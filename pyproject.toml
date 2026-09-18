@@ -8,14 +8,14 @@ version = "0.1.0"
 description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { file = "LICENSE" }
+license = "LicenseRef-FSL-1.1-MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Zain Dana Harper" }]
 keywords = ["writing", "linter", "prose", "ai-detection", "editor", "quality", "receipt", "audit"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Text Processing :: Linguistic",
     "Environment :: Console",
-    "License :: Other/Proprietary License",
     "Intended Audience :: Developers",
 ]
 dependencies = []  # the core detector is standard-library only
