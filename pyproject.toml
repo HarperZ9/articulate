@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "articulate-writing"
+version = "0.1.0"
+description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Zain Dana Harper" }]
+keywords = ["writing", "linter", "prose", "ai-detection", "editor", "quality", "receipt", "audit"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Linguistic",
+    "Environment :: Console",
+    "License :: Other/Proprietary License",
+    "Intended Audience :: Developers",
+]
+dependencies = []  # the core detector is standard-library only
+
+[project.optional-dependencies]
+mcp = ["fastmcp>=3"]      # the MCP server surface
+dev = ["pytest>=7"]
+
+[project.scripts]
+articulate = "articulate.cli:main"
+articulate-lsp = "articulate.lsp_server:serve"
+
+[project.urls]
+Homepage = "https://github.com/HarperZ9/articulate"
+Repository = "https://github.com/HarperZ9/articulate"
+Documentation = "https://github.com/HarperZ9/articulate/tree/main/docs"
+Issues = "https://github.com/HarperZ9/articulate/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/articulate"]
