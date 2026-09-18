@@ -15,7 +15,7 @@ skilled editor does:
                  literal term, a buried point, verbosity out of proportion to
                  the task, weak verbs, passive overuse. Reports, does not edit.
 
-  --fix FILE     Rewrite the prose to skilled-author quality in the operator's
+  --fix FILE     Rewrite the prose to skilled-author quality in the plain-writing
                  standard, preserving every fact, number, claim, citation, term
                  of art and structural element, then re-run the mechanical
                  detector and iterate until the rewrite is clean. Offers the
@@ -48,7 +48,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CLAUDE = "claude"
 
 STANDARD = """\
-WRITING STANDARD (the operator's, non-negotiable):
+WRITING STANDARD (non-negotiable):
 Write plain, spoken, technical English that is easy to read. Vary sentence
 length unpredictably. Ban these devices outright: antithesis ("not X but Y"),
 corrective negation (", not Y"), contrasting pairs, rule of three, negative

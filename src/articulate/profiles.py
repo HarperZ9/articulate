@@ -29,7 +29,7 @@ DEFAULT = "flavored"
 #   off       nothing gates (report only): narrative, literary essays
 #   flavored  the HIGH device tier gates: docs, research, chat, readme
 #   strict    HIGH + MEDIUM gate: procedures, commits, error messages, essays
-#             the operator wants device-free
+#             that must be device-free
 
 
 class ProfileError(ValueError):
@@ -94,7 +94,7 @@ PROFILES: dict[str, dict] = {
     "social": _p("flavored"),
     "chat": _p("flavored",
                register=("engineering", "operator-dialogue", "conversational")),
-    # The operator's directive: essays in this program are device-free, so an
+    # Essays in this program are device-free, so an
     # essay uses the strict slop level; the register map's usual "off" applies
     # only to literary narrative (fiction), where authorial voice governs.
     "essay": _p("strict", register=("argument", "reader", "written-argument")),
@@ -111,7 +111,7 @@ PATH_RULES: list[tuple[str, str]] = [
     (r"(?i)(^|/)README(\.md)?$", "readme"),
     # A .tex under a proofs/ or papers/ tree is math and belongs in a math register,
     # so it routes there ahead of the .tex-is-essay default. An essay written in
-    # .tex (the operator's device-free essays) still lands on essay.
+    # .tex (device-free essays) still lands on essay.
     (r"(?i)(^|/)(proofs?)/", "proof"),
     (r"(?i)(^|/)(papers?|research|whitepapers?)/", "research"),
     (r"(?i)\.tex$", "essay"),

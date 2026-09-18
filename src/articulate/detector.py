@@ -3,7 +3,7 @@
 """
 check-writing-devices.py  ("Articulate")
 
-A detector for AI prose tells and the operator's banned rhetorical devices. It
+A detector for AI prose tells and a configured set of banned rhetorical devices. It
 reads a prose file and reports, with line numbers, where the machine-writing
 tells sit so a human can fix them at the source. This is a DETECTION and QUALITY
 tool. It finds tells; it does not remove them, does not rewrite, and has no mode
@@ -12,8 +12,8 @@ of writing plainly, not a goal this tool serves.
 
 What it looks for, in three confidence tiers:
 
-  HIGH    Mechanically unambiguous devices the operator bans outright, plus the
-          register words he named. Low false-positive rate. These are hits.
+  HIGH    Mechanically unambiguous devices the standard bans outright, plus the
+          named register words. Low false-positive rate. These are hits.
   MEDIUM  Strong tells of current frontier-model prose (Opus 5, Fable 5.1,
           Sol 5.6, Astra 6): the "delve" register, stock transitions and
           openers, trailing participial closers, marketing superlatives. Small
@@ -71,7 +71,7 @@ except (AttributeError, ValueError):
 # --------------------------------------------------------------------------- #
 
 HIGH = [
-    # --- rhetorical devices the operator bans outright -------------------- #
+    # --- banned rhetorical devices --------------------------------------- #
     ("antithesis",   "not X but Y",
      re.compile(r"\bnot\b(?!\s+help\s+but\b)[^.\n;:]{0,90}?\bbut\b", re.I)),
     ("antithesis",   "not only ... but (also)",
@@ -93,10 +93,10 @@ HIGH = [
      re.compile(r"\u2014")),
     ("em-dash",      "spaced en-dash used as em",
      re.compile(r"\s\u2013\s")),
-    # --- filler intensifiers the operator named ---------------------------- #
+    # --- named filler intensifiers ---------------------------------------- #
     ("filler-intensifier", "genuinely / really / truly / actually",
      re.compile(r"\b(?:genuinely|really|truly|actually)\b", re.I)),
-    # --- corporate-register verbs the operator named ----------------------- #
+    # --- named corporate-register verbs ---------------------------------- #
     ("corporate-verb", "leverage / underscore / reflect (as corporate verb)",
      re.compile(r"\b(?:leverage[sd]?|leveraging|underscore[sd]?|underscoring)\b", re.I)),
     # --- deletable padding circumlocutions (from research spec #1) --------- #
@@ -973,7 +973,7 @@ def detect_injection(text):
     It is a literal-ASCII heuristic, so it will miss paraphrased jailbreaks,
     homoglyph or base64-obfuscated directives, and inline (mid-line) role headers.
     The content-as-data boundary in the editor, not this warning, is the actual
-    guardrail; the warning is an operator-facing signal on top of it."""
+    guardrail; the warning is a reviewer-facing signal on top of it."""
     lines = text.splitlines(keepends=True)
     offsets, acc = [], 0
     for raw in lines:
@@ -1226,7 +1226,7 @@ def main(argv):
         print(json.dumps({"files": payload, "total_hits": total}, ensure_ascii=False, indent=2))
     elif total:
         print(f"[writing] {total} HIGH/MEDIUM tell(s) across {len(files)} file(s). "
-              f"These read as machine-written or break the operator's prose rules. "
+              f"These read as machine-written or break the plain-writing standard. "
               f"Rewrite plainly before this ships. Contrast pairs, setup/payoff, and "
               f"performed enthusiasm are not fully caught here; hold those by judgment.")
     return 0
