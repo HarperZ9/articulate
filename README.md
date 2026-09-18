@@ -1,5 +1,7 @@
 # Articulate
 
+![Articulate: a local writing-quality and AI-tell detection and editing tool. Lines of prose bow around a verified core, one span is marked as drift, and the verdict lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
+
 A local writing-quality and AI-tell detection and editing tool. It flags the
 prose devices and machine-writing tells that make text read as generated, scores
 how machine-textured a passage is, and (with an LLM backend) rewrites prose to a
@@ -134,5 +136,6 @@ screenplay, poetry), the editor injection boundary, per-span mixed-authorship
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. A local-model editor backend, a labeled non-native corpus for a
-fairness check, and PyPI packaging are on the roadmap.
+one package. Version 0.1.0 is on PyPI as `articulate-writing`. A local-model
+editor backend and a labeled non-native corpus for a fairness check remain on the
+roadmap.
