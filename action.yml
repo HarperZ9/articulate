@@ -26,8 +26,8 @@ runs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
-    # Installs the checked-out package. Swap for `pip install articulate-writing`
-    # once the package is published to PyPI.
+    # Installs the action's own checked-out code, so a pinned action ref runs that
+    # exact version. articulate-writing is also on PyPI for standalone installs.
     - run: pip install "${{ github.action_path }}"
       shell: bash
     - run: |
