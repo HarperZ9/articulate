@@ -97,3 +97,140 @@ def test_kept_word_does_not_inflate_texture_under_research():
     flavored = articulate.check_text(txt, profile=profiles.load("flavored"))
     assert flavored["texture_score"] > research["texture_score"]
     assert research["elevated"] is False
+
+
+# --------------------------------------------------------------------------- #
+# AI cadence tells: prose free of banned constructions that still reads as
+# machine-written by its shape (demonstrative summary-beats, reply sycophancy,
+# balanced ordinals, aphoristic labels, dead-metaphor connectors). Each tell has
+# a positive (must fire) and a near-miss negative (must stay clean). These are
+# MEDIUM, so under the flavored profile they do not gate; the assertions are on
+# the finding, not the gate.
+# --------------------------------------------------------------------------- #
+
+def _cadence(text):
+    r = articulate.check_text(text if text.endswith("\n") else text + "\n",
+                              profile=profiles.load("flavored"))
+    return {f["label"] for f in r["medium"] if f["category"] == "cadence"}
+
+
+def _fires(text, needle):
+    return any(needle in label for label in _cadence(text))
+
+
+def test_cadence_demonstrative_summary_beat_fires():
+    assert _fires("The check re-runs offline. That is the whole point of the design.",
+                  "demonstrative summary-beat")
+    assert _fires("A stranger re-runs it. That is the load-bearing part of the claim.",
+                  "demonstrative summary-beat")
+    assert _fires("You can automate the search. That is what makes it scale.",
+                  "demonstrative summary-beat")
+
+
+def test_cadence_demonstrative_near_miss_stays_clean():
+    # sentence-initial "That/This is the <concrete noun>" is ordinary reference,
+    # and a mid-clause "that is" is never a summary-beat.
+    for s in ("That is the wrench I borrowed from Dave.",
+              "This is the part where the engine stalls.",
+              "That is the file you asked for.",
+              "I know that is the reason he left."):
+        assert not _fires(s, "demonstrative summary-beat"), s
+
+
+def test_cadence_meta_acknowledgment_fires():
+    assert _fires("Right, and that supports the whole picture you drew earlier.",
+                  "meta-acknowledgment")
+    assert _fires("I like the point you're making about receipts.", "meta-acknowledgment")
+    assert _fires("What you're describing is the reproducibility gap.",
+                  "meta-acknowledgment")
+    assert _fires("You're onto something with the offline replay.", "meta-acknowledgment")
+    assert _fires("You nailed it with the trust boundary.", "meta-acknowledgment")
+
+
+def test_cadence_meta_acknowledgment_near_miss_stays_clean():
+    for s in ("You're right that the deadline is tight.",   # bare 'right that'
+              "I drew the map you asked for.",              # not framing praise
+              "Let me know what works for you."):
+        assert not _fires(s, "meta-acknowledgment"), s
+
+
+def test_cadence_balanced_ordinal_fires():
+    assert _fires("Most of the tooling that does the first ignores the second.",
+                  "balanced ordinal")
+    assert _fires("The former checks the work; the latter explains it.", "former/latter")
+    assert _fires("One verifies the run, and the other reads the result.", "one/the-other")
+
+
+def test_cadence_ordinal_near_miss_stays_clean():
+    # an enumeration where a noun follows the ordinal is not a closing antithesis.
+    ordinal_labels = {
+        "balanced ordinal antithesis (the first ... the second)",
+        "former/latter antithesis",
+        "one/the-other antithesis (one does X, the other Y)",
+    }
+    for s in ("On the first day we hiked; on the second day we rested.",
+              "The first bus was full, so I took the next one.",
+              "One of the cats knocked it over."):
+        assert not (_cadence(s) & ordinal_labels), s
+
+
+def test_cadence_aphoristic_label_fires():
+    assert _fires("Verification is one thing. Understanding is a separate problem.",
+                  "aphoristic label")
+    assert _fires("Getting it to run is the easy part.", "aphoristic label")
+    assert _fires("Shipping the receipt, which is the point, comes last.", "aphoristic label")
+
+
+def test_cadence_aphoristic_near_miss_stays_clean():
+    for s in ("This is a hard problem to reason about.",   # 'a hard' is excluded
+              "The output is a separate file on disk.",     # 'file' is not a label noun
+              "I watched the whole thing twice."):          # no copula label
+        assert not _fires(s, "aphoristic label"), s
+
+
+def test_cadence_dead_metaphor_connector_fires():
+    assert _fires("The throughline of the argument is trust.", "dead-metaphor connector")
+    assert _fires("Provenance is the connective tissue between the tools.",
+                  "dead-metaphor connector")
+
+
+def test_cadence_dead_metaphor_near_miss_stays_clean():
+    assert not _fires("The connective rod links the two gears.", "dead-metaphor connector")
+
+
+def test_cadence_tell_is_allowlist_exempt():
+    # 'load-bearing' is a kept term of art (profiles._TERMS), but a summary-beat
+    # built on it is a structural tell and must still fire despite the allowlist.
+    r = articulate.check_text(
+        "A stranger re-runs the checks. That is the load-bearing part of the claim.\n",
+        profile=profiles.load("flavored"))
+    assert "cadence" in {f["category"] for f in r["medium"]}
+
+
+def test_cadence_human_controls_stay_clean():
+    # plain, concrete, offhand human sentences with none of the tells.
+    controls = [
+        "I fixed the leaky faucet yesterday and it still drips a little.",
+        "The bus was late again so I walked the last mile home.",
+        "She said the meeting moved to three, so I rescheduled the call.",
+        "On the first day we drove to the coast; on the second day we hiked.",
+        "That is the wrench I borrowed from Dave last weekend.",
+        "This is the part where the engine usually stalls out.",
+        "You're right that the deadline is tight, but we can split it.",
+        "One of the dogs barked all night. The other one slept through it.",
+    ]
+    for c in controls:
+        r = articulate.check_text(c + "\n", profile=profiles.load("flavored"))
+        assert r["clean"], (c, [f["match"] for f in r["high"] + r["medium"]])
+
+
+def test_cadence_canonical_example_is_not_clean():
+    # the shipped draft that motivated the tells: no banned construction, yet it
+    # reads as machine-written. It must now report a MEDIUM cadence tell.
+    panos = ("The third tribe only works if the reproducibility package is real: a "
+             "stranger re-runs the checks and gets the same verdict without trusting "
+             "the authors or the reviewer. That is the load-bearing part of the whole "
+             "picture you drew.\n")
+    r = articulate.check_text(panos, profile=profiles.load("flavored"))
+    assert r["clean"] is False
+    assert any(f["category"] == "cadence" for f in r["medium"])

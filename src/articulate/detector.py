@@ -229,6 +229,89 @@ MEDIUM = [
     # --- promotional descriptive filler (research spec #14) --------------- #
     ("blog-tell", "promotional filler (boasts a / nestled in)",
      re.compile(r"\bboasts (?:a |an )?\w+|\bnestled (?:in|amid|among|between)\b", re.I)),
+    # --- AI CADENCE tells (frontier-model reply/essay rhythm) ------------- #
+    # These catch prose that is free of banned constructions yet still reads as
+    # machine-written because of its shape. They are strong frontier-model tells,
+    # so they sit in MEDIUM. Anything that would fire on ordinary prose (bare "the
+    # first", ordinary "that is") is deliberately excluded or moved to LOW.
+    #
+    # A summary-beat is a structural device, not a vocabulary choice, so the
+    # "cadence" category is exempt from the terms-of-art allowlist (see
+    # ALLOW_EXEMPT_CATEGORIES): "That is the load-bearing part" is a summary-beat
+    # whether or not "load-bearing" is a kept term of art elsewhere.
+    #
+    # 1. Demonstrative summary-beat: a sentence that labels the prior point
+    #    ("That is the load-bearing part", "This is the whole point", "That is what
+    #    makes it work"). Anchored to a sentence boundary (line start or after
+    #    .!?) so ordinary mid-clause "that is" does not fire, and the object is a
+    #    curated set of summary labels so "This is the file I need" does not fire.
+    ("cadence", "demonstrative summary-beat (That is the ...)",
+     re.compile(r"(?i)(?:^|[.!?]\s+)(?:that|this)(?:'s|’s|\s+(?:is|was))\s+"
+                r"(?:what\s+(?:makes|matters|counts|does|gives|keeps|separates|"
+                r"drives|holds|lets|allows|breaks)\b"
+                r"|the\s+(?:crux|kicker|takeaway|whole\s+point|whole\s+game|"
+                r"hard\s+part|easy\s+part)\b"
+                r"|the\s+(?:whole|entire|actual|central|core|crucial|essential|"
+                r"load[- ]bearing)\s+(?:point|problem|part|piece|question|issue|"
+                r"reason|insight|tension|idea|thing|layer|catch|danger|risk|"
+                r"trick|move|bit)\b)")),
+    # 2. Meta-acknowledgment of the interlocutor (reply sycophancy): restating or
+    #    praising the other person's framing ("the whole picture you drew", "the
+    #    point you're making", "what you're describing", "you're onto something",
+    #    "you nailed it", "you're absolutely right").
+    ("cadence", "meta-acknowledgment of interlocutor (reply sycophancy)",
+     re.compile(r"(?i)"
+                r"\bthe\s+(?:whole\s+|entire\s+|exact\s+|very\s+)?"
+                r"(?:picture|point|framing|frame|world|model|story|argument|thread|"
+                r"distinction|vision|map|case|diagnosis|analogy|metaphor|setup)\s+"
+                r"(?:that\s+)?you(?:'re|’re|\s+are|'ve|’ve|\s+have|\s+just)?"
+                r"\s+(?:drew|draw|drawing|described|describing|laid\s+out|"
+                r"laying\s+out|painting|painted|paint|making|made|make|outlined|"
+                r"outlining|sketched|sketching|set\s+out|raised|raising|"
+                r"getting\s+at|pointing\s+(?:to|at))\b"
+                r"|\bwhat\s+you(?:'re|’re|\s+are|'ve|’ve|\s+have)\s+"
+                r"(?:describing|getting\s+at|pointing\s+(?:to|at)|driving\s+at|"
+                r"after|onto|really\s+saying|circling)\b"
+                r"|\byou(?:'re|’re|\s+are)\s+(?:really\s+|absolutely\s+|"
+                r"totally\s+|clearly\s+)?onto\s+something\b"
+                r"|\byou(?:'ve|’ve|\s+have)\s+(?:really\s+)?nailed\s+"
+                r"(?:it|this|that)\b"
+                r"|\byou\s+nailed\s+(?:it|this|that)\b"
+                r"|\byou(?:'re|’re|\s+are)\s+(?:absolutely|exactly|completely|"
+                r"totally|so)\s+right\b")),
+    # 3. Balanced ordinal/antithetical closer: two abstract ordinals used as a neat
+    #    closing generalization ("does the first ... ignores the second", "the
+    #    former ... the latter", "one does X, the other Y"). The "second" must
+    #    close a clause (bare, punctuation next), so an enumeration like "the first
+    #    day ... the second day" (a noun follows) does not fire.
+    ("cadence", "balanced ordinal antithesis (the first ... the second)",
+     re.compile(r"(?i)\bthe\s+first\b[^.\n]{1,70}?\bthe\s+second\b"
+                r"(?=\s*[.,;:!?)\]”’\"']|\s*$)")),
+    ("cadence", "former/latter antithesis",
+     re.compile(r"(?i)\bthe\s+former\b[^.\n]{1,70}?\bthe\s+latter\b")),
+    ("cadence", "one/the-other antithesis (one does X, the other Y)",
+     re.compile(r"(?i)\bone\s+(?:does|did|says|said|is|was|handles|solves|takes|"
+                r"gets|goes|makes|gives|checks|verifies|understands|wins|leads|"
+                r"works|covers|answers)\b[^.\n]{0,55}?,\s+(?:while\s+|whereas\s+|"
+                r"and\s+|but\s+)?the\s+other\b")),
+    # 4. Aphoristic label: naming a thing with a stock generalization ("X is a
+    #    separate problem", "X is the hard part", "that is the whole point",
+    #    "which is the point"). The noun set is curated so "This is a hard problem"
+    #    (a-branch excludes "hard") does not fire.
+    ("cadence", "aphoristic label (a separate problem / the hard part)",
+     re.compile(r"(?i)\b(?:is|are|was|were|remains?|becomes?)\s+"
+                r"(?:a\s+(?:separate|different|distinct|whole\s+other|"
+                r"whole\s+different)\s+(?:problem|question|issue|matter|beast|"
+                r"story|animal|game)"
+                r"|the\s+(?:hard|easy|tricky|fun|whole|entire)\s+"
+                r"(?:part|bit|point|game))\b"
+                r"|\bwhich\s+is\s+(?:rather\s+|exactly\s+|precisely\s+|"
+                r"kind of\s+)?the\s+point\b")),
+    # 5. Dead-metaphor connector overused in AI prose. "load-bearing" (as summary
+    #    metaphor) is caught by the summary-beat above; "at its core" is a HIGH
+    #    throat-clearing opener already. These two are the remaining connectors.
+    ("cadence", "dead-metaphor connector (throughline / connective tissue)",
+     re.compile(r"(?i)\b(?:the\s+)?through[- ]?line\b|\bconnective\s+tissue\b")),
 ]
 
 # Abstract-metaphor jargon that spikes in model prose. These are HITS to fix by
@@ -287,6 +370,12 @@ def allowed(matched_text, allow):
 # not consulted for them.
 ALLOW_EXEMPT_CATEGORIES = frozenset({
     "antithesis", "corrective-negation", "substitution", "negative-parallel",
+    # Cadence tells are structural, not vocabulary: a summary-beat like "That is
+    # the load-bearing part" is a tell whatever the vocabulary, so a terms-of-art
+    # allowlist (which keeps "load-bearing", "substrate") must not un-flag it. Same
+    # rationale as the device categories above; the contrast-pair pass already
+    # bypasses the allowlist for the same reason.
+    "cadence",
 })
 
 # Emoji: a coarse but serviceable set of the ranges frontier models reach for.
@@ -744,7 +833,7 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
                 high.append(_mk(i, off, cat, label, m.start(), m.end(), raw, snippet))
         for cat, label, rx in MEDIUM:
             m = rx.search(text)
-            if m and not allowed(m.group(0), allow):
+            if m and (cat in ALLOW_EXEMPT_CATEGORIES or not allowed(m.group(0), allow)):
                 medium.append(_mk(i, off, cat, label, m.start(), m.end(), raw, snippet))
         for cat, label, rx in REGISTER_JARGON:   # a hit to fix; allowlist to keep
             m = rx.search(text)

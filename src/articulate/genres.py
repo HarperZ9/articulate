@@ -73,7 +73,7 @@ def _g(base, *, slop="off", unit="sentence", structural_classify=None,
 
 
 GENRES: dict[str, dict] = {
-    # Literary fiction: voice is the whole point, so the device tiers report but
+    # Literary fiction: voice carries the work, so the device tiers report but
     # never gate; the fiction lexicon stays on as an advisory.
     "literary-fiction": _g("narrative"),
     # Category fiction: as literary, plus convention phrasing the genres lean on,
