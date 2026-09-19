@@ -48,7 +48,7 @@ from . import profiles
 # poetry report so the tool does not flag a poet for writing a poem.
 _VERSE_DEVICE_SUPPRESS = (
     "antithesis", "corrective-negation", "substitution", "negative-parallel",
-    "contrast-pair", "cadence", "rule-of-three",
+    "contrast-pair", "cadence", "rule-of-three", "anaphora",
 )
 
 

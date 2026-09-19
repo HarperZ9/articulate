@@ -106,12 +106,40 @@ HIGH = [
                 r"a wide range of|in the process of|in a timely manner|"
                 r"it should be noted that)\b", re.I)),
     # --- assistant-affirmation opener bleeding into prose (spec #4) -------- #
+    # Line-initial affirmation plus punctuation is near-exclusive to assistant
+    # residue. The word set is extended over the original; "sure" stays as "sure
+    # thing" only (bare "Sure," is ordinary human chat).
     ("assistant-residue", "assistant affirmation opener",
-     re.compile(r"(?im)^\s*(?:certainly|absolutely|great question|sure thing|of course)[!,]")),
+     re.compile(r"(?im)^\s*(?:certainly|absolutely|great question|good question|"
+                r"excellent question|excellent point|fantastic question|sure thing|"
+                r"of course|happy to help|i'?d be happy to)[!,.]")),
     # --- vague-change blog intro (spec #7) -------------------------------- #
     ("blog-tell", "vague-change intro (as X continues to evolve)",
      re.compile(r"\bas (?:the )?[\w-]+(?:\s+\w+){0,2}\s+continues to "
                 r"(?:evolve|grow|change|develop|advance|expand)\b", re.I)),
+    # --- AI self-identification / knowledge-cutoff disclaimer ------------- #
+    # Near-zero outside text that quotes or discusses AI systems. A hard, clean
+    # tell of unedited model output leaking its own framing.
+    ("assistant-residue", "AI self-identification / knowledge-cutoff disclaimer",
+     re.compile(r"(?i)\bas\s+(?:an\s+ai(?:\s+language\s+model)?|a\s+(?:large\s+)?language\s+model)\b"
+                r"|\bi'?m\s+(?:just\s+|only\s+)?an?\s+ai\b"
+                r"|\bas\s+a\s+(?:helpful\s+)?(?:ai\s+)?assistant\b"
+                r"|\bas\s+of\s+my\s+(?:last\s+)?(?:knowledge|training)\s+(?:update|cut[- ]?off|cutoff)\b"
+                r"|\bmy\s+(?:training\s+data|knowledge\s+cut[- ]?off|knowledge\s+cutoff)\b"
+                r"|\bi\s+(?:do\s+not|don'?t)\s+have\s+(?:access\s+to\s+)?real[- ]?time\b")),
+    # --- leaked assistant / citation markup tokens (copy-paste leakage) --- #
+    # Literal substrings emitted by chat UIs. Essentially never in natural prose.
+    # Case-sensitive on purpose: these are exact machine tokens, not words.
+    ("assistant-residue", "leaked assistant/citation markup token",
+     re.compile(r"contentReference|oaicite|turn0search|turn0news|citeturn"
+                r"|grok_render_citation_card_json|ppl-ai-file-upload"
+                r"|:::writing|\[oai_citation")),
+    # --- invisible-unicode artifacts (zero-width space / word joiner) ----- #
+    # Zero-width space (U+200B) and word joiner (U+2060) in prose are near-
+    # unambiguous machine artifacts. NBSP and ZWJ (emoji sequences) are excluded
+    # because they have legitimate typographic and emoji uses.
+    ("invisible-unicode", "zero-width / word-joiner artifact",
+     re.compile("[​⁠]")),
 ]
 
 MEDIUM = [
@@ -179,7 +207,8 @@ MEDIUM = [
      re.compile(r"\bfrom [a-z][a-z ]{2,30} to [a-z][a-z ]{2,30}(?:,| and )", re.I)),
     # --- hedge stacking --------------------------------------------------- #
     ("hedge-stack", "stacked hedge",
-     re.compile(r"\b(?:may|might|could|can)\s+(?:potentially|possibly|perhaps|arguably)\b", re.I)),
+     re.compile(r"\b(?:may|might|could|can)\s+(?:potentially|possibly|perhaps|arguably|conceivably)\b"
+                r"|\b(?:potentially|possibly|conceivably)\s+(?:could|may|might)\b", re.I)),
     # --- self-referential meta -------------------------------------------- #
     ("meta", "self-referential framing",
      re.compile(r"(?i)\b(?:in this (?:essay|article|post|section|piece|guide),?\s*(?:we|i|you)|"
@@ -312,6 +341,122 @@ MEDIUM = [
     #    throat-clearing opener already. These two are the remaining connectors.
     ("cadence", "dead-metaphor connector (throughline / connective tissue)",
      re.compile(r"(?i)\b(?:the\s+)?through[- ]?line\b|\bconnective\s+tissue\b")),
+
+    # ===================================================================== #
+    # COMPREHENSIVE tell set (delivery / structural / lexical / formatting).
+    # Deduped against every entry above; each is a strong, low-false-positive
+    # frontier-model tell. Single dual-use words are NOT here (they live in the
+    # register-word lists and the SOFT density score); high-false-positive
+    # formatting and density signals are LOW advisories or heuristics, not here.
+    # ===================================================================== #
+
+    # --- assistant reply / closer register ------------------------------- #
+    ("sycophancy", "sycophantic flattery of the interlocutor",
+     re.compile(r"(?i)\b(?:that|this)(?:'s| is)\s+(?:a|an)\s+(?:great|excellent|"
+                r"fantastic|really\s+good|very\s+good|insightful|thoughtful|"
+                r"brilliant|smart|wonderful)\s+(?:point|question|idea|observation|"
+                r"catch|example|call)\b")),
+    ("assistant-closer", "boilerplate helpful closer",
+     re.compile(r"(?i)\bi\s+hope\s+(?:this|that|these|the\s+above)\s+(?:helps?|"
+                r"is\s+helpful|clarifies|answers?\s+your\s+question|makes\s+sense)\b"
+                r"|\bhope\s+(?:this|that)\s+helps\b"
+                r"|\bis\s+there\s+anything\s+else\s+(?:i\s+can\s+(?:help|assist|do)|"
+                r"you'?d\s+like)\b")),
+    ("delivery", "reassurance cadence",
+     re.compile(r"(?i)\b(?:don'?t\s+worry|not\s+to\s+worry|worry\s+not|rest\s+assured|"
+                r"the\s+good\s+news\s+is|no\s+need\s+to\s+(?:worry|panic|stress))\b")),
+    ("over-apology", "reflexive over-apology template",
+     re.compile(r"(?i)\bi\s+apologi[sz]e\s+for\s+(?:the|any)\s+(?:confusion|"
+                r"misunderstanding|inconvenience|error|mistake|oversight)\b"
+                r"|\bsorry\s+for\s+the\s+confusion\b")),
+    ("disclaimer", "unsolicited not-a-professional disclaimer",
+     re.compile(r"(?i)\bi'?m\s+not\s+(?:a|your)\s+(?:doctor|lawyer|attorney|"
+                r"financial\s+advisor|accountant|therapist|medical\s+professional)\b"
+                r"|\bthis\s+(?:is\s+not|isn'?t|should\s+not\s+be\s+considered)\s+"
+                r"(?:legal|medical|financial|professional|tax|investment)\s+advice\b")),
+    ("evasive", "evasive non-answer template",
+     re.compile(r"(?i)\bthere(?:'s| is)\s+no\s+(?:one[- ]size[- ]fits[- ]all|"
+                r"single\s+(?:right\s+|correct\s+)?answer|silver\s+bullet|"
+                r"magic\s+bullet|universal\s+(?:answer|solution))\b")),
+
+    # --- meta / scaffolding / reveal ------------------------------------- #
+    ("meta", "section-framing imperative (let's break it down)",
+     re.compile(r"(?i)\blet(?:'?s| us)\s+(?:break\s+(?:it|this)\s+down|take\s+a\s+"
+                r"(?:closer\s+)?look|get\s+started|jump\s+(?:in|right\s+in)|"
+                r"walk\s+through|dig\s+(?:in|into))\b"
+                r"|\bwithout\s+further\s+ado\b|\bbuckle\s+up\b")),
+    ("meta", "back-reference (as we've seen / as mentioned earlier)",
+     re.compile(r"(?i)\bas\s+(?:we'?ve|we\s+have)\s+(?:seen|discussed|explored|"
+                r"noted|established)\b"
+                r"|\bas\s+(?:mentioned|discussed|noted|stated|shown)\s+"
+                r"(?:earlier|above|previously|before)\b")),
+    ("meta", "reader mind-reading (you might be wondering)",
+     re.compile(r"(?i)\byou\s+(?:might|may|probably|likely)\s+(?:be\s+)?"
+                r"(?:wondering|asking|thinking|expecting)\b"
+                r"|\bif\s+you'?re\s+like\s+(?:most|many)\s+(?:people|of\s+us|"
+                r"developers|readers)\b|\bchances\s+are\b")),
+    ("scaffold", "roadmap-preview sentence (by the end of this guide)",
+     re.compile(r"(?i)\bby\s+the\s+end\s+of\s+this\s+(?:article|post|guide|piece|"
+                r"section|tutorial|chapter)\b")),
+    ("reveal", "colon reveal (The kicker: X)",
+     re.compile(r"(?im)^\s*(?:and\s+)?(?:the\s+)?(?:kicker|catch|twist|upshot|"
+                r"best\s+part|plot\s+twist)\s*:\s*\S")),
+    ("reveal", "here's-the-kicker declarative reveal",
+     re.compile(r"(?i)\bhere(?:'?s| is)\s+(?:the\s+)?(?:kicker|catch|deal|rub|"
+                r"best\s+part|twist|secret|hard\s+part|beauty\s+of\s+it)\b")),
+    ("reveal", "here's-where-it-gets-interesting escalation",
+     re.compile(r"(?i)\b(?:but|and|now)?\s*(?:here(?:'?s| is)|this\s+is)\s+where\s+"
+                r"(?:it|things|the\s+\w+)\s+get(?:s)?\s+(?:interesting|tricky|"
+                r"complicated|good|weird|fun|hairy|real)\b")),
+    ("throat-clearing", "worth-noting preamble",
+     re.compile(r"(?i)\bit(?:'?s| is)\s+worth\s+(?:noting|mentioning|remembering|"
+                r"pointing\s+out|highlighting|considering)\s+that\b"
+                r"|\bit\s+(?:is|should\s+be)\s+(?:important|worth|essential)\s+"
+                r"to\s+note\s+that\b")),
+
+    # --- structural framing pivots --------------------------------------- #
+    ("antithesis", "this isn't about X, it's about Y",
+     re.compile(r"(?i)\b(?:this|it|that)\s+(?:isn'?t|is\s+not|wasn'?t|was\s+not)\s+"
+                r"(?:just\s+)?about\b[^.!?\n]{1,60}?[.,;]\s*"
+                r"(?:it(?:'?s| is)|this\s+is|they'?re)\s+about\b")),
+    ("setup", "more-than-just setup",
+     re.compile(r"(?i)\b(?:more\s+than|much\s+more\s+than|far\s+more\s+than)\s+"
+                r"(?:just|simply|merely)\b")),
+    ("both-sides", "reflexive both-sides balancing",
+     re.compile(r"(?i)\bon\s+(?:the\s+)?one\s+hand\b[^.\n]{0,160}?"
+                r"\bon\s+the\s+other\s+hand\b"
+                r"|\bthere\s+are\s+(?:both\s+)?(?:pros\s+and\s+cons|"
+                r"advantages\s+and\s+disadvantages|benefits\s+and\s+drawbacks|"
+                r"trade[- ]?offs)\b")),
+    ("closer", "restatement opener (Simply put / In a nutshell)",
+     re.compile(r"(?im)^\s*(?:simply\s+put|put\s+simply|in\s+a\s+nutshell|"
+                r"to\s+put\s+it\s+(?:simply|briefly))\s*,")),
+    ("closer", "and-that's-why closing beat",
+     re.compile(r"(?im)^\s*(?:and|so)\s+that(?:'?s| is)\s+(?:why|how|what|the\s+"
+                r"(?:whole\s+)?(?:point|reason|idea))\b")),
+    ("enumeration", "-ly ordinal enumeration (Firstly / Secondly)",
+     re.compile(r"(?im)^\s*(?:firstly|secondly|thirdly|fourthly|lastly)\s*,")),
+    ("rhetorical-we", "inclusive we've-all-been-there",
+     re.compile(r"(?i)\bwe(?:'ve| have)\s+all\s+been\s+there\b|\bwe\s+all\s+know\b"
+                r"|\bwe\s+live\s+in\s+a\s+(?:world|time|age|era)\b")),
+
+    # --- marketing / puffery phrase frames (not single dual-use words) ---- #
+    ("cta", "marketing hook (look no further / picture this / imagine a world)",
+     re.compile(r"(?i)\b(?:look\s+no\s+further|embark\s+on\s+(?:a|your|this)\s+"
+                r"(?:journey|adventure)|imagine\s+a\s+world\s+where|buckle\s+up|"
+                r"picture\s+this|now\s+imagine)\b")),
+    ("continuation-cliche", "continues to (captivate / inspire / redefine)",
+     re.compile(r"(?i)\bcontinues?\s+to\s+(?:captivate|inspire|thrive|resonate|"
+                r"redefine|push\s+the\s+boundaries|shape\s+the\s+future)\b")),
+    ("significance", "inflated-significance / legacy framing",
+     re.compile(r"(?i)\bwatershed\s+moment\b"
+                r"|\b(?:marks?|marking|represents?|signals?)\s+an?\s+(?:pivotal|"
+                r"significant|defining|major|key)\s+(?:moment|shift|milestone|"
+                r"turning\s+point)\b"
+                r"|\bsetting\s+the\s+stage\s+for\b"
+                r"|\b(?:leaves?|left|leaving)\s+(?:an?\s+)?(?:indelible|lasting|"
+                r"profound|enduring)\s+(?:mark|legacy|impact|impression)\b"
+                r"|\blasting\s+legacy\b")),
 ]
 
 # Abstract-metaphor jargon that spikes in model prose. These are HITS to fix by
@@ -335,6 +480,32 @@ LOW = [
      re.compile(r"^\s*(?:[-*+]|\d+\.)\s+\*\*[^*\n]{1,60}\*\*\s*[:\-\u2013\u2014]")),
     ("closer-question", "rhetorical question",
      re.compile(r"^\s*(?:so |but |and )?(?:what if|why|how|isn'?t it|could it be)\b[^?\n]*\?\s*$", re.I)),
+    # --- comprehensive-set LOW advisories (higher FP; never gate) --------- #
+    # Formatting glyph tells. Editors auto-insert curly quotes and ellipses for
+    # human authors, so these are advisory density signals, not hits.
+    ("ellipsis-char", "ellipsis character (U+2026)",
+     re.compile(r"\u2026")),
+    ("arrow-glyph", "arrow glyph in prose",
+     re.compile(r"[\u2192\u21d2\u279c\u2794\u27a4\u2b95\u2799]")),
+    ("curly-quote", "curly quotation mark / apostrophe",
+     re.compile(r"[\u201c\u201d\u2018\u2019]")),
+    ("box-drawing", "box-drawing glyph in prose",
+     re.compile(r"[\u2500-\u257f]")),
+    ("bold-wrapup", "bold wrap-up label (**Bottom line:** / **TL;DR:**)",
+     re.compile(r"(?im)^\s*\*\*(?:bottom line|key takeaways?|tl;?dr|the takeaway|"
+                r"pro ?tip|note|important)\b[^*\n]*\*\*\s*:?")),
+    # Structural framing that is common in ordinary prose too.
+    ("superlative", "hedged superlative (one of the most X)",
+     re.compile(r"(?i)\bone of the (?:most|best|leading|largest|fastest|greatest|biggest)\b")),
+    ("correlative", "correlative comparative (the more X, the more Y)",
+     re.compile(r"(?i)\bthe (?:more|less|greater|bigger|better|harder|faster|deeper|higher)\b"
+                r"[^.!?,\n]{1,40},?\s+the (?:more|less|greater|bigger|better|worse|"
+                r"slower|easier|deeper|higher)\b")),
+    ("concessive-opener", "concession-then-resolution opener (Despite X, Y)",
+     re.compile(r"(?im)^\s*(?:despite|although|while|though|even though)\b[^.!?\n]{1,80},")),
+    ("editorial-adverb", "sentence-initial editorial adverb",
+     re.compile(r"(?im)^\s*(?:interestingly|remarkably|surprisingly|fundamentally|"
+                r"undoubtedly|arguably)\s*,")),
 ]
 
 # A file may exempt its terms of art with a line like:
@@ -510,6 +681,25 @@ EXPLETIVE = re.compile(r"(?i)^(?:there (?:is|are|was|were)|"
 # "evaluation", "attribution" as real terms.
 NOMINAL = re.compile(r"\b\w{4,}(?:tion|ment|ance|ence|ancy|ency)\b", re.I)
 
+# Structural-heuristic constants (comprehensive set). Markdown structure markers
+# and the token sets the statistical advisories count over. These feed report-only
+# LOW advisories and the local-anaphora MEDIUM, never the HIGH device gate.
+HEADING = re.compile(r"^\s{0,3}#{1,6}\s")
+BULLET = re.compile(r"^\s*(?:[-*+]|\d+\.)\s")
+BOLD_SPAN = re.compile(r"\*\*[^*\n]+\*\*|__[^_\n]+__")
+# Stopword-only n-grams are not repetition tells, so they are excluded.
+NGRAM_STOP = frozenset({
+    "the", "a", "an", "and", "or", "but", "of", "to", "in", "on", "for", "with",
+    "as", "at", "by", "is", "are", "was", "were", "be", "been", "it", "its",
+    "this", "that", "these", "those", "you", "we", "they", "i", "he", "she",
+    "from", "into", "than", "then", "so", "if", "not", "no", "do", "does",
+    "can", "will", "would", "your", "our", "their", "there", "here", "which",
+})
+# Hedge tokens; several in one sentence is a hedge cluster (Orwell caution excess).
+HEDGE_WORDS = re.compile(r"(?i)\b(?:may|might|could|can|perhaps|possibly|potentially|"
+                         r"likely|probably|maybe|generally|typically|usually|often|"
+                         r"somewhat|arguably|seemingly|presumably|conceivably)\b")
+
 
 def _blank(m):
     return " " * (m.end() - m.start())
@@ -669,6 +859,158 @@ def find_contrast_pairs(lines):
     return findings
 
 
+def _line_offsets(lines):
+    offsets, acc = [], 0
+    for raw in lines:
+        offsets.append(acc)
+        acc += len(raw)
+    return offsets
+
+
+def find_anaphora_runs(lines):
+    """A local run of >=3 consecutive prose sentences opening with the same
+    CONTENT word (case-insensitive), a report-only advisory (LOW). Function-word
+    openers (The/This/It/You) are excluded and left to the document-wide opener
+    ratio; list items and headings are skipped, and only real sentences (>=4
+    words) count, so a bulleted list or a run of short labels does not trip it.
+    Reported once, at the run's first sentence."""
+    offsets = _line_offsets(lines)
+    # Only real prose sentences: drop those whose source line is a heading or a
+    # list item, and require at least four words so labels and fragments are out.
+    sents = [(ln, s) for (ln, s) in sentence_spans(lines)
+             if not (0 < ln <= len(lines)
+                     and (HEADING.match(lines[ln - 1]) or BULLET.match(lines[ln - 1])))
+             and len(WORD.findall(s)) >= 4]
+    findings, i, n = [], 0, len(sents)
+    while i < n:
+        m0 = FIRSTWORD.match(sents[i][1])
+        if not m0:
+            i += 1
+            continue
+        w0 = m0.group(1).lower()
+        j = i + 1
+        while j < n:
+            mj = FIRSTWORD.match(sents[j][1])
+            if not mj or mj.group(1).lower() != w0:
+                break
+            j += 1
+        run = j - i
+        if run >= 3 and len(w0) >= 3 and w0 not in OPENER_STOP:
+            l2 = sents[i][0]
+            raw = lines[l2 - 1] if l2 - 1 < len(lines) else ""
+            lead = len(raw) - len(raw.lstrip())
+            findings.append(_mk(l2, offsets[l2 - 1], "anaphora",
+                                f"{run} consecutive sentences open with '{w0}'",
+                                lead, min(len(raw.rstrip("\n")), lead + len(w0)),
+                                raw, sents[i][1][:100]))
+        i = j
+    return findings
+
+
+def find_repeated_ngrams(text, n=3, min_repeat=3):
+    """A content n-gram repeated >= min_repeat times (a mode-collapse repetition
+    signal). Grams that are entirely stopwords, or carry fewer than two content
+    tokens, are skipped so ordinary function-word runs and a repeated two-word term
+    do not fire. Returns (gram_text, count) or None. Report-only (LOW)."""
+    words = [w.lower() for w in re.findall(r"[a-zA-Z']+", text)]
+    if len(words) < n * min_repeat:
+        return None
+    from collections import Counter
+    grams = Counter()
+    for k in range(len(words) - n + 1):
+        g = tuple(words[k:k + n])
+        if sum(1 for w in g if w not in NGRAM_STOP) < 2:
+            continue
+        grams[g] += 1
+    if not grams:
+        return None
+    gram, cnt = grams.most_common(1)[0]
+    return (" ".join(gram), cnt) if cnt >= min_repeat else None
+
+
+def paragraph_word_counts(lines):
+    """Word counts of blank-line-separated paragraphs, skipping fenced code and
+    frontmatter. Used for the uniform-paragraph-length advisory."""
+    counts, cur, in_fence = [], 0, False
+    in_fm = bool(lines) and lines[0].strip() == "---"
+    for idx, raw in enumerate(lines):
+        if FENCE.match(raw):
+            in_fence = not in_fence
+            continue
+        if in_fm:
+            if idx > 0 and raw.strip() == "---":
+                in_fm = False
+            continue
+        if in_fence:
+            continue
+        if raw.strip() == "":
+            if cur:
+                counts.append(cur)
+                cur = 0
+        elif not raw.lstrip().startswith(("#", "|", ">")):
+            cur += len(WORD.findall(strip_markup(raw)))
+    if cur:
+        counts.append(cur)
+    return [c for c in counts if c > 0]
+
+
+def document_advisories(lines, word_total):
+    """Document-level LOW advisories over structure and repetition: header,
+    list, and bold density on short/expository text; a repeated content n-gram;
+    a hedge cluster in one sentence; and near-uniform paragraph lengths. Each has
+    a minimum-size guard so a short human snippet cannot trip it. Report-only:
+    none of these gate, and none change the clean/flagged verdict."""
+    offsets = _line_offsets(lines)
+    out = []
+
+    def add(line_no, cat, label):
+        raw = lines[line_no - 1] if 0 < line_no <= len(lines) else "\n"
+        out.append(_mk(line_no, offsets[line_no - 1] if line_no <= len(offsets) else 0,
+                       cat, label, 0, 0, raw, raw.strip()[:100]))
+
+    # Markdown structure density. Fenced code is masked out of the counts.
+    nonblank = headers = list_lines = bold_spans = 0
+    in_fence = False
+    for raw in lines:
+        if FENCE.match(raw):
+            in_fence = not in_fence
+            continue
+        if in_fence or not raw.strip():
+            continue
+        nonblank += 1
+        if HEADING.match(raw):
+            headers += 1
+        if BULLET.match(raw):
+            list_lines += 1
+        bold_spans += len(BOLD_SPAN.findall(raw))
+
+    if headers >= 3 and word_total and word_total < 300:
+        add(1, "header-reflex", f"{headers} headers in {word_total} words (structure on short text)")
+    if nonblank >= 6 and list_lines / nonblank > 0.6:
+        add(1, "list-reflex", f"{list_lines}/{nonblank} lines are list items (lists replacing prose)")
+    if word_total >= 60 and bold_spans / word_total * 100 > 2.5:
+        add(1, "bold-density", f"{bold_spans} bold spans / {word_total} words (boldface overuse)")
+
+    rep = find_repeated_ngrams("\n".join(lines))
+    if rep:
+        add(1, "ngram-repetition", f"'{rep[0]}' repeats {rep[1]}x (n-gram repetition)")
+
+    para = paragraph_word_counts(lines)
+    if len(para) >= 4:
+        mu = mean(para)
+        if mu and pstdev(para) / mu < 0.25:
+            add(1, "paragraph-uniformity",
+                f"{len(para)} paragraphs, near-uniform length (cv<0.25)")
+
+    for line_no, s in sentence_spans(lines):
+        if len(HEDGE_WORDS.findall(s)) >= 3:
+            raw = lines[line_no - 1] if line_no <= len(lines) else "\n"
+            out.append(_mk(line_no, offsets[line_no - 1], "hedge-cluster",
+                           "3+ hedges in one sentence", 0,
+                           min(len(raw.rstrip("\n")), 1), raw, s[:100]))
+    return out
+
+
 # Magic-byte signatures for common binary and Office formats. A file that starts
 # with one of these is not screenable prose, so a caller refuses it rather than
 # scanning the replacement characters a lossy UTF-8 decode would produce.
@@ -812,6 +1154,13 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
         me = EMOJI.search(raw_low)
         if me:
             low.append(_mk(i, off, "emoji", "emoji in text", me.start(), me.end(), raw, snippet))
+            # Emoji used as STRUCTURE (in a heading, as/beside a bullet, or at the
+            # very start of a line as a status marker) is a strong tell, not just
+            # decoration. Markdown-oriented; a MEDIUM rather than an advisory.
+            if HEADING.match(raw_low) or BULLET.match(raw_low) or not raw_low[:me.start()].strip():
+                medium.append(_mk(i, off, "emoji-structure",
+                                  "emoji as heading / bullet / status marker",
+                                  me.start(), me.end(), raw, snippet))
         for cat, label, rx in LOW:
             m = rx.search(raw_low)
             if m and not allowed(m.group(0), allow):
@@ -877,6 +1226,15 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
     if "contrast-pair" not in suppress:
         cp_lines = [mask_quotes(ln) for ln in lines] if mask_q else lines
         medium.extend(find_contrast_pairs(cp_lines))
+
+    # Local anaphora and the document-level structure / repetition signals are
+    # report-only advisories (LOW): they fire on ordinary human prose too, so they
+    # never gate or change the clean verdict. Verse suppresses anaphora, which
+    # poets use by craft. Each carries a minimum-size guard, so a short snippet
+    # cannot trip it.
+    if "anaphora" not in suppress:
+        low.extend(find_anaphora_runs(lines))
+    low.extend(document_advisories(lines, word_total))
 
     doc = cadence_stats(" ".join(prose_words))
     doc["words"] = word_total
@@ -1079,7 +1437,7 @@ def detect_injection(text):
     return out
 
 
-RULESET_SEMVER = "0.3.0"
+RULESET_SEMVER = "0.4.0"
 
 
 def ruleset_fingerprint():

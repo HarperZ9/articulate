@@ -234,3 +234,155 @@ def test_cadence_canonical_example_is_not_clean():
     r = articulate.check_text(panos, profile=profiles.load("flavored"))
     assert r["clean"] is False
     assert any(f["category"] == "cadence" for f in r["medium"])
+
+
+# --------------------------------------------------------------------------- #
+# COMPREHENSIVE tell set: delivery / structural / lexical / formatting tells
+# added on top of the cadence work. Representative coverage, not one test per
+# tell: every new HIGH is exercised, every new MEDIUM category has a positive,
+# the trickier ones have a near-miss negative, and a 22-snippet human-control
+# corpus (varied registers) must stay clean of HIGH and MEDIUM.
+# --------------------------------------------------------------------------- #
+
+def _hm(text):
+    r = articulate.check_text(text if text.endswith("\n") else text + "\n",
+                              profile=profiles.load("flavored"))
+    return {(f["tier"], f["category"]) for f in r["high"] + r["medium"]}
+
+
+def _has_cat(text, category):
+    return any(c == category for _t, c in _hm(text))
+
+
+# --- new HIGH tells (mechanically unambiguous) ------------------------------ #
+
+def test_high_ai_self_disclosure():
+    assert ("HIGH", "assistant-residue") in _hm(
+        "As an AI language model, I cannot provide medical advice here.")
+    assert ("HIGH", "assistant-residue") in _hm(
+        "As of my last knowledge update, I do not have real-time access to prices.")
+
+
+def test_high_leaked_markup_token():
+    assert ("HIGH", "assistant-residue") in _hm(
+        "The finding held :contentReference[oaicite:0]{index=0} across every run.")
+
+
+def test_high_invisible_unicode():
+    assert ("HIGH", "invisible-unicode") in _hm(
+        "This line hides a​zero-width space between two ordinary words.")
+    assert not _has_cat("This line has only ordinary spaces between words.",
+                        "invisible-unicode")
+
+
+def test_high_affirmation_opener_extended():
+    assert ("HIGH", "assistant-residue") in _hm("Good question! The build caches responses.")
+    assert not _has_cat("Good tooling makes the difference on a long project.",
+                        "assistant-residue")
+
+
+# --- new MEDIUM tells: one positive per new category ------------------------ #
+
+MEDIUM_POSITIVES = {
+    "sycophancy": "That is a great question, and it gets at the core tradeoff.",
+    "assistant-closer": "The config lives in one file. I hope this helps you get unstuck.",
+    "delivery": "Setup takes two commands. Don't worry, it is simpler than it sounds.",
+    "over-apology": "I apologize for the confusion in my earlier note about the flags.",
+    "disclaimer": "The deduction may apply. This is not financial advice, of course.",
+    "evasive": "People ask which to pick. There is no one-size-fits-all answer.",
+    "meta": "The pipeline has three stages. Let's break it down stage by stage.",
+    "scaffold": "By the end of this guide, you will have a running verifier.",
+    "reveal": "The kicker: the whole run reproduces offline with no network.",
+    "throat-clearing": "It is worth noting that the benchmark shows no accuracy gain.",
+    "antithesis": "This isn't about speed, it is about whether you can check it.",
+    "setup": "The receipt is more than just a log line for the pipeline output.",
+    "both-sides": "On the one hand it is fast; on the other hand it drops cases.",
+    "closer": "Simply put, the verifier trusts arithmetic and nothing else.",
+    "enumeration": "Firstly, it scales cleanly. Secondly, the cost stays flat.",
+    "rhetorical-we": "We have all been there, staring at a build that only fails in CI.",
+    "cta": "Looking for a verifier you can trust? Look no further than this one.",
+    "continuation-cliche": "The framework continues to captivate a devoted audience.",
+    "significance": "The release marks a pivotal moment for reproducible evaluation.",
+    "emoji-structure": "## \U0001F680 Getting Started",
+}
+
+
+def test_medium_positives_fire_by_category():
+    for category, text in MEDIUM_POSITIVES.items():
+        cats = {c for _t, c in _hm(text)}
+        assert category in cats, (category, text, cats)
+
+
+def test_medium_reveal_and_meta_variants():
+    # contracted and expanded copulas both fire (recall, no precision cost)
+    assert _has_cat("Here is the kicker: it needs no trust at all.", "reveal")
+    assert _has_cat("And here is where it gets interesting: the check runs twice.", "reveal")
+    assert _has_cat("As we have seen, provenance travels with the work.", "meta")
+    assert _has_cat("You might be wondering why the verifier ignores the model.", "meta")
+    assert _has_cat("And that is why the receipt matters more than the verdict.", "closer")
+
+
+# --- near-miss negatives for the tighter new tells -------------------------- #
+
+def test_new_tells_near_miss_stay_clean():
+    negatives = [
+        "That is the file you asked for last week.",        # not a summary label
+        "You are right, we should ship it today.",          # bare agreement, no flattery adj
+        "It depends on the soil type and the season.",      # not the one-size template
+        "Let me know if the schedule works for everyone.",  # human closer -> LOW only
+        "Feel free to swing by after five.",                # human -> LOW only
+        "Despite the delay, the release still went out.",   # concessive -> LOW only
+        "The more we tested, the more confident we felt.",  # correlative -> LOW only
+        "This is a hard problem we spent a week on.",        # 'a hard' excluded
+        "That's why I always test on a clean install.",      # no and/so prefix
+    ]
+    for s in negatives:
+        assert not _hm(s), (s, _hm(s))
+
+
+# --- false-positive control corpus (>= 20 varied human snippets) ------------ #
+
+HUMAN_CONTROLS = [
+    "I fixed the leaky faucet yesterday and it still drips a little.",
+    "The bus was late so I walked the last mile home. My feet are killing me.",
+    "She said the meeting moved to three, so I rescheduled the call.",
+    "One of the cats knocked the plant off the sill again.",
+    "Honestly the whole thing took longer than I expected, but we got it done.",
+    "You're right, let's grab lunch after the standup.",
+    "On the first day we drove to the coast; on the second day we hiked.",
+    "That is the wrench I borrowed from Dave last weekend.",
+    "This is the part where the engine usually stalls out.",
+    "Despite the rain, the game went ahead and we lost badly.",
+    "The more I read the manual, the more confused I got.",
+    "Let me know what time works and I'll book the room.",
+    "Feel free to swing by after five; the door is open.",
+    "We tried the new build on Linux and it segfaulted on startup.",
+    "The ticket says the export fails when the file has a BOM.",
+    "First, unplug the router. Wait ten seconds. Plug it back in.",
+    "The paper argues that soil carbon is underestimated in current models.",
+    "Both options work; I lean toward the cheaper one for now.",
+    "It depends on the soil, but most tomatoes want full sun.",
+    "He parked the truck, grabbed the chainsaw, and headed for the oak.",
+    "My grandfather watched the rain from the porch and said nothing.",
+    "Thanks for the quick turnaround. The invoice looks right to me.",
+]
+
+
+def test_human_control_corpus_stays_clean():
+    assert len(HUMAN_CONTROLS) >= 20
+    for c in HUMAN_CONTROLS:
+        r = articulate.check_text(c + "\n", profile=profiles.load("flavored"))
+        assert r["clean"], (c, [f["match"] for f in r["high"] + r["medium"]])
+
+
+# --- statistical advisories are report-only (never gate, never flag) -------- #
+
+def test_statistical_advisories_are_low_only():
+    doc = ("Overview of the options.\n\n"
+           "- item one here\n- item two here\n- item three here\n"
+           "- item four here\n- item five here\n- item six here\n\n"
+           "The system reads files. The system writes receipts. The system checks them.\n")
+    r = articulate.check_text(doc, profile=profiles.load("flavored"))
+    low_cats = {f["category"] for f in r["low"]}
+    assert r["clean"] is True                       # advisories never gate or flag
+    assert low_cats & {"list-reflex", "anaphora"}   # but an advisory did fire
