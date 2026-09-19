@@ -274,6 +274,11 @@ MEDIUM = [
     #    makes it work"). Anchored to a sentence boundary (line start or after
     #    .!?) so ordinary mid-clause "that is" does not fire, and the object is a
     #    curated set of summary labels so "This is the file I need" does not fire.
+    #    A fourth branch adds the "That is the <X> half" shape: a curated noun set
+    #    (half, side, piece, layer, angle, story, trick) after an optional single
+    #    modifier word, closed by end-of-clause or "of" so "That is the side
+    #    effect" (a compound noun, another noun follows) does not fire. "whole
+    #    game" is already covered by the second branch.
     ("cadence", "demonstrative summary-beat (That is the ...)",
      re.compile(r"(?i)(?:^|[.!?]\s+)(?:that|this)(?:'s|’s|\s+(?:is|was))\s+"
                 r"(?:what\s+(?:makes|matters|counts|does|gives|keeps|separates|"
@@ -283,7 +288,9 @@ MEDIUM = [
                 r"|the\s+(?:whole|entire|actual|central|core|crucial|essential|"
                 r"load[- ]bearing)\s+(?:point|problem|part|piece|question|issue|"
                 r"reason|insight|tension|idea|thing|layer|catch|danger|risk|"
-                r"trick|move|bit)\b)")),
+                r"trick|move|bit)\b"
+                r"|the\s+(?:\w+\s+)?(?:half|side|piece|layer|angle|story|trick)\b"
+                r"(?=\s*(?:[.,;:!?]|of\b|$)))")),
     # 2. Meta-acknowledgment of the interlocutor (reply sycophancy): restating or
     #    praising the other person's framing ("the whole picture you drew", "the
     #    point you're making", "what you're describing", "you're onto something",
@@ -480,6 +487,25 @@ LOW = [
      re.compile(r"^\s*(?:[-*+]|\d+\.)\s+\*\*[^*\n]{1,60}\*\*\s*[:\-\u2013\u2014]")),
     ("closer-question", "rhetorical question",
      re.compile(r"^\s*(?:so |but |and )?(?:what if|why|how|isn'?t it|could it be)\b[^?\n]*\?\s*$", re.I)),
+    # Two-imperative parallel slogan used as an aphoristic closer ("Attest the
+    # run, re-derive the answer."). HIGH false-positive risk (ordinary
+    # instructions are imperative pairs too, e.g. "Open the door, grab the
+    # keys."), so it is LOW/advisory and anchored tightly: the whole line is a
+    # short clause pair, each clause a bare verb + article + object, comma-joined,
+    # sentence-final, nothing else. A leading determiner/pronoun/preposition in
+    # either clause (a declarative subject, not a bare imperative) blocks the match.
+    ("imperative-pair", "two-imperative parallel slogan (Verb the X, verb the Y.)",
+     re.compile(r"(?im)^\s*"
+                r"(?!(?:the|a|an|and|or|but|so|this|that|these|those|it|he|she|"
+                r"they|we|you|i|my|your|our|his|her|their|its|there|here|if|when|"
+                r"as|for|to|of|in|on|at)\b)"
+                r"[a-z][\w-]*\s+(?:the|a|an|your|our|my|their|its|his|her)\s+"
+                r"\w+(?:\s+\w+){0,2}\s*,\s*"
+                r"(?!(?:the|a|an|and|or|but|so|this|that|these|those|it|he|she|"
+                r"they|we|you|i|my|your|our|his|her|their|its|there|here|if|when|"
+                r"as|for|to|of|in|on|at)\b)"
+                r"[a-z][\w-]*\s+(?:the|a|an|your|our|my|their|its|his|her)\s+"
+                r"\w+(?:\s+\w+){0,2}\s*[.!?]?\s*$")),
     # --- comprehensive-set LOW advisories (higher FP; never gate) --------- #
     # Formatting glyph tells. Editors auto-insert curly quotes and ellipses for
     # human authors, so these are advisory density signals, not hits.
@@ -907,6 +933,70 @@ def find_anaphora_runs(lines):
     return findings
 
 
+# A curated evaluative-adjective + abstract-noun fragment ("Strong foundation.",
+# "Solid architecture."), the two-or-three-word declarative beat a model drops at
+# the start of a paragraph. Both the adjective and the noun come from curated
+# sets, so an ordinary short line ("Good morning.", "Nice work.") does not fire:
+# "morning" and "work" are not summary nouns. The noun must be followed by
+# sentence punctuation, so a full sentence ("Strong foundations hold the system
+# together.") is not a fragment and does not match.
+FRAGMENT_OPENER = re.compile(
+    r"(?i)^\s*"
+    r"(?:(?:very|really|remarkably|genuinely|impressively|surprisingly)\s+)?"
+    r"(?:strong|solid|clean|elegant|powerful|robust|simple|clear|sound|smart|"
+    r"impressive|remarkable|compelling|decent|great|excellent|fine|good|tight|"
+    r"slick|neat|thoughtful|careful|rigorous|brilliant|nice|classic|textbook)\s+"
+    r"(?:foundations?|architecture|design|reasoning|logic|structure|framing|"
+    r"insight|distinction|approach|execution|progress|groundwork|footing|"
+    r"fundamentals?|engineering|craftsmanship|integration|abstraction|premise|"
+    r"thesis|argument|analysis|coverage|separation|encapsulation|typing)"
+    r"[.!?](?=\s|$)")
+
+
+def find_fragment_openers(lines):
+    """A curated evaluative-adjective + abstract-noun fragment used as a punchy
+    beat at the START of a paragraph ("Strong foundation.", "Solid architecture.").
+    Report-only (LOW): the fragment shape is legitimate human prose too, so it
+    never gates. Paragraph-initial only, because a fragment mid-paragraph is a
+    stylistic choice; the machine tell is opening a paragraph with it. Fenced code
+    and frontmatter are skipped, and a heading, list item, table row, block quote,
+    or horizontal rule is not a prose paragraph, so it is passed over."""
+    offsets = _line_offsets(lines)
+    findings = []
+    in_fence = False
+    in_fm = bool(lines) and lines[0].strip() == "---"
+    prev_blank = True
+    for i, raw in enumerate(lines, 1):
+        if FENCE.match(raw):
+            in_fence = not in_fence
+            prev_blank = False
+            continue
+        if in_fence:
+            prev_blank = False
+            continue
+        if in_fm:
+            if i > 1 and raw.strip() == "---":
+                in_fm = False
+            prev_blank = False
+            continue
+        stripped = raw.strip()
+        if not stripped:
+            prev_blank = True
+            continue
+        is_structure = bool(HEADING.match(raw) or BULLET.match(raw)
+                            or is_md_hr(raw) or stripped[0] in "|>")
+        if prev_blank and not is_structure:
+            text = strip_markup(raw)
+            m = FRAGMENT_OPENER.match(text)
+            if m:
+                lead = len(text) - len(text.lstrip())
+                findings.append(_mk(i, offsets[i - 1], "fragment-opener",
+                                    "evaluative fragment opener (Strong foundation.)",
+                                    lead, m.end(), raw, stripped[:100]))
+        prev_blank = False
+    return findings
+
+
 def find_repeated_ngrams(text, n=3, min_repeat=3):
     """A content n-gram repeated >= min_repeat times (a mode-collapse repetition
     signal). Grams that are entirely stopwords, or carry fewer than two content
@@ -1234,6 +1324,8 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
     # cannot trip it.
     if "anaphora" not in suppress:
         low.extend(find_anaphora_runs(lines))
+    if "fragment-opener" not in suppress:
+        low.extend(find_fragment_openers(lines))
     low.extend(document_advisories(lines, word_total))
 
     doc = cadence_stats(" ".join(prose_words))
@@ -1437,7 +1529,7 @@ def detect_injection(text):
     return out
 
 
-RULESET_SEMVER = "0.4.0"
+RULESET_SEMVER = "0.5.0"
 
 
 def ruleset_fingerprint():
@@ -1459,7 +1551,8 @@ def ruleset_fingerprint():
             parts.append(f"{name}|{cat}|{label}|{rx.pattern}")
     for nm, rx in (("EMOJI", EMOJI), ("VAGUE_QUANT", VAGUE_QUANT),
                    ("EXPLETIVE", EXPLETIVE), ("NOMINAL", NOMINAL), ("NEG", NEG),
-                   ("SOFT", SOFT), ("PASSIVE", PASSIVE), ("ADVERB", ADVERB)):
+                   ("SOFT", SOFT), ("PASSIVE", PASSIVE), ("ADVERB", ADVERB),
+                   ("FRAGMENT_OPENER", FRAGMENT_OPENER)):
         parts.append(f"X|{nm}|{rx.pattern}")
     parts.append(f"PRONOUN_SUBJ={sorted(PRONOUN_SUBJ)}|STOP4={sorted(STOP4)}")
     # A receipt records a profile or mode name and re-derives by loading it, so the

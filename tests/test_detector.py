@@ -386,3 +386,135 @@ def test_statistical_advisories_are_low_only():
     low_cats = {f["category"] for f in r["low"]}
     assert r["clean"] is True                       # advisories never gate or flag
     assert low_cats & {"list-reflex", "anaphora"}   # but an advisory did fire
+
+
+# --------------------------------------------------------------------------- #
+# Cadence residuals (ruleset 0.5.0): three tells that 0.4.0 read as clean. The
+# demonstrative "That is the <X> half" shape extends an existing MEDIUM cadence
+# tell; the two-imperative slogan and the evaluative fragment opener are LOW,
+# because they fire on innocent prose too (an ordinary imperative pair, a human
+# punchy fragment). Each has a positive and a near-miss negative, and a >= 25
+# snippet human control corpus must gain no HIGH or MEDIUM.
+# --------------------------------------------------------------------------- #
+
+def _low_fires(text, category):
+    r = articulate.check_text(text if text.endswith("\n") else text + "\n",
+                              profile=profiles.load("flavored"))
+    return any(f["category"] == category for f in r["low"])
+
+
+def test_demonstrative_half_extension_fires():
+    # the residual line that motivated the extension: "the run half" (a curated
+    # noun after an arbitrary modifier) now reads as a MEDIUM cadence tell.
+    assert _fires("A log an agent cannot rewrite. That is the run half of trust.",
+                  "demonstrative summary-beat")
+    for s in ("That is the other side of the coin.",
+              "That is the missing piece.",
+              "This is the base layer of the stack.",
+              "That is the interesting angle.",
+              "That is the whole story.",
+              "This is the clever trick.",
+              "That is the story of the whole project."):
+        assert _fires(s, "demonstrative summary-beat"), s
+
+
+def test_demonstrative_half_extension_near_miss_stays_clean():
+    # a compound noun (another noun follows the curated word) or a concrete noun
+    # is not a summary-beat, so "That is the side effect" / "the file" stay clean.
+    for s in ("That is the side effect we were worried about.",
+              "This is the side project I mentioned.",
+              "That is the story we tell new hires.",
+              "That is the file we need.",
+              "This is the part where the engine stalls."):
+        assert not _fires(s, "demonstrative summary-beat"), s
+
+
+def test_imperative_pair_is_low_advisory_only():
+    text = "Attest the run, re-derive the answer.\n"
+    r = articulate.check_text(text, profile=profiles.load("flavored"))
+    assert _low_fires("Attest the run, re-derive the answer.", "imperative-pair")
+    assert r["clean"] is True                    # LOW never gates or flags
+    assert not any(f["category"] == "imperative-pair"
+                   for f in r["high"] + r["medium"])
+    # an ordinary imperative pair fires the same advisory (that is why it is LOW).
+    assert _low_fires("Open the door, grab the keys.", "imperative-pair")
+
+
+def test_imperative_pair_near_miss_stays_clean():
+    # a declarative subject (pronoun / determiner opener) or a three-clause list
+    # is not a bare two-imperative slogan.
+    for s in ("He parked the truck, grabbed the chainsaw, and left.",
+              "The report covers the data, and the analysis follows.",
+              "I opened the box, and the manual was missing.",
+              "We tested the build, it crashed on startup."):
+        assert not _low_fires(s, "imperative-pair"), s
+
+
+def test_fragment_opener_is_low_advisory_only():
+    for s in ("Strong foundation.", "Solid foundation.", "Clean architecture."):
+        r = articulate.check_text(s + "\n", profile=profiles.load("flavored"))
+        assert _low_fires(s, "fragment-opener"), s
+        assert r["clean"] is True
+        assert not any(f["category"] == "fragment-opener"
+                       for f in r["high"] + r["medium"])
+
+
+def test_fragment_opener_is_paragraph_initial_only():
+    para_start = "Solid design.\n\nThe rest of the system builds on it cleanly.\n"
+    r = articulate.check_text(para_start, profile=profiles.load("flavored"))
+    assert any(f["category"] == "fragment-opener" for f in r["low"])
+    # a fragment mid-paragraph (previous line is prose, not blank) is a style
+    # choice, not the machine opener this catches.
+    mid = "The design took three weeks to settle.\nSolid design.\n"
+    r2 = articulate.check_text(mid, profile=profiles.load("flavored"))
+    assert not any(f["category"] == "fragment-opener" for f in r2["low"])
+
+
+def test_fragment_opener_near_miss_stays_clean():
+    # a full sentence (a verb follows the noun) is not a fragment; a non-summary
+    # noun ("morning", "work") never fires whatever the adjective.
+    for s in ("Good morning.", "Nice work.", "Solid work today, everyone.",
+              "Strong foundations take time to build properly.",
+              "The foundation is strong and the tests pass."):
+        assert not _low_fires(s, "fragment-opener"), s
+
+
+# A dedicated control corpus for the three residual tells, including the
+# deliberate near-misses named in the change request. None may gain a HIGH or a
+# MEDIUM finding; a LOW advisory on an ordinary imperative pair is acceptable.
+NEW_TELL_CONTROLS = [
+    "That is the file we need.",
+    "That is the file you asked for last week.",
+    "Open the door, grab the keys.",
+    "Good morning.",
+    "Nice work.",
+    "Solid work today, everyone.",
+    "That is the side effect we were worried about.",
+    "This is the side project I mentioned.",
+    "That is the story we tell new hires.",
+    "This is the part where the engine stalls.",
+    "That is the wrench I borrowed from Dave.",
+    "He parked the truck, grabbed the chainsaw, and headed for the oak.",
+    "First, unplug the router. Wait ten seconds. Plug it back in.",
+    "I opened the box, and the manual was missing.",
+    "The report covers the data, and the analysis follows next week.",
+    "We tested the build, it segfaulted on startup.",
+    "Morning.",
+    "Thanks again.",
+    "See you tomorrow.",
+    "The foundation is strong and the tests pass.",
+    "Strong foundations take time to build properly.",
+    "I fixed the leaky faucet yesterday and it still drips a little.",
+    "On the first day we drove to the coast; on the second day we hiked.",
+    "It depends on the soil, but most tomatoes want full sun.",
+    "Both options work; I lean toward the cheaper one for now.",
+    "Great progress on the migration this week, thanks all.",
+]
+
+
+def test_new_tell_control_corpus_no_high_or_medium():
+    assert len(NEW_TELL_CONTROLS) >= 25
+    for c in NEW_TELL_CONTROLS:
+        r = articulate.check_text(c + "\n", profile=profiles.load("flavored"))
+        hm = [(f["tier"], f["category"], f["match"]) for f in r["high"] + r["medium"]]
+        assert not hm, (c, hm)

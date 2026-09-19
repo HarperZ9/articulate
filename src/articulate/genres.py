@@ -49,6 +49,7 @@ from . import profiles
 _VERSE_DEVICE_SUPPRESS = (
     "antithesis", "corrective-negation", "substitution", "negative-parallel",
     "contrast-pair", "cadence", "rule-of-three", "anaphora",
+    "fragment-opener", "imperative-pair",
 )
 
 
