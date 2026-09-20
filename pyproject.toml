@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.2.0"
+version = "0.3.0"
 description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
 readme = "README.md"
 requires-python = ">=3.9"

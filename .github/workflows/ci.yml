@@ -31,7 +31,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e .
       # Dogfood in CI: our shipped docs must pass our own gate.
-      - run: python -m articulate.cli check README.md docs/*.md --gate
+      - run: python -m articulate.cli check README.md CHANGELOG.md docs/*.md --gate
 
   build:
     runs-on: ubuntu-latest

@@ -8,6 +8,6 @@ from . import genres, profiles
 from .detector import (GATE_TIERS, analyze_blocks, binary_reason, check_text,
                        scan_lines, segment_blocks)
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = ["check_text", "scan_lines", "analyze_blocks", "segment_blocks",
            "binary_reason", "profiles", "genres", "GATE_TIERS", "__version__"]
