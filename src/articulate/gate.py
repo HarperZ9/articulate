@@ -109,8 +109,14 @@ def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail
     perplexity detectors use, and the fairness harness is its only reader."""
     p = profile or {}
     keep = tuple(allow) + tuple(p.get("keep", ()))
-    high, medium, low, doc = scan_lines(text.splitlines(keepends=True), keep,
-                                        genre=_genre(p))
+    lines = text.splitlines(keepends=True)
+    high, medium, low, doc = scan_lines(lines, keep, genre=_genre(p))
+    if p.get("terminology") or p.get("rule_packs"):
+        # Project terminology and domain rule packs (articulate.rules_ext) gate
+        # like any other finding.
+        from . import rules_ext
+        xh, xm, xl = rules_ext.scan(text, lines, p)
+        high, medium, low = high + xh, medium + xm, low + xl
     high, medium, low = house_retier(high, medium, low, profile, house_notes)
     # gate_promote lets a mode block a category its tier would not block. It only
     # adds gating, so it can never lift the HIGH tier.

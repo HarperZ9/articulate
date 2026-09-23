@@ -130,6 +130,11 @@ or the opener. Which rules fired and the line remain, and for a
 closed-vocabulary rule that narrows the flagged word to that rule's small, public
 candidate set.
 
+A project terminology rule is the extreme case. Its rule id names its term, as in
+`terminology/banned/whitelist`, and a receipt made under a project config embeds
+the project's term lists so it can be replayed. A content-free record of such a
+check therefore shows which listed term appeared and on which line.
+
 ## Hash mode
 
 A `--redact hash` receipt keeps a plain sha256 of each matched substring, for an

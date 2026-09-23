@@ -9,14 +9,16 @@
   articulate desk FILE                  (questions for a reviewer)
 
 With no FILE, reads stdin. The profile is chosen by --profile, else an in-file
-`writing-profile:` tag, else the file path, else the default. `--gate` exits 1
-when any input is blocked under its profile, for CI use.
+`writing-profile:` tag, else a glob in the project config (.articulate.json),
+else the file path, else the default. `--gate` exits 1 when any input is
+blocked under its profile, for CI use.
 """
 import argparse
 import json
 import sys
 
-from . import cli_desk, cli_ext, cli_process, cli_receipts, modes, profiles, pysource
+from . import (cli_desk, cli_ext, cli_process, cli_receipts, modes, profiles, project,
+               pysource)
 from .cli_output import print_check, print_score, print_spans, redact, to_sarif  # noqa: F401
 from .detector import analyze_blocks, binary_reason, check_text
 from .local_only import command_map
@@ -29,23 +31,15 @@ except (AttributeError, ValueError):
     pass
 
 
-def _profile_name(path, text, override):
-    if override:
-        return override
-    tag = profiles.declared_profile(text)
-    if tag:
-        return tag
-    if path and path != "<stdin>":
-        return profiles.profile_for(path)
-    return profiles.DEFAULT
+_RESOLVE_ERRORS = (profiles.ProfileError, modes.ModeError, project.ConfigError)
 
 
 def _resolve(name, text, args):
-    """Return (label, profile_dict). A --mode wins over profile inference."""
-    if getattr(args, "mode", None):
-        return args.mode, modes.load(args.mode)
-    pname = _profile_name(name, text, args.profile)
-    return pname, profiles.load(pname)
+    """Return (label, profile_dict) with the project config applied. A --mode
+    wins, then --profile, an in-file tag, the config's globs, and the path."""
+    cfg = project.for_path(name, getattr(args, "config", None))
+    return project.resolve(name, text, profile=args.profile,
+                           mode=getattr(args, "mode", None), cfg=cfg)
 
 
 def _prose(name, text):
@@ -93,7 +87,7 @@ def _screen(args):
         text = _prose(name, text)
         try:
             pname, prof = _resolve(name, text, args)
-        except (profiles.ProfileError, modes.ModeError) as e:
+        except _RESOLVE_ERRORS as e:
             raise ValueError(str(e)) from e
         notes = getattr(args, "house_notes", False)
         r = check_text(text, profile=prof, house_notes=notes)
@@ -154,6 +148,9 @@ def _add_check_args(p, cmd):
     p.add_argument("--profile", default=None, help="force a profile (house, essay, ...)")
     p.add_argument("--mode", default=None,
                    help="a writing mode (domain/articulation, e.g. memo/argue)")
+    p.add_argument("--config", default=None, metavar="PATH",
+                   help="a project config file, or 'none'; default: the nearest "
+                        ".articulate.json above each file")
     if cmd in ("check", "score"):
         p.add_argument("--house-notes", action="store_true",
                        help="also report the house style's patterns as low notes "
@@ -220,7 +217,7 @@ def main(argv=None):
     handlers = {
         "check": lambda: _cmd_check(args),
         "score": lambda: _cmd_score(args),
-        "receipt": lambda: cli_receipts.cmd_receipt(args, _inputs, _profile_name),
+        "receipt": lambda: cli_receipts.cmd_receipt(args, _inputs),
         "verify": lambda: cli_receipts.cmd_verify(args, _decode),
         "audit": lambda: cli_receipts.cmd_audit(args, _decode),
         "process": lambda: cli_process.cmd_process(args),

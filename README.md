@@ -43,6 +43,11 @@ before you rely on any output.
   readme, essay, narrative and more) set which findings block. Writing modes
   such as `memo/argue` and genres such as `memoir`, `screenplay` and `poetry`
   read each kind of writing by its own convention.
+- **Set project rules.** A `.articulate.json` file, found by walking up from each
+  file, maps path globs to profiles, bans or prefers terms (each with its own rule
+  id, reason, and suggestion), allows terms of art, and names freeze terms every
+  rewrite must keep. Terminology findings show in `check`, SARIF, the LSP server,
+  and receipts, which embed the rules so a replay needs no access to the project.
 - **Edit for the reader.** `judge` reads judgment-level failures. `fix` writes
   each rewrite and re-checks it. `polish` keeps a pass only when no quality score
   falls, the gate does not go from ok to blocked and no note the mode requires

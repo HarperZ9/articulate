@@ -11,12 +11,23 @@ import os
 import sys
 from collections import Counter
 
-from . import modes, profiles, receipt
+from . import modes, profiles, project, receipt
 from .detector import binary_reason, ruleset_fingerprint
 from .tool_text import DOES_NOT_PROVE
 
 
-def cmd_receipt(args, inputs, profile_name):
+def _screening(name, text, args):
+    """(profile_name, mode, config) for one input. A --mode wins over profile
+    inference, as in `check`; a project config glob may name a mode too, and the
+    receipt then records that mode."""
+    cfg = project.for_path(name, getattr(args, "config", None))
+    if getattr(args, "mode", None):
+        return None, args.mode, cfg
+    pname = project.resolve(name, text, profile=args.profile, cfg=cfg)[0]
+    return (None, pname, cfg) if "/" in pname else (pname, None, cfg)
+
+
+def cmd_receipt(args, inputs):
     redact = getattr(args, "redact", "none")
     redact = None if redact in (None, "none") else redact
     # The "who": an explicit --reviewer, else the CI actor, else unrecorded.
@@ -33,15 +44,15 @@ def cmd_receipt(args, inputs, profile_name):
         if reason:
             print(f"[articulate] {name}: cannot screen ({reason})", file=sys.stderr)
             continue
-        # A --mode wins over profile inference, as in `check`, and the receipt
-        # records the mode so verify replays the same screening.
-        pname = None if mode else profile_name(name, text, args.profile)
+        # The receipt records the mode, and the project rules it ran under, so
+        # verify replays the same screening.
         try:
-            rec = receipt.make_receipt(text, pname, mode=mode,
+            pname, fmode, cfg = _screening(name, text, args)
+            rec = receipt.make_receipt(text, pname, mode=fmode,
                                        per_span=getattr(args, "spans", False),
-                                       redact=redact, reviewer=reviewer)
-        except profiles.ProfileError as e:
-            print(f"[articulate] {e}", file=sys.stderr)
+                                       redact=redact, reviewer=reviewer, config=cfg)
+        except (profiles.ProfileError, modes.ModeError, project.ConfigError) as e:
+            print(f"[articulate] {name}: {e}", file=sys.stderr)
             return 2
         rec["file"] = name
         print(json.dumps(rec, ensure_ascii=False, indent=2))

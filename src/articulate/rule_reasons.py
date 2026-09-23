@@ -127,6 +127,13 @@ REASONS = {
         "An emoji used as a heading or bullet marker has no fixed meaning, and a "
         "screen reader reads its name aloud.",
         "W3C Web Content Accessibility Guidelines 2.1, success criterion 1.1.1"),
+    # Project terminology (.articulate.json). The project names the term and its
+    # own reason; this is the cost every such rule shares.
+    "terminology": (
+        "Two words for one thing make the reader ask whether they name two things; "
+        "the project's term list names the word it uses, and the finding carries "
+        "the project's own reason.",
+        _PLAIN + ", use the same term consistently"),
 }
 
 # Every report-only note carries a reason too (articulate.note_reasons), so every

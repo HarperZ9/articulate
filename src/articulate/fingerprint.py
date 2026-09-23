@@ -15,7 +15,7 @@ from .rules_high import HIGH
 from .rules_low import FICTION_SLOP, INJECTION, LOW, REGISTER_JARGON
 from .scan import MEDIUM
 
-RULESET_SEMVER = "0.7.0"
+RULESET_SEMVER = "0.8.0"
 
 
 def behavior_constants():
@@ -102,6 +102,8 @@ def ruleset_fingerprint():
             return sorted(o)
         raise TypeError(f"non-serializable ruleset value: {type(o).__name__}")
 
+    from . import rules_ext as _rules_ext
+    parts.extend(_rules_ext.fingerprint_parts())
     parts.append("PROFILES=" + _json.dumps(_profiles.PROFILES, sort_keys=True, default=_stable))
     parts.append("GENRES=" + _json.dumps(_genres.GENRES, sort_keys=True, default=_stable))
     parts.append("MODES=" + _json.dumps(_modes.MODES, sort_keys=True, default=_stable))
@@ -121,4 +123,5 @@ def known_categories():
     for lst in (HIGH, MEDIUM, REGISTER_JARGON, LOW, FICTION_SLOP, INJECTION):
         for cat, _label, _rx in lst:
             cats.add(cat)
-    return frozenset(cats)
+    from . import rules_ext
+    return frozenset(cats | rules_ext.categories())

@@ -68,8 +68,8 @@ def main(argv=None):
         print(f"[articulate] {reason}")
         return 2
     try:
-        g = _guard.from_args(args)
-    except ValueError as e:          # a bad --allow-change kind
+        g = _guard.from_args(args, target)
+    except ValueError as e:          # a bad flag value or a malformed project config
         print(f"[articulate] {e}")
         return 2
     print(f"[articulate] {cmd} sends the full text of {os.path.basename(target)} to a hosted "

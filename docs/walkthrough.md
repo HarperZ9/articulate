@@ -52,6 +52,24 @@ findings says `house style`. Every result ends with the does-not-prove line.
 No path selects a house profile for you; this repository opts in for its own
 docs.
 
+A team sets its own vocabulary in a `.articulate.json` at the repository root:
+
+```json
+{
+  "version": 1,
+  "profiles": {"blog/**": "essay"},
+  "terminology": {
+    "banned": [{"term": "whitelist", "suggestion": "allowlist"}],
+    "preferred": [{"use": "sign in", "instead_of": ["log in", "login"]}]
+  },
+  "freeze": ["Articulate"]
+}
+```
+
+Every later check of a file under that root reports a banned term as
+`terminology/banned/whitelist` with its suggestion, and every rewrite keeps
+"Articulate" verbatim. `articulate config post.md` shows what applies.
+
 ## 3. See where the findings sit
 
 ```bash
