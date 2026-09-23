@@ -133,6 +133,16 @@ cannot judge contribution, novelty or significance. It prints no score, no
 verdict, no ranking and no question count, and it never reads a process record.
 No study has measured how much time it saves a reviewer, and we claim none.
 
+## What leaves your machine
+
+The checks, the LSP server, and the MCP tools `check`, `score`, and `compare`
+make no network call; no module imports a network library, and a test enforces
+it. Articulate has no telemetry. Only the editor commands send text out, to the
+model backend you run (today the `claude` CLI under your own account), and they
+mask code, math, links, citations, quotes, and freeze terms before the text
+leaves. The prose around those spans does reach the backend, under that
+backend's own terms.
+
 ## Content-free is not zero-leakage
 
 A content-free audit receipt keeps no verbatim text: it drops the matched
@@ -156,6 +166,7 @@ word. Use `--redact drop` when the word itself must stay secret.
 
 ## English patterns
 
-The patterns are English literals. On a non-English document they simply do not
+The patterns are English literals, and so are the domain rule packs, the
+meaning guard's word lists and the readability formula. On a non-English document they simply do not
 fire, so an empty result on non-English text means the English rules found
 nothing. It is never a verification of the text.

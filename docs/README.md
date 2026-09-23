@@ -28,4 +28,5 @@ output is a suggestion that no receipt reproduces.
 No Articulate output shows who or what wrote a text, and no finding, count,
 receipt, process record or desk question is a basis for an accusation. The tool
 aims at the reader and never at an outside score. The full statement is in
-[Boundaries](boundaries.md).
+[Boundaries](boundaries.md). Its rules read English only, and the checks make no
+network call.

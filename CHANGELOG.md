@@ -290,6 +290,11 @@ Fairness harness and release check:
   source in the docs; heuristic rules sit in LOW and never block.
 - `corpus/domains/` holds synthetic samples with an `expect.json`; the benchmark
   now counts a domain mismatch as a regression.
+- Docs state the scope and the privacy posture concretely: the rules read English
+  only; the checks make no network call and have no telemetry; only the editor
+  sends text, to the model backend the writer runs, with protected spans masked.
+  A test now fails the build if any module imports a network library or if a
+  module outside the editor layer starts a subprocess.
 
 ## 0.5.0
 

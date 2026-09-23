@@ -176,7 +176,7 @@ clears "a revolutionary product" in the same file; choose the narrowest term
 that works. The line sits in a comment that a rendered page does not show, so a
 CI owner should review `writing-allow:` lines in a diff.
 
-## Privacy
+## Privacy and runtime
 
 The checks, receipts, process record and desk never touch the network. Each
 command either stays on your machine or sends the full text to a hosted model:
@@ -184,9 +184,10 @@ command either stays on your machine or sends the full text to a hosted model:
 | Command | Where the text goes |
 |:-|:-|
 | `articulate check`, `score`, `receipt`, `verify`, `audit`, `modes` | Nowhere: local |
+| `articulate compare`, `config` | Nowhere: local |
 | `articulate process`, `disclose`, `desk`, the LSP server | Nowhere: local |
 | `python -m articulate.fairness`, `python -m articulate.bench` | Nowhere: local |
-| The `check` and `score` tools of both MCP servers | Nowhere: local |
+| The `check`, `score` and `compare` tools of both MCP servers | Nowhere: local |
 | `python -m articulate.editor --judge`, `--review` (alias `--advise`): advice | A hosted model, through the `claude` CLI and the service it is set up to use |
 | `python -m articulate.editor --fix`, `--polish`: rewrites | A hosted model, through the `claude` CLI and the service it is set up to use |
 | The `judge`, `fix` and `polish` tools of both MCP servers | A hosted model, through the `claude` CLI and the service it is set up to use |
@@ -206,6 +207,30 @@ exact offsets; which rule fired and the line remain. The process log lives in
 `.articulate/process/` beside your document with a `.gitignore` of its own. A
 default export carries no salt; `--reveal N` exports draft N's salt with its
 text, and nothing else.
+
+- **No telemetry.** Articulate sends no usage data, crash reports, or analytics
+  anywhere, and it has no account or license check.
+- **The model backend is yours.** Only the editor commands (`judge`, `fix`,
+  `polish`, `review`) and the matching MCP tools send text out, and only to the
+  backend you run: today the `claude` CLI on your machine, under your own
+  account and its terms. Before a rewrite, code, math, links, citations, quotes,
+  and freeze terms are replaced by placeholders, so those spans never reach the
+  model; the surrounding prose does.
+- **What stays on disk.** The editor writes its rewrite to an output file. A full
+  receipt stores each matched substring (use `--redact` for none). The process
+  record writes only under `.articulate/process/`. The other commands write
+  nothing.
+- **Runtime.** Python 3.9 or later, with no third-party dependency in the core
+  (the optional fastmcp server needs the `mcp` extra). The package is about 330
+  KB of Python source. On one development machine, checking a 3,900-word page
+  took about 60 ms after a 60 ms import; your numbers will differ.
+
+## Scope: English only
+
+Every pattern, word list, and readability formula in Articulate is for English.
+A document in another language is screened, and the English rules simply do not
+fire on it, so a clean result on non-English text means nothing about that
+text. Multilingual rules are not planned for this release.
 
 ## Status
 
