@@ -15,6 +15,7 @@ import os
 import sys
 
 from . import editor as ed
+from . import guard as _guard
 from .local_only import LOCAL_ONLY_EXIT, LOCAL_ONLY_VAR, command_map, local_only
 
 _COMMANDS = ("judge", "fix", "polish", "review", "advise")
@@ -47,6 +48,7 @@ def _parser():
                     help="a profile; `house` sends the house writing standard")
     ap.add_argument("--local-only", action="store_true",
                     help=f"refuse every hosted call, as {LOCAL_ONLY_VAR}=1 does")
+    _guard.add_arguments(ap)
     return ap
 
 
@@ -63,6 +65,11 @@ def main(argv=None):
     if reason:
         print(f"[articulate] {reason}")
         return 2
+    try:
+        g = _guard.from_args(args)
+    except ValueError as e:          # a bad --allow-change kind
+        print(f"[articulate] {e}")
+        return 2
     print(f"[articulate] {cmd} sends the full text of {os.path.basename(target)} to a hosted "
           f"model through the claude CLI; the checks themselves run offline. Set "
           f"{LOCAL_ONLY_VAR}=1 to refuse.", file=sys.stderr)
@@ -74,8 +81,9 @@ def main(argv=None):
         return 0
     if cmd == "polish":
         return ed.polish(target, args.out, max(1, args.passes), max(1, min(5, args.bar)),
-                         mode=args.mode, profile=args.profile)
-    return ed.fix(target, args.out, max(1, args.passes), mode=args.mode, profile=args.profile)
+                         mode=args.mode, profile=args.profile, guard=g)
+    return ed.fix(target, args.out, max(1, args.passes), mode=args.mode, profile=args.profile,
+                  guard=g)
 
 
 def _unreadable(target):

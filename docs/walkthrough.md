@@ -92,6 +92,24 @@ standard reaches the model only under a house profile, and no instruction names
 an outside score. The rewrite is
 a suggestion; read it against the original.
 
+Every rewrite passes the meaning guard before it lands. If the model drops a
+number, flips a negation, weakens a "must" to a "should", or loses a link, a code
+span, a citation, or a name, the rewrite is refused, the previous text stays, and
+the output names what blocked it:
+
+```
+[fix] pass 1 refused: meaning guard refused the rewrite: changed modal 'must' (L3) -> 'should' (L3); kept the previous text
+```
+
+Run the same check on any two versions, with a gate for continuous integration:
+
+```bash
+articulate compare post.md post.fixed.md --gate
+```
+
+The guard compares surface facts, so a rewrite can pass it and still shift a
+claim. See [Boundaries](boundaries.md).
+
 ## 5. Record a re-derivable receipt
 
 ```bash

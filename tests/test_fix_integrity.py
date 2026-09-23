@@ -137,6 +137,11 @@ def test_mcp_fix_masks_math_when_the_text_is_latex(monkeypatch):
 # "may" is a kept term of art under technical-docs/argue (normative-spec base).
 MODE_CLEAN = ("The estimate may potentially hold across 42 plots in every season we "
               "measured this year.\n")
+# The draft the fake model rewrites into MODE_CLEAN. It carries the same number,
+# modal and scope word, so the meaning guard passes the rewrite and these tests
+# reach the self-check they are about.
+MODE_DRAFT = ("The estimate may potentially hold across 42 plots in every season that "
+              "we measured this year.\n")
 
 
 def test_mode_clean_text_differs_by_profile():
@@ -147,7 +152,7 @@ def test_mode_clean_text_differs_by_profile():
 
 
 def test_fix_self_check_uses_the_chosen_mode(work, monkeypatch, capsys):
-    src = _write(work, "draft.md", "Some draft prose that needs a rewrite today.\n")
+    src = _write(work, "draft.md", MODE_DRAFT)
     out = os.path.join(work, "draft.fixed.md")
     monkeypatch.setattr(editor, "claude_call", FakeModel(lambda t: MODE_CLEAN))
     assert editor.fix(src, out, passes=1, mode="technical-docs/argue") == 0
@@ -157,7 +162,7 @@ def test_fix_self_check_uses_the_chosen_mode(work, monkeypatch, capsys):
 
 
 def test_fix_self_check_without_a_mode_still_uses_the_default(work, monkeypatch, capsys):
-    src = _write(work, "draft.md", "Some draft prose that needs a rewrite today.\n")
+    src = _write(work, "draft.md", MODE_DRAFT)
     out = os.path.join(work, "draft.fixed.md")
     monkeypatch.setattr(editor, "claude_call", FakeModel(lambda t: MODE_CLEAN))
     editor.fix(src, out, passes=1)

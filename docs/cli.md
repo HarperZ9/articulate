@@ -102,6 +102,27 @@ articulate audit [PATH ...] [--days N] [--reverify] [--gate] [--json]
   reported, and it does not fail the gate.
 - `--json`: the summary as JSON.
 
+## compare
+
+Run the meaning guard on an original and a rewrite. Each surface invariant is
+reported as kept, dropped, added, or changed, with its line and column in each
+file. See [the meaning guard](features.md#the-meaning-guard).
+
+```bash
+articulate compare ORIGINAL REWRITE [--json] [--gate] [--show-kept]
+                   [--freeze TERM] [--allow-change KINDS]
+```
+
+- `--json`: the full report, with every item, its status, and both locations.
+- `--gate`: exit 1 when an invariant that may not change was dropped, added, or
+  changed.
+- `--show-kept`: list the kept invariants too.
+- `--freeze TERM`: a term that must survive verbatim. Repeat the flag for more.
+- `--allow-change KINDS`: kinds that may change without failing the gate, as a
+  comma list such as `number,entity`, or `all`. The kinds are `code`, `math`,
+  `url`, `citation`, `quote`, `freeze`, `number`, `modal`, `scope`, `negation`,
+  and `entity`.
+
 ## modes
 
 List the available writing modes.
@@ -246,6 +267,12 @@ The editor is tested with CLI version 2.1.251. The first version that accepts
 all four flags is unknown. An older CLI that rejects one of them stops the
 command with an error that says to upgrade.
 
+`--fix` and `--polish` take the meaning-guard flags:
+
+- `--allow-change KINDS`: let these invariant kinds change. Without it, a rewrite
+  that changes any invariant is refused and the previous text is kept.
+- `--freeze TERM`: a term every rewrite must keep verbatim. Repeat for more.
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.
@@ -261,4 +288,6 @@ command with an error that says to upgrade.
   unchanged since the published one or every gate passes; 1 when a gate fails
   and no accepted override names the current ruleset, or a receipt is missing
   or malformed.
+- `compare --gate`: 1 if an invariant that may not change moved, 2 if a file
+  cannot be read, else 0.
 - `articulate.bench`: the number of failed expectations, so 0 means every one held.

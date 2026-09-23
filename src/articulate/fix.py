@@ -5,11 +5,14 @@
 `fix` rewrites the text so its intended reader can follow it on one read, then
 re-checks the rewrite under the same profile or mode, for up to `passes` rounds.
 On a math file every span is masked before the model call and spliced back
-after. The rewrite is a suggestion; the writer decides.
+after. Every rewrite passes the meaning guard: a candidate that moves a surface
+invariant of the text it was given is refused, and the previous text is kept.
+The rewrite is a suggestion; the writer decides.
 """
 import os
 
 from . import editor as ed
+from . import guard as _guard
 
 
 def _call(is_html, prof, delta):
@@ -19,24 +22,34 @@ def _call(is_html, prof, delta):
     return call
 
 
-def _one_pass(attempt, text, path, out_path, prof, call):
+def _write(out_path, text):
+    with open(out_path, "w", encoding="utf-8") as fh:
+        fh.write(text + ("" if text.endswith("\n") else "\n"))
+
+
+def _one_pass(attempt, text, path, out_path, prof, call, guard):
     """Returns (status, text). 'done' and 'again' wrote a rewrite; 'stop' wrote
-    nothing because the last rewrite had no findings; 'failed' wrote nothing."""
+    nothing because the last rewrite had no findings; 'refused' kept the previous
+    text (on the first pass it writes the original); 'failed' wrote nothing."""
     clean_before, mech = ed.mechanical(path if attempt == 1 else out_path, prof)
     if attempt > 1 and clean_before:
         return "stop", text
     try:
         # On a math file the model sees placeholders, never a formula.
-        result = (ed.masked_rewrite(text, call, prof) if ed.is_math_file(path)
-                  else call(text, mech))
+        result = guard.run(lambda t: (ed.masked_rewrite(t, call, prof) if ed.is_math_file(path)
+                                      else call(t, mech)), text)
+    except _guard.RewriteRefused as e:
+        print(f"[fix] pass {attempt} refused: {e}; kept the previous text")
+        if attempt == 1:
+            _write(out_path, text)
+        return "refused", text
     except ed._UNAVAILABLE as e:
         print(f"[fix] pass {attempt} failed: {e}")
         return "failed", text
     if not result.strip():
         print(f"[fix] pass {attempt}: empty result, stopping")
         return "failed", text
-    with open(out_path, "w", encoding="utf-8") as fh:
-        fh.write(result + ("" if result.endswith("\n") else "\n"))
+    _write(out_path, result)
     # The self-check reads the rewrite under the same profile as the first pass.
     clean_after, _ = ed.mechanical(out_path, prof)
     print(f"[fix] pass {attempt}: {'no findings' if clean_after else 'findings remain'} -> {out_path}")
@@ -53,7 +66,8 @@ def _log_pass(path, name):
         print(f"[{name}] the process log is broken, so no entry was added: {e}")
 
 
-def fix(path, out_path, passes, mode=None, profile=None):
+def fix(path, out_path, passes, mode=None, profile=None, guard=None):
+    g = guard or _guard.RewriteGuard()
     ext = os.path.splitext(path)[1]
     out_path = out_path or os.path.splitext(path)[0] + ".fixed" + ext
     text = open(path, encoding="utf-8", errors="replace").read()
@@ -64,7 +78,7 @@ def fix(path, out_path, passes, mode=None, profile=None):
     call = _call(ext.lower() in (".html", ".htm"), prof, ecfg.get("standard_delta", ""))
     wrote = False
     for attempt in range(1, passes + 1):
-        status, text = _one_pass(attempt, text, path, out_path, prof, call)
+        status, text = _one_pass(attempt, text, path, out_path, prof, call, g)
         wrote = wrote or status in ("done", "again")
         if status == "failed":
             if wrote:
@@ -72,7 +86,7 @@ def fix(path, out_path, passes, mode=None, profile=None):
                 # even though this pass failed.
                 _log_pass(path, "fix")
             return 1
-        if status in ("done", "stop"):
+        if status in ("done", "stop", "refused"):
             break
     if wrote:
         _log_pass(path, "fix")

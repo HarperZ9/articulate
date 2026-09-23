@@ -7,10 +7,11 @@ raises ``ModuleNotFoundError: No module named 'fastmcp'`` the moment a host
 launches it. The install succeeds and the server does not start, which is the
 worst shape for a defect: nothing fails until a user tries to use it.
 
-This module serves the same five tools with nothing but the standard library,
+This module serves the same six tools with nothing but the standard library,
 so the package's MCP surface works from a bare install. It is not a second
 implementation. The tool bodies stay in ``mcp_server`` as ``do_check``,
-``do_score``, ``do_judge``, ``do_fix`` and ``do_polish``; both transports call
+``do_score``, ``do_judge``, ``do_compare``, ``do_fix`` and ``do_polish``; both
+transports call
 those same functions, so the two surfaces cannot drift apart in behavior.
 Importing ``mcp_server`` is safe without fastmcp because that module imports it
 lazily, inside ``build_server``.
@@ -25,7 +26,7 @@ import json
 import sys
 
 from . import __version__
-from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score
+from .mcp_server import do_check, do_compare, do_fix, do_judge, do_polish, do_score
 from .tool_text import TOOLS as TOOL_TEXT
 
 PROTOCOL = "2025-06-18"
@@ -37,13 +38,23 @@ _IS_TEX = {"is_tex": {"type": "boolean", "default": False,
                       "description": ("treat the input as LaTeX: mask every math span "
                                       "before each model call and restore it byte "
                                       "for byte")}}
+_ALLOW = {"allow_change": {"type": "string", "default": "",
+                           "description": ("invariant kinds a rewrite may change (comma "
+                                           "list, or 'all'); empty refuses any change")}}
 
 _SCHEMAS = {
     "check": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
     "score": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
     "judge": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
+    "compare": {"type": "object", "required": ["original", "rewrite"],
+                "properties": dict(
+                    original={"type": "string", "description": "the original text"},
+                    rewrite={"type": "string", "description": "the rewritten text"},
+                    freeze={"type": "array", "items": {"type": "string"},
+                            "description": "terms that must survive verbatim"},
+                    **_ALLOW)},
     "fix": {"type": "object", "required": ["text"],
-            "properties": dict(_TEXT, **_IS_HTML, **_IS_TEX)},
+            "properties": dict(_TEXT, **_IS_HTML, **_IS_TEX, **_ALLOW)},
     "polish": {"type": "object", "required": ["text"],
                "properties": dict(
                    _TEXT,
@@ -51,7 +62,7 @@ _SCHEMAS = {
                         "description": "the quality bar every dimension must clear"},
                    passes={"type": "integer", "default": 3, "minimum": 1,
                            "description": "how many rewrite attempts before giving up"},
-                   **_IS_HTML, **_IS_TEX)},
+                   **_IS_HTML, **_IS_TEX, **_ALLOW)},
     "articulate.status": {"type": "object", "properties": {}},
     "articulate.doctor": {"type": "object", "properties": {}},
 }
@@ -59,9 +70,9 @@ _SCHEMAS = {
 TOOLS = [{"name": name, "description": TOOL_TEXT[name], "inputSchema": schema}
          for name, schema in _SCHEMAS.items()]
 
-# check and score read the text and nothing else. The rest call out to an editor
-# backend, so a host with no backend still gets a working detector.
-LOCAL_ONLY = ("check", "score")
+# check, score and compare read the text and nothing else. The rest call out to an
+# editor backend, so a host with no backend still gets a working detector.
+LOCAL_ONLY = ("check", "score", "compare")
 NEEDS_BACKEND = ("judge", "fix", "polish")
 
 
@@ -87,10 +98,10 @@ def _identity(include_detail: bool) -> dict:
     return info
 
 
-def _text_arg(args: dict) -> str:
-    text = args.get("text")
+def _text_arg(args: dict, name: str = "text") -> str:
+    text = args.get(name)
     if not isinstance(text, str):
-        raise ValueError("'text' is required and must be a string")
+        raise ValueError(f"'{name}' is required and must be a string")
     return text
 
 
@@ -110,14 +121,19 @@ def _call(params: dict) -> dict:
             result = do_score(_text_arg(args))
         elif name == "judge":
             result = do_judge(_text_arg(args))
+        elif name == "compare":
+            result = do_compare(_text_arg(args, "original"), _text_arg(args, "rewrite"),
+                                args.get("freeze") or (), str(args.get("allow_change", "")))
         elif name == "fix":
             result = do_fix(_text_arg(args), bool(args.get("is_html", False)),
-                            bool(args.get("is_tex", False)))
+                            bool(args.get("is_tex", False)),
+                            str(args.get("allow_change", "")))
         elif name == "polish":
             result = do_polish(_text_arg(args), int(args.get("bar", 4)),
                                int(args.get("passes", 3)),
                                bool(args.get("is_html", False)),
-                               bool(args.get("is_tex", False)))
+                               bool(args.get("is_tex", False)),
+                               str(args.get("allow_change", "")))
         else:
             return {"content": [{"type": "text", "text": "unknown tool %r" % (name,)}],
                     "isError": True}

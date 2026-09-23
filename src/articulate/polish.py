@@ -5,15 +5,18 @@
 Each pass rewrites the best text so far, scores it on five qualities for its
 intended reader, and keeps it only when editor.accept() says so: no score falls,
 the gate under the chosen profile does not go from ok to blocked, and no
-required advisory opens. The loop stops when every quality clears the bar, the
-gate is ok and the required advisories are closed, or when the passes run out.
-No density, cadence statistic or outside score enters any decision.
+required advisory opens. Every candidate also passes the meaning guard; a
+refused one ends the loop with the best text kept. The loop stops when every
+quality clears the bar, the gate is ok and the required advisories are closed,
+or when the passes run out. No density, cadence statistic or outside score
+enters any decision.
 
 rewrite_fn(text, summary, notes) and judge_fn(text) are injectable for testing.
 """
 import os
 
 from . import editor as ed
+from . import guard as _guard
 
 
 class _Loop:
@@ -43,17 +46,18 @@ def _scores(q):
     return {k: int(q.get(k, 0) or 0) for k in ed.QUALITIES}
 
 
-def _callables(path, loop, ecfg, rewrite_fn, judge_fn):
-    """(judge, rewrite) for this file. On a math file no model call sees a
-    formula: the judge scores masked text, and the rewrite gets masked text, a
-    findings summary built from it and notes with any math scrubbed."""
+def _callables(path, loop, ecfg, rewrite_fn, judge_fn, guard):
+    """(judge, rewrite) for this file. Every rewrite runs through the guard. On a
+    math file no model call sees a formula: the judge scores masked text, and the
+    rewrite gets masked text, a findings summary built from it and notes with any
+    math scrubbed."""
     is_html = os.path.splitext(path)[1].lower() in (".html", ".htm")
     delta = ecfg.get("standard_delta", "")
     base_judge = judge_fn or ed.quality_judge
     base_rewrite = rewrite_fn or (lambda t, mech, worst: ed.rewrite_once(
         t, mech, worst, is_html, delta, profile=loop.prof))
     if not ed.is_math_file(path):
-        return base_judge, base_rewrite
+        return base_judge, guard.wrap(base_rewrite)
 
     def judge(t):
         return base_judge(ed.mask_math(t)[0])
@@ -61,10 +65,15 @@ def _callables(path, loop, ecfg, rewrite_fn, judge_fn):
     def rewrite(t, mech, worst):
         notes = ed.scrub_math_notes(worst)
         return ed.masked_rewrite(t, lambda m, mm: base_rewrite(m, mm, notes), loop.prof)
-    return judge, rewrite
+    return judge, guard.wrap(rewrite)
 
 
-def _run(loop, passes, judge, rewrite):
+def _guard_result(guard):
+    """The meaning guard's result for the candidate it just passed, for accept()."""
+    return {"ok": guard.log[-1]["accepted"]} if guard.log else None
+
+
+def _run(loop, passes, judge, rewrite, guard):
     r, open_req = loop.evaluate(loop.best)
     q = judge(loop.best)
     sc = _scores(q)
@@ -79,6 +88,9 @@ def _run(loop, passes, judge, rewrite):
             worst.append("clear required advisories: " + ", ".join(sorted(open_req)))
         try:
             cand = rewrite(loop.best, ed.mechanical_text(loop.best, loop.prof)[1], worst)
+        except _guard.RewriteRefused as e:
+            print(f"[polish] rewrite refused: {e}; kept best")
+            return
         except ed._UNAVAILABLE as e:
             print(f"[polish] rewrite failed: {e}")
             return
@@ -92,7 +104,8 @@ def _run(loop, passes, judge, rewrite):
             print(f"[polish] judge failed: {e}; kept the best version so far")
             return
         cr, c_open = loop.evaluate(cand)
-        ok, why = ed.accept(sc, _scores(cq), r["gate"], cr["gate"], c_open - open_req, None)
+        ok, why = ed.accept(sc, _scores(cq), r["gate"], cr["gate"], c_open - open_req,
+                            _guard_result(guard))
         if not ok:
             _row(attempt + 1, _scores(cq), cr["gate"], f"REJECTED ({why}); kept best")
             return
@@ -102,7 +115,8 @@ def _run(loop, passes, judge, rewrite):
 
 
 def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=None,
-           profile=None):
+           profile=None, guard=None):
+    g = guard or _guard.RewriteGuard()
     ext = os.path.splitext(path)[1]
     out_path = out_path or os.path.splitext(path)[0] + ".polished" + ext
     prof, ecfg = ed._resolve(mode, profile, path)
@@ -115,13 +129,13 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
         print(f"[polish] mode {mode} does not rewrite by default (authorial voice "
               f"governs); use --judge. No change written.")
         return 0
-    judge, rewrite = _callables(path, loop, ecfg, rewrite_fn, judge_fn)
+    judge, rewrite = _callables(path, loop, ecfg, rewrite_fn, judge_fn, g)
     print(f"[polish] {os.path.basename(path)}" + (f" [{mode}]" if mode else "")
           + f" -> {os.path.basename(out_path)} (bar: every quality >= {bar}/5, "
             f"gate ok, required fixes cleared)\n")
     print(f"{'pass':<5}{'conc':<5}{'comm':<5}{'econ':<5}{'rhyt':<5}{'rest':<5}{'gate':<9}note")
     try:
-        _run(loop, passes, judge, rewrite)
+        _run(loop, passes, judge, rewrite, g)
     except ed._UNAVAILABLE as e:
         print(f"\n[polish] model layer unavailable: {e}")
         print("[polish] the local checks still work; rerun when the backend is restored.")

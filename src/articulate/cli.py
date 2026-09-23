@@ -16,7 +16,7 @@ import argparse
 import json
 import sys
 
-from . import cli_desk, cli_process, cli_receipts, modes, profiles, pysource
+from . import cli_desk, cli_ext, cli_process, cli_receipts, modes, profiles, pysource
 from .cli_output import print_check, print_score, print_spans, redact, to_sarif  # noqa: F401
 from .detector import analyze_blocks, binary_reason, check_text
 from .local_only import command_map
@@ -207,6 +207,7 @@ def build_parser():
     sub.add_parser("modes", help="list available writing modes")
     cli_process.register(sub)
     cli_desk.register(sub)
+    cli_ext.register(sub)
     return ap
 
 
@@ -214,6 +215,8 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     ap = build_parser()
     args = ap.parse_args(argv)
+    if getattr(args, "handler", None):
+        return args.handler(args)
     handlers = {
         "check": lambda: _cmd_check(args),
         "score": lambda: _cmd_score(args),

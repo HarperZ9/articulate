@@ -33,14 +33,21 @@ TOOLS = {
     "judge": ("A skilled-editor read of the judgment-level failures a pattern check "
               "cannot see: confident emptiness, vague abstraction, uncommitted hedging, "
               "weak verbs, a buried point. Reports; does not rewrite. " + _EDITOR),
+    "compare": ("The meaning guard. Reports which surface invariants (numbers, "
+                "negations, modal strength, entities, URLs, code, citations, quotes, "
+                "freeze terms) a rewrite kept, dropped, added, or changed, with "
+                "locations. Surface proxies only; see does_not_prove in the result. "
+                "Local, no network."),
     "fix": ("Rewrite the text so its intended reader can follow it on one read, then "
             "re-check the rewrite and return it with the findings and gate after the "
-            "rewrite. Offers a suggestion; the writer decides. With is_tex, LaTeX math is masked from the model and "
-            "restored byte for byte. " + _EDITOR),
+            "rewrite. A rewrite that changes a surface invariant is refused unless "
+            "allow_change names that kind. Offers a suggestion; the writer decides. "
+            "With is_tex, LaTeX math is masked from the model and restored byte for "
+            "byte. " + _EDITOR),
     "polish": ("The quality loop: rewrite, then score five qualities (concreteness, "
                "commitment, economy, rhythm read aloud, a restatable fact per paragraph) "
-               "and keep a pass only when no score falls and the gate does not go from "
-               "ok to blocked. The "
+               "and keep a pass only when no score falls, the gate does not go from "
+               "ok to blocked and the meaning guard passes. The "
                "target is the reader, never an outside score. With is_tex, LaTeX math "
                "is masked before every model call. " + _EDITOR),
     "articulate.status": ("Liveness and identity of the articulate MCP server (name, "

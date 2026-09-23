@@ -218,6 +218,41 @@ adds, and quotes only the authors' own claims beside them. It prints no score,
 no verdict, no ranking and no question count, and it never reads a process record.
 `--author` asks the same questions before submission.
 
+## The meaning guard
+
+A rewrite that reads better and says something different is a defect. The meaning
+guard compares a rewrite with its original and reports each surface invariant as
+kept, dropped, added, or changed, with its line and column. It reads:
+
+- numbers with their units, percentages, dates, times, and versions. They are
+  normalized, so "10 ms" matches "10ms", "50%" matches "50 percent", "three"
+  matches "3", and "May 5, 2026" matches "2026-05-05".
+- negations: not, no, never, none, nothing, nobody, nowhere, cannot, n't, without,
+  neither, and nor.
+- modal strength in three classes: required (must, shall, required, have to),
+  recommended (should, recommended, ought to), and optional (may, might, can,
+  could, optional). An all-capitals BCP 14 keyword is its own value, so MUST to
+  must counts as a change.
+- scope words that bound a claim: only, unless, except, at least, at most, up to
+  a number, always, and exactly.
+- named entities, approximated as capitalized words that do not open a sentence,
+  plus acronyms.
+- URLs and emails, inline and fenced code, math spans, citations (`[1]`, `[@key]`,
+  `(Author, 2020)`, `Author et al.`, a DOI, an arXiv id, `\cite{}`), quoted
+  strings, and project freeze terms.
+
+`fix` and `polish` run every model rewrite through the guard. A rewrite that
+drops, adds, or changes an invariant is refused, the previous text is kept, and
+the output names the invariant that blocked it. `--allow-change number,entity`
+lets the named kinds change, and `--allow-change all` turns the refusal off. Both
+are explicit choices, and neither is a default. `articulate compare` runs the same
+check on any two files, and the MCP servers expose it as the `compare` tool.
+
+What it does not prove: the invariants are surface proxies. A rewrite can keep
+all of them and still change the meaning, for example by moving a negation into
+another clause or by swapping two numbers. A reported change can also be harmless.
+A `preserved` verdict is a screen. It is no proof that two texts say the same thing.
+
 ## Re-derivable receipts
 
 A receipt records the findings and the gate with the exact text hash and a
@@ -257,12 +292,13 @@ patterns simply do not fire on it.
 
 ## Surfaces
 
-- CLI: `check`, `score`, `receipt`, `verify`, `audit`, `modes`, `process`,
-  `disclose` and `desk`.
+- CLI: `check`, `score`, `receipt`, `verify`, `audit`, `compare`, `modes`,
+  `process`, `disclose` and `desk`.
 - LSP server: inline diagnostics in VS Code, JetBrains through LSP4IJ and Neovim.
 - SARIF for GitHub code scanning, Azure DevOps and reviewdog.
 - Two MCP servers that share one description table: `articulate-mcp` from a bare
-  install, and `articulate.mcp_server` under the `[mcp]` extra.
+  install, and `articulate.mcp_server` under the `[mcp]` extra. Both serve the
+  checks, the meaning guard and the editor.
 - A GitHub Action and a pre-commit hook.
 
 ## The benchmark

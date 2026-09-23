@@ -48,6 +48,11 @@ before you rely on any output.
   falls, the gate does not go from ok to blocked and no note the mode requires
   opens. No instruction names an outside score, a sentence-length target or a
   vocabulary level.
+- **Guard the meaning.** Every rewrite passes a meaning guard. A rewrite that
+  drops a number, flips a negation, weakens a modal, or loses a link, code span,
+  citation, quote, or name is refused, and the original is kept. `articulate
+  compare` runs the same check on any two files. The invariants are surface
+  proxies, so a pass is a screen and no proof of equivalence.
 - **Keep your own process record.** `articulate process` keeps a local,
   opt-in log of your drafts as salted commitments, with order and day only by
   default, and exports a process summary you control. `articulate disclose`
@@ -83,6 +88,9 @@ python -m articulate.cli disclose essay.md --contributions contributions.json
 
 # a reviewer's questions
 python -m articulate.cli desk paper.md --venue paper
+
+# meaning guard: did a rewrite keep every number, negation, modal, link, and name?
+python -m articulate.cli compare post.md post.fixed.md --gate
 
 # the fairness harness on a corpus manifest you hold
 python -m articulate.fairness manifest.json --out receipt.json
