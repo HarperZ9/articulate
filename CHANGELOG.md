@@ -70,6 +70,13 @@ release is cut.
   logged in an order; it does not prove who typed them, its times come from the
   local clock, a deleted tail is undetectable without an external anchor, and it
   is not a tool for passing a detector.
+- Docs state the scope and the privacy posture concretely: the rules read English
+  only; the core makes no network call and has no telemetry; only the editor
+  sends text, to the user's own backend, with protected spans masked. A test now
+  fails the build if any module imports a network library or if a module other
+  than the editor starts a subprocess. The README no longer says the editor
+  defaults to a local model: the code supports the `claude` CLI only, and a
+  local-model backend stays on the roadmap.
 
 ## 0.4.0
 

@@ -3,6 +3,16 @@
 Articulate makes narrow claims on purpose. This page states what a verdict and a
 receipt mean, and what they never mean. Read it before you rely on either.
 
+## What leaves your machine
+
+The core commands, the LSP server, and the MCP tools `check`, `score`, and
+`compare` make no network call; no module imports a network library, and a test
+enforces it. Articulate has no telemetry. Only the editor commands send text out,
+to the model backend you run (today the `claude` CLI under your own account), and
+they mask code, math, links, citations, quotes, and freeze terms before the text
+leaves. The prose around those spans does reach the backend, under that
+backend's own terms.
+
 ## Detection and writing quality, never evasion
 
 Articulate finds where prose reads as machine-written or breaks a plain-writing
@@ -110,11 +120,13 @@ so a device-clean short text reads `unverifiable` and the receipt makes no clean
 claim. This is calibrated uncertainty, and it is deliberate. A banned device is
 unambiguous at any length, so a short text with a device still reads `flagged`.
 
-## English patterns, and an honest detection ceiling
+## English only, and an honest detection ceiling
 
-The detector's patterns are English literals. A non-English document is screened,
-and the patterns simply do not fire on it, so a clean result on non-English text
-means the English rules found nothing, and it is never a verification of the text.
+Articulate's scope is English. The detector's patterns, the domain rule packs,
+the meaning guard's word lists, and the readability formula are all written for
+English. A non-English document is screened, and the rules simply do not fire on
+it, so a clean result on non-English text means the English rules found nothing,
+and it is never a verification of the text.
 
 The detector reads devices, register, and structure with regular expressions. It
 cannot read token probability, so a device-clean passage of machine writing can
