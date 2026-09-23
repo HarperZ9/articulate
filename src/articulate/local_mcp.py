@@ -172,9 +172,12 @@ def handle(req):
     return _err(rid, -32601, "method not found: %s" % (method,))
 
 
-# The bundled-lane MCP contract in the wider toolchain names the dispatcher
-# handle_request. Both names point at one function so either contract is met
-# without a second code path.
+# Sibling lane servers are split on what they call this function. Measured across
+# the installed distributions on 2026-09-22: chorus, gather, mneme and
+# accountable-surface expose handle_request; plexus, canon and relay expose
+# handle. Nothing dispatches across packages by either name, so neither is a
+# contract and this alias is a convenience, not a requirement. Both point at one
+# function, so there is no second code path to keep in step.
 handle_request = handle
 
 
