@@ -316,4 +316,6 @@ command with an error that says to upgrade.
   or malformed.
 - `compare --gate`: 1 if an invariant that may not change moved, 2 if a file
   cannot be read, else 0.
-- `articulate.bench`: the number of failed expectations, so 0 means every one held.
+- `articulate.bench`: the number of failed expectations plus the number of
+  domain corpus mismatches, so 0 means every one held. `articulate.bench_domains`
+  runs the domain corpus alone.

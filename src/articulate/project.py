@@ -131,7 +131,7 @@ def _check_options(path, options):
     from . import rules_ext
     if not isinstance(options, dict):
         _fail(path, "'options' must map a rule-pack name to an object")
-    known = rules_ext.option_defaults()
+    known, choices = rules_ext.option_defaults(), rules_ext.option_choices()
     for name, opts in options.items():
         if name not in known:
             _fail(path, f"options[{name!r}]: no such rule pack; tunable: {sorted(known)}")
@@ -144,6 +144,9 @@ def _check_options(path, options):
             if not _type_ok(value, known[name][key]):
                 _fail(path, f"options[{name!r}][{key!r}] must be "
                             f"{type(known[name][key]).__name__}")
+            allowed = choices.get(name, {}).get(key)
+            if allowed and value not in allowed:
+                _fail(path, f"options[{name!r}][{key!r}] must be one of {list(allowed)}")
 
 
 def validate(path, data):

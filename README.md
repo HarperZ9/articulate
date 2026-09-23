@@ -43,6 +43,14 @@ before you rely on any output.
   readme, essay, narrative and more) set which findings block. Writing modes
   such as `memo/argue` and genres such as `memoir`, `screenplay` and `poetry`
   read each kind of writing by its own convention.
+- **Check domain rules.** Domain profiles add deterministic rules for one kind of
+  writing: `ux-microcopy` (button, label, and error length, case, vague errors,
+  "click here" links), `code-review` (condescension, requests with no reason,
+  absolute language about a person), `plain-language` (a Flesch-Kincaid grade
+  gate, default grade 8, configurable), `controlled-english` (sentence length,
+  one instruction per sentence, idioms, phrasal verbs), and RFC 2119 / RFC 8174
+  keyword checks inside `normative-spec`. Each default names its source, and a
+  heuristic rule reports without blocking.
 - **Set project rules.** A `.articulate.json` file, found by walking up from each
   file, maps path globs to profiles, bans or prefers terms (each with its own rule
   id, reason, and suggestion), allows terms of art, and names freeze terms every

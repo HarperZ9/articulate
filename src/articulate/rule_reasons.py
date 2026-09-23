@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from .aliases import CATEGORY_ALIASES, resolve_all, resolve_category  # noqa: F401
 from .note_reasons import NOTE_REASONS
+from .pack_reasons import PACK_REASONS
 
 # Categories in the house pack: one writer's standard, applied only by choice.
 HOUSE_CATEGORIES = frozenset({
@@ -139,6 +140,8 @@ REASONS = {
 # Every report-only note carries a reason too (articulate.note_reasons), so every
 # output can say what a finding costs a reader.
 REASONS.update(NOTE_REASONS)
+# Every domain rule-pack category (articulate.rules_ext) carries one too.
+REASONS.update(PACK_REASONS)
 
 # What an output says about a house-pack finding in place of a reader-cost reason.
 HOUSE_REASON = ("House style: one writer's standard, gated only by a house profile; it "

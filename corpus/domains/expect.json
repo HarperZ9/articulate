@@ -1,0 +1,21 @@
+{
+  "_note": "Synthetic examples written for the domain rule packs. Each entry names the profile to check under and the exact set of rule-pack categories the file must produce. A clean file must produce none and must pass its profile's gate.",
+  "ux-microcopy/flagged.txt": {"profile": "ux-microcopy",
+    "expect": ["ux-case", "ux-length", "ux-link-text", "ux-vague-error"]},
+  "ux-microcopy/clean.txt": {"profile": "ux-microcopy", "expect": []},
+  "code-review/flagged.md": {"profile": "code-review",
+    "expect": ["review-absolute", "review-condescension", "review-no-reason"]},
+  "code-review/clean.md": {"profile": "code-review", "expect": []},
+  "plain-language/flagged.md": {"profile": "plain-language",
+    "expect": ["plain-long-sentence", "plain-readability", "plain-wordy"]},
+  "plain-language/clean.md": {"profile": "plain-language", "expect": []},
+  "bcp14/flagged.md": {"profile": "normative-spec",
+    "expect": ["bcp14-may-not", "bcp14-mixed-case", "bcp14-no-boilerplate", "bcp14-shall-must"]},
+  "bcp14/flagged-declared.md": {"profile": "normative-spec",
+    "expect": ["bcp14-lowercase", "bcp14-old-boilerplate"]},
+  "bcp14/clean.md": {"profile": "normative-spec", "expect": []},
+  "controlled-english/flagged.md": {"profile": "controlled-english",
+    "expect": ["controlled-idiom", "controlled-multi-instruction", "controlled-phrasal-verb",
+               "controlled-sentence-length", "controlled-vague-pronoun"]},
+  "controlled-english/clean.md": {"profile": "controlled-english", "expect": []}
+}

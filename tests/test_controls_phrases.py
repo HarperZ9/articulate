@@ -65,8 +65,14 @@ def _every_id():
     return (sorted(profiles.PROFILES) + sorted(genres.GENRES) + list(modes.names()))
 
 
+# The four domain profiles joined after the proposals counted 55 ids.
+DOMAIN_PROFILES = ("code-review", "controlled-english", "plain-language", "ux-microcopy")
+
+
 def test_the_id_list_is_the_one_the_proposals_counted():
-    assert len(_every_id()) == 55
+    ids = _every_id()
+    assert set(DOMAIN_PROFILES) <= set(ids)
+    assert len(ids) == 55 + len(DOMAIN_PROFILES)
 
 
 @pytest.mark.parametrize("run_id", _every_id())

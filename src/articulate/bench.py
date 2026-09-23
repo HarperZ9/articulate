@@ -12,6 +12,9 @@ Two checks, both about the rules and neither about who wrote a text:
             every profile expect.json lists for the control set. These are
             public texts a reader would call plain; a rule change that starts
             blocking one of them fails here.
+  domains   Each synthetic sample in corpus/domains/ must raise exactly the
+            rule-pack categories corpus/domains/expect.json lists for it
+            (articulate.bench_domains).
 
 This benchmark sets no target on text from any source. It measures nothing about
 fairness; the fairness harness (python -m articulate.fairness) does that on
@@ -69,6 +72,12 @@ def main(argv):
     for kind, name, prof, ok, note in rows:
         print(f"  {'ok  ' if ok else 'FAIL'} {kind:<8} {prof:<11} {name}: {note}")
     print(f"[bench] {len(rows)} expectation(s), {failures} failure(s)")
+    # The domain rule packs have their own regression corpus under domains/.
+    from . import bench_domains
+    domains = os.path.join(corpus, "domains")
+    if os.path.isfile(os.path.join(domains, "expect.json")):
+        print()
+        failures += bench_domains.main([domains])
     return failures
 
 
