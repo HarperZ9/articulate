@@ -4,6 +4,34 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.4.0
+
+Added a stdio MCP server that runs from a bare install.
+
+The existing MCP surface is built on fastmcp, which is declared under the `mcp`
+extra. A plain `pip install articulate-writing` produced a package whose MCP
+entry point raised `ModuleNotFoundError: No module named 'fastmcp'` the moment a
+host launched it. The install reported success and the server never started.
+
+- `articulate.local_mcp` serves the same five tools over stdio JSON-RPC 2.0
+  (protocol `2025-06-18`) with nothing but the standard library, plus
+  `articulate.status` and `articulate.doctor`. `doctor` reports which tools run
+  local (`check`, `score`) and which need an LLM backend (`judge`, `fix`,
+  `polish`), so a host with no backend knows what it still gets.
+- New console script `articulate-mcp`. The fastmcp server stays available under
+  the `[mcp]` extra as `articulate.mcp_server`.
+- The tool bodies are unchanged and shared. Both transports call the same
+  `do_check`, `do_score`, `do_judge`, `do_fix` and `do_polish`, and a test parses
+  the fastmcp module for its `@mcp.tool` functions to assert the stdio server
+  exposes every one of them. The two surfaces cannot drift apart.
+- `tests/test_version_alignment.py` binds `pyproject.toml`, `articulate.__version__`
+  and the version the MCP server reports. The three had no guard tying them
+  together, so a release could ship reporting the previous version.
+- The publish workflow now pins its actions by commit SHA rather than by moving
+  tag, checks the release tag against the declared version, records artifact
+  digests, resolves every console script in a clean venv, and rebuilds a wheel
+  from the sdist before uploading.
+
 ## 0.3.0
 
 Added three cadence detectors for prose that reads clean under the earlier ruleset

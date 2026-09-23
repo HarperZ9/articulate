@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.3.0"
+version = "0.4.0"
 description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -27,6 +27,10 @@ dev = ["pytest>=7"]
 [project.scripts]
 articulate = "articulate.cli:main"
 articulate-lsp = "articulate.lsp_server:serve"
+# The stdlib-only stdio MCP server. It needs nothing beyond the base install, so
+# an MCP host can launch it straight from `pip install articulate-writing`. The
+# fastmcp server stays available under the [mcp] extra as articulate.mcp_server.
+articulate-mcp = "articulate.local_mcp:main"
 
 [project.urls]
 Homepage = "https://github.com/HarperZ9/articulate"
