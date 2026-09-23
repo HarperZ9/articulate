@@ -43,6 +43,18 @@ whatever the model returns. It applies to the spans the patterns recognize. A
 citation style or a link form outside those patterns reaches the model as prose,
 where only the meaning guard checks it.
 
+## Domain rules are phrase lists and formulas
+
+The domain profiles run deterministic rules: phrase lists, length limits, and a
+readability formula. Each one sees the surface of the text. A readability grade
+comes from sentence length and estimated syllables, so a low grade shows short
+words and sentences and says nothing about whether a reader understands the page.
+The code review rules match phrases, so they miss a paraphrase and cannot read
+tone or intent. The BCP 14 rules check how keywords are written, and they cannot
+judge whether a requirement is right. The controlled-English profile is inspired
+by controlled-language practice. It does not implement ASD-STE100 or any other
+specification, and a clean result is no conformance claim.
+
 ## A receipt attests a screening, not compliance
 
 A receipt records that a named, fingerprinted ruleset ran against a specific text

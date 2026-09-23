@@ -155,4 +155,6 @@ python -m articulate.editor --review FILE
 - `audit --reverify --gate`: 1 on a real integrity break, else 0.
 - `compare --gate`: 1 if an invariant that may not change moved, 2 if a file
   cannot be read, else 0.
-- `articulate.bench`: the number of misclassified files, so 0 is a perfect run.
+- `articulate.bench`: the number of misclassified files plus the number of domain
+  corpus mismatches, so 0 is a perfect run. `articulate.bench_domains` runs the
+  domain corpus alone.

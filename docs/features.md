@@ -32,13 +32,154 @@ A profile is a register configuration expressed as data. It sets which detector
 tiers block, a list of terms of art the detector never flags, and provenance
 fields. The shipped profiles cover procedures, commits, error messages,
 changelogs, release notes, API docs, specs, research, proofs, model cards,
-readmes, legal text, journalism, social copy, chat, essays, and narrative.
+readmes, legal text, journalism, social copy, chat, essays, and narrative, plus
+the domain profiles below: UI microcopy, code review comments, plain language,
+and controlled English.
 
 The gate follows a slop level. `off` blocks nothing, for narrative where authorial
 voice governs. `flavored` blocks the HIGH device tier, for docs and research.
 `strict` blocks HIGH and MEDIUM, for procedures and essays that must be device
 free. A profile resolves from an explicit flag, an in-file `writing-profile:` tag,
 or the file path.
+
+## Domain profiles
+
+Some kinds of writing have rules of their own. A domain profile switches on a
+rule pack: deterministic rules for that kind of writing, run beside the detector.
+Their findings gate, report, and export like any other finding. A rule whose
+judgment is a heuristic sits in the LOW tier and reports without blocking. Every
+numeric default is an option under `options` in the project config, and the
+source of each default is named below. All of these rules read English only.
+
+### `ux-microcopy`: UI strings
+
+One UI string per line. A `button:`, `label:`, or `error:` prefix sets the type,
+or a resource key does (`"save_button": "Save"`). Strict gate.
+
+- `ux-length` (MEDIUM): a button over 3 words or 26 characters, a label over 4
+  words, an error sentence over 25 words. Button words follow Material Design 3
+  ("ideally 1-3 words"), button characters follow Microsoft's Windows button
+  guidance (26 characters), and error sentences follow GOV.UK's 25-word split.
+  The 4-word label limit is Articulate's own default, with no published number
+  behind it.
+- `ux-case` (LOW): title case where the project uses sentence case (Material
+  Design 3, the Microsoft Style Guide). Apple's guidelines use title-style
+  buttons, so `case` takes `sentence`, `title`, or `off`. A proper noun reads like
+  title case, so this reports only.
+- `ux-vague-error` (LOW): an error with no next step whose text is vague or names
+  no cause, after the Nielsen Norman Group error-message guidelines.
+- `ux-link-text` (MEDIUM): "click here", or link text such as "here" or "learn
+  more", after the W3C tip against "click here" links. WCAG applies the rule
+  strictly at level AAA (failure F84 under success criterion 2.4.9); at level A,
+  link text may lean on its context.
+
+```
+[articulate] strings.txt [ux-microcopy]: 0 high, 4 medium (blocked)  texture 0/100
+  L1 [MEDIUM ux-length] button label has 7 words and 34 characters; the limit is 3 words and 26 characters: button: Save And Continue To The Next Step
+  L5 [MEDIUM ux-link-text] link text that names no destination; name where the link goes: link: For details, click here.
+```
+
+### `code-review`: review comments
+
+Flavored gate, so these report and the banned devices still block.
+
+- `review-condescension`: "just", "simply", "obviously", "clearly" (LOW), and
+  stronger markers such as "why didn't you" or "any competent developer" (MEDIUM).
+- `review-no-reason` (LOW): a request ("please rename", "can you move", "this
+  should be") in a comment that gives no reason anywhere in it.
+- `review-absolute` (MEDIUM): absolute language about a person, such as "you
+  always", "you never", or "your code is wrong".
+
+These are phrase lists. They miss a paraphrase and cannot read tone.
+
+### `plain-language`: a readability gate
+
+Strict gate.
+
+- `plain-readability` (MEDIUM): the document's Flesch-Kincaid grade is above
+  `max_grade` (default 8). The finding names the grade and the reading ease and
+  anchors on the hardest sentence.
+- `plain-long-sentence` (LOW): a sentence over 25 words (GOV.UK's split).
+- `plain-wordy` (LOW): a wordy phrase with a plainer form, such as "in order
+  to" for "to". The list is curated for this tool.
+
+Where grade 8 comes from: Microsoft Word's readability help recommends a grade
+score of "around 7.0 to 8.0". No US federal rule sets a number. The Plain Writing
+Act of 2010 defines plain writing without a score, and the Federal Plain Language
+Guidelines argue against a blanket grade. Health guidance aims lower: AHRQ's
+health literacy toolkit points to a 4th to 6th grade level for patient
+materials, so a health team should set `max_grade` to 6. Below `min_words`
+(default 100, Articulate's own floor) the grade is too unstable to gate on, and
+the rule stays silent. Syllables are estimated, so the grade can differ from
+another tool's by a grade or more, and a low grade shows short words and short
+sentences, which is not the same as a reader understanding the text.
+
+### `normative-spec`: RFC 2119 and RFC 8174 keywords
+
+The existing spec register now checks BCP 14 keyword use. RFC 8174 gives the
+keywords their special meaning only in all capitals, and asks a document that
+uses them to say so in a boilerplate sentence citing BCP 14.
+
+- `bcp14-mixed-case` (HIGH, gates): "MUST not", "SHOULD not", "must NOT",
+  "NOT recommended".
+- `bcp14-no-boilerplate` (MEDIUM): capital keywords with no citation of BCP 14,
+  RFC 2119, or RFC 8174.
+- `bcp14-may-not` (MEDIUM): "MAY NOT", which neither RFC defines.
+- `bcp14-lowercase` (LOW): a lowercase "must", "shall", or "should" in a document
+  that declares BCP 14. Lowercase "may", "required", "recommended", and
+  "optional" are left alone as common plain words.
+- `bcp14-shall-must` (LOW): both SHALL and MUST in one document.
+- `bcp14-old-boilerplate` (LOW): a declaration without the RFC 8174 clause
+  "when, and only when, they appear in all capitals".
+
+Quoted keywords, such as those listed in the boilerplate itself, never count as
+uses. The rules check keyword form, and they cannot tell whether a requirement is
+the right one.
+
+### `controlled-english`: second-language readers and translation
+
+Inspired by controlled-language practice in technical writing. Articulate does
+not implement ASD-STE100 or any other controlled-language specification, ships
+none of their dictionaries, and makes no conformance claim. Strict gate.
+
+- `controlled-sentence-length`: a sentence over 25 words (MEDIUM), or an
+  instruction over 20 words (LOW, because spotting an instruction is a
+  heuristic). The two limits follow the published sentence-length rules of
+  ASD-STE100 Issue 9 (rules 5.1 and 6.3), and both are options.
+- `controlled-multi-instruction` (LOW): two instructions chained in one sentence.
+- `controlled-idiom` (LOW): an idiom a translation engine may read word by word,
+  with a literal form.
+- `controlled-phrasal-verb` (LOW): a phrasal verb with a single-word form, such as
+  "find out" to "learn".
+- `controlled-vague-pronoun` (LOW): a sentence that opens with "This", "That",
+  "These", or "It" and a verb, with no noun.
+
+The idiom and phrasal-verb lists are Articulate's own and are short. A clean
+result means these lists found nothing; it cannot certify a text for
+translation.
+
+### Sources for the domain defaults
+
+Each page was read on 2026-09-23. A source can change after that date, so
+check it before you rely on a default.
+
+- Material Design 3, button guidelines: <https://m3.material.io/components/buttons/guidelines>
+- Microsoft, Windows button controls: <https://learn.microsoft.com/en-us/windows/apps/develop/ui/controls/buttons>
+- Microsoft Style Guide, capitalization: <https://learn.microsoft.com/en-us/style-guide/capitalization>
+- Apple Human Interface Guidelines, buttons: <https://developer.apple.com/design/human-interface-guidelines/buttons>
+- Nielsen Norman Group, error-message guidelines: <https://www.nngroup.com/articles/error-message-guidelines/>
+- W3C, "Don't use 'click here' as link text": <https://www.w3.org/QA/Tips/noClickHere>
+- GOV.UK, clear language: <https://guidance.publishing.service.gov.uk/writing-to-gov-uk-standards/writing-guidelines/clear-language/>
+- Microsoft Word, readability statistics: <https://support.microsoft.com/en-us/word/get-your-document-s-readability-and-level-statistics-in-microsoft-word>
+- Plain Writing Act of 2010: <https://www.govinfo.gov/content/pkg/PLAW-111publ274/html/PLAW-111publ274.htm>
+- AHRQ Health Literacy Universal Precautions Toolkit, Tool 11: <https://www.ahrq.gov/health-literacy/improve/precautions/tool11.html>
+- RFC 2119 and RFC 8174: <https://www.rfc-editor.org/rfc/rfc2119.txt>, <https://www.rfc-editor.org/rfc/rfc8174.txt>
+- ASD-STE100: <https://www.asd-ste100.org/>
+
+The Flesch-Kincaid and Flesch reading-ease formulas trace to Kincaid, Fishburne,
+Rogers, and Chissom (1975), Research Branch Report 8-75. The coefficients here
+match the ones Microsoft's readability page reproduces; the original report was
+not checked.
 
 ## Project config
 
@@ -59,7 +200,8 @@ standard library only in 3.11.
     "allowed": ["leverage"]
   },
   "freeze": ["Articulate"],
-  "protect": {"quotes": true, "blockquotes": true}
+  "protect": {"quotes": true, "blockquotes": true},
+  "options": {"plain-language": {"max_grade": 6}, "ux-microcopy": {"case": "title"}}
 }
 ```
 
@@ -78,8 +220,8 @@ standard library only in 3.11.
 - `freeze` terms are protected spans and meaning-guard invariants in every
   rewrite and in `articulate compare`.
 - `protect` switches the two configurable protected kinds.
-- `options` tunes a domain rule pack by name, and an unknown pack or option is an
-  error.
+- `options` tunes a domain rule pack by name (`ux-microcopy`, `plain-language`,
+  `controlled-english`). An unknown pack, option, or value is an error.
 
 A malformed file stops the command with the file name and the reason: an unknown
 key, a bad type, an unknown profile, or a term that is both banned and allowed.
@@ -303,3 +445,9 @@ Quality is measured, not asserted. `articulate.bench` runs the detector over a
 labeled corpus and reports recall on the AI-authored samples, specificity on the
 human-authored samples, and a count of regressions. The exit code is the number
 of misclassified files, so a checker can gate on it.
+
+The same run checks the domain rule packs against `corpus/domains/`: each sample
+names its profile and the exact set of pack rules it must produce, and a clean
+sample must produce none and pass its gate. The samples are short and written for
+the purpose, so this is a regression check. It measures nothing about recall or
+precision on real documents.

@@ -18,13 +18,27 @@ defaults are part of the ruleset fingerprint. Standard library only.
 """
 from __future__ import annotations
 
-from . import detector, terms
+import re
+
+from . import detector, invariants, terms
 
 SEMVER = "1.0.0"
 # name -> module. A pack module exposes NAME, CATEGORIES, OPTIONS (defaults),
 # scan(text, prose, options, make) -> {"HIGH": [...], "MEDIUM": [...],
 # "LOW": [...]}, and fingerprint() -> list of strings.
 PACKS = {}
+
+
+_TAG = re.compile(r"<[^<>\n]{1,400}>")
+
+
+def mask_line(line):
+    """Mask code, URLs and emails, tags, and TeX with equal-length spaces. The
+    URL and tag patterns are bounded, so a long line of dotted tokens or of
+    unclosed angle brackets stays linear."""
+    for rx in (detector.INLINE_CODE, invariants.URL, _TAG, detector.TEX):
+        line = rx.sub(detector._blank, line)
+    return line
 
 
 def prose_lines(lines):
@@ -45,7 +59,7 @@ def prose_lines(lines):
             if i > 1 and raw.strip() == "---":
                 in_fm = False
             continue
-        yield i, start, raw, detector.strip_markup(raw)
+        yield i, start, raw, mask_line(raw)
 
 
 def scan(text, lines, profile):
@@ -74,6 +88,20 @@ def categories():
 
 def option_defaults():
     return {name: dict(pack.OPTIONS) for name, pack in PACKS.items() if pack.OPTIONS}
+
+
+def option_choices():
+    """{pack: {option: allowed values}} for options that take a fixed set."""
+    return {name: dict(getattr(pack, "CHOICES", {})) for name, pack in PACKS.items()}
+
+
+def _register():
+    from . import pack_bcp14, pack_controlled, pack_plain, pack_review, pack_ux
+    for pack in (pack_ux, pack_review, pack_plain, pack_bcp14, pack_controlled):
+        PACKS[pack.NAME] = pack
+
+
+_register()
 
 
 def fingerprint_parts():

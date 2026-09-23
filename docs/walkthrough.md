@@ -142,6 +142,24 @@ a report-only lexicon flags generation artifacts. For a proof or a technical
 paper, `academic/prove` and `science-writing/explain` protect math and keep rigor
 vocabulary clean. See [Features](features.md#writing-modes).
 
+Some writing has rules of its own. A file of UI strings checks under
+`ux-microcopy`:
+
+```bash
+articulate check strings.txt --profile ux-microcopy --verbose
+```
+
+```
+[articulate] strings.txt [ux-microcopy]: 0 high, 4 medium (blocked)  texture 0/100
+  L1 [MEDIUM ux-length] button label has 7 words and 34 characters; the limit is 3 words and 26 characters: button: Save And Continue To The Next Step
+  L5 [MEDIUM ux-link-text] link text that names no destination; name where the link goes: link: For details, click here.
+  L3 [LOW ux-vague-error] error text without a cause and a next step: say what happened and what to do: error: Something went wrong.
+```
+
+`code-review`, `plain-language`, and `controlled-english` work the same way, and
+`normative-spec` checks RFC 2119 keywords. See
+[Features](features.md#domain-profiles).
+
 A team sets its own vocabulary in a `.articulate.json` at the repository root:
 
 ```json

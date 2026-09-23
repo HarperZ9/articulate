@@ -47,6 +47,20 @@ release is cut.
   replay re-derives with no access to the project.
 - Ruleset semver moves 0.5.0 to 0.6.0. Older receipts read `Unverifiable` under
   this build, as a ruleset change should.
+- Domain profiles, each backed by a rule pack with its own rule ids:
+  `ux-microcopy` (length limits for buttons, labels, and errors; case; vague
+  error text; link text such as "click here"), `code-review` (condescension
+  markers, requests with no reason, absolute language about a person),
+  `plain-language` (a Flesch-Kincaid grade gate, default 8, plus long sentences
+  and wordy phrases), and `controlled-english` (sentence length, one instruction
+  per sentence, idioms, phrasal verbs, a sentence-initial pronoun with no noun).
+  The existing `normative-spec` register gains RFC 2119 / RFC 8174 checks:
+  mixed-case keywords (gating), keywords without the boilerplate, "MAY NOT",
+  lowercase keywords in a declared document, SHALL mixed with MUST, and the
+  pre-8174 boilerplate. Every numeric default is a config option and names its
+  source in the docs; heuristic rules sit in LOW and never block.
+- `corpus/domains/` holds synthetic samples with an `expect.json`; the benchmark
+  now counts a domain mismatch as a regression.
 
 ## 0.4.0
 

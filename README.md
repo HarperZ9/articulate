@@ -29,6 +29,14 @@ say what a verdict and a receipt mean and what they never claim.
   essay, narrative, and more) sets which findings block. Fiction gates nothing;
   procedures and essays gate strictly. Profiles resolve from `--profile`, an
   in-file `writing-profile:` tag, or the file path.
+- **Check domain rules.** Domain profiles add deterministic rules for one kind of
+  writing: `ux-microcopy` (button, label, and error length, case, vague errors,
+  "click here" links), `code-review` (condescension, requests with no reason,
+  absolute language about a person), `plain-language` (a Flesch-Kincaid grade
+  gate, default grade 8, configurable), `controlled-english` (sentence length,
+  one instruction per sentence, idioms, phrasal verbs), and RFC 2119 / RFC 8174
+  keyword checks inside `normative-spec`. Each default names its source, and a
+  heuristic rule reports without blocking.
 - **Set project rules.** A `.articulate.json` file, found by walking up from each
   file, maps path globs to profiles, bans or prefers terms (each with its own rule
   id, reason, and suggestion), allows terms of art, and names freeze terms every

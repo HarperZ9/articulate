@@ -46,14 +46,18 @@ _TERMS = (
 
 
 def _p(slop, *, keep=(), no_em_dash=True, max_words=None,
-       register=("general", "peer", "written")):
-    return {
+       register=("general", "peer", "written"), packs=()):
+    rec = {
         "slop": slop,
         "keep": tuple(_TERMS) + tuple(keep),
         "no_em_dash": no_em_dash,
         "max_sentence_words": max_words,
         "register": {"field": register[0], "tenor": register[1], "mode": register[2]},
     }
+    if packs:
+        # Domain rule packs (articulate.rules_ext) this register switches on.
+        rec["rule_packs"] = tuple(packs)
+    return rec
 
 
 PROFILES: dict[str, dict] = {
@@ -67,7 +71,19 @@ PROFILES: dict[str, dict] = {
     "api-docs": _p("flavored"),
     "normative-spec": _p("flavored",
                          keep=("must", "should", "may", "shall", "required",
-                               "recommended", "optional")),
+                               "recommended", "optional"), packs=("bcp14",)),
+    # Domain registers backed by a rule pack each. UI copy, plain language, and
+    # controlled English gate strictly; review comments report their tone rules
+    # and gate only the banned devices.
+    "ux-microcopy": _p("strict", register=("interface", "user", "ui-string"),
+                       packs=("ux-microcopy",)),
+    "code-review": _p("flavored", register=("engineering", "peer", "review-comment"),
+                      keep=("nit", "lgtm", "blocking", "non-blocking", "suggestion"),
+                      packs=("code-review",)),
+    "plain-language": _p("strict", register=("public", "general-reader", "written"),
+                         packs=("plain-language",)),
+    "controlled-english": _p("strict", register=("technical", "second-language", "written"),
+                             packs=("controlled-english",)),
     # Formal Latinate words that are ordinary in scholarly writing; kept in the
     # research register so a paper is not flagged for its normal vocabulary. The
     # stems match every inflection through the substring allowlist. This is a
