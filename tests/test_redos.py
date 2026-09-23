@@ -27,7 +27,10 @@ ADVERSARIAL = [
     # only skips lines without "@" would still take about 40 s here.
     ("1.1.1.1." * 5000) + "@",
     # Unclosed "<": the tag mask rescanned to the end of the line from each one.
-    "<a " * 10000,
+    # On 10000 of them the old code stayed under the 3 s budget, so a regression
+    # would pass. On 40000 it took 13 s to 26 s per check_text call, and the
+    # fixed code takes about 0.35 s.
+    "<a " * 40000,
 ]
 
 
@@ -40,9 +43,11 @@ GENRE_ADVERSARIAL = [
     ("shivers ran down her spine " * 2000),    # the fiction lexicon, at length
     ("a mix of joy and " * 4000) + "fear washed over her",
     # Unclosed curly quotes: the dialogue mask rescanned to the end of the line
-    # from each opening mark, about 3.3 s per call before the linear scan.
-    "\u201ca " * 10000,
-    "\u2018a " * 10000,
+    # from each opening mark. On 10000 of them the old code took 3.3 s to 5.0 s
+    # per check_text call, too close to the budget to fail reliably. On 20000 it
+    # took 14 s to 21 s, and the fixed code takes under 0.5 s.
+    "\u201ca " * 20000,
+    "\u2018a " * 20000,
 ]
 
 

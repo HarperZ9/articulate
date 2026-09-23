@@ -21,11 +21,11 @@ Time for one `check_text` call, before and after:
 - `"1.1.1.1." * 5000` under flavored: 53.2 s before, 0.14 s after.
 - `("1.1.1.1." * 5000) + "@"` under flavored: 47.8 s before, 0.14 s after.
 - `"twenty-" * 8000` under flavored: 29.5 s before, 0.08 s after.
-- `"<a " * 10000` under flavored: 1.9 s before, 0.08 s after.
-- `"\u201ca " * 10000` under literary-fiction: 3.7 s before, 0.10 s after.
+- `"<a " * 40000` under flavored: 23.5 s before, 0.33 s after.
+- `"\u201ca " * 20000` under literary-fiction: 13.6 s before, 0.21 s after.
 
-Before and after were measured on one machine in one session. That machine was
-under load from other work, so the absolute numbers are noisy.
+Before and after were measured on one machine, each pair in one session. That
+machine was under load from other work, so the absolute numbers are noisy.
 
 - The e-mail part of the URL pattern retried every word boundary inside a long
   run of word characters, dots, or hyphens, and rescanned the rest of the run
@@ -40,9 +40,13 @@ under load from other work, so the absolute numbers are noisy.
 - The patterns themselves are unchanged and remain the definition of record as
   `detector.URL`, `detector.TAG`, and `detector.QUOTED`. `tests/test_masking.py`
   compares each mask with `re.sub` on 4,000 generated lines and a set of hand
-  cases, and holds each mask to a time budget on long hostile lines.
+  cases. It also holds each mask, and the detector functions `strip_markup` and
+  `mask_quotes` that apply them, to 0.25 s per call on long hostile lines, so a
+  call site that goes back to `re.sub` fails as well.
 - `tests/test_redos.py` adds the inputs above, so the 3 s per-input budget now
-  covers them.
+  covers them. The tag and curly-quote inputs use 40000 and 20000 repeats. With
+  10000 repeats the old code took 0.3 s to 0.6 s on the tag input and 3.3 s to
+  5.0 s on the quote input, so a regression there could pass the budget.
 - Checked for identical output: full `check_text` results (rule ids, spans,
   labels, gate, texture, cadence) and per-line masks were compared before and
   after on every tracked file except the VS Code extension's lockfile, under no

@@ -3,7 +3,8 @@ reference patterns they replace. Findings are computed on the masked line, so
 any difference here would change a finding and break receipt replay under an
 unchanged ruleset fingerprint. The reference patterns are only safe to run on
 short input, so the comparison uses short generated strings, and a separate
-test holds the masks to a time budget on long hostile lines."""
+test holds the masks, and the detector functions that apply them, to a time
+budget on long hostile lines."""
 import random
 import re
 import time
@@ -71,20 +72,32 @@ HOSTILE = [
     ("1.1.1.1." * 5000) + "@",
     "twenty-" * 8000,
     "a@" * 20000,
-    "<a " * 10000,
-    ("<a " * 10000) + ">",
-    "\u201ca " * 10000,
-    "\u2018a " * 10000,
+    # The quadratic tag pattern takes about 0.09 s per call on 10000 unclosed
+    # "<", under any budget that is safe on a slow runner. On 40000 it took
+    # 1.4 s to 4.4 s, so these lines use 40000. The quote pattern took about
+    # 0.4 s on 10000 unclosed curly quotes and 1.7 s on 20000.
+    "<a " * 40000,
+    ("<a " * 40000) + ">",
+    "\u201ca " * 20000,
+    "\u2018a " * 20000,
     "\"a\" " * 10000,
     "https://" * 5000,
 ]
 
+# The masks, plus the detector functions that apply them. Timing the detector
+# functions as well catches a call site that goes back to URL.sub, TAG.sub, or
+# QUOTED.sub, in addition to a regression inside the masking module.
+MASKERS = [masking.mask_urls, masking.mask_tags, masking.mask_quoted,
+           detector.strip_markup, detector.mask_quotes]
+
 
 def test_masks_are_linear_on_hostile_lines():
+    # The linear code takes at most about 0.01 s per call on these lines. On
+    # each of the seven lines where a reference pattern is quadratic, that
+    # pattern took 1.3 s or more per call, so the 0.25 s budget separates them.
     for i, text in enumerate(HOSTILE):
-        start = time.perf_counter()
-        masking.mask_urls(text)
-        masking.mask_tags(text)
-        masking.mask_quoted(text)
-        elapsed = time.perf_counter() - start
-        assert elapsed < 1.0, f"hostile line {i} took {elapsed:.2f}s"
+        for fn in MASKERS:
+            start = time.perf_counter()
+            fn(text)
+            elapsed = time.perf_counter() - start
+            assert elapsed < 0.25, f"{fn.__name__} on hostile line {i} took {elapsed:.2f}s"
