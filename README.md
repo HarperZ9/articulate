@@ -55,7 +55,8 @@ before you rely on any output.
   drops a number, flips a negation, weakens a modal, or loses a link, code span,
   citation, quote, or name is refused, and the original is kept. `articulate
   compare` runs the same check on any two files. The invariants are surface
-  proxies, so a pass is a screen and no proof of equivalence.
+  proxies, so a pass is a screen and no proof of equivalence. `--explain` prints
+  each changed sentence before and after, with the detector findings it carried.
 - **Keep your own process record.** `articulate process` keeps a local,
   opt-in log of your drafts as salted commitments, with order and day only by
   default, and exports a process summary you control. `articulate disclose`

@@ -276,6 +276,10 @@ command with an error that says to upgrade.
 - `--unprotect KINDS`: let the model edit block quotes or quoted material
   (`quotes`, `blockquotes`). Code, math, links, citations, and freeze terms
   always stay protected.
+- `--explain [text|json]`: after the run, print the change report: each changed
+  sentence before and after, the detector findings that sentence carried, the
+  findings left in the new sentence, the meaning-guard rows for the pair, and
+  every refused candidate with its reason. `text` is the default.
 
 ## Exit codes
 

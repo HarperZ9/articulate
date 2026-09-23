@@ -21,7 +21,7 @@ import tempfile
 from typing import List, Optional
 
 from . import detector as core
-from . import editor, guard, meaning
+from . import changes, editor, guard, meaning
 from .local_only import LocalOnly
 from .origin_guard import note as origin_note
 from .origin_guard import strip_origin_guesses
@@ -168,6 +168,7 @@ def do_fix(text, is_html=False, is_tex=False, allow_change=""):
     return {"ok": True, "rewrite": rewrite,
             "findings_after": after["findings"], "gate_after": after["gate"],
             "meaning": g.log[-1]["report"]["verdict"],
+            "changes": changes.build(text, rewrite)["changes"],
             "note": "a suggestion; read it against the original before shipping",
             "does_not_prove": DOES_NOT_PROVE}
 

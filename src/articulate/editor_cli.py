@@ -14,6 +14,7 @@ import argparse
 import os
 import sys
 
+from . import changes as _changes
 from . import editor as ed
 from . import guard as _guard
 from .local_only import LOCAL_ONLY_EXIT, LOCAL_ONLY_VAR, command_map, local_only
@@ -49,6 +50,7 @@ def _parser():
     ap.add_argument("--local-only", action="store_true",
                     help=f"refuse every hosted call, as {LOCAL_ONLY_VAR}=1 does")
     _guard.add_arguments(ap)
+    _changes.add_arguments(ap)
     return ap
 
 
@@ -80,10 +82,13 @@ def main(argv=None):
         ed.review(target, args.mode, args.profile)
         return 0
     if cmd == "polish":
-        return ed.polish(target, args.out, max(1, args.passes), max(1, min(5, args.bar)),
-                         mode=args.mode, profile=args.profile, guard=g)
-    return ed.fix(target, args.out, max(1, args.passes), mode=args.mode, profile=args.profile,
-                  guard=g)
+        out = args.out or _changes.default_out(target, "polished")
+        rc = ed.polish(target, out, max(1, args.passes), max(1, min(5, args.bar)),
+                       mode=args.mode, profile=args.profile, guard=g)
+        return _changes.finish(args, target, out, g, rc)
+    out = args.out or _changes.default_out(target, "fixed")
+    rc = ed.fix(target, out, max(1, args.passes), mode=args.mode, profile=args.profile, guard=g)
+    return _changes.finish(args, target, out, g, rc)
 
 
 def _unreadable(target):
