@@ -28,8 +28,8 @@ from . import quantities
 KINDS = ("code", "math", "url", "citation", "quote", "freeze", "number",
          "modal", "scope", "negation", "entity")
 
-_INLINE_CODE = re.compile(r"``[^\n]{1,500}?``|`[^`\n]{1,500}`")
-_MATH = [
+INLINE_CODE = re.compile(r"``[^\n]{1,500}?``|`[^`\n]{1,500}`")
+MATH = [
     re.compile(r"\$\$.{1,4000}?\$\$", re.S),
     re.compile(r"\\\[.{1,4000}?\\\]", re.S),
     re.compile(r"\\\(.{1,1000}?\\\)", re.S),
@@ -37,12 +37,12 @@ _MATH = [
 ]
 # Inline $...$ counts as math only when its body carries TeX syntax, so a price
 # pair such as "$5 and $10" is not read as one formula.
-_INLINE_MATH = re.compile(r"\$(?=[^\s$])(?:\\.|[^$\\\n]){1,300}(?<=\S)\$")
-_TEX_SIGN = re.compile(r"[\\^_{}=<>]")
-_URL = re.compile(r"\bhttps?://[^\s<>\"'\])]{1,2000}|\bwww\.[^\s<>\"'\])]{1,2000}"
+INLINE_MATH = re.compile(r"\$(?=[^\s$])(?:\\.|[^$\\\n]){1,300}(?<=\S)\$")
+TEX_SIGN = re.compile(r"[\\^_{}=<>]")
+URL = re.compile(r"\bhttps?://[^\s<>\"'\])]{1,2000}|\bwww\.[^\s<>\"'\])]{1,2000}"
                   r"|\b[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}\b")
 _YEAR = r"(?:1[6-9]|20)\d{2}[a-z]?"
-_CITATION = re.compile(
+CITATION = re.compile(
     r"\[-?@[^\]\n]{1,200}\]"                               # pandoc [@key, p. 3]
     r"|\[\^[\w-]{1,40}\]"                                   # footnote [^1]
     r"|\[\d{1,4}(?:\s{0,2}[,\u2013-]\s{0,2}\d{1,4}){0,20}\]"  # numeric [1], [1-3]
@@ -53,7 +53,7 @@ _CITATION = re.compile(
     r"|\bdoi:\s{0,2}10\.\d{4,9}/[^\s\"<>]{1,200}|\b10\.\d{4,9}/[^\s\"<>]{1,200}"
     r"|\barXiv:\s{0,2}(?:\d{4}\.\d{4,5}|[a-z\-]{2,20}(?:\.[A-Z]{2})?/\d{7})(?:v\d{1,3})?"
     r"|\\cite[tp]?\*?(?:\[[^\]\n]{0,80}\])?\{[^}\n]{1,200}\}")
-_QUOTE = re.compile("\"[^\"\\n]{1,500}\"|\u201c[^\u201d\\n]{1,500}\u201d")
+QUOTE = re.compile("\"[^\"\\n]{1,500}\"|\u201c[^\u201d\\n]{1,500}\u201d")
 _TRAIL = ".,;:!?'\""
 
 _MODAL = re.compile(
@@ -113,49 +113,81 @@ def freeze_pattern(freeze):
     return re.compile(r"(?<!\w)(?:" + "|".join(re.escape(t) for t in terms) + r")(?!\w)")
 
 
-def _passes(freeze):
-    """The container passes in priority order: (kind, finder). A finder maps the
-    current masked text to a list of (start, end, key-or-None)."""
-    def rx_pass(rx, trim=True, keep=None):
-        def run(masked):
-            out = []
-            for m in rx.finditer(masked):
-                end = m.end()
-                while trim and end > m.start() + 1 and masked[end - 1] in _TRAIL:
-                    end -= 1
-                if keep is None or keep(m.group(0)):
-                    out.append((m.start(), end, None))
-            return out
-        return run
+def blockquotes(text):
+    """(start, end) of each run of Markdown block-quote lines ('>' at line start)."""
+    out, pos, open_at, last_end = [], 0, None, 0
+    for line in text.splitlines(keepends=True):
+        if line.lstrip(" ")[:1] == ">" and len(line) - len(line.lstrip(" ")) <= 3:
+            open_at = pos if open_at is None else open_at
+            last_end = pos + len(line.rstrip("\r\n"))
+        elif open_at is not None:
+            out.append((open_at, last_end))
+            open_at = None
+        pos += len(line)
+    if open_at is not None:
+        out.append((open_at, last_end))
+    return out
 
-    passes = [("code", lambda t: [(s, e, None) for s, e in fenced_blocks(t)]),
-              ("code", rx_pass(_INLINE_CODE, trim=False))]
-    passes += [("math", rx_pass(rx, trim=False)) for rx in _MATH]
-    passes += [("math", rx_pass(_INLINE_MATH, trim=False, keep=_TEX_SIGN.search)),
-               ("url", rx_pass(_URL)), ("citation", rx_pass(_CITATION)),
-               ("quote", rx_pass(_QUOTE, trim=False))]
+
+def _rx_pass(rx, trim=True, keep=None):
+    def run(masked):
+        out = []
+        for m in rx.finditer(masked):
+            end = m.end()
+            while trim and end > m.start() + 1 and masked[end - 1] in _TRAIL:
+                end -= 1
+            if keep is None or keep(m.group(0)):
+                out.append((m.start(), end, None))
+        return out
+    return run
+
+
+def container_passes(freeze=(), *, numbers=True, quotes=True, block_quotes=False,
+                     tex=False):
+    """The container passes in priority order: (kind, finder). A finder maps the
+    current masked text to a list of (start, end, key-or-None). `tex` reads every
+    inline $...$ as math, as a .tex file does; otherwise inline math needs TeX
+    syntax in its body."""
+    passes = [("code", lambda t: [(s, e, None) for s, e in fenced_blocks(t)])]
+    if block_quotes:
+        passes.append(("blockquote", lambda t: [(s, e, None) for s, e in blockquotes(t)]))
+    passes.append(("code", _rx_pass(INLINE_CODE, trim=False)))
+    passes += [("math", _rx_pass(rx, trim=False)) for rx in MATH]
+    passes += [("math", _rx_pass(INLINE_MATH, trim=False,
+                                 keep=None if tex else TEX_SIGN.search)),
+               ("url", _rx_pass(URL)), ("citation", _rx_pass(CITATION))]
+    if quotes:
+        passes.append(("quote", _rx_pass(QUOTE, trim=False)))
     frx = freeze_pattern(freeze)
     if frx is not None:
-        passes.append(("freeze", rx_pass(frx, trim=False)))
-    passes.append(("number", quantities.find))
+        passes.append(("freeze", _rx_pass(frx, trim=False)))
+    if numbers:
+        passes.append(("number", quantities.find))
     return passes
 
 
-def _containers(text, freeze):
-    """Claim the container spans in priority order; return (items, masked). Each
-    claimed span is blanked (newlines kept) before the next pass runs."""
-    items, chars = [], list(text)
-    masked = text
-    for kind, finder in _passes(freeze):
+def claim(text, passes):
+    """Run the passes in order and return (claims, masked): claims is a list of
+    (kind, start, end, key-or-None), and masked is the text with every claimed
+    span blanked (newlines kept), so a later pass cannot match inside an earlier
+    claim."""
+    claims, chars, masked = [], list(text), text
+    for kind, finder in passes:
         found = finder(masked)
         for start, end, key in found:
-            raw = text[start:end]
-            items.append(_item(kind, raw if key is None else key, raw, start, end))
+            claims.append((kind, start, end, key))
             for i in range(start, end):
                 if chars[i] != "\n":
                     chars[i] = " "
         if found:
             masked = "".join(chars)
+    return claims, masked
+
+
+def _containers(text, freeze):
+    claims, masked = claim(text, container_passes(freeze))
+    items = [_item(kind, text[s:e] if key is None else key, text[s:e], s, e)
+             for kind, s, e, key in claims]
     return items, masked
 
 

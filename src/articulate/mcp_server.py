@@ -29,8 +29,9 @@ from .tool_text import DOES_NOT_PROVE, TOOLS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 _BACKEND_NOTE = "the editor layer needs the claude CLI, which sends the text to a hosted model"
-_REFUSED_NOTE = ("the rewrite dropped, repeated or invented a masked math span and was "
-                 "refused; the text is unchanged")
+_REFUSED_NOTE = ("the rewrite dropped, repeated, moved or invented a protected span (code, "
+                 "math, a link, a citation, a quote or a freeze term) and was refused; the "
+                 "text is unchanged")
 _GUARD_NOTE = ("the rewrite changed a surface invariant of the text and was refused; the "
                "text is unchanged. Pass allow_change to accept a named kind of change")
 _LOCAL_ONLY_NOTE = ("local-only: the switch is on, so the text was not sent; the check and "
@@ -124,12 +125,11 @@ def do_judge(text):
 
 def _refusal(e):
     """A refused rewrite as data: the check that refused it, why, and what blocked it."""
-    return {"stage": getattr(e, "stage", "math"), "reason": str(e),
-            "blocking": getattr(e, "blocking", [])}
+    return {"stage": e.stage, "reason": editor.refusal_text(e), "blocking": e.blocking}
 
 
 def _refused_note(e):
-    return _GUARD_NOTE if isinstance(e, guard.RewriteRefused) else _REFUSED_NOTE
+    return _GUARD_NOTE if e.stage == "meaning" else _REFUSED_NOTE
 
 
 def do_compare(original, rewrite, freeze=None, allow_change=""):
@@ -145,13 +145,12 @@ def do_compare(original, rewrite, freeze=None, allow_change=""):
 
 
 def _rewrite(text, worst, is_html, is_tex, g):
-    """One editor rewrite through the guard. With is_tex, every LaTeX math span is
-    masked before the model call and spliced back byte for byte, as the CLI does
-    for a .tex file."""
-    if is_tex:
-        return g.run(lambda t: editor.masked_rewrite(
-            t, lambda m, mech: editor.rewrite_once(m, mech, worst, is_html)), text)
-    return g.run(lambda t: editor.rewrite_once(t, _mech_summary(t)[1], worst, is_html), text)
+    """One editor rewrite through the guard: every protected span is masked before
+    the model call and spliced back byte for byte, and the findings summary is
+    built from the masked text. With is_tex, every LaTeX math span is math, as
+    the CLI reads a .tex file."""
+    return editor.masked_rewrite(
+        text, lambda m, mech: editor.rewrite_once(m, mech, worst, is_html), guard=g, tex=is_tex)
 
 
 def do_fix(text, is_html=False, is_tex=False, allow_change=""):
@@ -160,8 +159,9 @@ def do_fix(text, is_html=False, is_tex=False, allow_change=""):
     g = guard.RewriteGuard(allow=allow_change)
     try:
         rewrite = _rewrite(text, [], is_html, is_tex, g)
-    except (editor.MathSpliceError, guard.RewriteRefused) as e:
-        return {"ok": False, "error": str(e), "note": _refused_note(e), "refused": _refusal(e)}
+    except guard.RewriteRefused as e:
+        return {"ok": False, "error": editor.refusal_text(e), "note": _refused_note(e),
+                "refused": _refusal(e)}
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e), "note": _failure_note(e)}
     after = do_check(rewrite)
@@ -197,7 +197,7 @@ def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False, allow_change="
             try:
                 cand = _rewrite(cur, editor.scrub_math_notes(worst) if is_tex else worst,
                                 is_html, is_tex, g)
-            except (editor.MathSpliceError, guard.RewriteRefused) as e:
+            except guard.RewriteRefused as e:
                 refused = e
                 break
             c_chk = do_check(cand)

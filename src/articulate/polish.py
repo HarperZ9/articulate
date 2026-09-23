@@ -47,25 +47,26 @@ def _scores(q):
 
 
 def _callables(path, loop, ecfg, rewrite_fn, judge_fn, guard):
-    """(judge, rewrite) for this file. Every rewrite runs through the guard. On a
-    math file no model call sees a formula: the judge scores masked text, and the
-    rewrite gets masked text, a findings summary built from it and notes with any
-    math scrubbed."""
+    """(judge, rewrite) for this file. Every rewrite runs through the guard: the
+    model gets the text with every protected span hidden and a findings summary
+    built from that text. On a math file no model call sees a formula: the judge
+    scores masked text too, and its notes reach the rewrite with any math
+    scrubbed."""
     is_html = os.path.splitext(path)[1].lower() in (".html", ".htm")
+    tex = ed.is_math_file(path)
     delta = ecfg.get("standard_delta", "")
     base_judge = judge_fn or ed.quality_judge
     base_rewrite = rewrite_fn or (lambda t, mech, worst: ed.rewrite_once(
         t, mech, worst, is_html, delta, profile=loop.prof))
-    if not ed.is_math_file(path):
-        return base_judge, guard.wrap(base_rewrite)
 
     def judge(t):
-        return base_judge(ed.mask_math(t)[0])
+        return base_judge(ed.mask_math(t)[0] if tex else t)
 
-    def rewrite(t, mech, worst):
-        notes = ed.scrub_math_notes(worst)
-        return ed.masked_rewrite(t, lambda m, mm: base_rewrite(m, mm, notes), loop.prof)
-    return judge, guard.wrap(rewrite)
+    def rewrite(t, _summary, worst):
+        notes = ed.scrub_math_notes(worst) if tex else worst
+        return ed.masked_rewrite(t, lambda m, mm: base_rewrite(m, mm, notes), loop.prof,
+                                 guard=guard, tex=tex)
+    return judge, rewrite
 
 
 def _guard_result(guard):
@@ -89,7 +90,10 @@ def _run(loop, passes, judge, rewrite, guard):
         try:
             cand = rewrite(loop.best, ed.mechanical_text(loop.best, loop.prof)[1], worst)
         except _guard.RewriteRefused as e:
-            print(f"[polish] rewrite refused: {e}; kept best")
+            if e.stage == "protected-span":
+                print(f"[polish] rewrite failed: {ed.refusal_text(e)}; kept best")
+            else:
+                print(f"[polish] rewrite refused: {e}; kept best")
             return
         except ed._UNAVAILABLE as e:
             print(f"[polish] rewrite failed: {e}")

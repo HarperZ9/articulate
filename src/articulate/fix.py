@@ -4,10 +4,12 @@
 
 `fix` rewrites the text so its intended reader can follow it on one read, then
 re-checks the rewrite under the same profile or mode, for up to `passes` rounds.
-On a math file every span is masked before the model call and spliced back
-after. Every rewrite passes the meaning guard: a candidate that moves a surface
-invariant of the text it was given is refused, and the previous text is kept.
-The rewrite is a suggestion; the writer decides.
+Every protected span (code, math, links, citations, quotes, freeze terms) is
+masked before the model call and spliced back after; a placeholder that does
+not come back intact fails the pass. Every rewrite then passes the meaning
+guard: a candidate that moves a surface invariant of the text it was given is
+refused, and the previous text is kept. The rewrite is a suggestion; the writer
+decides.
 """
 import os
 
@@ -31,14 +33,18 @@ def _one_pass(attempt, text, path, out_path, prof, call, guard):
     """Returns (status, text). 'done' and 'again' wrote a rewrite; 'stop' wrote
     nothing because the last rewrite had no findings; 'refused' kept the previous
     text (on the first pass it writes the original); 'failed' wrote nothing."""
-    clean_before, mech = ed.mechanical(path if attempt == 1 else out_path, prof)
+    clean_before, _ = ed.mechanical(path if attempt == 1 else out_path, prof)
     if attempt > 1 and clean_before:
         return "stop", text
     try:
-        # On a math file the model sees placeholders, never a formula.
-        result = guard.run(lambda t: (ed.masked_rewrite(t, call, prof) if ed.is_math_file(path)
-                                      else call(t, mech)), text)
+        # The model sees placeholders for every protected span, and on a math
+        # file never a formula; the findings summary is built from that text.
+        result = ed.masked_rewrite(text, call, prof, guard=guard, tex=ed.is_math_file(path))
     except _guard.RewriteRefused as e:
+        if e.stage == "protected-span":
+            # The model broke the placeholder contract: the pass failed.
+            print(f"[fix] pass {attempt} failed: {ed.refusal_text(e)}")
+            return "failed", text
         print(f"[fix] pass {attempt} refused: {e}; kept the previous text")
         if attempt == 1:
             _write(out_path, text)

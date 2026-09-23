@@ -92,7 +92,11 @@ standard reaches the model only under a house profile, and no instruction names
 an outside score. The rewrite is
 a suggestion; read it against the original.
 
-Every rewrite passes the meaning guard before it lands. If the model drops a
+The model never sees your code, math, links, citations, or quotes. Each one is
+swapped for a placeholder before the rewrite and spliced back byte for byte after
+it, and a rewrite that loses a placeholder is refused.
+
+Every rewrite also passes the meaning guard before it lands. If the model drops a
 number, flips a negation, weakens a "must" to a "should", or loses a link, a code
 span, a citation, or a name, the rewrite is refused, the previous text stays, and
 the output names what blocked it:

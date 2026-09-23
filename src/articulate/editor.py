@@ -40,6 +40,7 @@ except (AttributeError, ValueError):
     pass
 
 from . import claude_cli
+from . import guard as _guard
 from .origin_guard import clean_notes, strip_origin_guesses
 from .origin_guard import note as origin_note
 from .claude_cli import ClaudeUnavailable  # noqa: F401  (re-exported for callers)
@@ -106,15 +107,29 @@ def mechanical(path, profile=None):
     return mechanical_text(text, profile)
 
 
-def masked_rewrite(text, rewrite_fn, profile=None):
-    """Run rewrite_fn(masked_text, findings_summary) with every math span hidden,
-    then splice the spans back byte for byte. The summary is built from the masked
-    text as well, because it quotes document lines and would otherwise carry the
-    math into the prompt. Raises MathSpliceError when the rewrite lost or doubled
-    a placeholder."""
-    masked, spans = mask_math(text)
-    _, mech = mechanical_text(masked, profile)
-    return splice_math(rewrite_fn(masked, mech), spans)
+def masked_rewrite(text, rewrite_fn, profile=None, guard=None, tex=False):
+    """Run rewrite_fn(masked_text, findings_summary) through the guard. Every
+    protected span (code, math, links, citations, quotes, freeze terms) is hidden
+    and spliced back byte for byte after the call. The summary is built from the
+    masked text as well, because it quotes document lines and would otherwise
+    carry protected content into the prompt. `tex` reads the text as a .tex file,
+    so every inline $...$ is math. Raises guard.RewriteRefused when a placeholder
+    did not come back intact or the candidate moved a surface invariant."""
+    g = guard or _guard.RewriteGuard()
+    return g.run(lambda masked: rewrite_fn(masked, mechanical_text(masked, profile)[1]),
+                 text, tex=tex)
+
+
+def refusal_text(err):
+    """The message for a refused rewrite. A refusal that lost, repeated or
+    invented a math placeholder says it altered masked math."""
+    blocking = getattr(err, "blocking", ()) or ()
+    math = any(isinstance(b, dict) and (b.get("kind") == "math"
+                                        or "MATH_" in str(b.get("placeholder") or ""))
+               for b in blocking)
+    if getattr(err, "stage", "") == "protected-span" and math:
+        return f"the rewrite altered masked math and was refused: {err}"
+    return str(err)
 
 
 def claude_call(instructions, text, timeout=600):

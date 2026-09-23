@@ -40,6 +40,9 @@ meaning and its calibrated uncertainty. Terms of art stay; do not swap a
 technical term for a synonym. If removing a pattern would change a claim's
 meaning or strength, keep the meaning and find another phrasing. Never invent
 facts, sources, or numbers. Do not add a single claim that was not there.
+The text may contain placeholders such as ⦃CODE_0_1a2b3c⦄. Each stands
+for protected content you cannot see. Copy every placeholder exactly as written,
+once, in its original order; never add, split, merge, or edit one.
 
 In mathematical or scientific prose, preserve every symbol and its first-use
 definition, every quantifier and its order (for all, there exists), every stated

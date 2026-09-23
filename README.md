@@ -48,7 +48,10 @@ before you rely on any output.
   falls, the gate does not go from ok to blocked and no note the mode requires
   opens. No instruction names an outside score, a sentence-length target or a
   vocabulary level.
-- **Guard the meaning.** Every rewrite passes a meaning guard. A rewrite that
+- **Guard the meaning.** Code, math, links, citations, quotes, and freeze terms
+  are masked before the model sees the text and spliced back byte for byte, and
+  a rewrite that loses a placeholder is refused. Every rewrite then passes a
+  meaning guard. A rewrite that
   drops a number, flips a negation, weakens a modal, or loses a link, code span,
   citation, quote, or name is refused, and the original is kept. `articulate
   compare` runs the same check on any two files. The invariants are surface
