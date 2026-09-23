@@ -7,8 +7,9 @@ editor commands resolve a profile the same way without the config's globs; they
 read the config for freeze terms and the protect switches.
 
 `check`, `score`, `receipt`, and `compare` read the nearest `.articulate.json`
-above each file. `--config PATH` names the config file to use, and `--config
-none` turns discovery off. See [Project config](features.md#project-config).
+above each file; for standard input the search starts in the current directory.
+`--config PATH` names the config file to use, and `--config none` turns
+discovery off. See [Project config](features.md#project-config).
 
 ## check
 
