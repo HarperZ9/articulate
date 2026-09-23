@@ -5,8 +5,9 @@ profile is chosen by an explicit flag, then an in-file `writing-profile:` tag,
 then a glob in the project config, then the file path, then the default.
 
 `check`, `score`, `receipt`, and `compare` read the nearest `.articulate.json`
-above each file. `--config PATH` names the config file to use, and `--config
-none` turns discovery off. See [Project config](features.md#project-config).
+above each file; for standard input the search starts in the current directory.
+`--config PATH` names the config file to use, and `--config none` turns
+discovery off. See [Project config](features.md#project-config).
 
 ## check
 
