@@ -74,7 +74,11 @@ concreteness, commitment, economy, rhythm, and a restatable fact in each
 paragraph. It accepts a pass only when the detector gate stays clean and no
 quality score drops, so a rewrite never regresses.
 
-Every rewrite passes the meaning guard before it lands. If the model drops a
+The model never sees your code, math, links, citations, or quotes. Each one is
+swapped for a placeholder before the rewrite and spliced back byte for byte after
+it, and a rewrite that loses a placeholder is refused.
+
+Every rewrite also passes the meaning guard before it lands. If the model drops a
 number, flips a negation, weakens a "must" to a "should", or loses a link, a code
 span, a citation, or a name, the rewrite is refused, the previous text stays, and
 the output names what blocked it:

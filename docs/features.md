@@ -135,6 +135,32 @@ all of them and still change the meaning, for example by moving a negation into
 another clause or by swapping two numbers. A reported change can also be harmless.
 A `preserved` verdict is a screen. It is no proof that two texts say the same thing.
 
+## Protected spans
+
+Before any model rewrite, the editor replaces each protected span with a numbered
+placeholder, so the model never sees the protected text and cannot alter it:
+
+- fenced and inline code,
+- math (display math always; inline `$...$` on a `.tex` file, or elsewhere when
+  its body carries TeX syntax, so a pair of prices is left alone),
+- URLs and emails,
+- citations,
+- block quotes and quoted material,
+- freeze terms.
+
+After the rewrite, every placeholder must come back exactly once and in its
+original order. Each span is then spliced back byte for byte. A placeholder that
+is missing, duplicated, invented, reordered, or mangled refuses the whole rewrite,
+and the previous text is kept. Each placeholder carries a short nonce drawn from
+the text's hash, so a document that contains a similar string cannot collide with
+one. Block quotes and quoted material can be released with `--unprotect
+quotes,blockquotes` for a document whose quotes are the author's own prose; code,
+math, links, citations, and freeze terms stay protected.
+
+The guarantee is structural: it holds whatever the model returns. It covers the
+spans the patterns recognize. A citation style or a link form the patterns miss
+is ordinary prose to the model, and the meaning guard is the second check on it.
+
 ## Re-derivable receipts
 
 A receipt records a detection result together with the exact text hash and a

@@ -34,6 +34,15 @@ keeps the count, and two swapped numbers keep the set. A reported change can als
 be harmless. A `preserved` verdict means no listed invariant moved, and that is
 all it means. Read a rewrite against its original before you ship it.
 
+## Protected spans cover what the patterns recognize
+
+A protected span (code, math, a link, a citation, a quote, a freeze term) is
+masked before the model sees the text and spliced back byte for byte, and a
+rewrite that loses or reorders a placeholder is refused. That guarantee holds
+whatever the model returns. It applies to the spans the patterns recognize. A
+citation style or a link form outside those patterns reaches the model as prose,
+where only the meaning guard checks it.
+
 ## A receipt attests a screening, not compliance
 
 A receipt records that a named, fingerprinted ruleset ran against a specific text

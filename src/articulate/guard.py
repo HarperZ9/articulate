@@ -3,11 +3,15 @@
 """
 articulate.guard -- refuse a rewrite that breaks what the original says.
 
-Every model rewrite in the editor layer runs through a RewriteGuard. The guard
-compares the candidate against the text it was asked to rewrite with the meaning
+Every model rewrite in the editor layer runs through a RewriteGuard, in two
+stages. First, the protected spans (code, math, links, citations, block quotes,
+quoted material, freeze terms) are masked before the model sees the text and
+spliced back byte for byte after it (articulate.protect); a placeholder that does
+not come back exactly once and in order refuses the rewrite. Second, the spliced
+candidate is compared against the text it was asked to rewrite with the meaning
 guard (articulate.meaning). When any invariant is dropped, added, or changed, the
 candidate is refused: the guard raises RewriteRefused, the caller keeps the
-previous text, and the refusal names each invariant that blocked it.
+previous text, and the refusal names each placeholder or invariant that blocked it.
 
 A caller can let named kinds change with `allow` ("number", "entity", ...), or
 every kind with "all". That is an explicit opt-out, recorded in the log, never a
@@ -19,7 +23,7 @@ The guard checks surface invariants only; see the meaning module for what a
 """
 from __future__ import annotations
 
-from . import invariants, meaning
+from . import invariants, meaning, protect
 
 
 class RewriteRefused(RuntimeError):
@@ -49,12 +53,26 @@ def parse_allow(allow):
     return kinds
 
 
-class RewriteGuard:
-    """Wraps a rewrite function with the meaning guard."""
+def parse_unprotect(unprotect):
+    """The protect options with the named configurable kinds switched off."""
+    if isinstance(unprotect, str):
+        unprotect = unprotect.split(",")
+    names = {u.strip().lower() for u in (unprotect or ()) if u and u.strip()}
+    unknown = names - set(protect.CONFIGURABLE)
+    if unknown:
+        raise ValueError(f"cannot unprotect {sorted(unknown)}; configurable: "
+                         f"{', '.join(protect.CONFIGURABLE)}")
+    return {k: k not in names for k in protect.CONFIGURABLE}
 
-    def __init__(self, *, freeze=(), allow=()):
+
+class RewriteGuard:
+    """Wraps a rewrite function with the protected-span layer and the meaning guard."""
+
+    def __init__(self, *, freeze=(), allow=(), protect_opts=None):
         self.freeze = tuple(freeze or ())
         self.allow = parse_allow(allow)
+        self.protect = {k: True for k in protect.CONFIGURABLE}
+        self.protect.update(protect_opts or {})
         self.log = []
 
     def check(self, before, after):
@@ -71,14 +89,26 @@ class RewriteGuard:
                 stage="meaning", blocking=block, report=report)
         return after
 
-    def run(self, rewrite_fn, text):
-        """Call rewrite_fn(text) and check the candidate against `text`."""
-        return self.check(text, rewrite_fn(text))
+    def run(self, rewrite_fn, text, *, tex=False):
+        """Mask the protected spans, call rewrite_fn on the masked text, splice
+        the spans back, and check the candidate against `text`. `tex` reads every
+        inline $...$ as math, as a .tex file does."""
+        masked, spans = protect.mask(text, freeze=self.freeze, tex=tex, **self.protect)
+        raw = rewrite_fn(masked)
+        try:
+            candidate = protect.restore(raw, masked, spans)
+        except protect.ProtectError as e:
+            self.log.append({"accepted": False, "stage": "protected-span",
+                             "blocking": e.problems, "report": None,
+                             "before": text, "after": raw})
+            raise RewriteRefused("protected spans did not survive the rewrite: " + str(e),
+                                 stage="protected-span", blocking=e.problems) from e
+        return self.check(text, candidate)
 
-    def wrap(self, fn):
+    def wrap(self, fn, *, tex=False):
         """Adapt a polish-style rewrite(text, mech, worst) to run guarded."""
         def rewrite(text, mech, worst):
-            return self.run(lambda t: fn(t, mech, worst), text)
+            return self.run(lambda t: fn(t, mech, worst), text, tex=tex)
         return rewrite
 
     def refusals(self):
@@ -92,8 +122,12 @@ def add_arguments(ap):
                          "by default a rewrite that changes any invariant is refused")
     ap.add_argument("--freeze", action="append", default=[], metavar="TERM",
                     help="a term every rewrite must keep verbatim (repeatable)")
+    ap.add_argument("--unprotect", default="", metavar="KINDS",
+                    help="let the model edit these normally protected kinds: "
+                         "quotes, blockquotes (comma list)")
 
 
 def from_args(args):
     return RewriteGuard(freeze=getattr(args, "freeze", ()),
-                        allow=getattr(args, "allow_change", ""))
+                        allow=getattr(args, "allow_change", ""),
+                        protect_opts=parse_unprotect(getattr(args, "unprotect", "")))

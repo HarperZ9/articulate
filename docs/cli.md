@@ -121,7 +121,11 @@ python -m articulate.editor --review FILE
 
 - `--allow-change KINDS`: let these invariant kinds change. Without it, a rewrite
   that changes any invariant is refused and the previous text is kept.
-- `--freeze TERM`: a term every rewrite must keep verbatim. Repeat for more.
+- `--freeze TERM`: a term every rewrite must keep verbatim. Repeat for more. A
+  freeze term is also a protected span, so the model never sees it.
+- `--unprotect KINDS`: let the model edit block quotes or quoted material
+  (`quotes`, `blockquotes`). Code, math, links, citations, and freeze terms
+  always stay protected.
 
 ## Exit codes
 

@@ -22,6 +22,13 @@ release is cut.
   `allow_change` argument and report a refusal with its blocking invariants.
 - Limit: the invariants are surface proxies. A rewrite can keep all of them and
   still change the meaning. The report says so in a `does_not_prove` field.
+- Protected spans. The math masking that `.tex` files had is now a general layer
+  used before every model rewrite: fenced and inline code, math, URLs and emails,
+  citations, block quotes, quoted material, and freeze terms become placeholders
+  the model never sees. Every placeholder must come back exactly once and in
+  order, and is spliced back byte for byte; a missing, duplicated, invented,
+  reordered, or mangled placeholder refuses the rewrite. `--unprotect
+  quotes,blockquotes` releases the two configurable kinds.
 
 ## 0.4.0
 

@@ -78,6 +78,9 @@ meaning and its calibrated uncertainty. Terms of art stay; do not swap a
 technical term for a synonym. If removing a device would change a claim's
 meaning or strength, keep the meaning and find another phrasing. Never invent
 facts, sources, or numbers. Do not add a single claim that was not there.
+The text may contain placeholders such as ⦃CODE_0_1a2b3c⦄. Each stands
+for protected content you cannot see. Copy every placeholder exactly as written,
+once, in its original order; never add, split, merge, or edit one.
 
 In mathematical or scientific prose, preserve every symbol and its first-use
 definition, every quantifier and its order (for all, there exists), every stated
@@ -393,15 +396,11 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
     judge = judge_fn or quality_judge
     base_rewrite = rewrite_fn or (lambda t, mech, worst:
                                   rewrite_once(t, mech, worst, is_html, standard_delta))
-    if is_tex:
-        # Mask every math span before the rewrite and splice it back after, so a
-        # formula is preserved byte for byte whatever the model returns.
-        def rewrite(t, mech, worst):
-            masked, spans = mask_math(t)
-            return splice_math(base_rewrite(masked, mech, worst), spans)
-    else:
-        rewrite = base_rewrite
-    rewrite = (guard or _guard.RewriteGuard()).wrap(rewrite)
+    # The guard masks every protected span (code, math, links, citations, quotes,
+    # freeze terms) before the model sees the text and splices it back byte for
+    # byte, then refuses a candidate that moved an invariant. On .tex every inline
+    # $...$ counts as math.
+    rewrite = (guard or _guard.RewriteGuard()).wrap(base_rewrite, tex=is_tex)
 
     def evaluate(t):
         r = assess(t, prof)
@@ -496,7 +495,8 @@ Where the source is thin, do not pad; tighten.
 Output ONLY the rewritten text, with nothing before or after it. No commentary, \
 no code fences, no explanation."""
         try:
-            result = g.run(lambda t: strip_preamble(claude_call(instr, t)), text)
+            result = g.run(lambda t: strip_preamble(claude_call(instr, t)), text,
+                           tex=ext.lower() == ".tex")
         except _guard.RewriteRefused as e:
             print(f"[fix] pass {attempt} refused: {e}; kept the previous text")
             if attempt == 1:

@@ -45,7 +45,10 @@ say what a verdict and a receipt mean and what they never claim.
   loops until five qualities (concreteness, commitment, economy, rhythm, a
   restatable fact per paragraph) clear a bar. Gated on writing quality, never a
   detector score. Needs an LLM backend (local model or the `claude` CLI).
-- **Guard the meaning.** Every rewrite passes a meaning guard. A rewrite that
+- **Guard the meaning.** Code, math, links, citations, quotes, and freeze terms
+  are masked before the model sees the text and spliced back byte for byte, and
+  a rewrite that loses a placeholder is refused. Every rewrite then passes a
+  meaning guard. A rewrite that
   drops a number, flips a negation, weakens a modal, or loses a link, code span,
   citation, quote, or name is refused, and the original is kept. `articulate
   compare` runs the same check on any two files. The invariants are surface
