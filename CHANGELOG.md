@@ -4,6 +4,59 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+Fixed quadratic run time in the markup masks. Findings do not change, and the
+ruleset fingerprint does not move.
+
+Before the prose passes run, the detector blanks URLs, e-mail addresses, and HTML
+tags on every line, plus quoted speech under a dialogue-exempt genre. It did this
+with `re.sub` and patterns that backtrack quadratically on a long line where a
+match never completes. `strip_markup` runs up to six times per line, so one such
+line stalled `check_text` far past the 3 s budget the ReDoS test enforces.
+
+Time for one `check_text` call, before and after:
+
+- `"v1." * 10000` under flavored: 16.0 s before, 0.08 s after.
+- `"1.1.1.1." * 5000` under flavored: 53.2 s before, 0.14 s after.
+- `("1.1.1.1." * 5000) + "@"` under flavored: 47.8 s before, 0.14 s after.
+- `"twenty-" * 8000` under flavored: 29.5 s before, 0.08 s after.
+- `"<a " * 40000` under flavored: 23.5 s before, 0.33 s after.
+- `"\u201ca " * 20000` under literary-fiction: 13.6 s before, 0.21 s after.
+
+Before and after were measured on one machine, each pair in one session. That
+machine was under load from other work, so the absolute numbers are noisy.
+
+- The e-mail part of the URL pattern retried every word boundary inside a long
+  run of word characters, dots, or hyphens, and rescanned the rest of the run
+  each time. The tag pattern rescanned to the end of the line from every
+  unclosed `<`. The quote pattern did the same from every unclosed curly quote.
+- New module `articulate.masking` returns exactly what `re.sub` returns with
+  each pattern, in linear time. The e-mail scan tests each run once, because
+  every start inside one run succeeds or fails together. The tag mask stops at
+  the last `>` in the line, since no tag can start after it. The quote mask
+  skips an opening mark once one of its kind has failed to close before the
+  next newline.
+- The patterns themselves are unchanged and remain the definition of record as
+  `detector.URL`, `detector.TAG`, and `detector.QUOTED`. `tests/test_masking.py`
+  compares each mask with `re.sub` on 4,000 generated lines and a set of hand
+  cases. It also holds each mask, and the detector functions `strip_markup` and
+  `mask_quotes` that apply them, to 0.25 s per call on long hostile lines, so a
+  call site that goes back to `re.sub` fails as well.
+- `tests/test_redos.py` adds the inputs above, so the 3 s per-input budget now
+  covers them. The tag and curly-quote inputs use 40000 and 20000 repeats. With
+  10000 repeats the old code took 0.3 s to 0.6 s on the tag input and 3.3 s to
+  5.0 s on the quote input, so a regression there could pass the budget.
+- Checked for identical output: full `check_text` results (rule ids, spans,
+  labels, gate, texture, cadence) and per-line masks were compared before and
+  after on every tracked file except the VS Code extension's lockfile, under no
+  profile and under all 18 profiles, 6 genres, and 29 modes. The same check ran
+  on 612 further documents (Markdown, HTML, SVG) under 9 configurations. No
+  result differed. The benchmark output is byte-identical.
+  The fingerprint hashes the tier patterns and leaves the mask patterns out. It
+  reads `sha256:9f78a7484bb20f84` before and after, so `RULESET_SEMVER` stays
+  0.5.0.
+
 ## 0.4.0
 
 Added a stdio MCP server that runs from a bare install.

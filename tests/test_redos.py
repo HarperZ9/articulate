@@ -17,6 +17,20 @@ ADVERSARIAL = [
     "".join("<b>x</b>" for _ in range(5000)),
     "```\n" + ("x" * 40000) + "\n```",
     ("cutting-edge " * 6000),
+    # A long run of word characters mixed with dots or hyphens, with no "@". The
+    # e-mail alternative of the URL mask used to retry every word boundary in the
+    # run and rescan the rest of it each time: 14 s to 68 s per check_text call.
+    "v1." * 10000,
+    "1.1.1.1." * 5000,
+    "twenty-" * 8000,
+    # The same run with an "@" at the end and no domain after it. A fix that
+    # only skips lines without "@" would still take about 40 s here.
+    ("1.1.1.1." * 5000) + "@",
+    # Unclosed "<": the tag mask rescanned to the end of the line from each one.
+    # On 10000 of them the old code stayed under the 3 s budget, so a regression
+    # would pass. On 40000 it took 13 s to 26 s per check_text call, and the
+    # fixed code takes about 0.35 s.
+    "<a " * 40000,
 ]
 
 
@@ -28,6 +42,12 @@ GENRE_ADVERSARIAL = [
     ("INT. " * 8000) + "ROOM",                 # slugline prefix repeated
     ("shivers ran down her spine " * 2000),    # the fiction lexicon, at length
     ("a mix of joy and " * 4000) + "fear washed over her",
+    # Unclosed curly quotes: the dialogue mask rescanned to the end of the line
+    # from each opening mark. On 10000 of them the old code took 3.3 s to 5.0 s
+    # per check_text call, too close to the budget to fail reliably. On 20000 it
+    # took 14 s to 21 s, and the fixed code takes under 0.5 s.
+    "\u201ca " * 20000,
+    "\u2018a " * 20000,
 ]
 
 
