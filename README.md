@@ -52,7 +52,8 @@ say what a verdict and a receipt mean and what they never claim.
   drops a number, flips a negation, weakens a modal, or loses a link, code span,
   citation, quote, or name is refused, and the original is kept. `articulate
   compare` runs the same check on any two files. The invariants are surface
-  proxies, so a pass is a screen and no proof of equivalence.
+  proxies, so a pass is a screen and no proof of equivalence. `--explain` prints
+  each changed sentence before and after, with the detector findings it carried.
 
 ## Use
 

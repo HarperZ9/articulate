@@ -18,7 +18,7 @@ DOCS = ["README.md", "editors/vscode/README.md",
 MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "receipt.py", "lsp_server.py", "pysource.py", "modes.py",
            "genres.py", "__init__.py", "invariants.py", "quantities.py",
-           "meaning.py", "guard.py", "cli_ext.py", "protect.py"]
+           "meaning.py", "guard.py", "cli_ext.py", "protect.py", "changes.py"]
 
 
 def _gate(path, text):

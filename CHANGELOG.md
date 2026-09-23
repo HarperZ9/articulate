@@ -29,6 +29,11 @@ release is cut.
   order, and is spliced back byte for byte; a missing, duplicated, invented,
   reordered, or mangled placeholder refuses the rewrite. `--unprotect
   quotes,blockquotes` releases the two configurable kinds.
+- Change report. `--explain` (text) or `--explain json` after `--fix` or
+  `--polish` lists each changed sentence before and after, the detector findings
+  it carried (rule id and message), the findings left in the new sentence, the
+  meaning-guard rows for the pair, and every refused candidate with its reason.
+  The MCP `fix` tool returns the same per-sentence records.
 
 ## 0.4.0
 

@@ -25,7 +25,7 @@ import tempfile
 from typing import List, Optional
 
 from . import detector as core
-from . import editor, guard, meaning
+from . import changes, editor, guard, meaning
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -148,6 +148,7 @@ def do_fix(text, is_html=False, allow_change=""):
     return {"ok": True, "rewrite": rewrite,
             "clean_after": after["clean"], "texture_after": after["texture_score"],
             "meaning": g.log[-1]["report"]["verdict"],
+            "changes": changes.build(text, rewrite)["changes"],
             "note": "a suggestion; read it against the original before shipping"}
 
 

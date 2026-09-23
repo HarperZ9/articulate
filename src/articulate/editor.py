@@ -39,6 +39,7 @@ import re
 import subprocess
 import sys
 
+from . import changes as _changes
 from . import guard as _guard
 
 try:
@@ -543,6 +544,7 @@ def main():
     ap.add_argument("--mode", default=None,
                     help="a writing mode (domain/articulation, e.g. memo/argue)")
     _guard.add_arguments(ap)
+    _changes.add_arguments(ap)
     args = ap.parse_args()
     try:
         g = _guard.from_args(args)
@@ -570,10 +572,14 @@ def main():
     elif args.review:
         review(args.review, args.mode)
     elif args.polish:
-        return polish(args.polish, args.out, max(1, args.passes),
-                      max(1, min(5, args.bar)), mode=args.mode, guard=g)
+        out = args.out or _changes.default_out(target, "polished")
+        rc = polish(args.polish, out, max(1, args.passes),
+                    max(1, min(5, args.bar)), mode=args.mode, guard=g)
+        return _changes.finish(args, target, out, g, rc)
     else:
-        return fix(args.fix, args.out, max(1, args.passes), mode=args.mode, guard=g)
+        out = args.out or _changes.default_out(target, "fixed")
+        rc = fix(args.fix, out, max(1, args.passes), mode=args.mode, guard=g)
+        return _changes.finish(args, target, out, g, rc)
     return 0
 
 

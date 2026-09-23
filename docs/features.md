@@ -161,6 +161,25 @@ The guarantee is structural: it holds whatever the model returns. It covers the
 spans the patterns recognize. A citation style or a link form the patterns miss
 is ordinary prose to the model, and the meaning guard is the second check on it.
 
+## The change report
+
+`--explain` after `--fix` or `--polish` prints what changed and why the tool
+touched it, sentence by sentence. Each changed pair shows:
+
+- the sentence before and the sentence after, with its line;
+- the detector findings in the original sentence, by rule id and message, which
+  are the tells the rewrite was asked to fix;
+- any finding still present in the new sentence;
+- the meaning-guard rows that fall inside the pair, such as a changed number.
+
+It also lists every candidate the guard refused, with the placeholder or the
+invariant that blocked it. `--explain json` gives the same report as JSON. Pairs
+come from a sentence alignment, so a merged or split sentence shows up as one
+record that spans several sentences. The findings column shows what the detector
+saw in the original sentence. It cannot show that the model changed the sentence
+for that reason, and a change with no finding came from the judgment-level
+instructions. The MCP `fix` tool returns the same per-sentence records.
+
 ## Re-derivable receipts
 
 A receipt records a detection result together with the exact text hash and a

@@ -93,6 +93,27 @@ Run the same check on any two versions, with a gate for continuous integration:
 articulate compare post.md post.fixed.md --gate
 ```
 
+To see what changed and why, add `--explain`. Each changed sentence is shown
+before and after, with the detector findings it carried:
+
+```bash
+python -m articulate.editor --fix post.md --explain
+```
+
+```
+[changes] post.md -> post.fixed.md: 1 change(s); detector findings 2 -> 0; meaning preserved
+  #1 L2 replace
+    - We leverage cutting-edge tools.
+    + We use current tools.
+      flagged before: HIGH corporate-verb/leverage-underscore-reflect-as-corporate-verb: leverage / underscore / reflect (as corporate verb): 'leverage'
+      flagged before: MEDIUM marketing/marketing-superlative: marketing superlative: 'cutting-edge'
+```
+
+Had the model written "We build with two tools", the guard would have refused
+it: "two" is a number the original never stated.
+
+`--explain json` writes the same report as JSON for a review tool.
+
 The rewrite is a suggestion. Read it against the original before you ship it. The
 guard compares surface facts, so a rewrite can pass it and still shift a claim.
 The tool optimizes writing quality, and it never tunes prose toward a lower
