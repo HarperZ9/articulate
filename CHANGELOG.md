@@ -4,6 +4,80 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+Changes on the main branch since 0.4.0. The package version stays 0.4.0 until a
+release is cut.
+
+- Meaning guard. `articulate compare ORIGINAL REWRITE` reports each surface
+  invariant as kept, dropped, added, or changed, with line and column: numbers
+  with units, dates, times, and versions; negations; modal strength (with BCP 14
+  capitals as their own value); scope words; named entities; URLs and emails;
+  code; math; citations; quoted strings; and freeze terms. `--gate` exits 1 on a
+  change, and `--allow-change KINDS` exempts named kinds.
+- `fix` and `polish` run every model rewrite through the guard. A rewrite that
+  changes an invariant is refused, the previous text is kept, and the output
+  names the invariant. `--allow-change` and `--freeze` configure it.
+- Both MCP servers gain a local `compare` tool, and `fix` and `polish` take an
+  `allow_change` argument and report a refusal with its blocking invariants.
+- Limit: the invariants are surface proxies. A rewrite can keep all of them and
+  still change the meaning. The report says so in a `does_not_prove` field.
+- Protected spans. The math masking that `.tex` files had is now a general layer
+  used before every model rewrite: fenced and inline code, math, URLs and emails,
+  citations, block quotes, quoted material, and freeze terms become placeholders
+  the model never sees. Every placeholder must come back exactly once and in
+  order, and is spliced back byte for byte; a missing, duplicated, invented,
+  reordered, or mangled placeholder refuses the rewrite. `--unprotect
+  quotes,blockquotes` releases the two configurable kinds.
+- Change report. `--explain` (text) or `--explain json` after `--fix` or
+  `--polish` lists each changed sentence before and after, the detector findings
+  it carried (rule id and message), the findings left in the new sentence, the
+  meaning-guard rows for the pair, and every refused candidate with its reason.
+  The MCP `fix` tool returns the same per-sentence records.
+- Project config. A `.articulate.json` found by walking up from each file (JSON,
+  because the package supports Python 3.9) sets profiles by path glob, banned
+  and preferred terms with reasons and suggestions, allowed terms of art, freeze
+  terms, the protect switches, and rule-pack options. Terminology findings carry
+  their own rule ids (`terminology/banned/<term>`, `terminology/preferred/<form>`)
+  and show in `check`, SARIF, the LSP server, per-span verdicts, and receipts.
+  `--config PATH` or `--config none` overrides discovery on every command, and
+  `articulate config PATH` shows what applies. A malformed file stops the command
+  with the reason.
+- Receipts made under a config embed the project rules and their hash, so a
+  replay re-derives with no access to the project.
+- Ruleset semver moves 0.5.0 to 0.6.0. Older receipts read `Unverifiable` under
+  this build, as a ruleset change should.
+- Domain profiles, each backed by a rule pack with its own rule ids:
+  `ux-microcopy` (length limits for buttons, labels, and errors; case; vague
+  error text; link text such as "click here"), `code-review` (condescension
+  markers, requests with no reason, absolute language about a person),
+  `plain-language` (a Flesch-Kincaid grade gate, default 8, plus long sentences
+  and wordy phrases), and `controlled-english` (sentence length, one instruction
+  per sentence, idioms, phrasal verbs, a sentence-initial pronoun with no noun).
+  The existing `normative-spec` register gains RFC 2119 / RFC 8174 checks:
+  mixed-case keywords (gating), keywords without the boilerplate, "MAY NOT",
+  lowercase keywords in a declared document, SHALL mixed with MUST, and the
+  pre-8174 boilerplate. Every numeric default is a config option and names its
+  source in the docs; heuristic rules sit in LOW and never block.
+- `corpus/domains/` holds synthetic samples with an `expect.json`; the benchmark
+  now counts a domain mismatch as a regression.
+- Drafting provenance. `articulate drafts record|show|verify FILE` keeps a local,
+  append-only, hash-chained log of a document's drafts in `.articulate/drafts/`
+  beside it: text hash, time, word count, texture score, lines added and removed
+  since the previous draft, and an optional `--actor` label. Draft text is stored
+  content-addressed so `verify` re-derives each entry; `--no-snapshot` keeps
+  hashes only. A broken log is never extended. It records that drafts were
+  logged in an order; it does not prove who typed them, its times come from the
+  local clock, a deleted tail is undetectable without an external anchor, and it
+  is not a tool for passing a detector.
+- Docs state the scope and the privacy posture concretely: the rules read English
+  only; the core makes no network call and has no telemetry; only the editor
+  sends text, to the user's own backend, with protected spans masked. A test now
+  fails the build if any module imports a network library or if a module other
+  than the editor starts a subprocess. The README no longer says the editor
+  defaults to a local model: the code supports the `claude` CLI only, and a
+  local-model backend stays on the roadmap.
+
 ## 0.4.0
 
 Added a stdio MCP server that runs from a bare install.

@@ -74,9 +74,50 @@ concreteness, commitment, economy, rhythm, and a restatable fact in each
 paragraph. It accepts a pass only when the detector gate stays clean and no
 quality score drops, so a rewrite never regresses.
 
+The model never sees your code, math, links, citations, or quotes. Each one is
+swapped for a placeholder before the rewrite and spliced back byte for byte after
+it, and a rewrite that loses a placeholder is refused.
+
+Every rewrite also passes the meaning guard before it lands. If the model drops a
+number, flips a negation, weakens a "must" to a "should", or loses a link, a code
+span, a citation, or a name, the rewrite is refused, the previous text stays, and
+the output names what blocked it:
+
+```
+[fix] pass 1 refused: meaning guard refused the rewrite: changed modal 'must' (L3) -> 'should' (L3); kept the previous text
+```
+
+Run the same check on any two versions, with a gate for continuous integration:
+
+```bash
+articulate compare post.md post.fixed.md --gate
+```
+
+To see what changed and why, add `--explain`. Each changed sentence is shown
+before and after, with the detector findings it carried:
+
+```bash
+python -m articulate.editor --fix post.md --explain
+```
+
+```
+[changes] post.md -> post.fixed.md: 1 change(s); detector findings 2 -> 0; meaning preserved
+  #1 L2 replace
+    - We leverage cutting-edge tools.
+    + We use current tools.
+      flagged before: HIGH corporate-verb/leverage-underscore-reflect-as-corporate-verb: leverage / underscore / reflect (as corporate verb): 'leverage'
+      flagged before: MEDIUM marketing/marketing-superlative: marketing superlative: 'cutting-edge'
+```
+
+Had the model written "We build with two tools", the guard would have refused
+it: "two" is a number the original never stated.
+
+`--explain json` writes the same report as JSON for a review tool.
+
 The rewrite is a suggestion. Read it against the original before you ship it. The
-tool optimizes writing quality, and it never tunes prose toward a lower detector
-score. See [Boundaries](boundaries.md).
+guard compares surface facts, so a rewrite can pass it and still shift a claim.
+The tool optimizes writing quality, and it never tunes prose toward a lower
+detector score. See [Boundaries](boundaries.md).
 
 ## 5. Match the register with a mode
 
@@ -100,6 +141,42 @@ convention: quoted dialogue is exempt, craft devices report without blocking, an
 a report-only lexicon flags generation artifacts. For a proof or a technical
 paper, `academic/prove` and `science-writing/explain` protect math and keep rigor
 vocabulary clean. See [Features](features.md#writing-modes).
+
+Some writing has rules of its own. A file of UI strings checks under
+`ux-microcopy`:
+
+```bash
+articulate check strings.txt --profile ux-microcopy --verbose
+```
+
+```
+[articulate] strings.txt [ux-microcopy]: 0 high, 4 medium (blocked)  texture 0/100
+  L1 [MEDIUM ux-length] button label has 7 words and 34 characters; the limit is 3 words and 26 characters: button: Save And Continue To The Next Step
+  L5 [MEDIUM ux-link-text] link text that names no destination; name where the link goes: link: For details, click here.
+  L3 [LOW ux-vague-error] error text without a cause and a next step: say what happened and what to do: error: Something went wrong.
+```
+
+`code-review`, `plain-language`, and `controlled-english` work the same way, and
+`normative-spec` checks RFC 2119 keywords. See
+[Features](features.md#domain-profiles).
+
+A team sets its own vocabulary in a `.articulate.json` at the repository root:
+
+```json
+{
+  "version": 1,
+  "profiles": {"blog/**": "essay"},
+  "terminology": {
+    "banned": [{"term": "whitelist", "suggestion": "allowlist"}],
+    "preferred": [{"use": "sign in", "instead_of": ["log in", "login"]}]
+  },
+  "freeze": ["Articulate"]
+}
+```
+
+Every later check of a file under that root reports a banned term as
+`terminology/banned/whitelist` with its suggestion, and every rewrite keeps
+"Articulate" verbatim. `articulate config post.md` shows what applies.
 
 ## 6. Record a re-derivable receipt
 
@@ -161,5 +238,26 @@ The repository ships a GitHub Action and a pre-commit hook. The Action can also
 re-verify committed receipts and fail the build on drift. See
 [Features](features.md#surfaces) and the `action.yml` in the repository root.
 
-That is the full loop: screen, localize, judge, rewrite, record, and gate. Each
-step is local, and each verdict is one a reviewer can reproduce.
+## 9. Keep a record of your drafts
+
+If someone may later ask how the post came to be, record each draft as you go:
+
+```bash
+articulate drafts record post.md --actor alice
+articulate drafts show post.md
+articulate drafts verify post.md
+```
+
+```
+[drafts] post.md: intact, 4 draft(s)
+  note: the current file matches the last recorded draft (4)
+```
+
+The log is a hash chain, so an edited or removed entry reads `broken`. It records
+that the drafts were logged in this order. It cannot show who typed them, and it
+is not a way to pass a detector. See
+[Boundaries](boundaries.md#a-draft-log-records-a-process-and-proves-no-authorship).
+
+That is the full loop: screen, localize, judge, rewrite, record, gate, and keep a
+drafting record. Each step is local, and each verdict is one a reviewer can
+reproduce.

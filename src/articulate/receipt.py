@@ -36,7 +36,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
-from . import detector, profiles
+from . import detector, profiles, project
 
 SCHEMA = "articulate/receipt/v1"
 AUDIT_SCHEMA = "articulate/receipt/audit/v1"
@@ -107,7 +107,7 @@ def _block_receipt(text, prof) -> list:
 
 def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
                  redact: str = None, reviewer: str = None,
-                 created_at: str = None) -> dict:
+                 created_at: str = None, config=None) -> dict:
     """Build a receipt. `redact` None gives the full content-bearing receipt;
     "drop" or "hash" gives a content-free audit receipt (schema audit/v1) that keeps
     no verbatim document text. The per-span blocks are already content-free.
@@ -118,7 +118,10 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
     if redact not in (None, "drop", "hash"):
         raise ValueError(f"redact must be None, 'drop', or 'hash'; got {redact!r}")
     pname = profile_name or profiles.DEFAULT
-    prof = profiles.load(pname)
+    # Project rules (terminology, rule-pack options) change the findings, so the
+    # receipt embeds them with their hash and a replay re-derives under them.
+    rules = project.rules_payload(config)
+    prof = project.apply_payload(profiles.load(pname), rules)
     r = detector.check_text(text, profile=prof)
     content_free = redact in ("drop", "hash")
     rec = {
@@ -140,6 +143,9 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
     }
     if content_free:
         rec["redaction"] = redact
+    if rules:
+        rec["project_rules"] = rules
+        rec["project_rules_sha256"] = project.payload_sha256(rules)
     if per_span:
         rec["blocks"] = _block_receipt(text, prof)
     return rec
@@ -171,6 +177,15 @@ def verify_receipt(receipt: dict, text: str):
         prof = profiles.load(pname)
     except profiles.ProfileError:
         return "Unverifiable", f"receipt names an unknown profile {pname!r}"
+    rules = receipt.get("project_rules")
+    if rules is not None:
+        if receipt.get("project_rules_sha256") != project.payload_sha256(rules):
+            return "Unverifiable", "embedded project rules do not match their recorded hash"
+        try:
+            project.check_payload(rules)
+        except project.ConfigError as e:
+            return "Unverifiable", f"embedded project rules are malformed: {e}"
+        prof = project.apply_payload(prof, rules)
     r = detector.check_text(text, profile=prof)
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.

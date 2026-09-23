@@ -71,6 +71,53 @@ def test_detect_injection_is_bounded():
         assert elapsed < 3.0, f"detect_injection input {i} took {elapsed:.2f}s (possible ReDoS)"
 
 
+# The meaning guard extracts invariants from both sides of every rewrite, so its
+# patterns and its per-token sentence-start check get the same budget. The entity
+# cases are long single lines, where a per-token scan back to the line start was
+# once quadratic.
+MEANING_ADVERSARIAL = [
+    "1" * 40000, "1," * 20000, "(" * 40000, "(Smith " * 8000, "[@" * 20000,
+    "$" * 40000, "$a^" * 10000, "`" * 40000, "\\begin{proof}" * 5000,
+    "http://" * 8000, "a@b." * 10000, "May " * 10000, "10 ms " * 8000,
+    "Smith et al" * 5000, "doi:10.1234/" * 5000, "A " * 20000, "```\n" * 10000,
+    "v1." * 10000, "1.1.1.1." * 5000, "twenty-" * 8000,
+]
+
+
+def test_meaning_guard_is_bounded():
+    from articulate import meaning
+    for i, text in enumerate(MEANING_ADVERSARIAL + ADVERSARIAL):
+        start = time.perf_counter()
+        meaning.compare(text, text[: len(text) // 2])
+        elapsed = time.perf_counter() - start
+        assert elapsed < 3.0, f"meaning.compare input {i} took {elapsed:.2f}s"
+
+
+# The rule packs and project terminology (articulate.rules_ext) are timed on their
+# own layer, so this budget measures them and not the core passes above.
+PACK_ADVERSARIAL = [
+    "button: " + "a " * 20000, '"k": "' + "x" * 40000, "<a " * 10000, "[here" * 10000,
+    "MUST " * 10000, "MUST not " * 5000, "RFC 2119 " * 5000, "please " * 10000,
+    "why did you " * 5000, "Open the and " * 5000, "out of the " * 8000,
+    "This is " * 8000, "in order " * 8000, ("word " * 30 + ". ") * 400,
+    "error: " + "oops " * 10000, "a. " * 20000, "\n".join(["- item"] * 20000),
+]
+
+
+def test_rule_packs_are_bounded():
+    from articulate import rules_ext
+    term = {"banned": [{"term": "whitelist"}],
+            "preferred": [{"use": "sign in", "instead_of": ["log in"]}]}
+    for name in ("ux-microcopy", "code-review", "plain-language", "normative-spec",
+                 "controlled-english"):
+        prof = dict(profiles.load(name), terminology=term)
+        for i, text in enumerate(PACK_ADVERSARIAL + MEANING_ADVERSARIAL + ADVERSARIAL):
+            start = time.perf_counter()
+            rules_ext.scan(text, text.splitlines(keepends=True), prof)
+            elapsed = time.perf_counter() - start
+            assert elapsed < 3.0, f"{name} pack input {i} took {elapsed:.2f}s"
+
+
 def test_empty_and_whitespace_are_clean():
     prof = profiles.load("flavored")
     for text in ("", "\n\n\n", "   ", "\t\t"):

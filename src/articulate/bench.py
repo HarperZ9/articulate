@@ -24,7 +24,6 @@ Exit code is the number of misclassified files (0 = perfect), for CI use.
 """
 import json
 import os
-import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -136,6 +135,12 @@ def main(argv):
           f"[~ = known ceiling, not a regression]")
     print("[bench] note: device-clean AI can pass Articulate yet fail a trained "
           "detector; those are the honest misses, marked ~ and gated as expected.")
+    # The domain rule packs have their own regression corpus under domains/.
+    from . import bench_domains
+    domains = os.path.join(corpus, "domains")
+    if os.path.isfile(os.path.join(domains, "expect.json")):
+        print()
+        misses += bench_domains.main([domains])
     return misses
 
 

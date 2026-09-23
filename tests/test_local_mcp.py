@@ -100,7 +100,7 @@ def test_status_and_doctor_answer_without_a_backend():
     assert doctor["tools"] == [t["name"] for t in local_mcp.TOOLS]
     # The split is the honest part: a host with no LLM backend still gets a
     # working detector, and doctor says which tools that covers.
-    assert doctor["local_only"] == ["check", "score"]
+    assert doctor["local_only"] == ["check", "score", "compare"]
     assert set(doctor["needs_llm_backend"]) == {"judge", "fix", "polish"}
 
 

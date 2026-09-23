@@ -29,6 +29,24 @@ say what a verdict and a receipt mean and what they never claim.
   essay, narrative, and more) sets which findings block. Fiction gates nothing;
   procedures and essays gate strictly. Profiles resolve from `--profile`, an
   in-file `writing-profile:` tag, or the file path.
+- **Check domain rules.** Domain profiles add deterministic rules for one kind of
+  writing: `ux-microcopy` (button, label, and error length, case, vague errors,
+  "click here" links), `code-review` (condescension, requests with no reason,
+  absolute language about a person), `plain-language` (a Flesch-Kincaid grade
+  gate, default grade 8, configurable), `controlled-english` (sentence length,
+  one instruction per sentence, idioms, phrasal verbs), and RFC 2119 / RFC 8174
+  keyword checks inside `normative-spec`. Each default names its source, and a
+  heuristic rule reports without blocking.
+- **Set project rules.** A `.articulate.json` file, found by walking up from each
+  file, maps path globs to profiles, bans or prefers terms (each with its own rule
+  id, reason, and suggestion), allows terms of art, and names freeze terms every
+  rewrite must keep. Terminology findings show in `check`, SARIF, the LSP server,
+  and receipts, which embed the rules so a replay needs no access to the project.
+- **Record drafts.** `articulate drafts record` keeps a local, hash-chained log
+  of a document's drafts (hash, time, word count, texture score, change size, an
+  optional actor label), and `drafts verify` re-derives it. It records a process
+  for a reader who asks how a document came to be. It cannot show who typed the
+  text, and it is not a way to pass a detector.
 - **Choose a mode or a genre.** A writing mode crosses a domain register with an
   articulation need, such as `memo/argue` or `technical-docs/explain`. The genre
   axis reads narrative and expressive prose by its own convention: `literary-fiction`,
@@ -44,7 +62,17 @@ say what a verdict and a receipt mean and what they never claim.
   `fix` rewrites to the standard, self-checked against the detector. `polish`
   loops until five qualities (concreteness, commitment, economy, rhythm, a
   restatable fact per paragraph) clear a bar. Gated on writing quality, never a
-  detector score. Needs an LLM backend (local model or the `claude` CLI).
+  detector score. Needs an LLM backend: today the `claude` CLI on your machine,
+  under your own account. A local-model backend is on the roadmap.
+- **Guard the meaning.** Code, math, links, citations, quotes, and freeze terms
+  are masked before the model sees the text and spliced back byte for byte, and
+  a rewrite that loses a placeholder is refused. Every rewrite then passes a
+  meaning guard. A rewrite that
+  drops a number, flips a negation, weakens a modal, or loses a link, code span,
+  citation, quote, or name is refused, and the original is kept. `articulate
+  compare` runs the same check on any two files. The invariants are surface
+  proxies, so a pass is a screen and no proof of equivalence. `--explain` prints
+  each changed sentence before and after, with the detector findings it carried.
 
 ## Use
 
@@ -69,6 +97,9 @@ python -m articulate.cli check doc.md --content-free --sarif > doc.sarif  # no s
 # audit: query committed receipts locally (no server), and re-verify they still hold
 python -m articulate.cli audit receipts/                 # recorded verdicts, blocked rules
 python -m articulate.cli audit receipts/ --reverify --gate   # exit 1 if a source drifted
+
+# meaning guard: did a rewrite keep every number, negation, modal, link, and name?
+python -m articulate.cli compare post.md post.fixed.md --gate
 
 # SARIF for CI (GitHub Code Scanning, Azure, reviewdog)
 python -m articulate.cli check src/**/*.md --sarif > articulate.sarif
@@ -111,11 +142,40 @@ about whether the theorem is true. A clearly written proof can still be false, a
 Articulate never checks the mathematics. Correctness comes from referees and proof
 assistants (Lean, Coq, Isabelle), never from this tool.
 
-## Privacy
+## Privacy and runtime
 
-The detector never touches the network. The editor layer defaults to a local
-model where configured, and an `--offline` mode is on the roadmap for air-gapped
-use. A content-free audit receipt keeps no verbatim text: it drops the matched
+- **No network in the core.** `check`, `score`, `receipt`, `verify`, `audit`,
+  `compare`, `config`, `drafts`, the LSP server, and the MCP tools `check`,
+  `score`, and `compare` run on the Python standard library with no network call.
+  No module in the package imports a network library, and a test fails the build
+  if one does.
+- **No telemetry.** Articulate sends no usage data, crash reports, or analytics
+  anywhere, and it has no account or license check.
+- **The model backend is yours.** Only the editor commands (`judge`, `fix`,
+  `polish`, `review`) and the matching MCP tools send text out, and only to the
+  backend you run: today the `claude` CLI on your machine, under your own
+  account and its terms. Before a rewrite, code, math, links, citations, quotes,
+  and freeze terms are replaced by placeholders, so those spans never reach the
+  model; the surrounding prose does.
+- **What stays on disk.** The editor writes its rewrite to an output file. A full
+  receipt stores each matched substring (use `--redact` for none). A draft log
+  stores each draft's text beside the document unless you record with
+  `--no-snapshot`. The other commands write nothing.
+- **Runtime.** Python 3.9 or later, with no third-party dependency in the core
+  (the optional fastmcp server needs the `mcp` extra). The package is about 330
+  KB of Python source. On one development machine, checking a 3,900-word page
+  took about 60 ms after a 60 ms import; your numbers will differ.
+
+## Scope: English only
+
+Every pattern, word list, and readability formula in Articulate is for English.
+A document in another language is screened, and the English rules simply do not
+fire on it, so a clean result on non-English text means nothing about that
+text. Multilingual rules are not planned for this release.
+
+## Receipts and privacy
+
+A content-free audit receipt keeps no verbatim text: it drops the matched
 substring and the exact offsets, keeping only which rule fired, its tier and
 category, and the line. A team can retain and replay a record without storing the
 sensitive source. Content-free is not zero-leakage: which rules fired and the line
@@ -137,5 +197,8 @@ verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
 one package. Version 0.4.0 is on PyPI as `articulate-writing`; the
-[changelog](CHANGELOG.md) records what each release added. A local-model editor
-backend and a labeled non-native corpus for a fairness check remain on the roadmap.
+[changelog](CHANGELOG.md) records what each release added. The meaning guard,
+protected spans, the change report, the project config, the domain profiles, and
+drafting provenance are listed under Unreleased in the changelog and are not in
+0.4.0. A local-model editor backend and a labeled non-native corpus for a
+fairness check remain on the roadmap.

@@ -2,7 +2,12 @@
 
 The command is `articulate`. With no file, a command reads standard input. A
 profile is chosen by an explicit flag, then an in-file `writing-profile:` tag,
-then the file path, then the default.
+then a glob in the project config, then the file path, then the default.
+
+`check`, `score`, `receipt`, and `compare` read the nearest `.articulate.json`
+above each file; for standard input the search starts in the current directory.
+`--config PATH` names the config file to use, and `--config none` turns
+discovery off. See [Project config](features.md#project-config).
 
 ## check
 
@@ -77,6 +82,60 @@ articulate audit [PATH ...] [--days N] [--reverify] [--gate] [--json]
   `Unverifiable` is reported, and it does not fail the gate.
 - `--json`: the summary as JSON.
 
+## compare
+
+Run the meaning guard on an original and a rewrite. Each surface invariant is
+reported as kept, dropped, added, or changed, with its line and column in each
+file. See [the meaning guard](features.md#the-meaning-guard).
+
+```bash
+articulate compare ORIGINAL REWRITE [--json] [--gate] [--show-kept]
+                   [--freeze TERM] [--allow-change KINDS]
+```
+
+- `--json`: the full report, with every item, its status, and both locations.
+- `--gate`: exit 1 when an invariant that may not change was dropped, added, or
+  changed.
+- `--show-kept`: list the kept invariants too.
+- `--freeze TERM`: a term that must survive verbatim. Repeat the flag for more.
+- `--allow-change KINDS`: kinds that may change without failing the gate, as a
+  comma list such as `number,entity`, or `all`. The kinds are `code`, `math`,
+  `url`, `citation`, `quote`, `freeze`, `number`, `modal`, `scope`, `negation`,
+  and `entity`.
+- `--config PATH`: the project config whose freeze terms join `--freeze`. By
+  default the nearest one above the original file is read.
+
+## config
+
+Show which project config applies to a path, the profile it resolves to, and
+what the config sets.
+
+```bash
+articulate config [PATH] [--config PATH] [--json]
+```
+
+## drafts
+
+Keep a local, hash-chained record of a document's drafts. See
+[Drafting provenance](features.md#drafting-provenance) and its
+[boundary](boundaries.md#a-draft-log-records-a-process-and-proves-no-authorship).
+
+```bash
+articulate drafts record FILE [--actor LABEL] [--log DIR] [--no-snapshot]
+articulate drafts show FILE [--log DIR] [--json]
+articulate drafts verify FILE [--log DIR] [--json]
+```
+
+- `record`: append an entry for the file's current text. Identical text adds
+  nothing, and a broken log is never extended.
+- `show`: list the entries.
+- `verify`: check the chain and re-derive each stored draft. `intact` exits 0,
+  `broken` exits 1, and a missing log exits 2.
+- `--actor LABEL`: a label for who recorded the draft. It is self-declared.
+- `--log DIR`: the log directory. The default is `.articulate/drafts` beside the
+  file.
+- `--no-snapshot`: store hashes only, with no draft text.
+
 ## modes
 
 List the available writing modes.
@@ -96,9 +155,30 @@ python -m articulate.editor --polish FILE [--out OUT] [--bar 1-5] [--mode M]
 python -m articulate.editor --review FILE
 ```
 
+`--fix` and `--polish` take the meaning-guard flags:
+
+- `--allow-change KINDS`: let these invariant kinds change. Without it, a rewrite
+  that changes any invariant is refused and the previous text is kept.
+- `--freeze TERM`: a term every rewrite must keep verbatim. Repeat for more. A
+  freeze term is also a protected span, so the model never sees it.
+- `--unprotect KINDS`: let the model edit block quotes or quoted material
+  (`quotes`, `blockquotes`). Code, math, links, citations, and freeze terms
+  always stay protected.
+- `--config PATH`: the project config whose freeze terms and protect switches
+  apply. By default the nearest one above the file is read.
+- `--explain [text|json]`: after the run, print the change report: each changed
+  sentence before and after, the detector findings that sentence carried, the
+  findings left in the new sentence, the meaning-guard rows for the pair, and
+  every refused candidate with its reason. `text` is the default.
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.
 - `verify`: 0 Match, 1 Drift, 2 Unverifiable.
 - `audit --reverify --gate`: 1 on a real integrity break, else 0.
-- `articulate.bench`: the number of misclassified files, so 0 is a perfect run.
+- `compare --gate`: 1 if an invariant that may not change moved, 2 if a file
+  cannot be read, else 0.
+- `drafts verify`: 0 intact, 1 broken, 2 no log.
+- `articulate.bench`: the number of misclassified files plus the number of domain
+  corpus mismatches, so 0 is a perfect run. `articulate.bench_domains` runs the
+  domain corpus alone.

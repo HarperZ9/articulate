@@ -25,4 +25,5 @@ reproduce.
 Articulate does detection and writing quality. It is not an evasion tool, it never
 disguises machine authorship, and a receipt attests that a named ruleset ran and
 re-derives, never that a result is correct or that a document meets a regulation.
-The full statement is in [Boundaries](boundaries.md).
+Its rules read English only, and the core makes no network call. The full
+statement is in [Boundaries](boundaries.md).

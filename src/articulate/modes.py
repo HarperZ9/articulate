@@ -228,7 +228,7 @@ def load(mode_id: str) -> dict:
     # fields the detector reads. Pass them through so a genre mode behaves like
     # its genre. A plain register base carries none of these, so nothing changes.
     for k in ("genre", "unit", "structural_classify", "dialogue_exempt",
-              "quote_exempt_all", "fiction_slop", "suppress_categories"):
+              "quote_exempt_all", "fiction_slop", "suppress_categories", "rule_packs"):
         if k in base:
             out[k] = base[k]
     return out

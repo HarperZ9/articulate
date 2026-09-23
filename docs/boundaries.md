@@ -3,6 +3,16 @@
 Articulate makes narrow claims on purpose. This page states what a verdict and a
 receipt mean, and what they never mean. Read it before you rely on either.
 
+## What leaves your machine
+
+The core commands, the LSP server, and the MCP tools `check`, `score`, and
+`compare` make no network call; no module imports a network library, and a test
+enforces it. Articulate has no telemetry. Only the editor commands send text out,
+to the model backend you run (today the `claude` CLI under your own account), and
+they mask code, math, links, citations, quotes, and freeze terms before the text
+leaves. The prose around those spans does reach the backend, under that
+backend's own terms.
+
 ## Detection and writing quality, never evasion
 
 Articulate finds where prose reads as machine-written or breaks a plain-writing
@@ -24,6 +34,53 @@ review or a machine-checked formalization in a proof assistant such as Lean, Coq
 or Isabelle, by other people, on a longer timescale. Articulate has no role in
 that verification step.
 
+## The meaning guard is a surface screen
+
+The meaning guard compares numbers, negations, modal strength, scope words, named
+entities, links, code, math, citations, quotes, and freeze terms between an
+original and a rewrite. Those are surface proxies for meaning. A rewrite can keep
+every one and still say something else: a negation moved into another clause
+keeps the count, and two swapped numbers keep the set. A reported change can also
+be harmless. A `preserved` verdict means no listed invariant moved, and that is
+all it means. Read a rewrite against its original before you ship it.
+
+## Protected spans cover what the patterns recognize
+
+A protected span (code, math, a link, a citation, a quote, a freeze term) is
+masked before the model sees the text and spliced back byte for byte, and a
+rewrite that loses or reorders a placeholder is refused. That guarantee holds
+whatever the model returns. It applies to the spans the patterns recognize. A
+citation style or a link form outside those patterns reaches the model as prose,
+where only the meaning guard checks it.
+
+## Domain rules are phrase lists and formulas
+
+The domain profiles run deterministic rules: phrase lists, length limits, and a
+readability formula. Each one sees the surface of the text. A readability grade
+comes from sentence length and estimated syllables, so a low grade shows short
+words and sentences and says nothing about whether a reader understands the page.
+The code review rules match phrases, so they miss a paraphrase and cannot read
+tone or intent. The BCP 14 rules check how keywords are written, and they cannot
+judge whether a requirement is right. The controlled-English profile is inspired
+by controlled-language practice. It does not implement ASD-STE100 or any other
+specification, and a clean result is no conformance claim.
+
+## A draft log records a process, and proves no authorship
+
+`articulate drafts` keeps a hash-chained record of a document's drafts. It shows
+that this sequence of drafts was recorded in this order, and that no entry was
+edited, removed, or reordered since, as far as the chain can tell. It does not
+show who typed the text: the actor label is whatever the recorder typed. It does
+not show when the text was written, because the times come from the local clock.
+It does not show that the record is complete, because deleting the newest entries
+leaves a valid shorter chain, and anyone with write access can build a new chain
+from scratch. Commit the log, or publish the latest entry hash somewhere you do
+not control alone, to make a later rewrite visible.
+
+It is a record of process for a reader who asks how a document came to be. It is
+not a way to pass an AI detector, it never changes the text, and a draft history
+is not evidence that a person wrote any given sentence.
+
 ## A receipt attests a screening, not compliance
 
 A receipt records that a named, fingerprinted ruleset ran against a specific text
@@ -43,6 +100,11 @@ that rule's small, public candidate set. Store a content-free record when you mu
 retain a screening without the source text, and understand that the residual is
 the rule and the line, and never the word.
 
+A project terminology rule is the extreme case. Its rule id names its term, as in
+`terminology/banned/whitelist`, and a receipt made under a project config embeds
+the project's term lists so it can be replayed. A content-free record of such a
+check therefore shows which listed term appeared and on which line.
+
 ## Hash mode
 
 A `--redact hash` receipt keeps a plain sha256 of each matched substring, for an
@@ -58,11 +120,13 @@ so a device-clean short text reads `unverifiable` and the receipt makes no clean
 claim. This is calibrated uncertainty, and it is deliberate. A banned device is
 unambiguous at any length, so a short text with a device still reads `flagged`.
 
-## English patterns, and an honest detection ceiling
+## English only, and an honest detection ceiling
 
-The detector's patterns are English literals. A non-English document is screened,
-and the patterns simply do not fire on it, so a clean result on non-English text
-means the English rules found nothing, and it is never a verification of the text.
+Articulate's scope is English. The detector's patterns, the domain rule packs,
+the meaning guard's word lists, and the readability formula are all written for
+English. A non-English document is screened, and the rules simply do not fire on
+it, so a clean result on non-English text means the English rules found nothing,
+and it is never a verification of the text.
 
 The detector reads devices, register, and structure with regular expressions. It
 cannot read token probability, so a device-clean passage of machine writing can

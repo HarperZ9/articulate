@@ -39,6 +39,9 @@ import re
 import subprocess
 import sys
 
+from . import changes as _changes
+from . import guard as _guard
+
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (AttributeError, ValueError):
@@ -76,6 +79,9 @@ meaning and its calibrated uncertainty. Terms of art stay; do not swap a
 technical term for a synonym. If removing a device would change a claim's
 meaning or strength, keep the meaning and find another phrasing. Never invent
 facts, sources, or numbers. Do not add a single claim that was not there.
+The text may contain placeholders such as ⦃CODE_0_1a2b3c⦄. Each stands
+for protected content you cannot see. Copy every placeholder exactly as written,
+once, in its original order; never add, split, merge, or edit one.
 
 In mathematical or scientific prose, preserve every symbol and its first-use
 definition, every quantifier and its order (for all, there exists), every stated
@@ -359,12 +365,14 @@ def _row(attempt, sc, gate, note):
           + f"{gate:<9}{note}")
 
 
-def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=None):
+def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=None,
+           guard=None):
     """The quality loop with a MONOTONIC NO-REGRESSION contract: a rewrite pass is
     accepted only if it keeps the detector gate ok AND lowers none of the five
     quality scores. A pass that regresses any score is discarded and the best kept.
     Mode-aware: it consumes the mode's quality weights, required-fix advisories, and
     standard delta. The stopping criterion is writing quality, never a detector score.
+    Every candidate also passes the meaning guard; a refused one keeps the best text.
 
     rewrite_fn(text, mech, worst) and judge_fn(text) are injectable for testing."""
     ext = os.path.splitext(path)[1]
@@ -389,14 +397,11 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
     judge = judge_fn or quality_judge
     base_rewrite = rewrite_fn or (lambda t, mech, worst:
                                   rewrite_once(t, mech, worst, is_html, standard_delta))
-    if is_tex:
-        # Mask every math span before the rewrite and splice it back after, so a
-        # formula is preserved byte for byte whatever the model returns.
-        def rewrite(t, mech, worst):
-            masked, spans = mask_math(t)
-            return splice_math(base_rewrite(masked, mech, worst), spans)
-    else:
-        rewrite = base_rewrite
+    # The guard masks every protected span (code, math, links, citations, quotes,
+    # freeze terms) before the model sees the text and splices it back byte for
+    # byte, then refuses a candidate that moved an invariant. On .tex every inline
+    # $...$ counts as math.
+    rewrite = (guard or _guard.RewriteGuard()).wrap(base_rewrite, tex=is_tex)
 
     def evaluate(t):
         r = assess(t, prof)
@@ -430,7 +435,8 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
             _, mech = mechanical_text(best, prof)
             cand = rewrite(best, mech, worst)
         except (RuntimeError, subprocess.TimeoutExpired) as e:
-            print(f"[polish] rewrite failed: {e}")
+            refused = isinstance(e, _guard.RewriteRefused)
+            print(f"[polish] rewrite {'refused' if refused else 'failed'}: {e}; kept best")
             break
         if not cand or not cand.strip():
             print("[polish] empty rewrite; stopping")
@@ -451,7 +457,8 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
     return 0
 
 
-def fix(path, out_path, passes, mode=None):
+def fix(path, out_path, passes, mode=None, guard=None):
+    g = guard or _guard.RewriteGuard()
     ext = os.path.splitext(path)[1]
     if not out_path:
         out_path = os.path.splitext(path)[0] + ".fixed" + ext
@@ -489,7 +496,13 @@ Where the source is thin, do not pad; tighten.
 Output ONLY the rewritten text, with nothing before or after it. No commentary, \
 no code fences, no explanation."""
         try:
-            result = strip_preamble(claude_call(instr, text))
+            result = g.run(lambda t: strip_preamble(claude_call(instr, t)), text,
+                           tex=ext.lower() == ".tex")
+        except _guard.RewriteRefused as e:
+            print(f"[fix] pass {attempt} refused: {e}; kept the previous text")
+            if attempt == 1:
+                open(out_path, "w", encoding="utf-8").write(text)
+            break
         except (RuntimeError, subprocess.TimeoutExpired) as e:
             print(f"[fix] pass {attempt} failed: {e}")
             return 1
@@ -530,9 +543,15 @@ def main():
     ap.add_argument("--bar", type=int, default=4, help="quality bar 1-5 for --polish")
     ap.add_argument("--mode", default=None,
                     help="a writing mode (domain/articulation, e.g. memo/argue)")
+    _guard.add_arguments(ap)
+    _changes.add_arguments(ap)
     args = ap.parse_args()
-
     target = args.judge or args.fix or args.polish or args.review
+    try:
+        g = _guard.from_args(args, target)
+    except ValueError as e:          # a bad flag value or a malformed project config
+        print(f"[articulate] {e}")
+        return 2
     if not os.path.isfile(target):
         print(f"[articulate] no such file: {target}")
         return 2
@@ -552,10 +571,14 @@ def main():
     elif args.review:
         review(args.review, args.mode)
     elif args.polish:
-        return polish(args.polish, args.out, max(1, args.passes),
-                      max(1, min(5, args.bar)), mode=args.mode)
+        out = args.out or _changes.default_out(target, "polished")
+        rc = polish(args.polish, out, max(1, args.passes),
+                    max(1, min(5, args.bar)), mode=args.mode, guard=g)
+        return _changes.finish(args, target, out, g, rc)
     else:
-        return fix(args.fix, args.out, max(1, args.passes), mode=args.mode)
+        out = args.out or _changes.default_out(target, "fixed")
+        rc = fix(args.fix, out, max(1, args.passes), mode=args.mode, guard=g)
+        return _changes.finish(args, target, out, g, rc)
     return 0
 
 
