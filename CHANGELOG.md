@@ -27,10 +27,11 @@ host launched it. The install reported success and the server never started.
 - `tests/test_version_alignment.py` binds `pyproject.toml`, `articulate.__version__`
   and the version the MCP server reports. The three had no guard tying them
   together, so a release could ship reporting the previous version.
-- The publish workflow now pins its actions by commit SHA rather than by moving
-  tag, checks the release tag against the declared version, records artifact
-  digests, resolves every console script in a clean venv, and rebuilds a wheel
-  from the sdist before uploading.
+- The publish workflow now pins every action by commit SHA. A tag can be moved to
+  point at different code, which matters in a workflow that holds publishing
+  authority. It also checks the release tag against the declared version, records
+  artifact digests, resolves every console script in a clean venv, and rebuilds a
+  wheel from the sdist before uploading.
 
 ## 0.3.0
 
