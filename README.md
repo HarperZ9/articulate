@@ -29,6 +29,11 @@ say what a verdict and a receipt mean and what they never claim.
   essay, narrative, and more) sets which findings block. Fiction gates nothing;
   procedures and essays gate strictly. Profiles resolve from `--profile`, an
   in-file `writing-profile:` tag, or the file path.
+- **Set project rules.** A `.articulate.json` file, found by walking up from each
+  file, maps path globs to profiles, bans or prefers terms (each with its own rule
+  id, reason, and suggestion), allows terms of art, and names freeze terms every
+  rewrite must keep. Terminology findings show in `check`, SARIF, the LSP server,
+  and receipts, which embed the rules so a replay needs no access to the project.
 - **Choose a mode or a genre.** A writing mode crosses a domain register with an
   articulation need, such as `memo/argue` or `technical-docs/explain`. The genre
   axis reads narrative and expressive prose by its own convention: `literary-fiction`,

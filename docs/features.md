@@ -40,6 +40,58 @@ voice governs. `flavored` blocks the HIGH device tier, for docs and research.
 free. A profile resolves from an explicit flag, an in-file `writing-profile:` tag,
 or the file path.
 
+## Project config
+
+A project sets its own rules in a `.articulate.json` file. Articulate finds it
+by walking up from each checked file's directory, and the nearest file wins.
+`--config PATH` names a file, and `--config none` turns discovery off. The format
+is JSON because the package supports Python 3.9, and a TOML parser joined the
+standard library only in 3.11.
+
+```json
+{
+  "version": 1,
+  "profiles": {"docs/api/**": "api-docs", "blog/*.md": "essay"},
+  "terminology": {
+    "banned": [{"term": "whitelist", "suggestion": "allowlist",
+                "reason": "inclusive language"}],
+    "preferred": [{"use": "sign in", "instead_of": ["log in", "login"]}],
+    "allowed": ["leverage"]
+  },
+  "freeze": ["Articulate"],
+  "protect": {"quotes": true, "blockquotes": true}
+}
+```
+
+- `profiles` maps a path glob, relative to the config file, to a profile, genre,
+  or mode. The first matching glob wins. It ranks below `--profile`, `--mode`, and
+  an in-file `writing-profile:` tag, and above inference from the path.
+- `terminology` adds project rules to every check. A banned term fires as rule
+  `terminology/banned/<term>` (HIGH by default), and a replaced variant fires as
+  `terminology/preferred/<preferred form>` (MEDIUM by default). Each entry may set
+  its own `severity` and `match_case`, and the finding carries the reason and the
+  suggestion. Code spans, URLs, and fenced blocks are skipped. The findings show
+  in `check`, SARIF, the LSP server, per-span verdicts, and receipts.
+- `allowed` terms join the profile's terms-of-art keep list. They clear the
+  vocabulary and register rules; a structural device such as antithesis still
+  fires on them.
+- `freeze` terms are protected spans and meaning-guard invariants in every
+  rewrite and in `articulate compare`.
+- `protect` switches the two configurable protected kinds.
+- `options` tunes a domain rule pack by name, and an unknown pack or option is an
+  error.
+
+A malformed file stops the command with the file name and the reason: an unknown
+key, a bad type, an unknown profile, or a term that is both banned and allowed.
+It is never ignored in silence. The LSP server reports a broken config as a
+diagnostic and checks the document without it. `articulate config PATH` prints
+which config and profile apply to a file.
+
+A receipt made under a config embeds the terminology and options with their
+hash, so anyone can replay it with no access to the project. An edited rule set
+reads `Unverifiable`, and a consistently re-hashed edit that changes the findings
+reads `Drift`.
+
 ## Writing modes
 
 A mode crosses a domain register with an articulation need, what the prose does to

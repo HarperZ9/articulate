@@ -62,6 +62,11 @@ that rule's small, public candidate set. Store a content-free record when you mu
 retain a screening without the source text, and understand that the residual is
 the rule and the line, and never the word.
 
+A project terminology rule is the extreme case. Its rule id names its term, as in
+`terminology/banned/whitelist`, and a receipt made under a project config embeds
+the project's term lists so it can be replayed. A content-free record of such a
+check therefore shows which listed term appeared and on which line.
+
 ## Hash mode
 
 A `--redact hash` receipt keeps a plain sha256 of each matched substring, for an

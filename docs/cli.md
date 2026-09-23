@@ -2,7 +2,11 @@
 
 The command is `articulate`. With no file, a command reads standard input. A
 profile is chosen by an explicit flag, then an in-file `writing-profile:` tag,
-then the file path, then the default.
+then a glob in the project config, then the file path, then the default.
+
+`check`, `score`, `receipt`, and `compare` read the nearest `.articulate.json`
+above each file. `--config PATH` names the config file to use, and `--config
+none` turns discovery off. See [Project config](features.md#project-config).
 
 ## check
 
@@ -97,6 +101,17 @@ articulate compare ORIGINAL REWRITE [--json] [--gate] [--show-kept]
   comma list such as `number,entity`, or `all`. The kinds are `code`, `math`,
   `url`, `citation`, `quote`, `freeze`, `number`, `modal`, `scope`, `negation`,
   and `entity`.
+- `--config PATH`: the project config whose freeze terms join `--freeze`. By
+  default the nearest one above the original file is read.
+
+## config
+
+Show which project config applies to a path, the profile it resolves to, and
+what the config sets.
+
+```bash
+articulate config [PATH] [--config PATH] [--json]
+```
 
 ## modes
 
@@ -126,6 +141,8 @@ python -m articulate.editor --review FILE
 - `--unprotect KINDS`: let the model edit block quotes or quoted material
   (`quotes`, `blockquotes`). Code, math, links, citations, and freeze terms
   always stay protected.
+- `--config PATH`: the project config whose freeze terms and protect switches
+  apply. By default the nearest one above the file is read.
 - `--explain [text|json]`: after the run, print the change report: each changed
   sentence before and after, the detector findings that sentence carried, the
   findings left in the new sentence, the meaning-guard rows for the pair, and

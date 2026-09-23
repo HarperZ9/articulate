@@ -7,14 +7,15 @@ Each subcommand registers its parser here and sets a `handler`, so the core
 dispatcher in articulate.cli only needs one line to reach it.
 
   articulate compare ORIGINAL REWRITE [--json] [--gate] [--show-kept]
-                     [--freeze TERM] [--allow-change KINDS]
+                     [--freeze TERM] [--allow-change KINDS] [--config PATH]
+  articulate config [PATH] [--config PATH] [--json]
 """
 from __future__ import annotations
 
 import json
 import sys
 
-from . import guard, meaning
+from . import guard, meaning, project
 from .detector import binary_reason
 
 
@@ -43,10 +44,12 @@ def _cmd_compare(args):
         texts.append(text)
     try:
         allow = guard.parse_allow(args.allow_change)
-    except ValueError as e:
+        cfg = project.for_path(args.original, args.config)
+    except ValueError as e:          # a bad kind name or a malformed project config
         print(f"[articulate] {e}", file=sys.stderr)
         return 2
-    report = meaning.compare(texts[0], texts[1], freeze=args.freeze)
+    freeze = tuple(args.freeze) + (cfg.freeze if cfg else ())
+    report = meaning.compare(texts[0], texts[1], freeze=freeze)
     block = meaning.blocking(report, allow)
     if args.json:
         payload = dict(report, files={"original": args.original, "rewrite": args.rewrite},
@@ -70,9 +73,41 @@ def _register_compare(sub):
                    help="a term that must survive verbatim (repeatable)")
     p.add_argument("--allow-change", default="", metavar="KINDS",
                    help="invariant kinds that may change without failing --gate")
+    p.add_argument("--config", default=None, metavar="PATH",
+                   help="a project config file, or 'none'; its freeze terms join --freeze")
     p.set_defaults(handler=_cmd_compare)
+
+
+def _cmd_config(args):
+    """Show which project config applies to a path and what it sets."""
+    try:
+        cfg = project.for_path(args.path, args.config)
+        name = project.resolve(args.path, "", cfg=cfg)[0]
+    except ValueError as e:
+        print(f"[articulate] {e}", file=sys.stderr)
+        return 2
+    term = cfg.terminology if cfg else {}
+    info = {"config": cfg.path if cfg else None, "profile": name,
+            "banned": len(term.get("banned", [])), "preferred": len(term.get("preferred", [])),
+            "allowed": list(term.get("allowed", [])), "freeze": list(cfg.freeze if cfg else ()),
+            "protect": dict(cfg.protect) if cfg else {}, "options": cfg.options if cfg else {}}
+    if args.json:
+        print(json.dumps(info, ensure_ascii=False, indent=2))
+    else:
+        for key, value in info.items():
+            print(f"[config] {key}: {value}")
+    return 0
+
+
+def _register_config(sub):
+    p = sub.add_parser("config", help="show the project config that applies to a path")
+    p.add_argument("path", nargs="?", default=".", help="a file or directory (default: .)")
+    p.add_argument("--config", default=None, metavar="PATH", help="a config file, or 'none'")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(handler=_cmd_config)
 
 
 def register(sub):
     """Add every extension subcommand to the core CLI's subparsers."""
     _register_compare(sub)
+    _register_config(sub)

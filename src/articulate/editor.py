@@ -546,13 +546,12 @@ def main():
     _guard.add_arguments(ap)
     _changes.add_arguments(ap)
     args = ap.parse_args()
+    target = args.judge or args.fix or args.polish or args.review
     try:
-        g = _guard.from_args(args)
-    except ValueError as e:
+        g = _guard.from_args(args, target)
+    except ValueError as e:          # a bad flag value or a malformed project config
         print(f"[articulate] {e}")
         return 2
-
-    target = args.judge or args.fix or args.polish or args.review
     if not os.path.isfile(target):
         print(f"[articulate] no such file: {target}")
         return 2

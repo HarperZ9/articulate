@@ -19,7 +19,7 @@ import json
 import sys
 from urllib.parse import unquote, urlparse
 
-from . import profiles
+from . import project
 from .detector import check_text
 
 # LSP DiagnosticSeverity: 1 Error, 2 Warning, 3 Information, 4 Hint. A writing
@@ -75,10 +75,24 @@ def uri_to_path(uri):
     return path
 
 
-def build_diagnostics(text, uri, override=None):
-    prof = profiles.resolve(path=uri_to_path(uri), text=text, override=override)
+def _config_problem(path, config):
+    """(cfg, diagnostics): the project config for `path`, or None and one
+    diagnostic that names the broken config file, logged to stderr as well."""
+    try:
+        return project.for_path(path, config), []
+    except project.ConfigError as e:
+        print(f"[articulate-lsp] {e}", file=sys.stderr)
+        return None, [{"range": {"start": {"line": 0, "character": 0},
+                                 "end": {"line": 0, "character": 0}},
+                       "severity": 1, "code": "config", "source": "articulate",
+                       "message": f"project config ignored: {e}"}]
+
+
+def build_diagnostics(text, uri, override=None, config=None):
+    path = uri_to_path(uri)
+    cfg, diags = _config_problem(path, config)
+    prof = project.resolve(path, text, profile=override, cfg=cfg)[1]
     r = check_text(text, profile=prof)
-    diags = []
     for f in r["high"] + r["medium"] + r["low"]:
         line0 = f["line"] - 1
         ch0 = f["col"] - 1
@@ -102,7 +116,7 @@ def _publish(stdout, uri, diags):
     })
 
 
-def serve(stdin=None, stdout=None, profile_override=None):
+def serve(stdin=None, stdout=None, profile_override=None, config_override=None):
     stdin = stdin if stdin is not None else sys.stdin.buffer
     stdout = stdout if stdout is not None else sys.stdout.buffer
     while True:
@@ -118,13 +132,14 @@ def serve(stdin=None, stdout=None, profile_override=None):
             }})
         elif method == "textDocument/didOpen":
             td = msg["params"]["textDocument"]
-            _publish(stdout, td["uri"],
-                     build_diagnostics(td.get("text", ""), td["uri"], profile_override))
+            _publish(stdout, td["uri"], build_diagnostics(
+                td.get("text", ""), td["uri"], profile_override, config_override))
         elif method == "textDocument/didChange":
             uri = msg["params"]["textDocument"]["uri"]
             changes = msg["params"].get("contentChanges") or []
             text = changes[-1]["text"] if changes else ""
-            _publish(stdout, uri, build_diagnostics(text, uri, profile_override))
+            _publish(stdout, uri, build_diagnostics(text, uri, profile_override,
+                                                    config_override))
         elif method == "textDocument/didClose":
             _publish(stdout, msg["params"]["textDocument"]["uri"], [])
         elif method == "shutdown":
@@ -134,10 +149,13 @@ def serve(stdin=None, stdout=None, profile_override=None):
         # other requests/notifications (initialized, etc.) need no reply
 
 
+def _flag(name):
+    if name in sys.argv:
+        i = sys.argv.index(name)
+        if i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+    return None
+
+
 if __name__ == "__main__":
-    _override = None
-    if "--profile" in sys.argv:
-        _i = sys.argv.index("--profile")
-        if _i + 1 < len(sys.argv):
-            _override = sys.argv[_i + 1]
-    serve(profile_override=_override)
+    serve(profile_override=_flag("--profile"), config_override=_flag("--config"))

@@ -1388,6 +1388,12 @@ def check_text(text, *, profile=None, allow=()):
     }
     lines = text.splitlines(keepends=True)
     high, medium, low, doc = scan_lines(lines, keep, genre=genre)
+    if p.get("terminology") or p.get("rule_packs"):
+        # Project terminology and domain rule packs (articulate.rules_ext) gate
+        # like any other finding; they never feed the texture score.
+        from . import rules_ext
+        xh, xm, xl = rules_ext.scan(text, lines, p)
+        high, medium, low = high + xh, medium + xm, low + xl
     slop = (profile or {}).get("slop", "flavored")
     gate = GATE_TIERS.get(slop, frozenset({"HIGH"}))
     # gate_promote: a mode may block a specific category even when its tier is not
@@ -1529,7 +1535,7 @@ def detect_injection(text):
     return out
 
 
-RULESET_SEMVER = "0.5.0"
+RULESET_SEMVER = "0.6.0"
 
 
 def ruleset_fingerprint():
@@ -1575,6 +1581,8 @@ def ruleset_fingerprint():
             return sorted(o)
         raise TypeError(f"non-serializable ruleset value: {type(o).__name__}")
 
+    from . import rules_ext as _rules_ext
+    parts.extend(_rules_ext.fingerprint_parts())
     parts.append("PROFILES=" + _json.dumps(_profiles.PROFILES, sort_keys=True, default=_stable))
     parts.append("GENRES=" + _json.dumps(_genres.GENRES, sort_keys=True, default=_stable))
     parts.append("MODES=" + _json.dumps(_modes.MODES, sort_keys=True, default=_stable))
@@ -1590,7 +1598,8 @@ def known_categories():
     for lst in (HIGH, MEDIUM, REGISTER_JARGON, LOW, FICTION_SLOP, INJECTION):
         for cat, _label, _rx in lst:
             cats.add(cat)
-    return frozenset(cats)
+    from . import rules_ext
+    return frozenset(cats | rules_ext.categories())
 
 
 def texture_score(n_hard, n_soft, doc, words):

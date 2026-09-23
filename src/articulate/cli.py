@@ -6,24 +6,28 @@
   articulate score [FILE ...] [--profile P]
 
 With no FILE, reads stdin. The profile is chosen by --profile, else an in-file
-`writing-profile:` tag, else the file path, else the default. `--gate` exits 1
-when any input is blocked under its profile, for CI use.
+`writing-profile:` tag, else a glob in the project config (.articulate.json),
+else the file path, else the default. `--gate` exits 1 when any input is
+blocked under its profile, for CI use.
 """
 import argparse
 import json
 import os
 import sys
 
-from . import cli_ext, modes, profiles, pysource, receipt
+from . import cli_ext, modes, profiles, project, pysource, receipt
 from .detector import binary_reason, check_text, ruleset_fingerprint
 
 
+_RESOLVE_ERRORS = (profiles.ProfileError, modes.ModeError, project.ConfigError)
+
+
 def _resolve(name, text, args):
-    """Return (label, profile_dict). A --mode wins over profile inference."""
-    if getattr(args, "mode", None):
-        return args.mode, modes.load(args.mode)
-    pname = _profile_name(name, text, args.profile)
-    return pname, profiles.load(pname)
+    """Return (label, profile_dict) with the project config applied. A --mode
+    wins, then --profile, an in-file tag, the config's globs, and the path."""
+    cfg = project.for_path(name, getattr(args, "config", None))
+    return project.resolve(name, text, profile=args.profile,
+                           mode=getattr(args, "mode", None), cfg=cfg)
 
 
 def _redact(r):
@@ -114,17 +118,6 @@ def to_sarif(results):
     }
 
 
-def _profile_name(path, text, override):
-    if override:
-        return override
-    tag = profiles.declared_profile(text)
-    if tag:
-        return tag
-    if path and path != "<stdin>":
-        return profiles.profile_for(path)
-    return profiles.DEFAULT
-
-
 def _decode(data):
     """Decode source bytes to text with line endings canonicalized to LF, so a
     CRLF/LF rewrite of an otherwise-identical file is not read as a change. The same
@@ -202,7 +195,7 @@ def _cmd_check(args):
         text = _prose(name, text)
         try:
             pname, prof = _resolve(name, text, args)
-        except (profiles.ProfileError, modes.ModeError) as e:
+        except _RESOLVE_ERRORS as e:
             print(f"[articulate] {e}", file=sys.stderr)
             return 2
         r = check_text(text, profile=prof)
@@ -237,9 +230,14 @@ def _cmd_receipt(args):
         if reason:
             print(f"[articulate] {name}: cannot screen ({reason})", file=sys.stderr)
             continue
-        pname = _profile_name(name, text, args.profile)
-        rec = receipt.make_receipt(text, pname, per_span=getattr(args, "spans", False),
-                                   redact=redact, reviewer=reviewer)
+        try:
+            cfg = project.for_path(name, getattr(args, "config", None))
+            pname = project.resolve(name, text, profile=args.profile, cfg=cfg)[0]
+            rec = receipt.make_receipt(text, pname, per_span=getattr(args, "spans", False),
+                                       redact=redact, reviewer=reviewer, config=cfg)
+        except _RESOLVE_ERRORS as e:
+            print(f"[articulate] {name}: {e}", file=sys.stderr)
+            return 2
         rec["file"] = name
         print(json.dumps(rec, ensure_ascii=False, indent=2))
     return 0
@@ -386,7 +384,7 @@ def _cmd_score(args):
         text = _prose(name, text)
         try:
             pname, prof = _resolve(name, text, args)
-        except (profiles.ProfileError, modes.ModeError) as e:
+        except _RESOLVE_ERRORS as e:
             print(f"[articulate] {e}", file=sys.stderr)
             return 2
         r = check_text(text, profile=prof)
@@ -408,6 +406,9 @@ def main(argv=None):
         p.add_argument("--profile", default=None, help="force a register profile")
         p.add_argument("--mode", default=None,
                        help="a writing mode (domain/articulation, e.g. memo/argue)")
+        p.add_argument("--config", default=None, metavar="PATH",
+                       help="a project config file, or 'none'; default: the nearest "
+                            ".articulate.json above each file")
         if cmd == "check":
             p.add_argument("--json", action="store_true")
             p.add_argument("--sarif", action="store_true", help="emit SARIF 2.1.0")

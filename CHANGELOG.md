@@ -34,6 +34,19 @@ release is cut.
   it carried (rule id and message), the findings left in the new sentence, the
   meaning-guard rows for the pair, and every refused candidate with its reason.
   The MCP `fix` tool returns the same per-sentence records.
+- Project config. A `.articulate.json` found by walking up from each file (JSON,
+  because the package supports Python 3.9) sets profiles by path glob, banned
+  and preferred terms with reasons and suggestions, allowed terms of art, freeze
+  terms, the protect switches, and rule-pack options. Terminology findings carry
+  their own rule ids (`terminology/banned/<term>`, `terminology/preferred/<form>`)
+  and show in `check`, SARIF, the LSP server, per-span verdicts, and receipts.
+  `--config PATH` or `--config none` overrides discovery on every command, and
+  `articulate config PATH` shows what applies. A malformed file stops the command
+  with the reason.
+- Receipts made under a config embed the project rules and their hash, so a
+  replay re-derives with no access to the project.
+- Ruleset semver moves 0.5.0 to 0.6.0. Older receipts read `Unverifiable` under
+  this build, as a ruleset change should.
 
 ## 0.4.0
 

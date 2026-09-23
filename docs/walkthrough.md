@@ -142,6 +142,24 @@ a report-only lexicon flags generation artifacts. For a proof or a technical
 paper, `academic/prove` and `science-writing/explain` protect math and keep rigor
 vocabulary clean. See [Features](features.md#writing-modes).
 
+A team sets its own vocabulary in a `.articulate.json` at the repository root:
+
+```json
+{
+  "version": 1,
+  "profiles": {"blog/**": "essay"},
+  "terminology": {
+    "banned": [{"term": "whitelist", "suggestion": "allowlist"}],
+    "preferred": [{"use": "sign in", "instead_of": ["log in", "login"]}]
+  },
+  "freeze": ["Articulate"]
+}
+```
+
+Every later check of a file under that root reports a banned term as
+`terminology/banned/whitelist` with its suggestion, and every rewrite keeps
+"Articulate" verbatim. `articulate config post.md` shows what applies.
+
 ## 6. Record a re-derivable receipt
 
 Once the prose is where you want it, record a receipt so a reviewer can confirm

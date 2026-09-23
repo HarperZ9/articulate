@@ -125,9 +125,20 @@ def add_arguments(ap):
     ap.add_argument("--unprotect", default="", metavar="KINDS",
                     help="let the model edit these normally protected kinds: "
                          "quotes, blockquotes (comma list)")
+    ap.add_argument("--config", default=None, metavar="PATH",
+                    help="a project config file, or 'none'; default: the nearest "
+                         ".articulate.json above the file")
 
 
-def from_args(args):
-    return RewriteGuard(freeze=getattr(args, "freeze", ()),
-                        allow=getattr(args, "allow_change", ""),
-                        protect_opts=parse_unprotect(getattr(args, "unprotect", "")))
+def from_args(args, target=None):
+    """A guard from the CLI flags plus the project config for `target`: the
+    config's freeze terms and protect switches, with the flags applied on top."""
+    from . import project
+    cfg = project.for_path(target, getattr(args, "config", None)) if target else None
+    freeze = tuple(getattr(args, "freeze", ()) or ()) + (cfg.freeze if cfg else ())
+    opts = dict(cfg.protect) if cfg else {}
+    for kind, on in parse_unprotect(getattr(args, "unprotect", "")).items():
+        if not on:
+            opts[kind] = False
+    return RewriteGuard(freeze=freeze, allow=getattr(args, "allow_change", ""),
+                        protect_opts=opts)
