@@ -4,6 +4,25 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+Changes on the main branch since 0.4.0. The package version stays 0.4.0 until a
+release is cut.
+
+- Meaning guard. `articulate compare ORIGINAL REWRITE` reports each surface
+  invariant as kept, dropped, added, or changed, with line and column: numbers
+  with units, dates, times, and versions; negations; modal strength (with BCP 14
+  capitals as their own value); scope words; named entities; URLs and emails;
+  code; math; citations; quoted strings; and freeze terms. `--gate` exits 1 on a
+  change, and `--allow-change KINDS` exempts named kinds.
+- `fix` and `polish` run every model rewrite through the guard. A rewrite that
+  changes an invariant is refused, the previous text is kept, and the output
+  names the invariant. `--allow-change` and `--freeze` configure it.
+- Both MCP servers gain a local `compare` tool, and `fix` and `polish` take an
+  `allow_change` argument and report a refusal with its blocking invariants.
+- Limit: the invariants are surface proxies. A rewrite can keep all of them and
+  still change the meaning. The report says so in a `does_not_prove` field.
+
 ## 0.4.0
 
 Added a stdio MCP server that runs from a bare install.

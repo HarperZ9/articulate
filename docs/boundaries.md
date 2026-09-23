@@ -24,6 +24,16 @@ review or a machine-checked formalization in a proof assistant such as Lean, Coq
 or Isabelle, by other people, on a longer timescale. Articulate has no role in
 that verification step.
 
+## The meaning guard is a surface screen
+
+The meaning guard compares numbers, negations, modal strength, scope words, named
+entities, links, code, math, citations, quotes, and freeze terms between an
+original and a rewrite. Those are surface proxies for meaning. A rewrite can keep
+every one and still say something else: a negation moved into another clause
+keeps the count, and two swapped numbers keep the set. A reported change can also
+be harmless. A `preserved` verdict means no listed invariant moved, and that is
+all it means. Read a rewrite against its original before you ship it.
+
 ## A receipt attests a screening, not compliance
 
 A receipt records that a named, fingerprinted ruleset ran against a specific text

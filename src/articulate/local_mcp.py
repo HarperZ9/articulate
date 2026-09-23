@@ -25,13 +25,16 @@ import json
 import sys
 
 from . import __version__
-from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score
+from .mcp_server import do_check, do_compare, do_fix, do_judge, do_polish, do_score
 
 PROTOCOL = "2025-06-18"
 
 _TEXT = {"text": {"type": "string", "description": "the passage to read"}}
 _IS_HTML = {"is_html": {"type": "boolean", "default": False,
                         "description": "treat the input as HTML and preserve its markup"}}
+_ALLOW = {"allow_change": {"type": "string", "default": "",
+                           "description": ("invariant kinds a rewrite may change (comma "
+                                           "list, or 'all'); empty refuses any change")}}
 
 TOOLS = [
     {"name": "check",
@@ -49,12 +52,27 @@ TOOLS = [
                      "see: confident emptiness, vague abstraction, uncommitted hedging, weak "
                      "verbs, a buried point. Flags, does not rewrite. Needs an LLM backend."),
      "inputSchema": {"type": "object", "required": ["text"], "properties": dict(_TEXT)}},
+    {"name": "compare",
+     "description": ("The meaning guard. Reports which surface invariants (numbers, "
+                     "negations, modal strength, entities, URLs, code, citations, quotes, "
+                     "freeze terms) a rewrite kept, dropped, added, or changed, with "
+                     "locations. Surface proxies only; see does_not_prove in the result. "
+                     "Local, no network."),
+     "inputSchema": {"type": "object", "required": ["original", "rewrite"],
+                     "properties": dict(
+                         original={"type": "string", "description": "the original text"},
+                         rewrite={"type": "string", "description": "the rewritten text"},
+                         freeze={"type": "array", "items": {"type": "string"},
+                                 "description": "terms that must survive verbatim"},
+                         **_ALLOW)}},
     {"name": "fix",
      "description": ("Rewrite the text to the plain-writing standard and self-check the "
-                     "rewrite against the detector so it introduces no new tell. Offers a "
-                     "suggestion; the human decides. Needs an LLM backend."),
+                     "rewrite against the detector so it introduces no new tell. A rewrite "
+                     "that changes a surface invariant is refused unless allow_change names "
+                     "that kind. Offers a suggestion; the human decides. Needs an LLM "
+                     "backend."),
      "inputSchema": {"type": "object", "required": ["text"],
-                     "properties": dict(_TEXT, **_IS_HTML)}},
+                     "properties": dict(_TEXT, **_IS_HTML, **_ALLOW)}},
     {"name": "polish",
      "description": ("The quality loop: rewrite, then score five qualities (concreteness, "
                      "commitment, economy, rhythm, restatable-fact-per-paragraph) and iterate "
@@ -67,7 +85,7 @@ TOOLS = [
                               "description": "the quality bar every dimension must clear"},
                          passes={"type": "integer", "default": 3, "minimum": 1,
                                  "description": "how many rewrite attempts before giving up"},
-                         **_IS_HTML)}},
+                         **_IS_HTML, **_ALLOW)}},
     {"name": "articulate.status",
      "description": ("Liveness and identity of the articulate MCP server (name, version, "
                      "protocol). Network-free health probe."),
@@ -80,7 +98,7 @@ TOOLS = [
 
 # check and score read the text and nothing else. The rest call out to an editor
 # backend, so a host with no backend still gets a working detector.
-LOCAL_ONLY = ("check", "score")
+LOCAL_ONLY = ("check", "score", "compare")
 NEEDS_BACKEND = ("judge", "fix", "polish")
 
 
@@ -106,10 +124,10 @@ def _identity(include_detail: bool) -> dict:
     return info
 
 
-def _text_arg(args: dict) -> str:
-    text = args.get("text")
+def _text_arg(args: dict, name: str = "text") -> str:
+    text = args.get(name)
     if not isinstance(text, str):
-        raise ValueError("'text' is required and must be a string")
+        raise ValueError(f"'{name}' is required and must be a string")
     return text
 
 
@@ -129,12 +147,17 @@ def _call(params: dict) -> dict:
             result = do_score(_text_arg(args))
         elif name == "judge":
             result = do_judge(_text_arg(args))
+        elif name == "compare":
+            result = do_compare(_text_arg(args, "original"), _text_arg(args, "rewrite"),
+                                args.get("freeze") or (), str(args.get("allow_change", "")))
         elif name == "fix":
-            result = do_fix(_text_arg(args), bool(args.get("is_html", False)))
+            result = do_fix(_text_arg(args), bool(args.get("is_html", False)),
+                            str(args.get("allow_change", "")))
         elif name == "polish":
             result = do_polish(_text_arg(args), int(args.get("bar", 4)),
                                int(args.get("passes", 3)),
-                               bool(args.get("is_html", False)))
+                               bool(args.get("is_html", False)),
+                               str(args.get("allow_change", "")))
         else:
             return {"content": [{"type": "text", "text": "unknown tool %r" % (name,)}],
                     "isError": True}

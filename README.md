@@ -45,6 +45,11 @@ say what a verdict and a receipt mean and what they never claim.
   loops until five qualities (concreteness, commitment, economy, rhythm, a
   restatable fact per paragraph) clear a bar. Gated on writing quality, never a
   detector score. Needs an LLM backend (local model or the `claude` CLI).
+- **Guard the meaning.** Every rewrite passes a meaning guard. A rewrite that
+  drops a number, flips a negation, weakens a modal, or loses a link, code span,
+  citation, quote, or name is refused, and the original is kept. `articulate
+  compare` runs the same check on any two files. The invariants are surface
+  proxies, so a pass is a screen and no proof of equivalence.
 
 ## Use
 
@@ -69,6 +74,9 @@ python -m articulate.cli check doc.md --content-free --sarif > doc.sarif  # no s
 # audit: query committed receipts locally (no server), and re-verify they still hold
 python -m articulate.cli audit receipts/                 # recorded verdicts, blocked rules
 python -m articulate.cli audit receipts/ --reverify --gate   # exit 1 if a source drifted
+
+# meaning guard: did a rewrite keep every number, negation, modal, link, and name?
+python -m articulate.cli compare post.md post.fixed.md --gate
 
 # SARIF for CI (GitHub Code Scanning, Azure, reviewdog)
 python -m articulate.cli check src/**/*.md --sarif > articulate.sarif

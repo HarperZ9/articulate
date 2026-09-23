@@ -39,6 +39,8 @@ import re
 import subprocess
 import sys
 
+from . import guard as _guard
+
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (AttributeError, ValueError):
@@ -359,12 +361,14 @@ def _row(attempt, sc, gate, note):
           + f"{gate:<9}{note}")
 
 
-def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=None):
+def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=None,
+           guard=None):
     """The quality loop with a MONOTONIC NO-REGRESSION contract: a rewrite pass is
     accepted only if it keeps the detector gate ok AND lowers none of the five
     quality scores. A pass that regresses any score is discarded and the best kept.
     Mode-aware: it consumes the mode's quality weights, required-fix advisories, and
     standard delta. The stopping criterion is writing quality, never a detector score.
+    Every candidate also passes the meaning guard; a refused one keeps the best text.
 
     rewrite_fn(text, mech, worst) and judge_fn(text) are injectable for testing."""
     ext = os.path.splitext(path)[1]
@@ -397,6 +401,7 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
             return splice_math(base_rewrite(masked, mech, worst), spans)
     else:
         rewrite = base_rewrite
+    rewrite = (guard or _guard.RewriteGuard()).wrap(rewrite)
 
     def evaluate(t):
         r = assess(t, prof)
@@ -430,7 +435,8 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
             _, mech = mechanical_text(best, prof)
             cand = rewrite(best, mech, worst)
         except (RuntimeError, subprocess.TimeoutExpired) as e:
-            print(f"[polish] rewrite failed: {e}")
+            refused = isinstance(e, _guard.RewriteRefused)
+            print(f"[polish] rewrite {'refused' if refused else 'failed'}: {e}; kept best")
             break
         if not cand or not cand.strip():
             print("[polish] empty rewrite; stopping")
@@ -451,7 +457,8 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
     return 0
 
 
-def fix(path, out_path, passes, mode=None):
+def fix(path, out_path, passes, mode=None, guard=None):
+    g = guard or _guard.RewriteGuard()
     ext = os.path.splitext(path)[1]
     if not out_path:
         out_path = os.path.splitext(path)[0] + ".fixed" + ext
@@ -489,7 +496,12 @@ Where the source is thin, do not pad; tighten.
 Output ONLY the rewritten text, with nothing before or after it. No commentary, \
 no code fences, no explanation."""
         try:
-            result = strip_preamble(claude_call(instr, text))
+            result = g.run(lambda t: strip_preamble(claude_call(instr, t)), text)
+        except _guard.RewriteRefused as e:
+            print(f"[fix] pass {attempt} refused: {e}; kept the previous text")
+            if attempt == 1:
+                open(out_path, "w", encoding="utf-8").write(text)
+            break
         except (RuntimeError, subprocess.TimeoutExpired) as e:
             print(f"[fix] pass {attempt} failed: {e}")
             return 1
@@ -530,7 +542,13 @@ def main():
     ap.add_argument("--bar", type=int, default=4, help="quality bar 1-5 for --polish")
     ap.add_argument("--mode", default=None,
                     help="a writing mode (domain/articulation, e.g. memo/argue)")
+    _guard.add_arguments(ap)
     args = ap.parse_args()
+    try:
+        g = _guard.from_args(args)
+    except ValueError as e:
+        print(f"[articulate] {e}")
+        return 2
 
     target = args.judge or args.fix or args.polish or args.review
     if not os.path.isfile(target):
@@ -553,9 +571,9 @@ def main():
         review(args.review, args.mode)
     elif args.polish:
         return polish(args.polish, args.out, max(1, args.passes),
-                      max(1, min(5, args.bar)), mode=args.mode)
+                      max(1, min(5, args.bar)), mode=args.mode, guard=g)
     else:
-        return fix(args.fix, args.out, max(1, args.passes), mode=args.mode)
+        return fix(args.fix, args.out, max(1, args.passes), mode=args.mode, guard=g)
     return 0
 
 

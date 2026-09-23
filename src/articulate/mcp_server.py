@@ -22,9 +22,10 @@ stdout carries the MCP protocol; all logging goes to stderr.
 """
 import os
 import tempfile
+from typing import List, Optional
 
 from . import detector as core
-from . import editor
+from . import editor, guard, meaning
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -111,42 +112,73 @@ def do_judge(text):
                 "note": "detection tools work offline; the editor layer needs a local model or claude CLI credits"}
 
 
-def do_fix(text, is_html=False):
-    """Rewrite to the standard, self-gated on the detector. Needs the LLM backend."""
+def _refusal(e):
+    """A refused rewrite, reported as a result: the original is kept and the
+    blocking invariants are named, so the host can show why."""
+    return {"stage": e.stage, "reason": str(e), "blocking": e.blocking,
+            "note": "the previous text is kept; pass allow_change to accept a named "
+                    "kind of change"}
+
+
+def do_compare(original, rewrite, freeze=None, allow_change=""):
+    """The meaning guard: which surface invariants a rewrite kept, dropped, added,
+    or changed. Local, no network."""
+    if isinstance(freeze, str):
+        freeze = [freeze]
+    if any(not isinstance(t, str) for t in (freeze or ())):
+        raise ValueError("'freeze' must be a list of strings")
+    report = meaning.compare(original, rewrite, freeze=tuple(freeze or ()))
+    report["blocking"] = len(meaning.blocking(report, guard.parse_allow(allow_change)))
+    return report
+
+
+def do_fix(text, is_html=False, allow_change=""):
+    """Rewrite to the standard, self-gated on the detector and the meaning guard.
+    Needs the LLM backend."""
     _, mech = _mech_summary(text)
     try:
-        rewrite = editor.rewrite_once(text, mech, [], is_html)
+        g = guard.RewriteGuard(allow=allow_change)
+        rewrite = g.run(lambda t: editor.rewrite_once(t, mech, [], is_html), text)
+    except guard.RewriteRefused as e:
+        return {"ok": True, "rewrite": None, "refused": _refusal(e)}
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e),
                 "note": "the editor layer needs a local model or claude CLI credits"}
     after = do_check(rewrite)
     return {"ok": True, "rewrite": rewrite,
             "clean_after": after["clean"], "texture_after": after["texture_score"],
+            "meaning": g.log[-1]["report"]["verdict"],
             "note": "a suggestion; read it against the original before shipping"}
 
 
-def do_polish(text, bar=4, passes=3, is_html=False):
-    """Quality loop: rewrite and re-score five qualities until every one clears bar."""
+def do_polish(text, bar=4, passes=3, is_html=False, allow_change=""):
+    """Quality loop: rewrite and re-score five qualities until every one clears bar.
+    A candidate the meaning guard refuses ends the loop with the best text kept."""
     qualities = ("concreteness", "commitment", "economy", "rhythm", "restatable")
-    scorecard = []
+    scorecard, refused = [], None
     cur = text
     try:
+        g = guard.RewriteGuard(allow=allow_change)
         for attempt in range(passes + 1):
             chk = do_check(cur)
             q = editor.quality_judge(cur)
             sc = {k: int(q.get(k, 0) or 0) for k in qualities}
             scorecard.append({"pass": attempt, "scores": sc,
                               "mechanical_clean": chk["clean"], "verdict": q.get("verdict")})
-            if chk["clean"] and sc and min(sc.values()) >= bar:
+            if (chk["clean"] and sc and min(sc.values()) >= bar) or attempt == passes:
                 break
-            if attempt == passes:
-                break
-            cur = editor.rewrite_once(cur, _mech_summary(cur)[1], q.get("worst", []), is_html)
+            mech, worst = _mech_summary(cur)[1], q.get("worst", [])
+            cur = g.run(lambda t: editor.rewrite_once(t, mech, worst, is_html), cur)
+    except guard.RewriteRefused as e:
+        refused = _refusal(e)
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e), "scorecard": scorecard,
                 "note": "the editor layer needs a local model or claude CLI credits"}
-    return {"ok": True, "final_text": cur, "scorecard": scorecard,
-            "note": "gated on writing quality, never on a detector score"}
+    out = {"ok": True, "final_text": cur, "scorecard": scorecard,
+           "note": "gated on writing quality, never on a detector score"}
+    if refused:
+        out["refused"] = refused
+    return out
 
 
 def build_server():
@@ -174,19 +206,31 @@ def build_server():
         return do_judge(text)
 
     @mcp.tool
-    def fix(text: str, is_html: bool = False) -> dict:
-        """Rewrite the text to the plain-writing standard and self-check the rewrite
-        against the detector so it introduces no new tell. Offers a suggestion; the
-        human decides. Needs an LLM backend."""
-        return do_fix(text, is_html)
+    def compare(original: str, rewrite: str, freeze: Optional[List[str]] = None,
+                allow_change: str = "") -> dict:
+        """The meaning guard. Reports which surface invariants (numbers, negations,
+        modal strength, entities, URLs, code, citations, quotes, freeze terms) a
+        rewrite kept, dropped, added, or changed, with locations. Surface proxies
+        only; see does_not_prove in the result. Local, no network."""
+        return do_compare(original, rewrite, freeze, allow_change)
 
     @mcp.tool
-    def polish(text: str, bar: int = 4, passes: int = 3, is_html: bool = False) -> dict:
+    def fix(text: str, is_html: bool = False, allow_change: str = "") -> dict:
+        """Rewrite the text to the plain-writing standard and self-check the rewrite
+        against the detector so it introduces no new tell. A rewrite that changes a
+        surface invariant is refused unless allow_change names that kind. Offers a
+        suggestion; the human decides. Needs an LLM backend."""
+        return do_fix(text, is_html, allow_change)
+
+    @mcp.tool
+    def polish(text: str, bar: int = 4, passes: int = 3, is_html: bool = False,
+               allow_change: str = "") -> dict:
         """The quality loop: rewrite, then score five qualities (concreteness,
         commitment, economy, rhythm, restatable-fact-per-paragraph) and iterate until
-        every one clears `bar` (1-5) and the detector is clean. Gated on writing
-        quality, never on a detector score. Needs an LLM backend."""
-        return do_polish(text, bar, passes, is_html)
+        every one clears `bar` (1-5) and the detector is clean. Each candidate passes
+        the meaning guard. Gated on writing quality, never on a detector score.
+        Needs an LLM backend."""
+        return do_polish(text, bar, passes, is_html, allow_change)
 
     return mcp
 

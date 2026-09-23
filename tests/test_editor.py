@@ -38,19 +38,22 @@ def _read(p):
 
 
 def test_monotonic_accepts_improvement_then_rejects_regression(work):
-    src = _write(work, "x.md", "v0 text\n")
+    # The drafts carry no numbers, names, or negations, so the meaning guard passes
+    # every one and this test isolates the quality contract. (Labels like "v1"
+    # are version numbers, and the guard would rightly refuse "v0" -> "v1".)
+    src = _write(work, "x.md", "draft text\n")
     out = os.path.join(work, "x.polished.md")
     scores = {
-        "v0 text": _scored(concreteness=2, commitment=2, economy=2, rhythm=2, restatable=2),
-        "v1": _scored(concreteness=4, commitment=4, economy=4, rhythm=4, restatable=4),
-        "v2": _scored(concreteness=3, commitment=4, economy=4, rhythm=4, restatable=4),  # regresses
+        "draft text": _scored(concreteness=2, commitment=2, economy=2, rhythm=2, restatable=2),
+        "better": _scored(concreteness=4, commitment=4, economy=4, rhythm=4, restatable=4),
+        "worse": _scored(concreteness=3, commitment=4, economy=4, rhythm=4, restatable=4),  # regresses
     }
-    outputs = iter(["v1", "v2"])
+    outputs = iter(["better", "worse"])
     editor.polish(src, out, passes=3, bar=5,
                   rewrite_fn=lambda t, mech, worst: next(outputs),
                   judge_fn=lambda t: scores.get(t.strip(), _scored()))
-    # v0(2s) -> v1(4s) accepted -> v2 regresses concreteness (3<4) -> rejected, keep v1
-    assert _read(out).strip() == "v1"
+    # draft(2s) -> better(4s) accepted -> worse regresses concreteness (3<4) -> rejected
+    assert _read(out).strip() == "better"
 
 
 def test_bar_met_stops_early(work):

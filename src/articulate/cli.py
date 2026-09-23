@@ -14,7 +14,7 @@ import json
 import os
 import sys
 
-from . import modes, profiles, pysource, receipt
+from . import cli_ext, modes, profiles, pysource, receipt
 from .detector import binary_reason, check_text, ruleset_fingerprint
 
 
@@ -436,7 +436,10 @@ def main(argv=None):
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
+    cli_ext.register(sub)
     args = ap.parse_args(argv)
+    if getattr(args, "handler", None):
+        return args.handler(args)
     if args.cmd == "check":
         return _cmd_check(args)
     if args.cmd == "score":
