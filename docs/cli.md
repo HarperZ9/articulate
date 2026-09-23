@@ -113,6 +113,28 @@ what the config sets.
 articulate config [PATH] [--config PATH] [--json]
 ```
 
+## drafts
+
+Keep a local, hash-chained record of a document's drafts. See
+[Drafting provenance](features.md#drafting-provenance) and its
+[boundary](boundaries.md#a-draft-log-records-a-process-and-proves-no-authorship).
+
+```bash
+articulate drafts record FILE [--actor LABEL] [--log DIR] [--no-snapshot]
+articulate drafts show FILE [--log DIR] [--json]
+articulate drafts verify FILE [--log DIR] [--json]
+```
+
+- `record`: append an entry for the file's current text. Identical text adds
+  nothing, and a broken log is never extended.
+- `show`: list the entries.
+- `verify`: check the chain and re-derive each stored draft. `intact` exits 0,
+  `broken` exits 1, and a missing log exits 2.
+- `--actor LABEL`: a label for who recorded the draft. It is self-declared.
+- `--log DIR`: the log directory. The default is `.articulate/drafts` beside the
+  file.
+- `--no-snapshot`: store hashes only, with no draft text.
+
 ## modes
 
 List the available writing modes.
@@ -155,6 +177,7 @@ python -m articulate.editor --review FILE
 - `audit --reverify --gate`: 1 on a real integrity break, else 0.
 - `compare --gate`: 1 if an invariant that may not change moved, 2 if a file
   cannot be read, else 0.
+- `drafts verify`: 0 intact, 1 broken, 2 no log.
 - `articulate.bench`: the number of misclassified files plus the number of domain
   corpus mismatches, so 0 is a perfect run. `articulate.bench_domains` runs the
   domain corpus alone.

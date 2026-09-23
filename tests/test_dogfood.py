@@ -21,7 +21,7 @@ MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "meaning.py", "guard.py", "cli_ext.py", "protect.py", "changes.py",
            "project.py", "terms.py", "rules_ext.py", "pack_util.py", "pack_ux.py",
            "pack_review.py", "pack_plain.py", "pack_bcp14.py", "pack_controlled.py",
-           "bench_domains.py"]
+           "bench_domains.py", "drafts.py"]
 
 
 def _gate(path, text):

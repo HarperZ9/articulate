@@ -417,6 +417,30 @@ A content-free record is not zero-leakage. Which rules fired and the line remain
 which for a closed-vocabulary rule narrows the flagged word to that rule's small
 public candidate set. Read [Boundaries](boundaries.md) before you rely on it.
 
+## Drafting provenance
+
+A writer who is asked how a document came to be can keep a record of its drafts.
+`articulate drafts record FILE` appends one entry to a local log beside the
+file, in `.articulate/drafts/`. Each entry holds the draft's text hash, the time,
+its word count and texture score, the lines added and removed since the previous
+draft, and an optional `--actor` label. Each entry also carries the hash of the
+entry before it and a hash over its own content, so the log is a chain: an
+edited, removed, or reordered entry breaks it. Recording the same text twice adds
+nothing.
+
+By default the draft text is stored too, content-addressed under `objects/`, so
+`articulate drafts verify FILE` re-derives every text hash, word count, diff, and
+(under the same ruleset) texture score from the drafts themselves. It reports
+`intact` or `broken` with the reasons, and notes whether the current file matches
+the last recorded draft. `--no-snapshot` keeps hashes only, for a writer who must
+not store draft text. `articulate drafts show FILE` lists the entries. A broken
+log is never extended.
+
+What it shows and what it does not: see
+[Boundaries](boundaries.md#a-draft-log-records-a-process-and-proves-no-authorship).
+The stored drafts are the full text of each version. Commit the log only where
+you would commit those drafts, or record with `--no-snapshot`.
+
 ## Binary inputs fail closed
 
 A binary or an unsupported document (a `.docx`, a PDF, an image) is refused with

@@ -61,6 +61,15 @@ release is cut.
   source in the docs; heuristic rules sit in LOW and never block.
 - `corpus/domains/` holds synthetic samples with an `expect.json`; the benchmark
   now counts a domain mismatch as a regression.
+- Drafting provenance. `articulate drafts record|show|verify FILE` keeps a local,
+  append-only, hash-chained log of a document's drafts in `.articulate/drafts/`
+  beside it: text hash, time, word count, texture score, lines added and removed
+  since the previous draft, and an optional `--actor` label. Draft text is stored
+  content-addressed so `verify` re-derives each entry; `--no-snapshot` keeps
+  hashes only. A broken log is never extended. It records that drafts were
+  logged in an order; it does not prove who typed them, its times come from the
+  local clock, a deleted tail is undetectable without an external anchor, and it
+  is not a tool for passing a detector.
 
 ## 0.4.0
 

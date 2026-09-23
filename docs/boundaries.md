@@ -55,6 +55,22 @@ judge whether a requirement is right. The controlled-English profile is inspired
 by controlled-language practice. It does not implement ASD-STE100 or any other
 specification, and a clean result is no conformance claim.
 
+## A draft log records a process, and proves no authorship
+
+`articulate drafts` keeps a hash-chained record of a document's drafts. It shows
+that this sequence of drafts was recorded in this order, and that no entry was
+edited, removed, or reordered since, as far as the chain can tell. It does not
+show who typed the text: the actor label is whatever the recorder typed. It does
+not show when the text was written, because the times come from the local clock.
+It does not show that the record is complete, because deleting the newest entries
+leaves a valid shorter chain, and anyone with write access can build a new chain
+from scratch. Commit the log, or publish the latest entry hash somewhere you do
+not control alone, to make a later rewrite visible.
+
+It is a record of process for a reader who asks how a document came to be. It is
+not a way to pass an AI detector, it never changes the text, and a draft history
+is not evidence that a person wrote any given sentence.
+
 ## A receipt attests a screening, not compliance
 
 A receipt records that a named, fingerprinted ruleset ran against a specific text

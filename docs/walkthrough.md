@@ -238,5 +238,26 @@ The repository ships a GitHub Action and a pre-commit hook. The Action can also
 re-verify committed receipts and fail the build on drift. See
 [Features](features.md#surfaces) and the `action.yml` in the repository root.
 
-That is the full loop: screen, localize, judge, rewrite, record, and gate. Each
-step is local, and each verdict is one a reviewer can reproduce.
+## 9. Keep a record of your drafts
+
+If someone may later ask how the post came to be, record each draft as you go:
+
+```bash
+articulate drafts record post.md --actor alice
+articulate drafts show post.md
+articulate drafts verify post.md
+```
+
+```
+[drafts] post.md: intact, 4 draft(s)
+  note: the current file matches the last recorded draft (4)
+```
+
+The log is a hash chain, so an edited or removed entry reads `broken`. It records
+that the drafts were logged in this order. It cannot show who typed them, and it
+is not a way to pass a detector. See
+[Boundaries](boundaries.md#a-draft-log-records-a-process-and-proves-no-authorship).
+
+That is the full loop: screen, localize, judge, rewrite, record, gate, and keep a
+drafting record. Each step is local, and each verdict is one a reviewer can
+reproduce.

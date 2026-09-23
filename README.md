@@ -42,6 +42,11 @@ say what a verdict and a receipt mean and what they never claim.
   id, reason, and suggestion), allows terms of art, and names freeze terms every
   rewrite must keep. Terminology findings show in `check`, SARIF, the LSP server,
   and receipts, which embed the rules so a replay needs no access to the project.
+- **Record drafts.** `articulate drafts record` keeps a local, hash-chained log
+  of a document's drafts (hash, time, word count, texture score, change size, an
+  optional actor label), and `drafts verify` re-derives it. It records a process
+  for a reader who asks how a document came to be. It cannot show who typed the
+  text, and it is not a way to pass a detector.
 - **Choose a mode or a genre.** A writing mode crosses a domain register with an
   articulation need, such as `memo/argue` or `technical-docs/explain`. The genre
   axis reads narrative and expressive prose by its own convention: `literary-fiction`,
