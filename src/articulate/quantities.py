@@ -6,9 +6,10 @@ articulate.quantities -- numbers, units, dates, times, and versions as invariant
 `find(text)` returns (start, end, key) for every quantity in the text. The key is
 normalized so a faithful reformatting compares equal: "10 ms" and "10ms",
 "50%" and "50 percent", "1,000" and "1000", "three" and "3", "May 5, 2026" and
-"2026-05-05", "v1.2.3" and "1.2.3", "one million" and "1000000", "$5M" and "$5
-million", "10 megabytes" and "10 MB", "20 dollars" and "$20". A change of value
-or unit changes the key. A plural magnitude ("thousands") keys as itself.
+"2026-05-05", "2:00 PM" and "2pm", "v1.2.3" and "1.2.3", "one million" and
+"1000000", "$5M" and "$5 million", "10 megabytes" and "10 MB", "20 dollars" and
+"$20". A change of value or unit changes the key. A plural magnitude
+("thousands") keys as itself.
 
 Limits, stated plainly. The word "one" is skipped unless a magnitude word follows
 ("one million"), since it is far more often a pronoun. Ordinal words ("first")
@@ -128,6 +129,11 @@ _QUANTITY = re.compile(
     rf"|(?:{_CORE}){_TAIL}")
 
 
+# A 12-hour time on the hour: "2:00 PM" names the same time as "2 PM". A 24-hour
+# "14:00" keeps its minutes, since "14" alone reads as a count.
+_ON_THE_HOUR = re.compile(r"^(\d{1,2}):00(?=[ap]m$)")
+
+
 def _date_key(m):
     """Normalize a month-name date to ISO order: YYYY-MM-DD, MM-DD, or YYYY-MM."""
     raw = m.group(0)
@@ -174,7 +180,7 @@ def _quantity_key(m):
     if m.group("ver"):
         return "version:" + raw.lstrip("vV")
     if m.group("time") or m.group("clock"):
-        return "time:" + re.sub(r"[\s.]", "", raw).lower()
+        return "time:" + _ON_THE_HOUR.sub(r"\1", re.sub(r"[\s.]", "", raw).lower())
     if m.group("slash") or m.group("ord"):
         return raw
     if m.group("approx"):
