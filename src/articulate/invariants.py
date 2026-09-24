@@ -205,9 +205,29 @@ def claim(text, passes):
     return claims, masked
 
 
+_DASHES = str.maketrans({"\u2013": "-", "\u2014": "-"})
+_CURLY = str.maketrans({"\u201c": '"', "\u201d": '"', "\u2018": "'", "\u2019": "'"})
+_YEAR_COMMA = re.compile(r"(?<=[A-Za-z.]),? (?=" + _YEAR + r"\b)")
+
+
+def _citation_key(text):
+    """A citation as compared: dashes as '-', '&' as 'and', no comma before the
+    year, and no space around ',', ';', or '-'. "(Smith, 2020)" and "(Smith
+    2020)" compare equal, and [1-3] matches [1\u20133]."""
+    # Collapse whitespace first, so no later pattern scans a long run of it.
+    t = re.sub(r"\s+", " ", text.translate(_DASHES)).replace(" & ", " and ")
+    return re.sub(r" ?([,;-]) ?", r"\1", _YEAR_COMMA.sub(" ", t))
+
+
+# The key of each container kind. A formatting-only edit keeps the key, and the
+# report still shows each side as written.
+_KEYS = {"citation": _citation_key, "quote": lambda t: t.translate(_CURLY)}
+
+
 def _containers(text, freeze, tex=False, quotes=True):
     claims, masked = claim(text, container_passes(freeze, tex=tex, quotes=quotes))
-    items = [lexical.item(kind, text[s:e] if key is None else key, text[s:e], s, e)
+    items = [lexical.item(kind, _KEYS.get(kind, str)(text[s:e]) if key is None else key,
+                          text[s:e], s, e)
              for kind, s, e, key in claims]
     return items, masked
 
