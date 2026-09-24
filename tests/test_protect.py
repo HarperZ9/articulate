@@ -132,6 +132,41 @@ def test_a_partial_overlap_widens_the_outer_span():
     assert protect._outermost(claims) == [("quote", 0, 15, None), ("math", 20, 25, None)]
 
 
+# A URL can hold brackets. The ones it opens stay inside the span; a closer that
+# ends a Markdown link or a parenthesis, trailing punctuation, and a citation
+# written right after the URL stay outside it.
+URLS = [
+    ("See https://en.wikipedia.org/wiki/Mercury_(planet) for details.\n",
+     ["https://en.wikipedia.org/wiki/Mercury_(planet)"]),
+    ("Read [C](https://en.wikipedia.org/wiki/C_(programming_language)) first.\n",
+     ["https://en.wikipedia.org/wiki/C_(programming_language)"]),
+    ("Cited at https://doi.org/10.1016/S0140-6736(20)30183-5 in full.\n",
+     ["https://doi.org/10.1016/S0140-6736(20)30183-5"]),
+    ("See https://example.com/docs[1].\n", ["https://example.com/docs", "[1]"]),
+    ("(See https://example.com/a.)\n", ["https://example.com/a"]),
+    ("Read [the guide](https://example.com/guide), then go.\n",
+     ["https://example.com/guide"]),
+    ("Filter with https://example.com/q?a[0]=1 today.\n",
+     ["https://example.com/q?a[0]=1"]),
+]
+
+
+@pytest.mark.parametrize("text,expected", URLS)
+def test_urls_keep_their_own_brackets(text, expected):
+    masked, spans = protect.mask(text)
+    assert [s["text"] for s in spans] == expected
+    assert protect.restore(masked, masked, spans) == text
+
+
+def test_a_model_cannot_drop_the_closing_bracket_of_a_url():
+    text = "See https://en.wikipedia.org/wiki/Mercury_(planet) for details.\n"
+    out = guard.RewriteGuard().run(lambda m: m.replace(") for", " for"), text)
+    assert out == text
+    cut = text.replace(") for", " for")
+    with pytest.raises(guard.RewriteRefused):
+        guard.RewriteGuard().check(text, cut)
+
+
 PAPER = ("\\documentclass{article}\n\\begin{document}\n\\begin{abstract}\n"
          "We show the method is fast.\n\\end{abstract}\n"
          "\\begin{itemize}\n\\item Use ``quick'' and ``slow'' modes.\n\\end{itemize}\n"

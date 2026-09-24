@@ -23,7 +23,7 @@ from __future__ import annotations
 import bisect
 import re
 
-from . import quantities
+from . import finders, quantities
 
 KINDS = ("code", "math", "url", "citation", "quote", "freeze", "number",
          "modal", "scope", "negation", "entity")
@@ -46,6 +46,9 @@ MATH = [
 # pair such as "$5 and $10" is not read as one formula.
 INLINE_MATH = re.compile(r"\$(?=[^\s$])(?:\\.|[^$\\\n]){1,300}(?<=\S)\$")
 TEX_SIGN = re.compile(r"[\\^_{}=<>]")
+# The rule packs blank URLs out of a prose line with this pattern. The protected
+# spans and the meaning guard find URLs with finders.url_spans, which keeps a
+# balanced bracket inside a URL.
 URL = re.compile(r"\bhttps?://[^\s<>\"'\])]{1,2000}|\bwww\.[^\s<>\"'\])]{1,2000}"
                   r"|\b[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63}){1,8}\b")
 _YEAR = r"(?:1[6-9]|20)\d{2}[a-z]?"
@@ -61,7 +64,7 @@ CITATION = re.compile(
     r"|\barXiv:\s{0,2}(?:\d{4}\.\d{4,5}|[a-z\-]{2,20}(?:\.[A-Z]{2})?/\d{7})(?:v\d{1,3})?"
     r"|\\cite[tp]?\*?(?:\[[^\]\n]{0,80}\])?\{[^}\n]{1,200}\}")
 QUOTE = re.compile("\"[^\"\\n]{1,500}\"|\u201c[^\u201d\\n]{1,500}\u201d")
-_TRAIL = ".,;:!?'\""
+_TRAIL = finders.TRAIL
 
 _MODAL = re.compile(
     r"(?i)\b(?:(must|shall|should|may|might|can|could)(?=n['\u2019]t\b|not\b|\b)"
@@ -164,7 +167,7 @@ def container_passes(freeze=(), *, numbers=True, quotes=True, block_quotes=False
     passes += [("math", _rx_pass(rx, trim=False)) for rx in MATH]
     passes += [("math", _rx_pass(INLINE_MATH, trim=False,
                                  keep=None if tex else TEX_SIGN.search)),
-               ("url", _rx_pass(URL)), ("citation", _rx_pass(CITATION))]
+               ("url", finders.url_spans), ("citation", _rx_pass(CITATION))]
     if quotes:
         passes.append(("quote", _rx_pass(QUOTE, trim=False)))
     frx = freeze_pattern(freeze)
