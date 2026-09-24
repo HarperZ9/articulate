@@ -132,6 +132,13 @@ def test_one_and_identifiers_are_not_numbers():
     assert quantities.find("the one that uses sha256 and abc123") == []
 
 
+def test_tex_backtick_quotes_are_prose_not_code():
+    original = "Use ``quick'' and ``slow'' modes."
+    rewrite = "Use ``quick'' or ``slow'' modes."
+    assert meaning.compare(original, rewrite, tex=True)["verdict"] == "preserved"
+    assert "changed" in _statuses(meaning.compare(original, rewrite), "code")
+
+
 def test_blocking_honors_allowed_kinds():
     report = meaning.compare("Retry 3 times.", "Retry 4 times.")
     assert meaning.blocking(report) and not meaning.blocking(report, {"number"})

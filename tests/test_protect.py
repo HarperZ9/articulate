@@ -132,6 +132,43 @@ def test_a_partial_overlap_widens_the_outer_span():
     assert protect._outermost(claims) == [("quote", 0, 15, None), ("math", 20, 25, None)]
 
 
+PAPER = ("\\documentclass{article}\n\\begin{document}\n\\begin{abstract}\n"
+         "We show the method is fast.\n\\end{abstract}\n"
+         "\\begin{itemize}\n\\item Use ``quick'' and ``slow'' modes.\n\\end{itemize}\n"
+         "\\begin{align*}\nf(x) &\\le g(x)\n\\end{align*}\n"
+         "\\begin{theorem}\nFor all $n$ there exists $m > n$.\n\\end{theorem}\n"
+         "It is robust.\n\\end{document}\n")
+
+
+def test_tex_prose_environments_reach_the_model():
+    masked, spans = protect.mask(PAPER, tex=True)
+    for prose in ("We show the method is fast.", "\\item Use ``quick'' and ``slow'' modes.",
+                  "It is robust.", "\\begin{abstract}", "\\begin{document}"):
+        assert prose in masked, prose
+    hidden = [s["text"] for s in spans]
+    assert "\\begin{align*}\nf(x) &\\le g(x)\n\\end{align*}" in hidden
+    # Theorem-like environments stay protected, as the math mask in 0.4.1 had
+    # them: a changed quantifier order changes a theorem.
+    assert any(t.startswith("\\begin{theorem}") for t in hidden)
+    assert protect.restore(masked, masked, spans) == PAPER
+
+
+def test_tex_double_backticks_are_quotes_and_markdown_ones_are_code():
+    tex_masked, _ = protect.mask("Use ``quick'' and ``slow'' modes.\n", tex=True)
+    assert "``quick''" in tex_masked
+    md_masked, _ = protect.mask("Run ``ls -la`` first.\n")
+    assert "ls -la" not in md_masked
+
+
+def test_guard_lets_a_tex_rewrite_edit_prose_between_latex_quotes():
+    # The meaning guard reads the file as .tex too, so the words between two
+    # LaTeX quotes are prose there as well, and not a code span that changed.
+    def edit(m):
+        return m.replace("It is robust.", "It holds.").replace("'' and ``", "'' or ``")
+    out = guard.RewriteGuard().run(edit, PAPER, tex=True)
+    assert out == edit(PAPER)
+
+
 def test_unprotect_rejects_unknown_kinds():
     assert guard.parse_unprotect("quotes") == {"quotes": False, "blockquotes": True}
     with pytest.raises(ValueError):

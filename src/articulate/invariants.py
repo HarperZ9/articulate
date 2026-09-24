@@ -29,11 +29,18 @@ KINDS = ("code", "math", "url", "citation", "quote", "freeze", "number",
          "modal", "scope", "negation", "entity")
 
 INLINE_CODE = re.compile(r"``[^\n]{1,500}?``|`[^`\n]{1,500}`")
+# The environments whose body is math, plus the theorem-like ones the 0.4.1 math
+# mask protected, because a changed quantifier order changes a theorem. Any
+# other environment (document, abstract, itemize) holds prose the model edits.
+MATH_ENVS = ("equation", "align", "alignat", "flalign", "gather", "multline",
+             "eqnarray", "split", "math", "displaymath", "theorem", "lemma", "proof",
+             "definition", "proposition", "corollary", "claim")
 MATH = [
     re.compile(r"\$\$.{1,4000}?\$\$", re.S),
     re.compile(r"\\\[.{1,4000}?\\\]", re.S),
     re.compile(r"\\\(.{1,1000}?\\\)", re.S),
-    re.compile(r"\\begin\{([a-z]{1,20}\*?)\}.{0,8000}?\\end\{\1\}", re.S),
+    re.compile(r"\\begin\{((?:" + "|".join(MATH_ENVS) + r")\*?)\}.{0,8000}?\\end\{\1\}",
+               re.S),
 ]
 # Inline $...$ counts as math only when its body carries TeX syntax, so a price
 # pair such as "$5 and $10" is not read as one formula.
@@ -145,13 +152,15 @@ def _rx_pass(rx, trim=True, keep=None):
 def container_passes(freeze=(), *, numbers=True, quotes=True, block_quotes=False,
                      tex=False):
     """The container passes in priority order: (kind, finder). A finder maps the
-    current masked text to a list of (start, end, key-or-None). `tex` reads every
-    inline $...$ as math, as a .tex file does; otherwise inline math needs TeX
-    syntax in its body."""
+    current masked text to a list of (start, end, key-or-None). `tex` reads a
+    .tex file: every inline $...$ is math, and backticks open LaTeX quotes
+    (``like this''), so they mark no code. Elsewhere inline math needs TeX syntax
+    in its body."""
     passes = [("code", lambda t: [(s, e, None) for s, e in fenced_blocks(t)])]
     if block_quotes:
         passes.append(("blockquote", lambda t: [(s, e, None) for s, e in blockquotes(t)]))
-    passes.append(("code", _rx_pass(INLINE_CODE, trim=False)))
+    if not tex:
+        passes.append(("code", _rx_pass(INLINE_CODE, trim=False)))
     passes += [("math", _rx_pass(rx, trim=False)) for rx in MATH]
     passes += [("math", _rx_pass(INLINE_MATH, trim=False,
                                  keep=None if tex else TEX_SIGN.search)),
@@ -184,8 +193,8 @@ def claim(text, passes):
     return claims, masked
 
 
-def _containers(text, freeze):
-    claims, masked = claim(text, container_passes(freeze))
+def _containers(text, freeze, tex=False):
+    claims, masked = claim(text, container_passes(freeze, tex=tex))
     items = [_item(kind, text[s:e] if key is None else key, text[s:e], s, e)
              for kind, s, e, key in claims]
     return items, masked
@@ -237,9 +246,10 @@ def _tokens(masked, freeze_keys):
     return items
 
 
-def extract(text, *, freeze=()):
-    """Every surface invariant in `text`, in document order within each kind."""
-    containers, masked = _containers(text, tuple(freeze))
+def extract(text, *, freeze=(), tex=False):
+    """Every surface invariant in `text`, in document order within each kind.
+    `tex` reads the text as a .tex file (see container_passes)."""
+    containers, masked = _containers(text, tuple(freeze), tex)
     items = containers + _tokens(masked, set(freeze))
     items.sort(key=lambda i: (KINDS.index(i["kind"]), i["start"]))
     return items

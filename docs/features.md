@@ -336,7 +336,11 @@ placeholder, so the model never sees the protected text and cannot alter it:
 
 - fenced and inline code,
 - math (display math always; inline `$...$` on a `.tex` file, or elsewhere when
-  its body carries TeX syntax, so a pair of prices is left alone),
+  its body carries TeX syntax, so a pair of prices is left alone; on a `.tex`
+  file also the math environments such as `equation` and `align` and the
+  theorem-like ones such as `theorem` and `proof`. Prose environments such as
+  `abstract` and `itemize` reach the model, and so do LaTeX quotes written
+  with backticks),
 - URLs and emails,
 - citations,
 - block quotes and quoted material,

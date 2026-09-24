@@ -52,7 +52,8 @@ def _cmd_compare(args):
         print(f"[articulate] {e}", file=sys.stderr)
         return 2
     freeze = tuple(args.freeze) + (cfg.freeze if cfg else ())
-    report = meaning.compare(texts[0], texts[1], freeze=freeze)
+    report = meaning.compare(texts[0], texts[1], freeze=freeze,
+                             tex=args.original.lower().endswith(".tex"))
     block = meaning.blocking(report, allow)
     if args.json:
         payload = dict(report, files={"original": args.original, "rewrite": args.rewrite},
