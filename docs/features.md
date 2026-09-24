@@ -427,8 +427,13 @@ kept, dropped, added, or changed, with its line and column. It reads:
   recommended (should, recommended, ought to), and optional (may, might, can,
   could, optional). An all-capitals BCP 14 keyword is its own value, so MUST to
   must counts as a change.
-- scope words that bound a claim: only, unless, except, at least, at most, up to
-  a number, always, and exactly.
+- scope words that bound a claim: only, unless, except, at least, at most,
+  always, and exactly.
+- the direction of a bound on a number or date: up to, more than, over, above,
+  exceeds, less than, under, below, before, and after. These count only when a
+  number or date follows, so "over 50%" is a bound and "over the network" is
+  not. Synonyms compare equal: "under 50%" matches "below 50%", and "up to 3"
+  matches "at most 3".
 - named entities, approximated as capitalized words that do not open a sentence,
   plus acronyms.
 - URLs and emails, inline and fenced code, math spans, citations (`[1]`, `[@key]`,

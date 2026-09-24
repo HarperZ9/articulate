@@ -241,9 +241,10 @@ Fairness harness and release check:
 - Meaning guard. `articulate compare ORIGINAL REWRITE` reports each surface
   invariant as kept, dropped, added, or changed, with line and column: numbers
   with units, dates, times, and versions; negations; modal strength (with BCP 14
-  capitals as their own value); scope words; named entities; URLs and emails;
-  code; math; citations; quoted strings; and freeze terms. `--gate` exits 1 on a
-  change, and `--allow-change KINDS` exempts named kinds.
+  capitals as their own value); scope words; the direction of a bound on a
+  number or date ("under 50%", "up to 10 MB", "before May 5"); named entities;
+  URLs and emails; code; math; citations; quoted strings; and freeze terms.
+  `--gate` exits 1 on a change, and `--allow-change KINDS` exempts named kinds.
 - `fix` and `polish` run every model rewrite through the guard. A rewrite that
   changes an invariant is refused, the previous text is kept, and the output
   names the invariant. `--allow-change` and `--freeze` configure it.
