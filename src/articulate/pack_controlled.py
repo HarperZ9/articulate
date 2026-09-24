@@ -65,7 +65,7 @@ _IDIOMS = {
     "boils down to": "comes to", "on the fly": "during operation",
     "back to square one": "back to the start", "a piece of cake": "easy",
     "ballpark figure": "estimate", "cut corners": "skip steps",
-    "get the ball rolling": "start", "up in the air": "not decided",
+    "get the ball rolling": "start", "up in the air": "undecided",
     "in the loop": "informed", "moving forward": "from now on", "a no-brainer": "an easy choice",
     "bells and whistles": "extra features", "by and large": "mostly",
     "spin up": "start", "circle back": "return to",

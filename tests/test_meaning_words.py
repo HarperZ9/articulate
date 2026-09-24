@@ -182,3 +182,44 @@ def test_sentence_initial_quantifier_is_scope_and_no_name():
     items = invariants.extract("All tests pass. Every build ships.")
     assert [i["key"] for i in items if i["kind"] == "scope"] == ["universal", "universal"]
     assert [i["key"] for i in items if i["kind"] == "entity"] == []
+
+
+def _pack_suggestions():
+    from articulate import pack_controlled, pack_plain
+    pairs = list(pack_plain._WORDY) + list(pack_controlled._IDIOMS.items())
+    pairs += list(pack_controlled._PHRASAL.items())
+    # "to, or for" offers two replacements; each one is a rewrite to check.
+    return [(p, s) for p, both in pairs for s in both.split(", or ")]
+
+
+@pytest.mark.parametrize("phrase,suggestion", _pack_suggestions())
+def test_rule_pack_suggestions_keep_the_meaning(phrase, suggestion):
+    """The plain-language and controlled-English packs suggest these rewrites,
+    so the meaning guard must let each one through. "is able to" to "can" read
+    as an added modal, and "a no-brainer" as a dropped negation."""
+    original, rewrite = f"so we {phrase} it", f"so we {suggestion} it"
+    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+ABILITY_PRESERVED = [
+    ("The service is able to retry the call.", "The service can retry the call."),
+    ("The client has the ability to cancel.", "The client can cancel."),
+    ("The client is not able to cancel.", "The client cannot cancel."),
+    ("The client is unable to cancel.", "The client can't cancel."),
+    ("Caching is a no-brainer here.", "Caching is an easy choice here."),
+]
+ABILITY_CHANGED = [
+    ("The service is able to retry the call.", "The service must retry the call."),
+    ("The client is unable to cancel.", "The client can cancel."),
+    ("No-one reviewed it.", "Someone reviewed it."),
+]
+
+
+@pytest.mark.parametrize("original,rewrite", ABILITY_PRESERVED)
+def test_ability_and_hyphen_compounds_are_preserved(original, rewrite):
+    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+@pytest.mark.parametrize("original,rewrite", ABILITY_CHANGED)
+def test_ability_and_hyphen_compound_changes_are_caught(original, rewrite):
+    assert _verdict(original, rewrite) == "changed", _report(original, rewrite)
