@@ -134,6 +134,11 @@ MEANING_ADVERSARIAL = [
     # The URL finder trims unbalanced closers and trailing citations one at a
     # time; each trim step must stay constant time.
     "http://x" + ")" * 40000, "http://x" + "[1]" * 13000, "http://x(" * 5000 + "]" * 20000,
+    # Quotes, inline code, URLs, and display math carry no length cap, so an
+    # unclosed opener must not rescan to the end from each one.
+    '"' + "x" * 40000, '"a' * 20000, "http://x/" + "a" * 200000, "“a " * 20000,
+    "``" + "a`" * 20000, "$$a" * 10000, "\\[" * 20000, "\\(a" * 20000,
+    "\\begin{align}" * 5000, "\\begin{align}" + "\\begin{proof}x" * 5000,
 ]
 
 

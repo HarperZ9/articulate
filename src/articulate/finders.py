@@ -64,3 +64,62 @@ def url_spans(text):
         end = _url_end(text, m.start(), m.end())
         out.append((m.start(), end, None))
     return out
+
+
+def _paired(text, opener, closer_of, *, min_body=1, exclusive=False, one_line=False):
+    """Spans from an opener to the first closer after it, as a lazy regex such as
+    '\\$\\$.+?\\$\\$' finds them, with no length cap and in linear time.
+
+    `closer_of` maps the opener match to its closing string. A body holds at
+    least `min_body` characters. An `exclusive` body cannot hold the closer, as
+    in a quote. A `one_line` span ends before the next newline. When an opener
+    finds no closer, no later opener with the same closer can find one either
+    (before the line end, for `one_line`), so the scan skips those openers
+    where the regex engine would rescan to the end from each one."""
+    out, pos, n, stop = [], 0, len(text), -1
+    dead = {}   # closer -> offset before which an opener with it cannot close
+    while True:
+        m = opener.search(text, pos)
+        if m is None:
+            return out
+        start, closer = m.start(), closer_of(m)
+        if dead.get(closer, -1) > start:
+            pos = start + 1
+            continue
+        limit = n
+        if one_line:
+            if stop < start:
+                stop = text.find("\n", start)
+                stop = n if stop < 0 else stop
+            limit = stop
+        close = text.find(closer, m.end() if exclusive else m.end() + min_body, limit)
+        if close < 0:
+            dead[closer] = limit if one_line else n + 1
+            pos = start + 1
+        elif close < m.end() + min_body:
+            pos = start + 1          # an exclusive body that is too short
+        else:
+            out.append((start, close + len(closer), None))
+            pos = close + len(closer)
+
+
+_QUOTE_OPEN = re.compile("[\"\u201c]")
+_QUOTE_CLOSE = {"\"": "\"", "\u201c": "\u201d"}
+
+
+def quote_spans(text):
+    """Quoted material on one line, in straight or curly double quotes."""
+    return _paired(text, _QUOTE_OPEN, lambda m: _QUOTE_CLOSE[m.group()],
+                   exclusive=True, one_line=True)
+
+
+def display_math_finders(envs):
+    """The display-math finders in priority order: $$...$$, \\[...\\],
+    \\(...\\), then each named environment from \\begin to its own \\end."""
+    begin = re.compile(r"\\begin\{((?:" + "|".join(envs) + r")\*?)\}")
+    fixed = [(r"\$\$", "$$"), (r"\\\[", "\\]"), (r"\\\(", "\\)")]
+    finders = [lambda t, rx=re.compile(o), c=c: _paired(t, rx, lambda m, c=c: c)
+               for o, c in fixed]
+    finders.append(lambda t: _paired(t, begin, lambda m: "\\end{" + m.group(1) + "}",
+                                     min_body=0))
+    return finders

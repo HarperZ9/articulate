@@ -28,20 +28,19 @@ from . import finders, quantities
 KINDS = ("code", "math", "url", "citation", "quote", "freeze", "number",
          "modal", "scope", "negation", "entity")
 
-INLINE_CODE = re.compile(r"``[^\n]{1,500}?``|`[^`\n]{1,500}`")
+# No length cap: a negated class that runs to its delimiter stays linear, and a
+# cap would leave a long span unprotected.
+INLINE_CODE = re.compile(r"``[^\n]+?``|`[^`\n]+`")
 # The environments whose body is math, plus the theorem-like ones the 0.4.1 math
 # mask protected, because a changed quantifier order changes a theorem. Any
 # other environment (document, abstract, itemize) holds prose the model edits.
 MATH_ENVS = ("equation", "align", "alignat", "flalign", "gather", "multline",
              "eqnarray", "split", "math", "displaymath", "theorem", "lemma", "proof",
              "definition", "proposition", "corollary", "claim")
-MATH = [
-    re.compile(r"\$\$.{1,4000}?\$\$", re.S),
-    re.compile(r"\\\[.{1,4000}?\\\]", re.S),
-    re.compile(r"\\\(.{1,1000}?\\\)", re.S),
-    re.compile(r"\\begin\{((?:" + "|".join(MATH_ENVS) + r")\*?)\}.{0,8000}?\\end\{\1\}",
-               re.S),
-]
+# Display math has no length cap either. The finders pair each opener with its
+# first closer in linear time, where a lazy regex rescans to the end of the text
+# from every unclosed opener.
+MATH = finders.display_math_finders(MATH_ENVS)
 # Inline $...$ counts as math only when its body carries TeX syntax, so a price
 # pair such as "$5 and $10" is not read as one formula.
 INLINE_MATH = re.compile(r"\$(?=[^\s$])(?:\\.|[^$\\\n]){1,300}(?<=\S)\$")
@@ -63,7 +62,6 @@ CITATION = re.compile(
     r"|\bdoi:\s{0,2}10\.\d{4,9}/[^\s\"<>]{1,200}|\b10\.\d{4,9}/[^\s\"<>]{1,200}"
     r"|\barXiv:\s{0,2}(?:\d{4}\.\d{4,5}|[a-z\-]{2,20}(?:\.[A-Z]{2})?/\d{7})(?:v\d{1,3})?"
     r"|\\cite[tp]?\*?(?:\[[^\]\n]{0,80}\])?\{[^}\n]{1,200}\}")
-QUOTE = re.compile("\"[^\"\\n]{1,500}\"|\u201c[^\u201d\\n]{1,500}\u201d")
 _TRAIL = finders.TRAIL
 
 _MODAL = re.compile(
@@ -164,12 +162,12 @@ def container_passes(freeze=(), *, numbers=True, quotes=True, block_quotes=False
         passes.append(("blockquote", lambda t: [(s, e, None) for s, e in blockquotes(t)]))
     if not tex:
         passes.append(("code", _rx_pass(INLINE_CODE, trim=False)))
-    passes += [("math", _rx_pass(rx, trim=False)) for rx in MATH]
+    passes += [("math", find) for find in MATH]
     passes += [("math", _rx_pass(INLINE_MATH, trim=False,
                                  keep=None if tex else TEX_SIGN.search)),
                ("url", finders.url_spans), ("citation", _rx_pass(CITATION))]
     if quotes:
-        passes.append(("quote", _rx_pass(QUOTE, trim=False)))
+        passes.append(("quote", finders.quote_spans))
     frx = freeze_pattern(freeze)
     if frx is not None:
         passes.append(("freeze", _rx_pass(frx, trim=False)))
