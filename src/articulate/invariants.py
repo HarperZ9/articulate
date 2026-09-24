@@ -89,6 +89,16 @@ _ENTITY = re.compile(r"\b[A-Z][A-Za-z0-9]{0,40}(?:[.+\-][A-Za-z0-9]{1,40}){0,4}"
                      r"(?:['\u2019]s)?\b")
 _NOT_ENTITY = BCP14 | {"I", "NOT"}
 _LEAD_MARKUP = re.compile(r"(?:^|\s)(?:[-+*]|\d{1,3}[.)])$")
+# Block-quote markers at a line start, nested quotes included.
+_QUOTE_MARKS = re.compile(r"(?:[ ]{0,3}>[ ]?)*")
+# Quoted content after which no lazy line follows: a fence, a heading, a rule.
+_NO_LAZY_AFTER = re.compile(r"[ ]{0,3}(?:```|~~~|#{1,6}(?:[ \t]|$)|(?:[-*_][ \t]*){3,}$)")
+# A line that opens a new block, so it cannot continue a quoted paragraph. A
+# line that opens or closes display math also ends the quote, so a '>' line
+# inside $$...$$ cannot carry the quote over the closing delimiter.
+_INTERRUPTS = re.compile(r"[ ]{0,3}(?:```|~~~|#{1,6}(?:[ \t]|$)|[-+*][ \t]+\S"
+                         r"|\d{1,9}[.)][ \t]+\S|\||<[A-Za-z/!?]|(?:[-*_][ \t]*){3,}$"
+                         r"|\$\$|\\\[|\\\]|\\begin\{|\\end\{)")
 
 
 def _item(kind, key, text, start, end, **extra):
@@ -141,15 +151,24 @@ def _freeze_pass(rx):
 
 
 def blockquotes(text):
-    """(start, end) of each run of Markdown block-quote lines ('>' at line start)."""
-    out, pos, open_at, last_end = [], 0, None, 0
+    """(start, end) of each Markdown block quote: a run of lines that open with
+    '>', plus the lazy continuation lines CommonMark keeps inside it. A lazy
+    line is a non-blank line right after quoted paragraph text that opens no
+    block of its own (a fence, heading, list item, table row, HTML block, or
+    rule). A blank line ends the quote."""
+    out, pos, open_at, last_end, lazy = [], 0, None, 0, False
     for line in text.splitlines(keepends=True):
+        body = line.rstrip("\r\n")
         if line.lstrip(" ")[:1] == ">" and len(line) - len(line.lstrip(" ")) <= 3:
             open_at = pos if open_at is None else open_at
-            last_end = pos + len(line.rstrip("\r\n"))
+            last_end = pos + len(body)
+            content = body[_QUOTE_MARKS.match(body).end():]
+            lazy = bool(content.strip()) and not _NO_LAZY_AFTER.match(content)
+        elif open_at is not None and lazy and body.strip() and not _INTERRUPTS.match(body):
+            last_end = pos + len(body)
         elif open_at is not None:
             out.append((open_at, last_end))
-            open_at = None
+            open_at, lazy = None, False
         pos += len(line)
     if open_at is not None:
         out.append((open_at, last_end))
@@ -173,11 +192,11 @@ def container_passes(freeze=(), *, numbers=True, quotes=True, block_quotes=False
                      tex=False):
     """The container passes in priority order: (kind, finder). A finder maps the
     current masked text to a list of (start, end, key-or-None). `tex` reads a
-    .tex file: every inline $...$ is math, and backticks open LaTeX quotes
-    (``like this''), so they mark no code. Elsewhere inline math needs TeX syntax
-    in its body."""
+    .tex file: every inline $...$ is math, backticks open LaTeX quotes (``like
+    this''), so they mark no code, and a '>' line is no block quote. Elsewhere
+    inline math needs TeX syntax in its body."""
     passes = [("code", lambda t: [(s, e, None) for s, e in fenced_blocks(t)])]
-    if block_quotes:
+    if block_quotes and not tex:
         passes.append(("blockquote", lambda t: [(s, e, None) for s, e in blockquotes(t)]))
     if not tex:
         passes.append(("code", _rx_pass(INLINE_CODE, trim=False)))

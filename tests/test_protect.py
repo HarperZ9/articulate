@@ -146,6 +146,43 @@ def test_a_freeze_term_with_surrounding_spaces_still_matches():
     assert [s["text"] for s in spans] == ["Articulate"]
 
 
+LAZY = "> The board approved the plan\nafter a long review of the filings.\n\nWe agree.\n"
+
+
+@pytest.mark.parametrize("text", [LAZY, LAZY.replace("\n", "\r\n")])
+def test_a_lazy_continuation_line_stays_inside_the_block_quote(text):
+    # CommonMark keeps a non-blank line right after quoted paragraph text inside
+    # the quote, with or without its '>'.
+    masked, spans = protect.mask(text)
+    nl = "\r\n" if "\r\n" in text else "\n"
+    assert [s["text"] for s in spans] == [
+        "> The board approved the plan" + nl + "after a long review of the filings."]
+    assert guard.RewriteGuard().run(lambda m: m.replace("long", "short"), text) == text
+
+
+@pytest.mark.parametrize("text", ["$$\na\n> b\nc\n$$\nDone.\n", "$$\na\n> b\n$$\nDone.\n"])
+def test_a_quote_line_inside_display_math_leaves_the_math_whole(text):
+    # A lazy line must not carry the quote over the closing $$, or the math
+    # loses its closer and its body reaches the model.
+    masked, spans = protect.mask(text)
+    assert [s["text"] for s in spans] == [text[:text.index("\nDone")]]
+    assert masked.endswith("\nDone.\n") and "a" not in masked.replace("Done", "")
+
+
+def test_a_quote_line_in_a_tex_file_is_not_a_block_quote():
+    text = "The set\n> is ordered by size\nand then by name.\n"
+    masked, spans = protect.mask(text, tex=True)
+    assert masked == text and spans == []
+
+
+@pytest.mark.parametrize("after", ["\n\nNext.", "\n- item", "\n# Heading", "\n```\nx\n```",
+                                   "\n---", "\n>\nNext.", "\n| a | b |", "\n<div>x</div>"])
+def test_a_block_quote_ends_at_a_blank_line_or_a_new_block(after):
+    masked, spans = protect.mask("> Quoted text." + after + "\n")
+    assert spans[0]["text"] == ("> Quoted text.\n>" if after.startswith("\n>\n")
+                                else "> Quoted text.")
+
+
 TRIAL = "Drug A lowers the risk [1].\n\nDrug B raises the risk.\n"
 
 
