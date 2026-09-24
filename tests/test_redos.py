@@ -106,7 +106,7 @@ MEANING_ADVERSARIAL = [
     "http://x" + ")" * 40000, "http://x" + "[1]" * 13000, "http://x(" * 5000 + "]" * 20000,
     # Quotes, inline code, URLs, and display math carry no length cap, so an
     # unclosed opener must not rescan to the end from each one.
-    '"' + "x" * 40000, '"a' * 20000, "http://x/" + "a" * 200000, "“a " * 20000,
+    '"' + "x" * 40000, '"a' * 20000, "http://x/" + "a" * 200000, "\u201ca " * 20000,
     "``" + "a`" * 20000, "$$a" * 10000, "\\[" * 20000, "\\(a" * 20000,
     "\\begin{align}" * 5000, "\\begin{align}" + "\\begin{proof}x" * 5000,
 ]
@@ -116,7 +116,7 @@ MEANING_ADVERSARIAL = [
 # restores the model's output: three passes over every placeholder. A document
 # with thousands of citations or code spans makes thousands of placeholders.
 SPAN_ADVERSARIAL = ["[1] " * 20000, "`x` " * 20000, "a@b.co " * 10000,
-                    "⦃a" * 20000, "⦃" * 40000, "⦃CODE_0_1a2b3c⦄ " * 8000,
+                    "\u2983a" * 20000, "\u2983" * 40000, "\u2983CODE_0_1a2b3c\u2984 " * 8000,
                     "P [1].\n\n" * 10000, "\n \n\t\n" * 20000 + "x"]
 
 
