@@ -85,3 +85,33 @@ def test_word_magnitudes_and_units_normalize(text, keys):
 
 def test_one_alone_and_a_alone_stay_words():
     assert _keys("one of a kind, a few, and an hour") == []
+
+
+# A clock time with no minutes ("2am") keyed as the bare number 2, so a change
+# to "2pm" passed. "2 AM" to "2 PM" was caught only because AM and PM read as
+# acronym names.
+CLOCK_CHANGED = [
+    ("Backups run at 2am.", "Backups run at 2pm."),
+    ("Backups run at 2 a.m. daily.", "Backups run at 2 p.m. daily."),
+    ("Backups run at 2 AM.", "Backups run at 2 PM."),
+]
+CLOCK_PRESERVED = [
+    ("Backups run at 2am.", "Backups run at 2 a.m."),
+    ("Backups run at 2 PM.", "Backups run at 2pm."),
+]
+
+
+@pytest.mark.parametrize("original,rewrite", CLOCK_CHANGED)
+def test_changed_clock_time_is_caught(original, rewrite):
+    assert _verdict(original, rewrite) == "changed", _report(original, rewrite)
+
+
+@pytest.mark.parametrize("original,rewrite", CLOCK_PRESERVED)
+def test_same_clock_time_is_preserved(original, rewrite):
+    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+def test_clock_time_keys():
+    assert _keys("2am, 2 PM, 11 p.m., 10:30 AM") == [
+        "time:2am", "time:2pm", "time:11pm", "time:10:30am"]
+    assert _keys("5 amps and 3 pmol") == ["5", "3"]

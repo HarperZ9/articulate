@@ -120,6 +120,8 @@ _QUANTITY = re.compile(
     r"|\b[vV]\d{1,6}(?:\.\d{1,6})?\b)"
     r"|(?P<slash>\b\d{1,4}/\d{1,2}(?:/\d{2,4})?\b)"
     r"|(?P<time>\b\d{1,2}:\d{2}(?::\d{2})?(?:\s?[AaPp]\.?[Mm]\b\.?)?)"
+    # A clock time with no minutes: "2am", "2 PM", "2 p.m.".
+    r"|(?P<clock>\b\d{1,2}\s?(?i:[ap]\.m\.|[ap]m\b))"
     r"|(?P<ord>\b\d{1,9}(?:st|nd|rd|th)\b)"
     # A plural magnitude is a size with no exact value: "thousands of users".
     r"|(?P<approx>(?i:\b(?:dozens|hundreds|thousands|millions|billions|trillions)\b))"
@@ -171,7 +173,7 @@ def _quantity_key(m):
         return _date_key(m)
     if m.group("ver"):
         return "version:" + raw.lstrip("vV")
-    if m.group("time"):
+    if m.group("time") or m.group("clock"):
         return "time:" + re.sub(r"[\s.]", "", raw).lower()
     if m.group("slash") or m.group("ord"):
         return raw
