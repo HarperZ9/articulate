@@ -118,6 +118,7 @@ MEANING_ADVERSARIAL = [
     "is not able to " * 4000, "has the ability " * 5000, "no-" * 13000,
     "a million " * 5000, "one " * 20000 + "hundred", "$5M" * 8000, "Thousands " * 5000,
     "10 megabytes " * 5000, "$" + "5" * 40000 + "bn", "2 a.m" * 8000, "12 pm " * 6000,
+    "Smith (2020" * 5000, "Smith and " * 8000 + "(2020)", "aB " * 20000, "macOS. " * 8000,
 ]
 
 

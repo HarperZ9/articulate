@@ -331,10 +331,12 @@ kept, dropped, added, or changed, with its line and column. It reads:
   not. Synonyms compare equal: "under 50%" matches "below 50%", and "up to 3"
   matches "at most 3".
 - named entities, approximated as capitalized words that do not open a sentence,
-  plus acronyms.
+  acronyms, and names with a capital inside them (macOS, iPhone, gRPC). A
+  capitalized word that opens a sentence counts as a name when either text also
+  uses it as one mid-sentence, outside a heading, and never in lower case.
 - URLs and emails, inline and fenced code, math spans, citations (`[1]`, `[@key]`,
-  `(Author, 2020)`, `Author et al.`, a DOI, an arXiv id, `\cite{}`), quoted
-  strings, and project freeze terms.
+  `(Author, 2020)`, `Author (2020)`, `Author et al.`, a DOI, an arXiv id,
+  `\cite{}`), quoted strings, and project freeze terms.
 
 `fix` and `polish` run every model rewrite through the guard. A rewrite that
 drops, adds, or changes an invariant is refused, the previous text is kept, and
@@ -345,8 +347,11 @@ check on any two files, and the MCP servers expose it as the `compare` tool.
 
 What it does not prove: the invariants are surface proxies. A rewrite can keep
 all of them and still change the meaning, for example by moving a negation into
-another clause or by swapping two numbers. A reported change can also be harmless.
-A `preserved` verdict is a screen. It is no proof that two texts say the same thing.
+another clause or by swapping two numbers. A name used once, at the start of a
+sentence, can be swapped for another unreported ("Alice approved" to "Mallory
+approved"), because a capitalized word there may be an ordinary word. A reported
+change can also be harmless. A `preserved` verdict is a screen. It is no proof
+that two texts say the same thing.
 
 ## Protected spans
 
