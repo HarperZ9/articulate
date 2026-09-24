@@ -421,12 +421,14 @@ kept, dropped, added, or changed, with its line and column. It reads:
 - numbers with their units, percentages, dates, times, and versions. They are
   normalized, so "10 ms" matches "10ms", "50%" matches "50 percent", "three"
   matches "3", and "May 5, 2026" matches "2026-05-05".
-- negations: not, no, never, none, nothing, nobody, nowhere, cannot, n't, without,
-  neither, and nor. The "no" of "no more than 3" belongs to the bound, which
-  matches "at most 3", and "no fewer than 2" matches "at least 2".
+- negations: not, no, never, none, nothing, nobody, nowhere, cannot, unable,
+  n't, without, neither, and nor. The "no" of "no more than 3" belongs to the
+  bound, which matches "at most 3", and "no fewer than 2" matches "at least 2".
+  A hyphen compound such as "no-brainer" or "no-op" is no negation; "no-one" is.
 - modal strength in three classes: required (must, shall, required, have to),
   recommended (should, recommended, ought to), and optional (may, might, can,
-  could, optional). An all-capitals BCP 14 keyword is its own value, so MUST to
+  could, optional, is able to, has the ability to), so "is able to" to "can"
+  keeps the modal. An all-capitals BCP 14 keyword is its own value, so MUST to
   must counts as a change. A negation right after a modal ("must not",
   "cannot") and one just before it ("do not have to", "is not required") give
   different values, so "must not" to "do not have to" counts as a change.

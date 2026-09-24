@@ -145,6 +145,7 @@ MEANING_ADVERSARIAL = [
     # Each modal looks for a negation on either side of it with a bisect.
     "must not " * 5000, "do not have to " * 4000, "x" * 40000 + "n't have to",
     "all " * 10000, "each  other " * 5000, "a few " * 8000, "All. " * 8000,
+    "is not able to " * 4000, "has the ability " * 5000, "no-" * 13000,
 ]
 
 

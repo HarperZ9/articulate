@@ -18,7 +18,12 @@ import re
 _MODAL = re.compile(
     r"(?i)\b(?:(must|shall|should|may|might|can|could)(?=n['\u2019]t\b|not\b|\b)"
     r"|(sha)(?=n['\u2019]t\b)|(required|recommended|optional)\b"
-    r"|(ought\s{1,3}to|ha(?:ve|s|d)\s{1,3}to|needs?\s{1,3}to)\b)")
+    r"|(ought\s{1,3}to|ha(?:ve|s|d)\s{1,3}to|needs?\s{1,3}to)\b"
+    # Ability reads as the optional class, as "can" does: "is able to", "is not
+    # able to", "is unable to", "has the ability to".
+    r"|((?:is|are|am|be|been|being|was|were)(?:n['\u2019]t|\s{1,3}not)?\s{1,3}(?:un)?able"
+    r"\s{1,3}to|ha(?:s|ve|d)\s{1,3}the\s{1,3}ability\s{1,3}to)\b)")
+_ABILITY = 5
 _MODAL_CLASS = {"must": "required", "shall": "required", "sha": "required",
                 "required": "required", "have": "required", "has": "required",
                 "had": "required", "need": "required", "needs": "required",
@@ -65,9 +70,12 @@ _SCOPE_GROUPS = (
 )
 _SCOPE = re.compile(r"(?i)\b(?:" + "|".join(f"({p})" for _k, p, _b in _SCOPE_GROUPS)
                     + r")\b")
+# A hyphen compound that opens with "no" ("no-brainer", "no-op") negates
+# nothing, but "no-one" does.
 _NEGATION = re.compile(r"(?i)\b(?:never|none|nothing|nobody|nowhere|without|neither"
-                       r"|nor|cannot)\b|n['\u2019]t\b"
-                       r"|\b(?!" + _NEG_CMP + r")(?:not\b|no\b(?!\.\s?\d))")
+                       r"|nor|cannot|unable)\b|n['\u2019]t\b"
+                       r"|\b(?!" + _NEG_CMP + r")(?:not\b|no\b(?!\.\s?\d"
+                       r"|[-\u2010\u2011](?!one\b)))")
 _ENTITY = re.compile(r"\b[A-Z][A-Za-z0-9]{0,40}(?:[.+\-][A-Za-z0-9]{1,40}){0,4}"
                      r"(?:['\u2019]s)?\b")
 # What may stand between a negation and the modal it negates: spaces and at
@@ -140,7 +148,8 @@ def _modal_items(masked, negs):
         word = m.group(0)
         head = re.split(r"\s", word, maxsplit=1)[0].lower()
         start, end, prefix, suffix = _negation_side(masked, m, negs)
-        key = prefix + _MODAL_CLASS[head] + suffix + (":BCP14" if word in BCP14 else "")
+        cls = "optional" if m.group(_ABILITY) else _MODAL_CLASS[head]
+        key = prefix + cls + suffix + (":BCP14" if word in BCP14 else "")
         items.append(item("modal", key, masked[start:end], start, end))
     return items
 
