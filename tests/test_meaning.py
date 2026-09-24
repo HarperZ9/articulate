@@ -88,6 +88,13 @@ def test_freeze_term_is_an_invariant():
     assert "dropped" in _statuses(lost, "freeze")
 
 
+def test_freeze_term_keeps_its_key_across_normalization_forms():
+    nfc, nfd = "Ask Zo\u00eb about it.", "Ask Zoe\u0308 about it."
+    assert meaning.compare(nfd, nfc, freeze=("Zo\u00eb",))["verdict"] == "preserved"
+    lost = meaning.compare(nfd, "Ask Zoe about it.", freeze=("Zo\u00eb",))
+    assert "dropped" in _statuses(lost, "freeze")
+
+
 def test_identical_text_is_preserved_with_every_item_kept():
     text = ("Clients MUST NOT retry more than 3 times (Smith et al., 2020) unless "
             "`force=1` is set; see https://example.com.")

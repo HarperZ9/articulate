@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import bisect
 import re
+import unicodedata
 
 from . import finders, quantities
 
@@ -113,12 +114,30 @@ def fenced_blocks(text):
     return out
 
 
+def freeze_keys(freeze):
+    """The freeze terms as compared: surrounding whitespace dropped, in NFC."""
+    return {unicodedata.normalize("NFC", t.strip()) for t in freeze if t and t.strip()}
+
+
 def freeze_pattern(freeze):
-    """A regex for the freeze terms as whole words, longest first, or None."""
-    terms = sorted({t for t in freeze if t and t.strip()}, key=len, reverse=True)
-    if not terms:
+    """A regex for the freeze terms as whole words, longest first, or None. Each
+    term matches in its composed (NFC) and decomposed (NFD) form, so "Zo\u00eb"
+    matches whichever form the document uses. A combining mark after a match
+    means the word goes on, so "Zoe" does not match inside a decomposed
+    "Zoe\u0308"."""
+    forms = {unicodedata.normalize(f, t) for t in freeze_keys(freeze) for f in ("NFC", "NFD")}
+    if not forms:
         return None
-    return re.compile(r"(?<!\w)(?:" + "|".join(re.escape(t) for t in terms) + r")(?!\w)")
+    terms = sorted(forms, key=len, reverse=True)
+    return re.compile(r"(?<!\w)(?:" + "|".join(re.escape(t) for t in terms)
+                      + r")(?![\w\u0300-\u036f])")
+
+
+def _freeze_pass(rx):
+    def run(masked):
+        return [(m.start(), m.end(), unicodedata.normalize("NFC", m.group(0)))
+                for m in rx.finditer(masked)]
+    return run
 
 
 def blockquotes(text):
@@ -170,7 +189,7 @@ def container_passes(freeze=(), *, numbers=True, quotes=True, block_quotes=False
         passes.append(("quote", finders.quote_spans))
     frx = freeze_pattern(freeze)
     if frx is not None:
-        passes.append(("freeze", _rx_pass(frx, trim=False)))
+        passes.append(("freeze", _freeze_pass(frx)))
     if numbers:
         passes.append(("number", quantities.find))
     return passes
@@ -251,6 +270,6 @@ def extract(text, *, freeze=(), tex=False):
     """Every surface invariant in `text`, in document order within each kind.
     `tex` reads the text as a .tex file (see container_passes)."""
     containers, masked = _containers(text, tuple(freeze), tex)
-    items = containers + _tokens(masked, set(freeze))
+    items = containers + _tokens(masked, freeze_keys(freeze))
     items.sort(key=lambda i: (KINDS.index(i["kind"]), i["start"]))
     return items

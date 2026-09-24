@@ -121,6 +121,31 @@ def test_a_self_referential_nonce_cannot_let_a_code_span_move(monkeypatch):
         guard.RewriteGuard().run(drop_first, text)
 
 
+# A freeze term matches whatever Unicode normalization the document uses, and a
+# term padded with spaces still matches the word.
+NFC_ZOE, NFD_ZOE = "Zo\u00eb", "Zoe\u0308"
+
+
+@pytest.mark.parametrize("term,doc_form", [(NFC_ZOE, NFD_ZOE), (NFD_ZOE, NFC_ZOE),
+                                           (NFC_ZOE, NFC_ZOE)])
+def test_a_freeze_term_matches_either_normalization(term, doc_form):
+    text = f"Ask {doc_form} about it.\n"
+    masked, spans = protect.mask(text, freeze=(term,))
+    assert [s["text"] for s in spans] == [doc_form]
+    with pytest.raises(guard.RewriteRefused):
+        guard.RewriteGuard(freeze=(term,)).check(text, "Ask Zoe about it.\n")
+
+
+def test_a_freeze_term_is_not_the_base_of_an_accented_word():
+    masked, spans = protect.mask(f"Ask {NFD_ZOE} about it.\n", freeze=("Zoe",))
+    assert spans == []
+
+
+def test_a_freeze_term_with_surrounding_spaces_still_matches():
+    masked, spans = protect.mask("Articulate is local.\n", freeze=(" Articulate ",))
+    assert [s["text"] for s in spans] == ["Articulate"]
+
+
 TRIAL = "Drug A lowers the risk [1].\n\nDrug B raises the risk.\n"
 
 
