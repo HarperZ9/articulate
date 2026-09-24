@@ -143,3 +143,42 @@ def test_modal_key_records_the_side_of_its_negation():
         ("optional+not", "cannot"), ("not-required", "not strictly required")]
     assert _modals("Clients MUST NOT retry.") == [("required+not:BCP14", "MUST NOT")]
     assert _modals("You don't have to stay.") == [("not-required", "don't have to")]
+
+
+# Quantifiers and frequency words scope a claim as much as "only" does. None
+# was read, and a sentence-initial "All" was a weak name, which is never
+# reported when unmatched.
+QUANTIFIER_CHANGED = [
+    ("Users must reset all passwords.", "Users must reset some passwords."),
+    ("The proxy logs every request.", "The proxy logs some requests."),
+    ("All tests must pass.", "Tests must pass."),
+    ("The job usually finishes in 10 min.", "The job rarely finishes in 10 min."),
+    ("A few hosts failed.", "Few hosts failed."),
+]
+QUANTIFIER_PRESERVED = [
+    ("Users must reset all passwords.", "Users must reset every password."),
+    ("Each request is logged.", "Every request is logged."),
+    ("The job usually finishes early.", "The job typically finishes early."),
+    ("Some hosts failed.", "Several hosts failed."),
+    # Idioms that hold a quantifier word and quantify nothing.
+    ("It did not work at all.", "It did not work."),
+    ("After all, the cache is shared.", "In the end, the cache is shared."),
+    ("They review each other's code.", "They review one another's code."),
+    ("Above all, keep it short.", "Most of all, keep it short."),
+]
+
+
+@pytest.mark.parametrize("original,rewrite", QUANTIFIER_CHANGED)
+def test_changed_quantifier_is_caught(original, rewrite):
+    assert _verdict(original, rewrite) == "changed", _report(original, rewrite)
+
+
+@pytest.mark.parametrize("original,rewrite", QUANTIFIER_PRESERVED)
+def test_same_quantifier_is_preserved(original, rewrite):
+    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+def test_sentence_initial_quantifier_is_scope_and_no_name():
+    items = invariants.extract("All tests pass. Every build ships.")
+    assert [i["key"] for i in items if i["kind"] == "scope"] == ["universal", "universal"]
+    assert [i["key"] for i in items if i["kind"] == "entity"] == []

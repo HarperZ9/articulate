@@ -34,6 +34,8 @@ CASES = [
      "Clients must retry.", "changed"),
     ("scope", "Only admins can delete it.", "Only admins may delete it.",
      "Admins can delete it.", "dropped"),
+    ("scope", "Users must reset all passwords.", "Users must reset every password.",
+     "Users must reset some passwords.", "changed"),
     ("entity", "We deploy the service on Kubernetes today.",
      "Kubernetes runs the service today.",
      "We deploy the service on Nomad today.", "changed"),

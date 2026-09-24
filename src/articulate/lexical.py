@@ -37,6 +37,10 @@ _NEG_CMP = r"not?\s{1,3}(?:" + _MORE + "|" + _LESS + r"|later|earlier)\s{1,3}tha
 # "over 50%" and "up to 10 MB" bound a claim, and "over the network" and "up to
 # date" are prose. Synonyms share a key, so "under 50%" matches "below 50%".
 _SCOPE_GROUPS = (
+    # Idioms that hold a quantifier or bound word and quantify nothing. They
+    # match first and yield no item.
+    (None, r"at\s{1,3}all|after\s{1,3}all|above\s{1,3}all|all\s{1,3}(?:right|in\s{1,3}all)"
+           r"|(?:first|most|last)\s{1,3}of\s{1,3}all", False),
     ("only", r"only|solely|exclusively", False),
     ("unless", r"unless", False),
     ("except", r"except", False),
@@ -51,6 +55,13 @@ _SCOPE_GROUPS = (
     ("after", r"after|later\s{1,3}than|subsequent\s{1,3}to", True),
     ("always", r"always", False),
     ("exactly", r"exactly", False),
+    # Quantifiers and frequency words, one key per strength.
+    ("universal", r"all|every|each(?!\s{1,3}other\b)", False),
+    ("existential", r"some|several|a\s{1,3}few", False),
+    ("usually", r"usually|typically|normally", False),
+    ("often", r"often|frequently", False),
+    ("sometimes", r"sometimes|occasionally", False),
+    ("rarely", r"rarely|seldom", False),
 )
 _SCOPE = re.compile(r"(?i)\b(?:" + "|".join(f"({p})" for _k, p, _b in _SCOPE_GROUPS)
                     + r")\b")
@@ -140,16 +151,30 @@ def tokens(masked, freeze_keys, number_starts=frozenset()):
     negations = [item("negation", "negation", m.group(0), m.start(), m.end())
                  for m in _NEGATION.finditer(masked)]
     negs = ([n["start"] for n in negations], [n["end"] for n in negations])
-    items = _modal_items(masked, negs) + negations
+    scopes, scope_words = _scope_items(masked, number_starts)
+    return (_modal_items(masked, negs) + negations + scopes
+            + _entity_items(masked, freeze_keys, scope_words))
+
+
+def _scope_items(masked, number_starts):
+    """The scope items, and the start of every scope word, counted or not."""
+    items, words = [], set()
     for m in _SCOPE.finditer(masked):
+        words.add(m.start())
         key, _p, bound = _SCOPE_GROUPS[m.lastindex - 1]
-        if not bound or _bounds_number(masked, m.end(), number_starts):
+        if key and (not bound or _bounds_number(masked, m.end(), number_starts)):
             items.append(item("scope", key, m.group(0), m.start(), m.end()))
-    starts = [0] + [m.end() for m in re.finditer("\n", masked)]
+    return items, words
+
+
+def _entity_items(masked, freeze_keys, skip):
+    """Capitalized words and acronyms. A scope word at a sentence start ("All",
+    "Only", "After") is a function word and no name, so its start is skipped."""
+    items, starts = [], [0] + [m.end() for m in re.finditer("\n", masked)]
     for m in _ENTITY.finditer(masked):
         word = m.group(0)
         key = re.sub(r"['\u2019]s$", "", word)
-        if key in _NOT_ENTITY or key in freeze_keys:
+        if key in _NOT_ENTITY or key in freeze_keys or m.start() in skip:
             continue
         acronym = sum(c.isupper() for c in key) >= 2 or any(c.isdigit() for c in key)
         weak = _is_initial(masked, m.start(), starts) and not acronym
