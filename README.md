@@ -196,9 +196,9 @@ screenplay, poetry), the editor injection boundary, per-span mixed-authorship
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.4.0 is on PyPI as `articulate-writing`; the
+one package. Version 0.4.1 is on PyPI as `articulate-writing`; the
 [changelog](CHANGELOG.md) records what each release added. The meaning guard,
 protected spans, the change report, the project config, the domain profiles, and
 drafting provenance are listed under Unreleased in the changelog and are not in
-0.4.0. A local-model editor backend and a labeled non-native corpus for a
+0.4.1. A local-model editor backend and a labeled non-native corpus for a
 fairness check remain on the roadmap.

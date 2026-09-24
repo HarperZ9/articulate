@@ -58,6 +58,11 @@ import re
 import sys
 from statistics import mean, pstdev
 
+if __package__:
+    from . import masking
+else:   # run as a plain script file: the sibling module is on sys.path[0]
+    import masking
+
 # Prose files carry em-dashes, emoji, and smart quotes. The Windows console
 # defaults to cp1252 and would crash on them, so force a lossy UTF-8 stream.
 try:
@@ -588,10 +593,14 @@ EMOJI = re.compile(
     "]"
 )
 
-TAG = re.compile(r"<[^>]+>")
+# The reference patterns for the markup masks. strip_markup and mask_quotes
+# apply them through articulate.masking, which returns what re.sub with these
+# patterns returns, in linear time. Calling .sub with them on a long line that
+# never completes a match is quadratic, so the detector does not do that.
+TAG = re.compile(masking.TAG_PATTERN)
 TEX = re.compile(r"\\[a-zA-Z]+\*?\{?|[{}]")
 INLINE_CODE = re.compile(r"`[^`]*`")
-URL = re.compile(r"https?://\S+|\b[\w.-]+@[\w.-]+\.\w+\b")
+URL = re.compile(masking.URL_PATTERN)
 FENCE = re.compile(r"^\s*(```|~~~)")
 
 # Text inside a matched pair of quotation marks is spoken dialogue or a cited
@@ -600,7 +609,7 @@ FENCE = re.compile(r"^\s*(```|~~~)")
 # the masked line stays valid in the raw line) before the device passes run.
 # Straight single quotes are left alone because an apostrophe would open a false
 # span; double quotes and curly pairs are the reliable dialogue markers.
-QUOTED = re.compile("\"[^\"\\n]*\"|\u201c[^\u201d\\n]*\u201d|\u2018[^\u2019\\n]*\u2019")
+QUOTED = re.compile(masking.QUOTED_PATTERN)
 
 # Generation artifacts documented in AI-written fiction. This is a report-only
 # advisory that stays on even where authorial voice governs (slop=off), because
@@ -736,8 +745,8 @@ def strip_markup(line: str) -> str:
     preserved so a match offset in the masked line is a valid offset in the raw
     line, which is what span-level records need."""
     line = INLINE_CODE.sub(_blank, line)
-    line = URL.sub(_blank, line)
-    line = TAG.sub(_blank, line)
+    line = masking.mask_urls(line)    # URL.sub, in linear time
+    line = masking.mask_tags(line)    # TAG.sub, in linear time
     line = TEX.sub(_blank, line)
     return line
 
@@ -745,7 +754,7 @@ def strip_markup(line: str) -> str:
 def mask_quotes(line: str) -> str:
     """Mask quoted speech with equal-length spaces so a device inside a quote is
     not scored against the author. Offsets are preserved for span records."""
-    return QUOTED.sub(_blank, line)
+    return masking.mask_quoted(line)   # QUOTED.sub, in linear time
 
 
 def classify_fountain(lines):
