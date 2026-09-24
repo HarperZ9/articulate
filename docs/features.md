@@ -359,7 +359,9 @@ it occurs nowhere in the text. A string in the document that looks like a
 placeholder, or a lone `⦃` or `⦄`, is masked as a span of its own, so it cannot
 pass for a placeholder. Block quotes and quoted material can be released with
 `--unprotect quotes,blockquotes` for a document whose quotes are the author's
-own prose; code, math, links, citations, and freeze terms stay protected.
+own prose; code, math, links, citations, and freeze terms stay protected. The
+meaning guard reads a released quote as prose and checks the invariants in its
+words.
 
 The guarantee is structural: it holds whatever the model returns. It covers the
 spans the patterns recognize. A citation style or a link form the patterns miss

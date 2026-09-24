@@ -342,6 +342,34 @@ def test_guard_lets_a_tex_rewrite_edit_prose_between_latex_quotes():
     assert out == edit(PAPER)
 
 
+OWN_QUOTE = 'I said "this plan is really very good, not ready yet" and moved on.\n'
+
+
+def test_unprotected_quotes_are_prose_to_the_meaning_guard_too():
+    # --unprotect quotes shows the quote to the model; the meaning guard then
+    # reads it as prose, so trimming a word inside it is no changed quote.
+    g = guard.RewriteGuard(protect_opts={"quotes": False})
+    out = g.run(lambda m: m.replace("really very good", "good"), OWN_QUOTE)
+    assert out == OWN_QUOTE.replace("really very good", "good")
+    assert g.log[-1]["report"]["by_kind"].get("quote") is None
+
+
+def test_unprotected_quotes_still_keep_their_invariants():
+    # The words inside the quote are checked as prose: a dropped negation there
+    # still refuses the rewrite.
+    g = guard.RewriteGuard(protect_opts={"quotes": False})
+    with pytest.raises(guard.RewriteRefused) as info:
+        g.run(lambda m: m.replace("not ready", "ready"), OWN_QUOTE)
+    assert {r["kind"] for r in info.value.blocking} == {"negation"}
+
+
+def test_protected_quotes_refuse_an_edit_inside_them():
+    edited = OWN_QUOTE.replace("really very good", "good")
+    with pytest.raises(guard.RewriteRefused) as info:
+        guard.RewriteGuard().check(OWN_QUOTE, edited)
+    assert {r["kind"] for r in info.value.blocking} == {"quote"}
+
+
 def test_unprotect_rejects_unknown_kinds():
     assert guard.parse_unprotect("quotes") == {"quotes": False, "blockquotes": True}
     with pytest.raises(ValueError):

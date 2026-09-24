@@ -62,6 +62,16 @@ def test_meaning_rows_attach_to_their_pair():
     assert rep["changes"][0]["meaning"] == ["changed number '3' (L1) -> '5' (L1)"]
 
 
+def test_meaning_rows_read_quotes_as_the_guard_did():
+    before = 'She said "this is really very good" today.'
+    after = 'She said "this is good" today.'
+    kept = changes.build(before, after)
+    assert kept["summary"]["meaning"] == "changed"
+    released = changes.build(before, after,
+                             guard=guard.RewriteGuard(protect_opts={"quotes": False}))
+    assert released["summary"]["meaning"] == "preserved"
+
+
 def test_refusals_from_the_guard_are_reported():
     g = guard.RewriteGuard()
     with pytest.raises(guard.RewriteRefused):

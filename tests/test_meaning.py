@@ -149,6 +149,13 @@ def test_tex_backtick_quotes_are_prose_not_code():
     assert "changed" in _statuses(meaning.compare(original, rewrite), "code")
 
 
+def test_quotes_off_reads_quoted_words_as_prose():
+    original = 'She wrote "ship it Friday" in the log.'
+    report = meaning.compare(original, 'She wrote "ship it Monday" in the log.', quotes=False)
+    assert "quote" not in report["by_kind"]
+    assert "changed" in _statuses(report, "number") | _statuses(report, "entity")
+
+
 def test_blocking_honors_allowed_kinds():
     report = meaning.compare("Retry 3 times.", "Retry 4 times.")
     assert meaning.blocking(report) and not meaning.blocking(report, {"number"})

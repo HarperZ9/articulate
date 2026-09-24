@@ -53,7 +53,8 @@ def _cmd_compare(args):
         return 2
     freeze = tuple(args.freeze) + (cfg.freeze if cfg else ())
     report = meaning.compare(texts[0], texts[1], freeze=freeze,
-                             tex=args.original.lower().endswith(".tex"))
+                             tex=args.original.lower().endswith(".tex"),
+                             quotes=cfg.protect.get("quotes", True) if cfg else True)
     block = meaning.blocking(report, allow)
     if args.json:
         payload = dict(report, files={"original": args.original, "rewrite": args.rewrite},
