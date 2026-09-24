@@ -60,3 +60,40 @@ def test_single_sentence_start_name_swap_is_a_documented_blind_spot():
     report = meaning.compare("Alice approved the change.", "Mallory approved the change.")
     assert report["verdict"] == "preserved"
     assert "opens a sentence" in report["does_not_prove"]
+
+
+# The compare path keyed each citation and quote on its raw text, so a
+# formatting-only edit read as a change. fix and polish mask these spans and
+# restore them byte for byte, so this reached `articulate compare`, the MCP
+# compare tool, and a hand edit gated with --gate.
+FORMAT_PRESERVED = [
+    ("It holds (Smith, 2020).", "It holds (Smith 2020)."),
+    ("It holds (Smith et al., 2020).", "It holds (Smith et al. 2020)."),
+    ("It holds [1-3].", "It holds [1\u20133]."),
+    ("It holds [1, 2].", "It holds [1,2]."),
+    ("It holds (Smith & Lee, 2020).", "It holds (Smith and Lee, 2020)."),
+    ('She said "ship it" today.', "She said \u201cship it\u201d today."),
+    ('She said "don\'t ship" today.', "She said \u201cdon\u2019t ship\u201d today."),
+]
+FORMAT_CHANGED = [
+    ("It holds (Smith, 2020).", "It holds (Smith, 2021)."),
+    ("It holds [1-3].", "It holds [1-4]."),
+    ("It holds [1, 2].", "It holds [12]."),
+    ('She said "ship it" today.', "She said \u201cship it now\u201d today."),
+]
+
+
+@pytest.mark.parametrize("original,rewrite", FORMAT_PRESERVED)
+def test_formatting_only_citation_or_quote_edit_is_preserved(original, rewrite):
+    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+@pytest.mark.parametrize("original,rewrite", FORMAT_CHANGED)
+def test_changed_citation_or_quote_is_caught(original, rewrite):
+    assert _verdict(original, rewrite) == "changed", _report(original, rewrite)
+
+
+def test_normalized_key_keeps_the_written_text():
+    report = meaning.compare("It holds (Smith, 2020).", "It holds (Smith 2020).")
+    row = next(r for r in report["items"] if r["kind"] == "citation")
+    assert (row["before"]["text"], row["after"]["text"]) == ("(Smith, 2020)", "(Smith 2020)")
