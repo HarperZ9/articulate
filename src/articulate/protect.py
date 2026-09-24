@@ -46,16 +46,33 @@ def nonce_for(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:6]
 
 
+def _outermost(claims):
+    """The claims to mask, disjoint and in document order. A pass runs over the
+    text with earlier claims blanked, so a later claim can enclose an earlier
+    one: a quote around a code span, display math around a '>' line. The inner
+    claim then travels inside the outer placeholder. A partial overlap widens the
+    kept claim, so the layer protects more text and never less."""
+    kept = []
+    for kind, start, end, key in sorted(claims, key=lambda c: (c[1], -c[2])):
+        if kept and start < kept[-1][2]:
+            if end > kept[-1][2]:
+                kept[-1] = kept[-1][:2] + (end, kept[-1][3])
+            continue
+        kept.append((kind, start, end, key))
+    return kept
+
+
 def mask(text, *, freeze=(), quotes=True, blockquotes=True, tex=False):
     """Return (masked, spans). Each span is a dict with its kind, placeholder,
-    original text, and offsets, listed in document order."""
+    original text, and offsets, listed in document order. The spans never
+    overlap, and restoring the masked text unchanged gives back `text` exactly.
+    A masking that fails that check raises ProtectError and returns nothing."""
     passes = invariants.container_passes(freeze, numbers=False, quotes=quotes,
                                          block_quotes=blockquotes, tex=tex)
     claims, _ = invariants.claim(text, passes)
-    claims.sort(key=lambda c: c[1])
     nonce = nonce_for(text)
     spans, parts, pos = [], [], 0
-    for i, (kind, start, end, _key) in enumerate(claims):
+    for i, (kind, start, end, _key) in enumerate(_outermost(claims)):
         ph = f"{OPEN}{LABELS[kind]}_{i}_{nonce}{CLOSE}"
         spans.append({"kind": kind, "placeholder": ph, "text": text[start:end],
                       "start": start, "end": end})
@@ -63,7 +80,10 @@ def mask(text, *, freeze=(), quotes=True, blockquotes=True, tex=False):
         parts.append(ph)
         pos = end
     parts.append(text[pos:])
-    return "".join(parts), spans
+    masked = "".join(parts)
+    if restore(masked, masked, spans) != text:
+        raise ProtectError("masking did not round-trip", [_problem("round-trip")])
+    return masked, spans
 
 
 def _problem(kind, span=None, placeholder=None):

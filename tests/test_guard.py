@@ -85,6 +85,23 @@ def test_polish_control_faithful_rewrite_lands(work):
     assert _read(out) == FAITHFUL
 
 
+TEX = ("We show the bound is tight.\n"
+       "\\begin{align}\nf(x) &= 1\n> g(x)\n\\end{align}\n"
+       "It is robust.\n")
+
+
+def test_polish_on_tex_splices_an_environment_with_a_quote_line_once(work):
+    # A '>' line inside an align environment was claimed as a block quote, and
+    # the environment then enclosed it; the tail after the inner span was written
+    # twice. The prose edit must land and the environment must appear once.
+    src = _write(work, "t.tex", TEX)
+    out = os.path.join(work, "t.polished.tex")
+    editor.polish(src, out, passes=1, bar=5,
+                  rewrite_fn=lambda t, m, w: t.replace("It is robust.", "It holds."),
+                  judge_fn=lambda t: _scores(2 if t == TEX else 5))
+    assert _read(out) == TEX.replace("It is robust.", "It holds.")
+
+
 @pytest.mark.parametrize("allow,expected", [("", ORIGINAL), ("all", BROKEN)])
 def test_fix_refuses_unless_allowed(work, monkeypatch, allow, expected):
     src = _write(work, "f.md", ORIGINAL)
