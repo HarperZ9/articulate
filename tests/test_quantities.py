@@ -94,10 +94,15 @@ CLOCK_CHANGED = [
     ("Backups run at 2am.", "Backups run at 2pm."),
     ("Backups run at 2 a.m. daily.", "Backups run at 2 p.m. daily."),
     ("Backups run at 2 AM.", "Backups run at 2 PM."),
+    ("Backups run at 2:00 PM.", "Backups run at 2 AM."),
+    ("Backups run at 2:30 PM.", "Backups run at 2 PM."),
 ]
 CLOCK_PRESERVED = [
     ("Backups run at 2am.", "Backups run at 2 a.m."),
     ("Backups run at 2 PM.", "Backups run at 2pm."),
+    # A time on the hour, with and without ":00".
+    ("Backups run at 2:00 PM.", "Backups run at 2 PM."),
+    ("Backups run at 10:00 a.m.", "Backups run at 10 am."),
 ]
 
 
@@ -115,3 +120,6 @@ def test_clock_time_keys():
     assert _keys("2am, 2 PM, 11 p.m., 10:30 AM") == [
         "time:2am", "time:2pm", "time:11pm", "time:10:30am"]
     assert _keys("5 amps and 3 pmol") == ["5", "3"]
+    # The minutes drop only from a 12-hour time on the hour.
+    assert _keys("2:00 PM, 14:00, 2:00:00 PM") == [
+        "time:2pm", "time:14:00", "time:2:00:00pm"]

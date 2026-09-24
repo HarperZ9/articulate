@@ -420,10 +420,10 @@ kept, dropped, added, or changed, with its line and column. It reads:
 
 - numbers with their units, percentages, dates, times, and versions. They are
   normalized, so "10 ms" matches "10ms", "50%" matches "50 percent", "three"
-  matches "3", "May 5, 2026" matches "2026-05-05", and "2 PM" matches "2pm"
-  and "2 p.m.". Magnitude words and units count too: "one million" matches
-  "1,000,000", "$5M" matches "$5 million", "10 megabytes" matches "10 MB", and
-  "20 dollars" matches "$20", while "one million" to "one billion" and
+  matches "3", "May 5, 2026" matches "2026-05-05", and "2 PM" matches "2pm",
+  "2 p.m.", and "2:00 PM". Magnitude words and units count too: "one million"
+  matches "1,000,000", "$5M" matches "$5 million", "10 megabytes" matches "10
+  MB", and "20 dollars" matches "$20", while "one million" to "one billion" and
   "thousands" to "millions" count as changes. "pounds" keys as its own unit,
   because it names a weight or a currency.
 - negations: not, no, never, none, nothing, nobody, nowhere, cannot, unable,
