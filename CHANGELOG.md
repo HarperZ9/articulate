@@ -29,7 +29,8 @@ release is cut.
   order, and is spliced back byte for byte; a missing, duplicated, invented,
   reordered, or mangled placeholder refuses the rewrite, and so does one moved
   into another paragraph when the paragraph count holds. `--unprotect
-  quotes,blockquotes` releases the two configurable kinds.
+  quotes,blockquotes` releases the two configurable kinds, and the meaning
+  guard then reads a released quote as prose.
 - Change report. `--explain` (text) or `--explain json` after `--fix` or
   `--polish` lists each changed sentence before and after, the detector findings
   it carried (rule id and message), the findings left in the new sentence, the
