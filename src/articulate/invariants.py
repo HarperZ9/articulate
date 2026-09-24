@@ -232,8 +232,8 @@ def claim(text, passes):
     return claims, masked
 
 
-def _containers(text, freeze, tex=False):
-    claims, masked = claim(text, container_passes(freeze, tex=tex))
+def _containers(text, freeze, tex=False, quotes=True):
+    claims, masked = claim(text, container_passes(freeze, tex=tex, quotes=quotes))
     items = [_item(kind, text[s:e] if key is None else key, text[s:e], s, e)
              for kind, s, e, key in claims]
     return items, masked
@@ -285,10 +285,12 @@ def _tokens(masked, freeze_keys):
     return items
 
 
-def extract(text, *, freeze=(), tex=False):
+def extract(text, *, freeze=(), tex=False, quotes=True):
     """Every surface invariant in `text`, in document order within each kind.
-    `tex` reads the text as a .tex file (see container_passes)."""
-    containers, masked = _containers(text, tuple(freeze), tex)
+    `tex` reads the text as a .tex file (see container_passes). With `quotes`
+    off, quoted material is prose: no quote item, and its words yield their own
+    numbers, negations, and names."""
+    containers, masked = _containers(text, tuple(freeze), tex, quotes)
     items = containers + _tokens(masked, freeze_keys(freeze))
     items.sort(key=lambda i: (KINDS.index(i["kind"]), i["start"]))
     return items

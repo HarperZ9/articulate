@@ -94,11 +94,13 @@ def test_polish_on_tex_splices_an_environment_with_a_quote_line_once(work):
     # A '>' line inside an align environment was claimed as a block quote, and
     # the environment then enclosed it; the tail after the inner span was written
     # twice. The prose edit must land and the environment must appear once.
+    # On a .tex file the judge reads the text with its math masked, so the
+    # fixture scores the original by its prose.
     src = _write(work, "t.tex", TEX)
     out = os.path.join(work, "t.polished.tex")
     editor.polish(src, out, passes=1, bar=5,
                   rewrite_fn=lambda t, m, w: t.replace("It is robust.", "It holds."),
-                  judge_fn=lambda t: _scores(2 if t == TEX else 5))
+                  judge_fn=lambda t: _scores(2 if "It is robust." in t else 5))
     assert _read(out) == TEX.replace("It is robust.", "It holds.")
 
 

@@ -292,7 +292,10 @@ command with an error that says to upgrade.
   freeze term is also a protected span, so the model never sees it.
 - `--unprotect KINDS`: let the model edit block quotes or quoted material
   (`quotes`, `blockquotes`). Code, math, links, citations, and freeze terms
-  always stay protected.
+  always stay protected. The meaning guard then reads unprotected quotes as
+  prose: an edit inside one passes unless it changes a number, negation, name,
+  or other invariant in the quoted words. Without this flag, any edit inside a
+  quote is refused.
 - `--config PATH`: the project config whose freeze terms and protect switches
   apply. By default the nearest one above the file is read.
 - `--explain [text|json]`: after the run, print the change report: each changed

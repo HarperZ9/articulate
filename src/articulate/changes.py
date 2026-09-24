@@ -116,15 +116,18 @@ def _pairs(original, final):
             yield op, a_segs[i1:i2], b_segs[j1:j2]
 
 
-def build(original, final, *, profile=None, guard=None, freeze=()):
+def build(original, final, *, profile=None, guard=None, freeze=(), tex=False):
     """The change report as a dict. `guard` (a RewriteGuard) contributes its
-    refusals; `profile` sets the detector profile for the findings columns."""
+    refusals and its quote switch, so the meaning rows read the text as the
+    guard did; `profile` sets the detector profile for the findings columns;
+    `tex` reads both texts as .tex files."""
     from .detector import check_text
     # House-style notes stay out, as in every other editor output; a house
     # profile keeps them at their own tier.
     before_r = check_text(original, profile=profile, house_notes=False)
     after_r = check_text(final, profile=profile, house_notes=False)
-    report = meaning.compare(original, final, freeze=freeze)
+    quotes = guard.protect["quotes"] if guard else True
+    report = meaning.compare(original, final, freeze=freeze, tex=tex, quotes=quotes)
     starts = [[0] + [m.end() for m in re.finditer("\n", t)] for t in (original, final)]
     changes = []
     for op, a_segs, b_segs in _pairs(original, final):
@@ -213,7 +216,7 @@ def finish(args, path, out_path, guard, rc):
         print(f"[changes] cannot build the change report: {e}")
         return rc or 1
     rep = build(original, final, profile=_profile(args, path, original), guard=guard,
-                freeze=guard.freeze)
+                freeze=guard.freeze, tex=path.lower().endswith(".tex"))
     if args.explain == "json":
         print(json.dumps(dict(rep, file=path, out=out_path), ensure_ascii=False, indent=2))
     else:

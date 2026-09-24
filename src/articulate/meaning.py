@@ -95,11 +95,12 @@ def _compare_kind(kind, a, b, at_a, at_b):
     return out
 
 
-def compare(original, rewrite, *, freeze=(), tex=False):
+def compare(original, rewrite, *, freeze=(), tex=False, quotes=True):
     """The meaning-guard report for a rewrite of `original`. `tex` reads both
-    texts as .tex files, as the protected-span layer does."""
-    a_items = invariants.extract(original, freeze=freeze, tex=tex)
-    b_items = invariants.extract(rewrite, freeze=freeze, tex=tex)
+    texts as .tex files, as the protected-span layer does. `quotes` off reads
+    quoted material as prose, for quotes the model was allowed to edit."""
+    a_items = invariants.extract(original, freeze=freeze, tex=tex, quotes=quotes)
+    b_items = invariants.extract(rewrite, freeze=freeze, tex=tex, quotes=quotes)
     at_a, at_b = _locator(original), _locator(rewrite)
     items, by_kind = [], {}
     for kind in invariants.KINDS:

@@ -175,6 +175,16 @@ def test_editor_guard_takes_freeze_and_protect_from_the_config(work):
     assert g.freeze == ("Articulate",) and g.protect["quotes"] is False
 
 
+def test_compare_reads_quotes_as_the_config_protects_them(work, capsys):
+    # The config releases quotes, so the rewrite guard reads them as prose; the
+    # compare command applies the same switch, and --config none restores it.
+    a = _write(work, "q1.md", 'She said "this is really very good" today.\n')
+    b = _write(work, "q2.md", 'She said "this is good" today.\n')
+    assert cli.main(["compare", a, b, "--gate"]) == 0
+    assert cli.main(["compare", a, b, "--gate", "--config", "none"]) == 1
+    capsys.readouterr()
+
+
 def test_config_command_shows_what_applies(work, capsys):
     assert cli.main(["config", os.path.join(work, "notes", "x.md"), "--json"]) == 0
     info = json.loads(capsys.readouterr().out)

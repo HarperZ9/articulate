@@ -78,8 +78,11 @@ class RewriteGuard:
     def check(self, before, after, *, tex=False):
         """Return `after` if it keeps every invariant of `before` that is not
         allowed to change; otherwise raise RewriteRefused. `tex` reads both
-        texts as .tex files."""
-        report = meaning.compare(before, after, freeze=self.freeze, tex=tex)
+        texts as .tex files. When quotes are unprotected, the model may edit
+        them, so the meaning guard reads them as prose and checks the words
+        inside them like any other prose."""
+        report = meaning.compare(before, after, freeze=self.freeze, tex=tex,
+                                 quotes=self.protect["quotes"])
         block = meaning.blocking(report, self.allow)
         self.log.append({"accepted": not block, "stage": "meaning",
                          "blocking": block, "report": report,
