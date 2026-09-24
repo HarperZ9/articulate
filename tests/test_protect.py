@@ -99,6 +99,39 @@ def test_guard_refuses_a_dropped_placeholder_and_logs_the_stage():
     assert g.log[-1]["stage"] == "protected-span" and not g.log[-1]["accepted"]
 
 
+# A later pass can match across an earlier claim, because a claim is blanked to
+# spaces: the quote around a code span, the attribute quote around a link, the
+# citation around a URL, display math around a '>' line. Each pair is one span:
+# the inner text travels inside the outer placeholder and stays hidden.
+NESTED = [
+    ('He said "run `ls -la` now" and left.\n', "ls -la"),
+    ('<a href="https://example.com/guide">the guide</a>\n', "example.com"),
+    ("As shown (Smith, 2020; https://example.com/data) here.\n", "example.com"),
+    ("$$\na\n> b\n$$\nDone.\n", "> b"),
+    ("\\begin{equation}\na\n> b\n\\end{equation}\nDone.\n", "> b"),
+]
+
+
+@pytest.mark.parametrize("text,inner", NESTED)
+def test_nested_spans_round_trip_byte_for_byte(text, inner):
+    masked, spans = protect.mask(text)
+    assert inner not in masked
+    assert protect.restore(masked, masked, spans) == text
+    starts = [s["start"] for s in spans]
+    assert all(a["end"] <= b["start"] for a, b in zip(spans, spans[1:])), starts
+
+
+@pytest.mark.parametrize("text,inner", NESTED)
+def test_guard_accepts_an_identity_rewrite_of_nested_spans(text, inner):
+    assert guard.RewriteGuard().run(lambda m: m, text) == text
+
+
+def test_a_partial_overlap_widens_the_outer_span():
+    claims = [("code", 5, 15, None), ("quote", 0, 10, None), ("url", 2, 4, None),
+              ("math", 20, 25, None)]
+    assert protect._outermost(claims) == [("quote", 0, 15, None), ("math", 20, 25, None)]
+
+
 def test_unprotect_rejects_unknown_kinds():
     assert guard.parse_unprotect("quotes") == {"quotes": False, "blockquotes": True}
     with pytest.raises(ValueError):
