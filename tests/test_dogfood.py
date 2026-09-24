@@ -31,10 +31,10 @@ MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "quoting.py", "citations.py", "sentence_notes.py", "note_reasons.py",
            "local_only.py", "editor_cli.py", "fairness_scan.py",
            "invariants.py", "quantities.py", "meaning.py", "guard.py", "cli_ext.py",
-           "protect.py",
-           "changes.py",
-           "project.py", "rules_ext.py", "terms.py",
-           "pack_util.py", "pack_ux.py", "pack_review.py", "pack_plain.py", "pack_bcp14.py", "pack_controlled.py", "bench_domains.py", "pack_reasons.py"]
+           "protect.py", "changes.py", "project.py", "rules_ext.py", "terms.py",
+           "pack_util.py", "pack_ux.py", "pack_review.py", "pack_plain.py",
+           "pack_bcp14.py", "pack_controlled.py", "bench_domains.py",
+           "pack_reasons.py", "finders.py"]
 
 
 def _gate(path, text):

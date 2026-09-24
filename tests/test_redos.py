@@ -131,6 +131,9 @@ MEANING_ADVERSARIAL = [
     "http://" * 8000, "a@b." * 10000, "May " * 10000, "10 ms " * 8000,
     "Smith et al" * 5000, "doi:10.1234/" * 5000, "A " * 20000, "```\n" * 10000,
     "v1." * 10000, "1.1.1.1." * 5000, "twenty-" * 8000,
+    # The URL finder trims unbalanced closers and trailing citations one at a
+    # time; each trim step must stay constant time.
+    "http://x" + ")" * 40000, "http://x" + "[1]" * 13000, "http://x(" * 5000 + "]" * 20000,
 ]
 
 
