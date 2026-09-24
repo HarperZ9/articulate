@@ -12,7 +12,8 @@ release is cut.
 - Meaning guard. `articulate compare ORIGINAL REWRITE` reports each surface
   invariant as kept, dropped, added, or changed, with line and column: numbers
   with units, dates, times, and versions; negations; modal strength (with BCP 14
-  capitals as their own value); scope words; the direction of a bound on a
+  capitals as their own value); scope words, quantifiers ("all", "some"), and
+  frequency words ("usually", "rarely"); the direction of a bound on a
   number or date ("under 50%", "up to 10 MB", "before May 5"); named entities;
   URLs and emails; code; math; citations; quoted strings; and freeze terms.
   `--gate` exits 1 on a change, and `--allow-change KINDS` exempts named kinds.

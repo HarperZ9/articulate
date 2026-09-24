@@ -313,7 +313,11 @@ kept, dropped, added, or changed, with its line and column. It reads:
   "cannot") and one just before it ("do not have to", "is not required") give
   different values, so "must not" to "do not have to" counts as a change.
 - scope words that bound a claim: only, unless, except, at least, at most,
-  always, and exactly.
+  always, and exactly; the quantifiers all, every, and each (one value) and
+  some, several, and a few (another); and the frequency words usually,
+  typically, and normally, often and frequently, sometimes and occasionally,
+  and rarely and seldom, where each group is one value. Idioms such as "at
+  all", "after all", and "each other" quantify nothing and are skipped.
 - the direction of a bound on a number or date: up to, more than, over, above,
   exceeds, less than, under, below, before, and after. These count only when a
   number or date follows, so "over 50%" is a bound and "over the network" is
