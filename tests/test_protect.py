@@ -121,6 +121,41 @@ def test_a_self_referential_nonce_cannot_let_a_code_span_move(monkeypatch):
         guard.RewriteGuard().run(drop_first, text)
 
 
+TRIAL = "Drug A lowers the risk [1].\n\nDrug B raises the risk.\n"
+
+
+def _move_cite(m):
+    ph = protect.PLACEHOLDER.search(m).group(0)
+    return m.replace(" " + ph, "").replace("raises the risk.", "raises the risk " + ph + ".")
+
+
+@pytest.mark.parametrize("text", [TRIAL, TRIAL.replace("\n", "\r\n")])
+def test_a_citation_moved_to_another_paragraph_is_refused(text):
+    g = guard.RewriteGuard()
+    with pytest.raises(guard.RewriteRefused) as info:
+        g.run(_move_cite, text)
+    assert info.value.stage == "protected-span"
+    assert [p["problem"] for p in info.value.blocking] == ["moved"]
+    assert "moved placeholder citation '[1]'" in str(info.value)
+
+
+def test_a_citation_moved_within_its_paragraph_is_accepted():
+    text = "Drug A lowers the risk [1] in adults.\n\nDrug B raises the risk.\n"
+    out = guard.RewriteGuard().run(
+        lambda m: m.replace(" in adults", "").replace("the risk ", "the adult risk "), text)
+    assert out == "Drug A lowers the adult risk [1].\n\nDrug B raises the risk.\n"
+
+
+def test_a_move_across_merged_paragraphs_is_a_documented_limit():
+    """A rewrite that merges or splits paragraphs is checked for order only, so
+    a citation that moves while the paragraph count changes is not caught.
+    docs/boundaries.md states this limit."""
+    def merge_and_move(m):
+        return _move_cite(m).replace(".\n\nDrug B", ". Drug B")
+    out = guard.RewriteGuard().run(merge_and_move, TRIAL)
+    assert out == "Drug A lowers the risk. Drug B raises the risk [1].\n"
+
+
 def test_guard_hides_spans_and_restores_them():
     seen = []
 

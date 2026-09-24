@@ -146,7 +146,8 @@ MEANING_ADVERSARIAL = [
 # restores the model's output: three passes over every placeholder. A document
 # with thousands of citations or code spans makes thousands of placeholders.
 SPAN_ADVERSARIAL = ["[1] " * 20000, "`x` " * 20000, "a@b.co " * 10000,
-                    "⦃a" * 20000, "⦃" * 40000, "⦃CODE_0_1a2b3c⦄ " * 8000]
+                    "⦃a" * 20000, "⦃" * 40000, "⦃CODE_0_1a2b3c⦄ " * 8000,
+                    "P [1].\n\n" * 10000, "\n \n\t\n" * 20000 + "x"]
 
 
 def test_protected_spans_are_bounded():

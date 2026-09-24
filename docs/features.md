@@ -467,12 +467,17 @@ placeholder, so the model never sees the protected text and cannot alter it:
 After the rewrite, every placeholder must come back exactly once and in its
 original order. Each span is then spliced back byte for byte. A placeholder that
 is missing, duplicated, invented, reordered, or mangled refuses the whole rewrite,
-and the previous text is kept. Each placeholder carries a short nonce drawn from
-the text's hash and chosen so it occurs nowhere in the text. A string in the
-document that looks like a placeholder, or a lone `⦃` or `⦄`, is masked as a
-span of its own, so it cannot pass for a placeholder. Block quotes and quoted material can be released with `--unprotect
-quotes,blockquotes` for a document whose quotes are the author's own prose; code,
-math, links, citations, and freeze terms stay protected.
+and the previous text is kept. So does a placeholder moved into another
+paragraph, such as a citation that now follows a different claim, when the
+rewrite keeps the number of paragraphs. A rewrite that merges or splits
+paragraphs is checked for order only, and a move inside one paragraph passes.
+
+Each placeholder carries a short nonce drawn from the text's hash and chosen so
+it occurs nowhere in the text. A string in the document that looks like a
+placeholder, or a lone `⦃` or `⦄`, is masked as a span of its own, so it cannot
+pass for a placeholder. Block quotes and quoted material can be released with
+`--unprotect quotes,blockquotes` for a document whose quotes are the author's
+own prose; code, math, links, citations, and freeze terms stay protected.
 
 The guarantee is structural: it holds whatever the model returns. It covers the
 spans the patterns recognize. A citation style or a link form the patterns miss
