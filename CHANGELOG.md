@@ -240,7 +240,8 @@ Fairness harness and release check:
 
 - Meaning guard. `articulate compare ORIGINAL REWRITE` reports each surface
   invariant as kept, dropped, added, or changed, with line and column: numbers
-  with units, dates, times, and versions; negations; modal strength (with BCP 14
+  with units (as symbols or words) and magnitude words ("one million", "$5M"),
+  dates, times, and versions; negations; modal strength (with BCP 14
   capitals as their own value); scope words, quantifiers ("all", "some"), and
   frequency words ("usually", "rarely"); the direction of a bound on a
   number or date ("under 50%", "up to 10 MB", "before May 5"); named entities;

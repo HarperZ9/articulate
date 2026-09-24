@@ -420,7 +420,12 @@ kept, dropped, added, or changed, with its line and column. It reads:
 
 - numbers with their units, percentages, dates, times, and versions. They are
   normalized, so "10 ms" matches "10ms", "50%" matches "50 percent", "three"
-  matches "3", and "May 5, 2026" matches "2026-05-05".
+  matches "3", and "May 5, 2026" matches "2026-05-05". Magnitude words and
+  units count too: "one million" matches "1,000,000", "$5M" matches "$5
+  million", "10 megabytes" matches "10 MB", and "20 dollars" matches "$20",
+  while "one million" to "one billion" and "thousands" to "millions" count as
+  changes. "pounds" keys as its own unit, because it names a weight or a
+  currency.
 - negations: not, no, never, none, nothing, nobody, nowhere, cannot, unable,
   n't, without, neither, and nor. The "no" of "no more than 3" belongs to the
   bound, which matches "at most 3", and "no fewer than 2" matches "at least 2".
