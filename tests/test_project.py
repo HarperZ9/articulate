@@ -117,6 +117,7 @@ def test_allowed_term_clears_a_vocabulary_rule_but_not_a_device(work):
     ({"terminology": {"banned": [{"term": "x", "severity": "fatal"}]}}, "severity"),
     ({"options": {"nope": {"a": 1}}}, "no such rule pack"),
     ({"freeze": "Articulate"}, "freeze"),
+    ({"freeze": ["Articulate "]}, "whitespace"),
     ({"version": 2}, "version"),
 ])
 def test_malformed_config_fails_loudly(work, patch, needle):

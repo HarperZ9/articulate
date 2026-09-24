@@ -113,6 +113,10 @@ def _check_types(path, data):
     freeze = data.get("freeze", [])
     if not isinstance(freeze, list) or not all(isinstance(t, str) and t.strip() for t in freeze):
         _fail(path, "'freeze' must be a list of non-empty strings")
+    padded = [t for t in freeze if t != t.strip()]
+    if padded:
+        _fail(path, f"'freeze' terms start or end with whitespace: {padded!r}; "
+                    "a term matches as a whole word, so write it without the spaces")
     protect = data.get("protect", {})
     if not isinstance(protect, dict) or set(protect) - {"quotes", "blockquotes"} \
             or not all(isinstance(v, bool) for v in protect.values()):
