@@ -63,3 +63,41 @@ def test_bound_needs_a_number_after_it():
     assert _scopes("Stay under 5 ms, over 2 ms, before May 5, after 10:30.") == [
         "less-than", "more-than", "before", "after"]
     assert _scopes("Stay under the limit and over the moon, up to now.") == []
+
+
+def _negations(text):
+    return [i["text"] for i in invariants.extract(text) if i["kind"] == "negation"]
+
+
+# "no more than" is a bound, and the scope table already keys it with "at most".
+# The negation pattern also matched its "no", so the equal rewrite to "at most"
+# was refused as a dropped negation.
+COMPARATIVE_PRESERVED = [
+    ("Send no more than 3 requests.", "Send at most 3 requests."),
+    ("Keep no fewer than 2 replicas.", "Keep at least 2 replicas."),
+    ("Send a maximum of 3 requests.", "Send no more than 3 requests."),
+    ("Send not more than 3 requests.", "Send at most 3 requests."),
+    ("Keep not less than 2 replicas.", "Keep a minimum of 2 replicas."),
+]
+COMPARATIVE_CHANGED = [
+    ("Send no more than 3 requests.", "Send more than 3 requests."),
+    ("Keep no fewer than 2 replicas.", "Keep fewer than 2 replicas."),
+    ("There is no limit on retries.", "There is a limit on retries."),
+]
+
+
+@pytest.mark.parametrize("original,rewrite", COMPARATIVE_PRESERVED)
+def test_negated_comparative_is_a_bound(original, rewrite):
+    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+@pytest.mark.parametrize("original,rewrite", COMPARATIVE_CHANGED)
+def test_negated_comparative_change_is_caught(original, rewrite):
+    assert _verdict(original, rewrite) == "changed", _report(original, rewrite)
+
+
+def test_negated_comparative_is_no_negation():
+    assert _negations("Reply no later than May 5, not more than twice.") == []
+    assert _scopes("Reply no later than May 5, not more than twice.") == [
+        "at-most", "at-most"]
+    assert _negations("No, it is not ready and there is no more.") == ["No", "not", "no"]

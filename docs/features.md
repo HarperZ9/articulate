@@ -304,7 +304,8 @@ kept, dropped, added, or changed, with its line and column. It reads:
   normalized, so "10 ms" matches "10ms", "50%" matches "50 percent", "three"
   matches "3", and "May 5, 2026" matches "2026-05-05".
 - negations: not, no, never, none, nothing, nobody, nowhere, cannot, n't, without,
-  neither, and nor.
+  neither, and nor. The "no" of "no more than 3" belongs to the bound, which
+  matches "at most 3", and "no fewer than 2" matches "at least 2".
 - modal strength in three classes: required (must, shall, required, have to),
   recommended (should, recommended, ought to), and optional (may, might, can,
   could, optional). An all-capitals BCP 14 keyword is its own value, so MUST to

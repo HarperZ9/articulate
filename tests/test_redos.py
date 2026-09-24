@@ -111,6 +111,7 @@ MEANING_ADVERSARIAL = [
     "\\begin{align}" * 5000, "\\begin{align}" + "\\begin{proof}x" * 5000,
     # A bound word counts only before a number, so each match looks ahead once.
     "up to " * 8000 + "5", "more than 5 " * 5000, "under  " * 8000,
+    "no more than " * 6000, "not  " * 8000 + "more", "no less " * 8000,
 ]
 
 
