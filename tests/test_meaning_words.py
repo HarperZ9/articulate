@@ -101,3 +101,45 @@ def test_negated_comparative_is_no_negation():
     assert _scopes("Reply no later than May 5, not more than twice.") == [
         "at-most", "at-most"]
     assert _negations("No, it is not ready and there is no more.") == ["No", "not", "no"]
+
+
+def _modals(text):
+    return [(i["key"], i["text"]) for i in invariants.extract(text) if i["kind"] == "modal"]
+
+
+# A negation right after a modal ("must not") forbids the act; one right before
+# it ("do not have to") removes the obligation. The modal key was the class alone
+# and negations were one pooled count, so the two read the same.
+MODAL_CHANGED = [
+    ("You must not delete the audit log.", "You do not have to delete the audit log."),
+    ("You mustn't delete the file.", "You don't have to delete the file."),
+    ("Clients MUST NOT retry.", "Clients are NOT REQUIRED to retry."),
+    ("You should not merge it.", "You do not need to merge it."),
+]
+MODAL_PRESERVED = [
+    ("You must not delete the log.", "You mustn't delete the log."),
+    ("You do not have to delete the log.", "You don't have to delete the log."),
+    ("You don't need to sign in.", "You do not have to sign in."),
+    ("It cannot be undone.", "It can't be undone."),
+    ("You must never share keys.", "You must not share keys, ever."),
+    ("Do not panic; you must delete it.", "Don't panic; you must delete it."),
+]
+
+
+@pytest.mark.parametrize("original,rewrite", MODAL_CHANGED)
+def test_negation_moved_across_a_modal_is_caught(original, rewrite):
+    assert _verdict(original, rewrite) == "changed", _report(original, rewrite)
+
+
+@pytest.mark.parametrize("original,rewrite", MODAL_PRESERVED)
+def test_negation_kept_on_the_same_side_is_preserved(original, rewrite):
+    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+def test_modal_key_records_the_side_of_its_negation():
+    assert _modals("You must not go, and you do not have to stay.") == [
+        ("required+not", "must not"), ("not-required", "not have to")]
+    assert _modals("It cannot fail. It is not strictly required.") == [
+        ("optional+not", "cannot"), ("not-required", "not strictly required")]
+    assert _modals("Clients MUST NOT retry.") == [("required+not:BCP14", "MUST NOT")]
+    assert _modals("You don't have to stay.") == [("not-required", "don't have to")]

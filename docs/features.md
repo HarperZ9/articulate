@@ -309,7 +309,9 @@ kept, dropped, added, or changed, with its line and column. It reads:
 - modal strength in three classes: required (must, shall, required, have to),
   recommended (should, recommended, ought to), and optional (may, might, can,
   could, optional). An all-capitals BCP 14 keyword is its own value, so MUST to
-  must counts as a change.
+  must counts as a change. A negation right after a modal ("must not",
+  "cannot") and one just before it ("do not have to", "is not required") give
+  different values, so "must not" to "do not have to" counts as a change.
 - scope words that bound a claim: only, unless, except, at least, at most,
   always, and exactly.
 - the direction of a bound on a number or date: up to, more than, over, above,
