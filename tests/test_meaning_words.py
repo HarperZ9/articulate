@@ -154,6 +154,10 @@ QUANTIFIER_CHANGED = [
     ("All tests must pass.", "Tests must pass."),
     ("The job usually finishes in 10 min.", "The job rarely finishes in 10 min."),
     ("A few hosts failed.", "Few hosts failed."),
+    # "after all" and "at all" before a noun quantify it; the idiom reading
+    # used to swallow the "all".
+    ("Deploy after all tests pass.", "Deploy after tests pass."),
+    ("Keep the door locked at all times.", "Keep the door locked at times."),
 ]
 QUANTIFIER_PRESERVED = [
     ("Users must reset all passwords.", "Users must reset every password."),
@@ -165,6 +169,10 @@ QUANTIFIER_PRESERVED = [
     ("After all, the cache is shared.", "In the end, the cache is shared."),
     ("They review each other's code.", "They review one another's code."),
     ("Above all, keep it short.", "Most of all, keep it short."),
+    ("It works, after all.", "It works."),
+    ("Deploy after all tests pass.", "Deploy after every test passes."),
+    ("Deploy subsequent to all tests passing.", "Deploy after all tests passing."),
+    ("Keep the door locked at all times.", "Keep the door locked always."),
 ]
 
 

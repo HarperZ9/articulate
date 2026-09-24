@@ -43,9 +43,11 @@ _NEG_CMP = r"not?\s{1,3}(?:" + _MORE + "|" + _LESS + r"|later|earlier)\s{1,3}tha
 # date" are prose. Synonyms share a key, so "under 50%" matches "below 50%".
 _SCOPE_GROUPS = (
     # Idioms that hold a quantifier or bound word and quantify nothing. They
-    # match first and yield no item.
-    (None, r"at\s{1,3}all|after\s{1,3}all|above\s{1,3}all|all\s{1,3}(?:right|in\s{1,3}all)"
-           r"|(?:first|most|last)\s{1,3}of\s{1,3}all", False),
+    # match first and yield no item. "after all" is the idiom only when no word
+    # follows it, so "after all tests pass" keeps its quantifier, and "at all
+    # times" is "always".
+    (None, r"at\s{1,3}all(?!\s{1,3}times\b)|after\s{1,3}all(?!\s{1,3}\w)|above\s{1,3}all"
+           r"|all\s{1,3}(?:right|in\s{1,3}all)|(?:first|most|last)\s{1,3}of\s{1,3}all", False),
     ("only", r"only|solely|exclusively", False),
     ("unless", r"unless", False),
     ("except", r"except", False),
@@ -58,7 +60,7 @@ _SCOPE_GROUPS = (
     ("less-than", r"(?:" + _LESS + r")\s{1,3}than|under|below", True),
     ("before", r"before|prior\s{1,3}to|earlier\s{1,3}than", True),
     ("after", r"after|later\s{1,3}than|subsequent\s{1,3}to", True),
-    ("always", r"always", False),
+    ("always", r"always|at\s{1,3}all\s{1,3}times", False),
     ("exactly", r"exactly", False),
     # Quantifiers and frequency words, one key per strength.
     ("universal", r"all|every|each(?!\s{1,3}other\b)", False),

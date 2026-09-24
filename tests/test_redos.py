@@ -145,6 +145,7 @@ MEANING_ADVERSARIAL = [
     # Each modal looks for a negation on either side of it with a bisect.
     "must not " * 5000, "do not have to " * 4000, "x" * 40000 + "n't have to",
     "all " * 10000, "each  other " * 5000, "a few " * 8000, "All. " * 8000,
+    "after all " * 8000, "at all  " * 8000 + "times",
     "is not able to " * 4000, "has the ability " * 5000, "no-" * 13000,
     "a million " * 5000, "one " * 20000 + "hundred", "$5M" * 8000, "Thousands " * 5000,
     "10 megabytes " * 5000, "$" + "5" * 40000 + "bn", "2 a.m" * 8000, "12 pm " * 6000,
