@@ -147,7 +147,8 @@ MEANING_ADVERSARIAL = [
 # with thousands of citations or code spans makes thousands of placeholders.
 SPAN_ADVERSARIAL = ["[1] " * 20000, "`x` " * 20000, "a@b.co " * 10000,
                     "\u2983a" * 20000, "\u2983" * 40000, "\u2983CODE_0_1a2b3c\u2984 " * 8000,
-                    "P [1].\n\n" * 10000, "\n \n\t\n" * 20000 + "x"]
+                    "P [1].\n\n" * 10000, "\n \n\t\n" * 20000 + "x",
+                    "> a\n" + "- - " * 10000 + "x", "> a\n" + "b\n" * 20000, "> " * 20000 + "x"]
 
 
 def test_protected_spans_are_bounded():
