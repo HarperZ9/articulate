@@ -27,6 +27,11 @@ _MODAL_CLASS = {"must": "required", "shall": "required", "sha": "required",
                 "can": "optional", "could": "optional", "optional": "optional"}
 BCP14 = frozenset({"MUST", "SHALL", "SHOULD", "MAY", "REQUIRED", "RECOMMENDED",
                    "OPTIONAL"})
+# The comparatives. "no more than" and "not fewer than" are bounds (at most and
+# at least), so their "no" or "not" belongs to the bound and is no negation.
+_MORE = r"more|greater|higher|larger|longer"
+_LESS = r"less|fewer|lower|smaller|shorter"
+_NEG_CMP = r"not?\s{1,3}(?:" + _MORE + "|" + _LESS + r"|later|earlier)\s{1,3}than\b"
 # Scope groups as (key, pattern, bounds a number). A group that bounds a number
 # counts only when a number or date starts one to three spaces after it, so
 # "over 50%" and "up to 10 MB" bound a claim, and "over the network" and "up to
@@ -35,13 +40,13 @@ _SCOPE_GROUPS = (
     ("only", r"only|solely|exclusively", False),
     ("unless", r"unless", False),
     ("except", r"except", False),
-    ("at-least", r"at\s{1,3}least|no\s{1,3}(?:fewer|less)\s{1,3}than"
+    ("at-least", r"at\s{1,3}least|not?\s{1,3}(?:" + _LESS + r"|earlier)\s{1,3}than"
                  r"|a\s{1,3}minimum\s{1,3}of", False),
-    ("at-most", r"at\s{1,3}most|no\s{1,3}more\s{1,3}than|a\s{1,3}maximum\s{1,3}of", False),
+    ("at-most", r"at\s{1,3}most|not?\s{1,3}(?:" + _MORE + r"|later)\s{1,3}than"
+                r"|a\s{1,3}maximum\s{1,3}of", False),
     ("at-most", r"up\s{1,3}to", True),
-    ("more-than", r"(?:more|greater|higher|larger|longer)\s{1,3}than|over|above"
-                  r"|exceed(?:s|ed|ing)?", True),
-    ("less-than", r"(?:less|fewer|lower|smaller|shorter)\s{1,3}than|under|below", True),
+    ("more-than", r"(?:" + _MORE + r")\s{1,3}than|over|above|exceed(?:s|ed|ing)?", True),
+    ("less-than", r"(?:" + _LESS + r")\s{1,3}than|under|below", True),
     ("before", r"before|prior\s{1,3}to|earlier\s{1,3}than", True),
     ("after", r"after|later\s{1,3}than|subsequent\s{1,3}to", True),
     ("always", r"always", False),
@@ -49,8 +54,9 @@ _SCOPE_GROUPS = (
 )
 _SCOPE = re.compile(r"(?i)\b(?:" + "|".join(f"({p})" for _k, p, _b in _SCOPE_GROUPS)
                     + r")\b")
-_NEGATION = re.compile(r"(?i)\b(?:not|never|none|nothing|nobody|nowhere|without"
-                       r"|neither|nor|cannot)\b|\bno\b(?!\.\s?\d)|n['\u2019]t\b")
+_NEGATION = re.compile(r"(?i)\b(?:never|none|nothing|nobody|nowhere|without|neither"
+                       r"|nor|cannot)\b|n['\u2019]t\b"
+                       r"|\b(?!" + _NEG_CMP + r")(?:not\b|no\b(?!\.\s?\d))")
 _ENTITY = re.compile(r"\b[A-Z][A-Za-z0-9]{0,40}(?:[.+\-][A-Za-z0-9]{1,40}){0,4}"
                      r"(?:['\u2019]s)?\b")
 _NOT_ENTITY = BCP14 | {"I", "NOT"}
