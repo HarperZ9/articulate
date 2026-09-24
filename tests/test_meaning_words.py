@@ -204,9 +204,20 @@ def _pack_suggestions():
 def test_rule_pack_suggestions_keep_the_meaning(phrase, suggestion):
     """The plain-language and controlled-English packs suggest these rewrites,
     so the meaning guard must let each one through. "is able to" to "can" read
-    as an added modal, and "a no-brainer" as a dropped negation."""
-    original, rewrite = f"so we {phrase} it", f"so we {suggestion} it"
-    assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+    as an added modal, and "a no-brainer" as a dropped negation. Before a
+    statute citation, "pursuant to" to "under" read as an added bound."""
+    for context in ("so we {} it", "so we {} 5 U.S.C. 552 now"):
+        original, rewrite = context.format(phrase), context.format(suggestion)
+        assert _verdict(original, rewrite) == "preserved", _report(original, rewrite)
+
+
+def test_over_before_a_count_stays_a_bound_in_a_phrasal_verb():
+    """The controlled-English pack suggests "review" for "go over". Before a
+    count, "over" may mean "more than" ("do not go over 5 GB"), so the guard
+    refuses that rewrite there. The refusal is the safe side of the ambiguity,
+    and this test records it."""
+    assert _verdict("Do not go over 5 GB.", "Do not review 5 GB.") == "changed"
+    assert _verdict("We go over 3 items.", "We review 3 items.") == "changed"
 
 
 ABILITY_PRESERVED = [

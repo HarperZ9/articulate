@@ -456,10 +456,13 @@ kept, dropped, added, or changed, with its line and column. It reads:
   uses it as one mid-sentence, outside a heading, and never in lower case.
 - URLs and emails, inline and fenced code, math spans, citations (`[1]`, `[@key]`,
   `(Author, 2020)`, `Author (2020)`, `Author et al.`, a DOI, an arXiv id,
-  `\cite{}`), quoted strings, and project freeze terms. A citation or a quote
-  compares after its formatting is normalized, so "(Smith, 2020)" matches
-  "(Smith 2020)", `[1-3]` matches the same range with an en dash, and curly
-  quotes match straight ones. The report shows each side as written.
+  `\cite{}`, and a statute or regulation cited title first, such as `5 U.S.C.
+  552` or `21 CFR Part 11`), quoted strings, and project freeze terms. The
+  title number of a statute is no count, so "under 5 U.S.C. 552" is no bound.
+  A citation or a quote compares after its formatting is normalized, so
+  "(Smith, 2020)" matches "(Smith 2020)", `[1-3]` matches the same range with
+  an en dash, and curly quotes match straight ones. The report shows each side
+  as written.
 
 `fix` and `polish` run every model rewrite through the guard. A rewrite that
 drops, adds, or changes an invariant is refused, the previous text is kept, and
