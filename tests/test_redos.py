@@ -109,6 +109,8 @@ MEANING_ADVERSARIAL = [
     '"' + "x" * 40000, '"a' * 20000, "http://x/" + "a" * 200000, "\u201ca " * 20000,
     "``" + "a`" * 20000, "$$a" * 10000, "\\[" * 20000, "\\(a" * 20000,
     "\\begin{align}" * 5000, "\\begin{align}" + "\\begin{proof}x" * 5000,
+    # A bound word counts only before a number, so each match looks ahead once.
+    "up to " * 8000 + "5", "more than 5 " * 5000, "under  " * 8000,
 ]
 
 

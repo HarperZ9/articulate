@@ -27,12 +27,28 @@ _MODAL_CLASS = {"must": "required", "shall": "required", "sha": "required",
                 "can": "optional", "could": "optional", "optional": "optional"}
 BCP14 = frozenset({"MUST", "SHALL", "SHOULD", "MAY", "REQUIRED", "RECOMMENDED",
                    "OPTIONAL"})
-_SCOPE = re.compile(
-    r"(?i)\b(?:(only|solely|exclusively)|(unless)|(except)"
-    r"|(at\s{1,3}least|no\s{1,3}(?:fewer|less)\s{1,3}than|a\s{1,3}minimum\s{1,3}of)"
-    r"|(at\s{1,3}most|no\s{1,3}more\s{1,3}than|a\s{1,3}maximum\s{1,3}of"
-    r"|up\s{1,3}to(?=\s{1,3}[\d$]))|(always)|(exactly))\b")
-_SCOPE_KEYS = ("only", "unless", "except", "at-least", "at-most", "always", "exactly")
+# Scope groups as (key, pattern, bounds a number). A group that bounds a number
+# counts only when a number or date starts one to three spaces after it, so
+# "over 50%" and "up to 10 MB" bound a claim, and "over the network" and "up to
+# date" are prose. Synonyms share a key, so "under 50%" matches "below 50%".
+_SCOPE_GROUPS = (
+    ("only", r"only|solely|exclusively", False),
+    ("unless", r"unless", False),
+    ("except", r"except", False),
+    ("at-least", r"at\s{1,3}least|no\s{1,3}(?:fewer|less)\s{1,3}than"
+                 r"|a\s{1,3}minimum\s{1,3}of", False),
+    ("at-most", r"at\s{1,3}most|no\s{1,3}more\s{1,3}than|a\s{1,3}maximum\s{1,3}of", False),
+    ("at-most", r"up\s{1,3}to", True),
+    ("more-than", r"(?:more|greater|higher|larger|longer)\s{1,3}than|over|above"
+                  r"|exceed(?:s|ed|ing)?", True),
+    ("less-than", r"(?:less|fewer|lower|smaller|shorter)\s{1,3}than|under|below", True),
+    ("before", r"before|prior\s{1,3}to|earlier\s{1,3}than", True),
+    ("after", r"after|later\s{1,3}than|subsequent\s{1,3}to", True),
+    ("always", r"always", False),
+    ("exactly", r"exactly", False),
+)
+_SCOPE = re.compile(r"(?i)\b(?:" + "|".join(f"({p})" for _k, p, _b in _SCOPE_GROUPS)
+                    + r")\b")
 _NEGATION = re.compile(r"(?i)\b(?:not|never|none|nothing|nobody|nowhere|without"
                        r"|neither|nor|cannot)\b|\bno\b(?!\.\s?\d)|n['\u2019]t\b")
 _ENTITY = re.compile(r"\b[A-Z][A-Za-z0-9]{0,40}(?:[.+\-][A-Za-z0-9]{1,40}){0,4}"
@@ -68,8 +84,18 @@ def _is_initial(masked, pos, starts):
             or last_line.startswith(("#", "|", "```", "~~~")))
 
 
-def tokens(masked, freeze_keys):
-    """The word-level items, read from the masked text."""
+def _bounds_number(masked, end, number_starts):
+    """True when a number claim starts one to three spaces after `end`. The
+    number itself is blanked in `masked`, so the offsets come from its claim."""
+    for gap in (1, 2, 3):
+        if end + gap in number_starts:
+            return masked[end:end + gap].isspace()
+    return False
+
+
+def tokens(masked, freeze_keys, number_starts=frozenset()):
+    """The word-level items, read from the masked text. `number_starts` holds
+    the start offset of each number claim."""
     items = []
     for m in _MODAL.finditer(masked):
         word = m.group(0)
@@ -78,8 +104,9 @@ def tokens(masked, freeze_keys):
         key = cls + (":BCP14" if word in BCP14 else "")
         items.append(item("modal", key, word, m.start(), m.end()))
     for m in _SCOPE.finditer(masked):
-        key = _SCOPE_KEYS[m.lastindex - 1]
-        items.append(item("scope", key, m.group(0), m.start(), m.end()))
+        key, _p, bound = _SCOPE_GROUPS[m.lastindex - 1]
+        if not bound or _bounds_number(masked, m.end(), number_starts):
+            items.append(item("scope", key, m.group(0), m.start(), m.end()))
     for m in _NEGATION.finditer(masked):
         items.append(item("negation", "negation", m.group(0), m.start(), m.end()))
     starts = [0] + [m.end() for m in re.finditer("\n", masked)]

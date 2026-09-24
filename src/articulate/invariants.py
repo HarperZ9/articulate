@@ -215,6 +215,7 @@ def extract(text, *, freeze=(), tex=False, quotes=True):
     off, quoted material is prose: no quote item, and its words yield their own
     numbers, negations, and names."""
     containers, masked = _containers(text, tuple(freeze), tex, quotes)
-    items = containers + lexical.tokens(masked, freeze_keys(freeze))
+    numbers = frozenset(i["start"] for i in containers if i["kind"] == "number")
+    items = containers + lexical.tokens(masked, freeze_keys(freeze), numbers)
     items.sort(key=lambda i: (KINDS.index(i["kind"]), i["start"]))
     return items
