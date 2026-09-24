@@ -27,7 +27,8 @@ release is cut.
   citations, block quotes, quoted material, and freeze terms become placeholders
   the model never sees. Every placeholder must come back exactly once and in
   order, and is spliced back byte for byte; a missing, duplicated, invented,
-  reordered, or mangled placeholder refuses the rewrite. `--unprotect
+  reordered, or mangled placeholder refuses the rewrite, and so does one moved
+  into another paragraph when the paragraph count holds. `--unprotect
   quotes,blockquotes` releases the two configurable kinds.
 - Change report. `--explain` (text) or `--explain json` after `--fix` or
   `--polish` lists each changed sentence before and after, the detector findings

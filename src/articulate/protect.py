@@ -23,6 +23,7 @@ mangled placeholder remains. Standard library only.
 """
 from __future__ import annotations
 
+import bisect
 import collections
 import hashlib
 import re
@@ -37,6 +38,7 @@ PLACEHOLDER = re.compile("⦃([A-Z]{2,12})_(\\d{1,6})_([0-9a-f]{6})⦄")
 # one line, or a lone delimiter.
 _LITERAL = re.compile("⦃[^⦃⦄\\n]{0,64}⦄|[⦃⦄]")
 _NONCE_TRIES = 64
+_PARA_BREAK = re.compile(r"\n[ \t\r]*\n(?:[ \t\r]*\n)*")
 CONFIGURABLE = ("quotes", "blockquotes")
 
 
@@ -149,12 +151,41 @@ def _residue_problems(output, masked, spans):
     return [_problem("mangled", placeholder=m) for m in marks]
 
 
+def _paragraph_of(text):
+    """(ordinal, count): a function from an offset to its paragraph number, and
+    the number of paragraphs. Blank lines separate paragraphs; blank lines
+    before the first text or after the last do not count."""
+    first = len(text) - len(text.lstrip())
+    last = len(text.rstrip())
+    ends = [m.end() for m in _PARA_BREAK.finditer(text) if first < m.start() and m.end() < last]
+    return (lambda offset: bisect.bisect_right(ends, offset)), len(ends) + 1
+
+
+def _moved_problems(output, masked, spans):
+    """A placeholder that lands in another paragraph carries its span to another
+    claim: a citation that supported one sentence now supports another. The
+    check runs when the rewrite keeps the paragraph count. A rewrite that
+    merges or splits paragraphs is checked for order only, and a move inside
+    one paragraph is not caught."""
+    para_in, n_in = _paragraph_of(masked)
+    para_out, n_out = _paragraph_of(output)
+    if n_in != n_out:
+        return []
+    at_in = {m.group(0): m.start() for m in PLACEHOLDER.finditer(masked)}
+    at_out = {m.group(0): m.start() for m in PLACEHOLDER.finditer(output)}
+    return [_problem("moved", s) for s in spans
+            if para_in(at_in[s["placeholder"]]) != para_out(at_out[s["placeholder"]])]
+
+
 def restore(output, masked, spans):
     """Splice the protected spans back into `output`, byte for byte. Raise
     ProtectError unless every placeholder of `masked` appears exactly once, in
-    order, and nothing placeholder-like is left over."""
+    order, in the paragraph it came from, and nothing placeholder-like is left
+    over."""
     found = [m.group(0) for m in PLACEHOLDER.finditer(output)]
     problems = _placeholder_problems(found, spans) + _residue_problems(output, masked, spans)
+    if not problems:
+        problems = _moved_problems(output, masked, spans)
     if problems:
         raise ProtectError(describe(problems), problems)
     table = {s["placeholder"]: s["text"] for s in spans}

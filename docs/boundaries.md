@@ -53,6 +53,12 @@ whatever the model returns. It applies to the spans the patterns recognize. A
 citation style or a link form outside those patterns reaches the model as prose,
 where only the meaning guard checks it.
 
+The guard knows where a span sits only by paragraph. A citation that moves to
+another paragraph is refused when the rewrite keeps the paragraph count. A
+citation, link, or code span that moves to another sentence in the same
+paragraph passes, and so does one that moves while the rewrite merges or splits
+paragraphs.
+
 ## Domain rules are phrase lists and formulas
 
 The domain profiles run deterministic rules: phrase lists, length limits, and a
