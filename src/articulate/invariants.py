@@ -63,6 +63,12 @@ CITATION = re.compile(
     # Narrative author-year: Smith (2020), Smith and Lee (2020, p. 4).
     r"|\b[A-Z][\w'\-]{1,40}(?:\s{1,3}(?:and|&)\s{1,3}[A-Z][\w'\-]{1,40})?\s{1,3}\("
     + _YEAR + r"(?:,\s{0,2}pp?\.\s{0,2}[\d\u2013-]{1,12})?\)"
+    # A statute or regulation cited title first: 5 U.S.C. 552, 21 CFR Part 11,
+    # 45 C.F.R. 164.512(b), 85 Fed. Reg. 1234. Its title number is no count, so
+    # "under 5 U.S.C. 552" is no bound.
+    r"|\b\d{1,3}\s{1,3}(?:U\.\s?S\.\s?C\.|C\.\s?F\.\s?R\.|Stat\.|Fed\.\s{1,3}Reg\."
+    r"|(?:USC|CFR)\b)(?:\s{1,3}(?:[Pp]art\s{1,3}|\u00a7{1,2}\s{0,2})?\d{1,6}[a-z]?"
+    r"(?:\.\d{1,6}[a-z]?){0,2}(?:\([0-9A-Za-z]{1,4}\)){0,6})?"
     r"|\bdoi:\s{0,2}10\.\d{4,9}/[^\s\"<>]{1,200}|\b10\.\d{4,9}/[^\s\"<>]{1,200}"
     r"|\barXiv:\s{0,2}(?:\d{4}\.\d{4,5}|[a-z\-]{2,20}(?:\.[A-Z]{2})?/\d{7})(?:v\d{1,3})?"
     r"|\\cite[tp]?\*?(?:\[[^\]\n]{0,80}\])?\{[^}\n]{1,200}\}")
