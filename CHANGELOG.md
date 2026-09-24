@@ -4,7 +4,7 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.4.1
 
 Fixed quadratic run time in the markup masks. Findings do not change, and the
 ruleset fingerprint does not move.
@@ -56,6 +56,8 @@ machine was under load from other work, so the absolute numbers are noisy.
   The fingerprint hashes the tier patterns and leaves the mask patterns out. It
   reads `sha256:9f78a7484bb20f84` before and after, so `RULESET_SEMVER` stays
   0.5.0.
+
+Tests: 181 pass.
 
 ## 0.4.0
 
