@@ -75,10 +75,11 @@ class RewriteGuard:
         self.protect.update(protect_opts or {})
         self.log = []
 
-    def check(self, before, after):
+    def check(self, before, after, *, tex=False):
         """Return `after` if it keeps every invariant of `before` that is not
-        allowed to change; otherwise raise RewriteRefused."""
-        report = meaning.compare(before, after, freeze=self.freeze)
+        allowed to change; otherwise raise RewriteRefused. `tex` reads both
+        texts as .tex files."""
+        report = meaning.compare(before, after, freeze=self.freeze, tex=tex)
         block = meaning.blocking(report, self.allow)
         self.log.append({"accepted": not block, "stage": "meaning",
                          "blocking": block, "report": report,
@@ -91,8 +92,9 @@ class RewriteGuard:
 
     def run(self, rewrite_fn, text, *, tex=False):
         """Mask the protected spans, call rewrite_fn on the masked text, splice
-        the spans back, and check the candidate against `text`. `tex` reads every
-        inline $...$ as math, as a .tex file does."""
+        the spans back, and check the candidate against `text`. `tex` reads the
+        text as a .tex file: every inline $...$ is math, and backticks open
+        LaTeX quotes."""
         masked, spans = protect.mask(text, freeze=self.freeze, tex=tex, **self.protect)
         raw = rewrite_fn(masked)
         try:
@@ -103,7 +105,7 @@ class RewriteGuard:
                              "before": text, "after": raw})
             raise RewriteRefused("protected spans did not survive the rewrite: " + str(e),
                                  stage="protected-span", blocking=e.problems) from e
-        return self.check(text, candidate)
+        return self.check(text, candidate, tex=tex)
 
     def wrap(self, fn, *, tex=False):
         """Adapt a polish-style rewrite(text, mech, worst) to run guarded."""
