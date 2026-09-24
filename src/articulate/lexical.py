@@ -78,6 +78,10 @@ _NEGATION = re.compile(r"(?i)\b(?:never|none|nothing|nobody|nowhere|without|neit
                        r"|[-\u2010\u2011](?!one\b)))")
 _ENTITY = re.compile(r"\b[A-Z][A-Za-z0-9]{0,40}(?:[.+\-][A-Za-z0-9]{1,40}){0,4}"
                      r"(?:['\u2019]s)?\b")
+# A name that opens with a lower-case letter: macOS, iPhone, gRPC, eBay. The
+# capital inside it marks it as a name wherever it stands.
+_CAMEL = re.compile(r"\b[a-z]{1,10}[A-Z][A-Za-z0-9]{0,40}(?:['\u2019]s)?\b")
+_HEADING = re.compile(r"[ ]{0,3}#")
 # What may stand between a negation and the modal it negates: spaces and at
 # most one word, as in "is not strictly required".
 _BEFORE_MODAL = re.compile(r"\s{1,3}(?:[A-Za-z]{1,20}\s{1,3})?")
@@ -177,15 +181,18 @@ def _scope_items(masked, number_starts):
 
 
 def _entity_items(masked, freeze_keys, skip):
-    """Capitalized words and acronyms. A scope word at a sentence start ("All",
-    "Only", "After") is a function word and no name, so its start is skipped."""
+    """Capitalized words, acronyms, and lower-case-initial names. A scope word at
+    a sentence start ("All", "Only", "After") is a function word and no name, so
+    its start is skipped. `heading` marks a name on a Markdown heading line."""
     items, starts = [], [0] + [m.end() for m in re.finditer("\n", masked)]
-    for m in _ENTITY.finditer(masked):
+    for m in list(_ENTITY.finditer(masked)) + list(_CAMEL.finditer(masked)):
         word = m.group(0)
         key = re.sub(r"['\u2019]s$", "", word)
         if key in _NOT_ENTITY or key in freeze_keys or m.start() in skip:
             continue
         acronym = sum(c.isupper() for c in key) >= 2 or any(c.isdigit() for c in key)
-        weak = _is_initial(masked, m.start(), starts) and not acronym
-        items.append(item("entity", key, word, m.start(), m.end(), weak=weak))
+        weak = key[0].isupper() and not acronym and _is_initial(masked, m.start(), starts)
+        line = starts[bisect.bisect_right(starts, m.start()) - 1]
+        items.append(item("entity", key, word, m.start(), m.end(), weak=weak,
+                          heading=bool(_HEADING.match(masked, line))))
     return items

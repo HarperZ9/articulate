@@ -244,8 +244,9 @@ Fairness harness and release check:
   dates, times, and versions; negations; modal strength (with BCP 14
   capitals as their own value); scope words, quantifiers ("all", "some"), and
   frequency words ("usually", "rarely"); the direction of a bound on a
-  number or date ("under 50%", "up to 10 MB", "before May 5"); named entities;
-  URLs and emails; code; math; citations; quoted strings; and freeze terms.
+  number or date ("under 50%", "up to 10 MB", "before May 5"); named entities,
+  including names such as macOS and iPhone; URLs and emails; code; math;
+  citations; quoted strings; and freeze terms.
   `--gate` exits 1 on a change, and `--allow-change KINDS` exempts named kinds.
 - `fix` and `polish` run every model rewrite through the guard. A rewrite that
   changes an invariant is refused, the previous text is kept, and the output
@@ -253,7 +254,9 @@ Fairness harness and release check:
 - Both MCP servers gain a local `compare` tool, and `fix` and `polish` take an
   `allow_change` argument and report a refusal with its blocking invariants.
 - Limit: the invariants are surface proxies. A rewrite can keep all of them and
-  still change the meaning. The report says so in a `does_not_prove` field.
+  still change the meaning, and a name used once at the start of a sentence can
+  be swapped for another unreported. The report says so in a `does_not_prove`
+  field.
 - Protected spans. The math masking that `.tex` files had is now a general layer
   used before every model rewrite: fenced and inline code, math, URLs and emails,
   citations, block quotes, quoted material, and freeze terms become placeholders
