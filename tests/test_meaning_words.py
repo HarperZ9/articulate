@@ -123,6 +123,10 @@ MODAL_PRESERVED = [
     ("It cannot be undone.", "It can't be undone."),
     ("You must never share keys.", "You must not share keys, ever."),
     ("Do not panic; you must delete it.", "Don't panic; you must delete it."),
+    # RFC 2119 makes NOT RECOMMENDED a synonym of SHOULD NOT, and plain
+    # "not recommended" advises against in the same way.
+    ("Clients SHOULD NOT retry.", "Retrying is NOT RECOMMENDED."),
+    ("You should not merge it.", "Merging it is not recommended."),
 ]
 
 
@@ -143,6 +147,7 @@ def test_modal_key_records_the_side_of_its_negation():
         ("optional+not", "cannot"), ("not-required", "not strictly required")]
     assert _modals("Clients MUST NOT retry.") == [("required+not:BCP14", "MUST NOT")]
     assert _modals("You don't have to stay.") == [("not-required", "don't have to")]
+    assert _modals("It is NOT RECOMMENDED.") == [("recommended+not:BCP14", "NOT RECOMMENDED")]
 
 
 # Quantifiers and frequency words scope a claim as much as "only" does. None

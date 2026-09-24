@@ -318,7 +318,10 @@ kept, dropped, added, or changed, with its line and column. It reads:
   keeps the modal. An all-capitals BCP 14 keyword is its own value, so MUST to
   must counts as a change. A negation right after a modal ("must not",
   "cannot") and one just before it ("do not have to", "is not required") give
-  different values, so "must not" to "do not have to" counts as a change.
+  different values, so "must not" to "do not have to" counts as a change. For
+  the recommended class the two sides read the same, since "not recommended"
+  advises against as "should not" does; RFC 2119 makes NOT RECOMMENDED a
+  synonym of SHOULD NOT.
 - scope words that bound a claim: only, unless, except, at least, at most,
   always, and exactly; the quantifiers all, every, and each (one value) and
   some, several, and a few (another); and the frequency words usually,

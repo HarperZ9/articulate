@@ -155,6 +155,10 @@ def _modal_items(masked, negs):
         head = re.split(r"\s", word, maxsplit=1)[0].lower()
         start, end, prefix, suffix = _negation_side(masked, m, negs)
         cls = "optional" if m.group(_ABILITY) else _MODAL_CLASS[head]
+        if cls == "recommended" and prefix:
+            # "not recommended" advises against, as "should not" does, and RFC
+            # 2119 makes NOT RECOMMENDED a synonym of SHOULD NOT.
+            prefix, suffix = "", "+not"
         key = prefix + cls + suffix + (":BCP14" if word in BCP14 else "")
         items.append(item("modal", key, masked[start:end], start, end))
     return items
