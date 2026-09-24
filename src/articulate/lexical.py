@@ -59,6 +59,9 @@ _NEGATION = re.compile(r"(?i)\b(?:never|none|nothing|nobody|nowhere|without|neit
                        r"|\b(?!" + _NEG_CMP + r")(?:not\b|no\b(?!\.\s?\d))")
 _ENTITY = re.compile(r"\b[A-Z][A-Za-z0-9]{0,40}(?:[.+\-][A-Za-z0-9]{1,40}){0,4}"
                      r"(?:['\u2019]s)?\b")
+# What may stand between a negation and the modal it negates: spaces and at
+# most one word, as in "is not strictly required".
+_BEFORE_MODAL = re.compile(r"\s{1,3}(?:[A-Za-z]{1,20}\s{1,3})?")
 _NOT_ENTITY = BCP14 | {"I", "NOT"}
 _LEAD_MARKUP = re.compile(r"(?:^|\s)(?:[-+*]|\d{1,3}[.)])$")
 
@@ -99,22 +102,49 @@ def _bounds_number(masked, end, number_starts):
     return False
 
 
-def tokens(masked, freeze_keys, number_starts=frozenset()):
-    """The word-level items, read from the masked text. `number_starts` holds
-    the start offset of each number claim."""
+def _negation_side(masked, m, negs):
+    """(start, end, prefix, suffix) of a modal widened to a negation beside it.
+    A negation right after the modal ("must not", "mustn't", "cannot") negates
+    what follows, and adds "+not". A negation up to one word before it ("do not
+    have to", "is not strictly required") negates the modal, and adds "not-"."""
+    starts, ends = negs
+    start, end, prefix, suffix = m.start(), m.end(), "", ""
+    i = bisect.bisect_left(starts, start)
+    if i < len(starts):
+        gap = masked[end:starts[i]]
+        if starts[i] < end or gap == "" or (len(gap) <= 2 and gap.isspace()):
+            end, suffix = max(end, ends[i]), "+not"
+    j = bisect.bisect_right(ends, start) - 1
+    if j >= 0 and _BEFORE_MODAL.fullmatch(masked, ends[j], start):
+        start, prefix = starts[j], "not-"
+        # Widen to the whole word, so the report shows "don't have to".
+        while start > max(0, starts[j] - 20) and masked[start - 1].isalpha():
+            start -= 1
+    return start, end, prefix, suffix
+
+
+def _modal_items(masked, negs):
     items = []
     for m in _MODAL.finditer(masked):
         word = m.group(0)
         head = re.split(r"\s", word, maxsplit=1)[0].lower()
-        cls = _MODAL_CLASS[head]
-        key = cls + (":BCP14" if word in BCP14 else "")
-        items.append(item("modal", key, word, m.start(), m.end()))
+        start, end, prefix, suffix = _negation_side(masked, m, negs)
+        key = prefix + _MODAL_CLASS[head] + suffix + (":BCP14" if word in BCP14 else "")
+        items.append(item("modal", key, masked[start:end], start, end))
+    return items
+
+
+def tokens(masked, freeze_keys, number_starts=frozenset()):
+    """The word-level items, read from the masked text. `number_starts` holds
+    the start offset of each number claim."""
+    negations = [item("negation", "negation", m.group(0), m.start(), m.end())
+                 for m in _NEGATION.finditer(masked)]
+    negs = ([n["start"] for n in negations], [n["end"] for n in negations])
+    items = _modal_items(masked, negs) + negations
     for m in _SCOPE.finditer(masked):
         key, _p, bound = _SCOPE_GROUPS[m.lastindex - 1]
         if not bound or _bounds_number(masked, m.end(), number_starts):
             items.append(item("scope", key, m.group(0), m.start(), m.end()))
-    for m in _NEGATION.finditer(masked):
-        items.append(item("negation", "negation", m.group(0), m.start(), m.end()))
     starts = [0] + [m.end() for m in re.finditer("\n", masked)]
     for m in _ENTITY.finditer(masked):
         word = m.group(0)

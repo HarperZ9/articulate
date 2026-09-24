@@ -142,6 +142,8 @@ MEANING_ADVERSARIAL = [
     # A bound word counts only before a number, so each match looks ahead once.
     "up to " * 8000 + "5", "more than 5 " * 5000, "under  " * 8000,
     "no more than " * 6000, "not  " * 8000 + "more", "no less " * 8000,
+    # Each modal looks for a negation on either side of it with a bisect.
+    "must not " * 5000, "do not have to " * 4000, "x" * 40000 + "n't have to",
 ]
 
 
