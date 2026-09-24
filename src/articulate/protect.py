@@ -13,11 +13,13 @@ block quotes, quoted material, and freeze terms. Block quotes and quoted materia
 can be switched off, for a document where the quotes are the author's own prose.
 
 A placeholder reads like this: U+2983, a kind label, an index, a six-character
-nonce drawn from the text's hash, U+2984. The nonce ties the placeholders to one
-text, so a document that happens to contain a similar string cannot collide with
-them. `restore` refuses the output, and the caller keeps the previous text,
-unless every placeholder comes back exactly once and in order, and no stray,
-invented, or mangled placeholder remains. Standard library only.
+nonce drawn from the text's hash, U+2984. The nonce is chosen so it occurs
+nowhere in the text. A placeholder-shaped string already in the document, or a
+stray U+2983 or U+2984, is masked first as a span of its own ("literal"), so
+it never reaches the model and cannot pass for a placeholder. `restore`
+refuses the output, and the caller keeps the previous text, unless every
+placeholder comes back exactly once and in order, and no stray, invented, or
+mangled placeholder remains. Standard library only.
 """
 from __future__ import annotations
 
@@ -29,8 +31,12 @@ from . import invariants
 
 OPEN, CLOSE = "⦃", "⦄"
 LABELS = {"code": "CODE", "blockquote": "BLOCKQUOTE", "math": "MATH", "url": "URL",
-          "citation": "CITE", "quote": "QUOTE", "freeze": "TERM"}
+          "citation": "CITE", "quote": "QUOTE", "freeze": "TERM", "literal": "LITERAL"}
 PLACEHOLDER = re.compile("⦃([A-Z]{2,12})_(\\d{1,6})_([0-9a-f]{6})⦄")
+# Anything in the document that could read as a placeholder: a bracketed run on
+# one line, or a lone delimiter.
+_LITERAL = re.compile("⦃[^⦃⦄\\n]{0,64}⦄|[⦃⦄]")
+_NONCE_TRIES = 64
 CONFIGURABLE = ("quotes", "blockquotes")
 
 
@@ -43,8 +49,27 @@ class ProtectError(ValueError):
         self.problems = problems
 
 
+def _candidate(text, i):
+    seed = text.encode("utf-8") + (b"" if i == 0 else b"\0%d" % i)
+    return hashlib.sha256(seed).hexdigest()[:6]
+
+
 def nonce_for(text):
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:6]
+    """Six hex characters from the text's hash, the first candidate that occurs
+    nowhere in the text. A text can be built to hold its own first candidate;
+    the next one comes from a salted hash. The literal pass already keeps such
+    a text from colliding, so after a bounded number of tries the last
+    candidate stands."""
+    nonce = _candidate(text, 0)
+    for i in range(1, _NONCE_TRIES):
+        if nonce not in text:
+            break
+        nonce = _candidate(text, i)
+    return nonce
+
+
+def _literals(text):
+    return [(m.start(), m.end(), None) for m in _LITERAL.finditer(text)]
 
 
 def _outermost(claims):
@@ -68,8 +93,8 @@ def mask(text, *, freeze=(), quotes=True, blockquotes=True, tex=False):
     original text, and offsets, listed in document order. The spans never
     overlap, and restoring the masked text unchanged gives back `text` exactly.
     A masking that fails that check raises ProtectError and returns nothing."""
-    passes = invariants.container_passes(freeze, numbers=False, quotes=quotes,
-                                         block_quotes=blockquotes, tex=tex)
+    passes = [("literal", _literals)] + invariants.container_passes(
+        freeze, numbers=False, quotes=quotes, block_quotes=blockquotes, tex=tex)
     claims, _ = invariants.claim(text, passes)
     nonce = nonce_for(text)
     spans, parts, pos = [], [], 0

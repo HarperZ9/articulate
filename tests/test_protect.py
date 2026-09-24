@@ -78,6 +78,47 @@ def test_document_that_uses_the_delimiters_itself_still_round_trips():
     text = "The ⦃ and ⦄ marks appear in prose, and `code` too.\n"
     masked, spans = protect.mask(text)
     assert protect.restore(masked, masked, spans) == text
+    assert [s["kind"] for s in spans] == ["literal", "code"]
+    text = "A lone ⦄ and a lone ⦃ appear in prose, and `code` too.\n"
+    masked, spans = protect.mask(text)
+    assert protect.restore(masked, masked, spans) == text
+    assert [s["kind"] for s in spans] == ["literal", "literal", "code"]
+    # A mangled placeholder still shows: a stray bracket the model leaves behind
+    # was not in the prose that went in.
+    with pytest.raises(protect.ProtectError):
+        protect.restore(masked.replace(spans[2]["placeholder"], spans[2]["placeholder"][1:]),
+                        masked, spans)
+
+
+def test_placeholder_shaped_text_in_the_document_is_masked_as_its_own_span():
+    # The editor prompt shows this example placeholder, so a document about the
+    # editor can quote it. It must not read as an invented placeholder.
+    text = "A placeholder such as ⦃CODE_0_1a2b3c⦄ appears in logs.\n"
+    masked, spans = protect.mask(text)
+    assert "CODE_0_1a2b3c" not in masked
+    assert [s["kind"] for s in spans] == ["literal"]
+    out = guard.RewriteGuard().run(lambda m: m.replace("appears in", "shows up in"), text)
+    assert out == text.replace("appears in", "shows up in")
+    with pytest.raises(guard.RewriteRefused):
+        guard.RewriteGuard().run(lambda m: m.replace(spans[0]["placeholder"], ""), text)
+
+
+def test_a_self_referential_nonce_cannot_let_a_code_span_move(monkeypatch):
+    # A text can be built so the hash nonce equals one written in the text. Force
+    # that case: the first hash candidate is the nonce the text already holds.
+    text = "Keep `SAFE_MODE=1` on. Legacy note: ⦃CODE_0_000000⦄ ref 7.\n"
+    real = protect._candidate
+    monkeypatch.setattr(protect, "_candidate",
+                        lambda t, i: "000000" if i == 0 else real(t, i))
+    masked, spans = protect.mask(text)
+    nonce = spans[0]["placeholder"].rsplit("_", 1)[1][:-1]
+    assert nonce != "000000" and nonce not in text
+    assert [s["kind"] for s in spans] == ["code", "literal"]
+
+    def drop_first(m):
+        return m.replace(spans[0]["placeholder"], "it", 1)
+    with pytest.raises(guard.RewriteRefused):
+        guard.RewriteGuard().run(drop_first, text)
 
 
 def test_guard_hides_spans_and_restores_them():

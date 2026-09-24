@@ -468,8 +468,9 @@ After the rewrite, every placeholder must come back exactly once and in its
 original order. Each span is then spliced back byte for byte. A placeholder that
 is missing, duplicated, invented, reordered, or mangled refuses the whole rewrite,
 and the previous text is kept. Each placeholder carries a short nonce drawn from
-the text's hash, so a document that contains a similar string cannot collide with
-one. Block quotes and quoted material can be released with `--unprotect
+the text's hash and chosen so it occurs nowhere in the text. A string in the
+document that looks like a placeholder, or a lone `⦃` or `⦄`, is masked as a
+span of its own, so it cannot pass for a placeholder. Block quotes and quoted material can be released with `--unprotect
 quotes,blockquotes` for a document whose quotes are the author's own prose; code,
 math, links, citations, and freeze terms stay protected.
 
