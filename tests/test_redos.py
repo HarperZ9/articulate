@@ -137,6 +137,21 @@ MEANING_ADVERSARIAL = [
 ]
 
 
+# The protected-span layer masks, restores its own output as a self-check, and
+# restores the model's output: three passes over every placeholder. A document
+# with thousands of citations or code spans makes thousands of placeholders.
+SPAN_ADVERSARIAL = ["[1] " * 20000, "`x` " * 20000, "a@b.co " * 10000]
+
+
+def test_protected_spans_are_bounded():
+    from articulate import guard
+    for i, text in enumerate(SPAN_ADVERSARIAL + MEANING_ADVERSARIAL + ADVERSARIAL):
+        start = time.perf_counter()
+        guard.RewriteGuard().run(lambda m: m, text)
+        elapsed = time.perf_counter() - start
+        assert elapsed < 3.0, f"protected-span input {i} took {elapsed:.2f}s"
+
+
 def test_meaning_guard_is_bounded():
     from articulate import meaning
     for i, text in enumerate(MEANING_ADVERSARIAL + ADVERSARIAL):

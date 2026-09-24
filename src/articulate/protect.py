@@ -21,6 +21,7 @@ invented, or mangled placeholder remains. Standard library only.
 """
 from __future__ import annotations
 
+import collections
 import hashlib
 import re
 
@@ -95,9 +96,10 @@ def _problem(kind, span=None, placeholder=None):
 
 def _placeholder_problems(found, spans):
     by_ph = {s["placeholder"]: s for s in spans}
+    counts = collections.Counter(found)
     problems = []
     for s in spans:
-        n = found.count(s["placeholder"])
+        n = counts[s["placeholder"]]
         if n == 0:
             problems.append(_problem("missing", s))
         elif n > 1:
