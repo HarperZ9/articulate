@@ -1,4 +1,4 @@
-"""The rewrite paths keep math intact.
+"""The rewrite paths keep math intact and self-check under the chosen mode.
 
 No test here calls a model. Each one replaces ``editor.claude_call`` with a fake
 that records what the model would have been sent and returns a canned rewrite.
@@ -149,3 +149,37 @@ def test_mcp_polish_masks_math_when_the_text_is_latex(monkeypatch):
     assert res["ok"], res
     assert all(INLINE not in s and DISPLAY not in s for s in fake.sent)
     assert INLINE in res["final_text"] and DISPLAY in res["final_text"]
+
+
+# --- item 2: --fix self-checks under the chosen mode ------------------------- #
+
+# "robust" is a register-word tell under the default profile and a kept term of
+# art under academic/explain. Everything else in this text is clean under both.
+MODE_CLEAN = ("The robust estimate holds across 42 plots in every season we measured "
+              "this year, from the dry spring to the wet autumn.\n")
+
+
+def test_mode_clean_text_differs_by_profile():
+    # Guards the premise of the next test: the text reads differently by profile.
+    from articulate import modes
+    assert editor.mechanical_text(MODE_CLEAN, modes.load("academic/explain"))[0]
+    assert not editor.mechanical_text(MODE_CLEAN, None)[0]
+
+
+def test_fix_self_check_uses_the_chosen_mode(work, monkeypatch, capsys):
+    src = _write(work, "draft.md", "Some draft prose that needs a rewrite today.\n")
+    out = os.path.join(work, "draft.fixed.md")
+    monkeypatch.setattr(editor, "claude_call", FakeModel(lambda t: MODE_CLEAN))
+    assert editor.fix(src, out, passes=1, mode="academic/explain") == 0
+    printed = capsys.readouterr().out
+    assert "pass 1: CLEAN" in printed
+    assert "[fix] clean of mechanical tells" in printed
+
+
+def test_fix_self_check_without_a_mode_still_uses_the_default(work, monkeypatch, capsys):
+    src = _write(work, "draft.md", "Some draft prose that needs a rewrite today.\n")
+    out = os.path.join(work, "draft.fixed.md")
+    monkeypatch.setattr(editor, "claude_call", FakeModel(lambda t: MODE_CLEAN))
+    editor.fix(src, out, passes=1)
+    printed = capsys.readouterr().out
+    assert "pass 1: still has tells" in printed

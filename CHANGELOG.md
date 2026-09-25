@@ -34,6 +34,11 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   to delete the formula silently. The MCP `fix` and `polish` tools take an
   `is_tex` flag with the same behavior. `tests/test_fix_integrity.py` drives each
   path with a fake model and never calls a hosted one.
+- `--fix` self-checks its rewrite under the chosen mode. The first pass read the
+  detector under the mode's profile, and the post-rewrite checks ran under the
+  default profile, so a rewrite under `academic/explain` that kept one of the
+  mode's terms of art was reported as "still has tells". Both post-rewrite
+  checks now take the mode's profile.
 
 ## 0.4.1
 

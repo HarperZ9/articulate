@@ -515,7 +515,8 @@ no code fences, no explanation."""
 def fix(path, out_path, passes, mode=None):
     """Rewrite to the standard, then re-run the detector for up to `passes` rounds.
     On a math file every span is masked before the model call and spliced back
-    after."""
+    after. Every detector check, before and after a rewrite, runs under the chosen
+    mode's profile."""
     ext = os.path.splitext(path)[1]
     if not out_path:
         out_path = os.path.splitext(path)[0] + ".fixed" + ext
@@ -546,13 +547,14 @@ def fix(path, out_path, passes, mode=None):
             print(f"[fix] pass {attempt}: empty result, stopping")
             return 1
         open(out_path, "w", encoding="utf-8").write(result + ("\n" if not result.endswith("\n") else ""))
-        clean_after, _ = mechanical(out_path)
+        # The self-check reads the rewrite under the same mode as the first pass.
+        clean_after, _ = mechanical(out_path, prof)
         print(f"[fix] pass {attempt}: {'CLEAN' if clean_after else 'still has tells'} -> {out_path}")
         text = result
         if clean_after:
             break
 
-    _, mech_final = mechanical(out_path)
+    _, mech_final = mechanical(out_path, prof)
     print(f"\n[fix] final: {os.path.basename(out_path)}")
     print(f"[fix] {mech_final.splitlines()[0]}")
     print("[fix] the rewrite is a suggestion; read it against the original before you ship it.")
