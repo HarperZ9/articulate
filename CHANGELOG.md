@@ -15,6 +15,15 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   covers both sides. Findings change for any text with a table, so
   `RULESET_SEMVER` moves 0.5.0 to 0.5.1 and a receipt issued under 0.5.0 replays
   as `Unverifiable`, never as a misleading `Drift`.
+- `articulate receipt --mode M` now screens under the mode and records it. The
+  flag was accepted and then ignored: a receipt issued with
+  `--mode academic/argue` recorded the base profile `research` and its gate, so
+  it described a screening the author never ran. The receipt now carries a `mode`
+  field beside the mode's base profile, and `verify` replays under that mode. A
+  receipt whose mode is unknown or malformed, or whose profile is not the mode's
+  base, reads `Unverifiable`. An unknown `--mode` or `--profile` exits 2 with a
+  message and no output. `receipt.make_receipt` takes a `mode` keyword.
+  `tests/test_receipt_mode.py` covers issuance, replay, and tampering.
 
 ## 0.4.1
 

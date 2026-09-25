@@ -233,13 +233,28 @@ def _cmd_receipt(args):
     redact = None if redact in (None, "none") else redact
     # The "who": an explicit --reviewer, else the CI actor, else unrecorded.
     reviewer = getattr(args, "reviewer", None) or os.environ.get("GITHUB_ACTOR") or None
+    mode = getattr(args, "mode", None)
+    if mode:
+        # Fail before any output, so a bad mode never yields a partial receipt set.
+        try:
+            modes.load(mode)
+        except modes.ModeError as e:
+            print(f"[articulate] {e}", file=sys.stderr)
+            return 2
     for name, text, reason in _inputs(args.files):
         if reason:
             print(f"[articulate] {name}: cannot screen ({reason})", file=sys.stderr)
             continue
-        pname = _profile_name(name, text, args.profile)
-        rec = receipt.make_receipt(text, pname, per_span=getattr(args, "spans", False),
-                                   redact=redact, reviewer=reviewer)
+        # A --mode wins over profile inference, as in `check`, and the receipt
+        # records the mode so verify replays the same screening.
+        pname = None if mode else _profile_name(name, text, args.profile)
+        try:
+            rec = receipt.make_receipt(text, pname, mode=mode,
+                                       per_span=getattr(args, "spans", False),
+                                       redact=redact, reviewer=reviewer)
+        except profiles.ProfileError as e:
+            print(f"[articulate] {e}", file=sys.stderr)
+            return 2
         rec["file"] = name
         print(json.dumps(rec, ensure_ascii=False, indent=2))
     return 0

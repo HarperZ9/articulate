@@ -38,10 +38,13 @@ articulate score [FILE ...] [--profile P] [--mode M]
 Emit a re-derivable receipt as JSON on standard output.
 
 ```bash
-articulate receipt [FILE ...] [--profile P] [--spans]
+articulate receipt [FILE ...] [--profile P] [--mode M] [--spans]
                    [--redact {none,drop,hash}] [--reviewer NAME]
 ```
 
+- `--mode M`: screen under a writing mode, as `check --mode` does. The receipt
+  records the mode in a `mode` field beside the mode's base profile, and `verify`
+  replays it under the same mode. A mode wins over `--profile`.
 - `--spans`: record the per-paragraph verdicts in the receipt.
 - `--redact drop`: a content-free audit receipt with the matched substring and the
   offsets dropped.
