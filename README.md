@@ -1,12 +1,13 @@
 # Articulate
 
-![Articulate: a local writing-quality and AI-tell detection and editing tool. Lines of prose bow around a verified core, one span is marked as drift, and the verdict lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
+![Articulate: a local writing-quality and AI-tell detector. Lines of prose bow around a verified core, one span is marked as drift, and the verdict lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
 
-A local writing-quality and AI-tell detection and editing tool. It flags the
-prose devices and machine-writing tells that make text read as generated, scores
-how machine-textured a passage is, and (with an LLM backend) rewrites prose to a
-plain, skilled standard. The core runs standard-library-only with no network
-call. Detection quality and writing quality are the goals; a detector score is a
+A writing-quality and AI-tell detector that runs locally with no network call,
+plus an optional editor that sends text to a hosted model through the `claude`
+CLI. The detector flags the prose devices and machine-writing tells that make
+text read as generated and scores how machine-textured a passage is. It runs
+standard-library-only. The editor rewrites prose to a plain, skilled standard.
+Detection quality and writing quality are the goals; a detector score is a
 benchmark and a byproduct, never something the tool optimizes toward, and it is
 not an evasion tool.
 
@@ -103,11 +104,15 @@ stating the idea before the formalism, keeping a roadmap, defining each symbol
 once. The proof mode does not rewrite by default, because a wrong change to a
 quantifier order or an inequality direction changes a theorem; it routes to
 `--judge`, and `--fix` is opt-in. On a `.tex` file `--fix` and `--polish` mask
-every math span before the model call, including in the detector summary the
-prompt quotes, and splice each span back byte for byte. A rewrite that drops or
-repeats a masked span is refused, so a formula is never altered. The MCP `fix`
-and `polish` tools do the same when called with `is_tex: true`. Math in other
-file types, such as `$...$` in Markdown, is not masked.
+every math span before each model call and splice each span back byte for byte.
+The masking covers the text sent for rewriting, the detector summary the prompt
+quotes, the text the polish quality scorer reads, and the scorer's notes. A
+theorem, lemma, proof or other listed environment is masked whole with the math
+inside it, so its prose is left as written. A rewrite that drops or repeats a
+masked span is refused, so a formula is never altered. The MCP `fix` and
+`polish` tools do the same when called with `is_tex: true`. `--judge` and
+`--review` send the full text, math included. Math in other file types, such as
+`$...$` in Markdown, is not masked.
 
 The boundary is fixed and load-bearing: a clean gate, a low texture score, or a
 Match receipt means the prose was screened under a named ruleset. It says nothing

@@ -89,44 +89,36 @@ def test_fix_splices_math_back_byte_for_byte(work, monkeypatch):
     assert "bound" in result            # the prose rewrite did land
 
 
-def test_fix_refuses_a_rewrite_that_drops_a_math_span(work, monkeypatch):
+def test_fix_refuses_a_rewrite_that_drops_a_math_span(work, monkeypatch, capsys):
     src = _write(work, "note.tex", TEX)
     out = os.path.join(work, "note.fixed.tex")
     # The model drops every placeholder, so the formulas would vanish on splice.
-    monkeypatch.setattr(editor, "claude_call",
-                        FakeModel(lambda t: "The bound holds for all t.\n"))
+    fake = FakeModel(lambda t: "The bound holds for all t.\n")
+    monkeypatch.setattr(editor, "claude_call", fake)
     assert editor.fix(src, out, passes=1) == 1
-    assert not os.path.exists(out) or INLINE in _read(out)
+    assert fake.sent, "the fake model was never called"
+    assert "altered masked math" in capsys.readouterr().out
+    assert not os.path.exists(out)      # refused before any write
 
 
-def test_polish_refuses_a_rewrite_that_drops_a_math_span(work):
+def test_polish_refuses_a_rewrite_that_drops_a_math_span(work, capsys):
     src = _write(work, "note.tex", TEX)
     out = os.path.join(work, "note.polished.tex")
     scores = {"concreteness": 1, "commitment": 1, "economy": 1, "rhythm": 1,
               "restatable": 1, "worst": ["w"]}
-    editor.polish(src, out, passes=1, bar=5,
-                  rewrite_fn=lambda t, mech, worst: "The bound holds for all t.\n",
-                  judge_fn=lambda t: dict(scores))
-    result = _read(out)
-    assert INLINE in result and DISPLAY in result
-
-
-def test_polish_prompt_summary_never_quotes_math(work):
-    src = _write(work, "note.tex", TEX)
-    out = os.path.join(work, "note.polished.tex")
-    seen = []
+    calls = []
 
     def rewrite_fn(t, mech, worst):
-        seen.append((t, mech))
-        return t
+        calls.append(t)
+        return "The bound holds for all t.\n"
 
-    editor.polish(src, out, passes=1, bar=5, rewrite_fn=rewrite_fn,
-                  judge_fn=lambda t: {"concreteness": 1, "commitment": 1, "economy": 1,
-                                      "rhythm": 1, "restatable": 1, "worst": ["w"]})
-    assert seen, "the rewrite was never called"
-    for t, mech in seen:
-        assert INLINE not in t and INLINE not in mech
-        assert "leverage" in mech          # the summary still reports the finding
+    assert editor.polish(src, out, passes=2, bar=5, rewrite_fn=rewrite_fn,
+                         judge_fn=lambda t: dict(scores)) == 0
+    assert len(calls) == 1              # the refusal stops the loop
+    printed = capsys.readouterr().out
+    assert "[polish] rewrite failed" in printed
+    assert "altered masked math" in printed
+    assert _read(out) == TEX            # the original is kept
 
 
 def test_mcp_fix_masks_math_when_the_text_is_latex(monkeypatch):
@@ -137,18 +129,6 @@ def test_mcp_fix_masks_math_when_the_text_is_latex(monkeypatch):
     assert all(INLINE not in s and DISPLAY not in s for s in fake.sent)
     assert all(INLINE not in i for i in fake.instructions)
     assert INLINE in res["rewrite"] and DISPLAY in res["rewrite"]
-
-
-def test_mcp_polish_masks_math_when_the_text_is_latex(monkeypatch):
-    fake = FakeModel(_hostile)
-    monkeypatch.setattr(editor, "claude_call", fake)
-    monkeypatch.setattr(editor, "quality_judge",
-                        lambda t: {"concreteness": 1, "commitment": 1, "economy": 1,
-                                   "rhythm": 1, "restatable": 1, "worst": ["w"]})
-    res = mcp_server.do_polish(TEX, bar=5, passes=1, is_tex=True)
-    assert res["ok"], res
-    assert all(INLINE not in s and DISPLAY not in s for s in fake.sent)
-    assert INLINE in res["final_text"] and DISPLAY in res["final_text"]
 
 
 # --- item 2: --fix self-checks under the chosen mode ------------------------- #

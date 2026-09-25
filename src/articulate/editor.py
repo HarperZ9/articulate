@@ -146,17 +146,19 @@ def injection_warning(text):
 
 
 # Math spans a rewrite must never touch: a changed symbol, quantifier order, or
-# inequality direction changes a theorem. Longest and display forms first so an
-# inline pass does not split a display span.
-_MATH_PATTERNS = [
-    re.compile(r"\$\$.*?\$\$", re.S),
-    re.compile(r"\\\[.*?\\\]", re.S),
-    re.compile(r"\\\(.*?\\\)", re.S),
-    re.compile(r"\$(?:\\.|[^$\\])*\$", re.S),
-    re.compile(r"\\begin\{(equation|align|gather|multline|eqnarray|split|theorem"
-               r"|lemma|proof|definition|proposition|corollary|claim)\*?\}"
-               r".*?\\end\{\1\*?\}", re.S),
-]
+# inequality direction changes a theorem. One pass, one alternation: at each
+# position the environment form is tried first, then display, then inline. An
+# environment that holds inline or display math is masked whole, so no span ever
+# contains another span's placeholder and every span restores byte for byte.
+_MATH_RX = re.compile(
+    r"\\begin\{(?P<env>equation|align|gather|multline|eqnarray|split|theorem"
+    r"|lemma|proof|definition|proposition|corollary|claim)\*?\}"
+    r".*?\\end\{(?P=env)\*?\}"
+    r"|\$\$.*?\$\$"
+    r"|\\\[.*?\\\]"
+    r"|\\\(.*?\\\)"
+    r"|\$(?:\\.|[^$\\])*\$",
+    re.S)
 _MATH_PLACEHOLDER = "\u2983MATH{}\u2984"   # a distinctive bracket unlikely to be edited
 _MATH_PLACEHOLDER_RX = re.compile("\u2983MATH(\\d+)\u2984")
 
@@ -184,9 +186,7 @@ def mask_math(text):
         spans.append(m.group(0))
         return _MATH_PLACEHOLDER.format(len(spans) - 1)
 
-    for rx in _MATH_PATTERNS:
-        text = rx.sub(repl, text)
-    return text, spans
+    return _MATH_RX.sub(repl, text), spans
 
 
 def splice_math(text, spans):
@@ -216,6 +216,13 @@ def masked_rewrite(text, rewrite_fn, profile=None):
     masked, spans = mask_math(text)
     _, mech = mechanical_text(masked, profile)
     return splice_math(rewrite_fn(masked, mech), spans)
+
+
+def scrub_math_notes(notes):
+    """Editor notes with every formula and every math placeholder replaced by
+    '[math]'. A quality judge quotes the text it read, so its notes would carry a
+    formula (or a placeholder) into the next rewrite prompt."""
+    return [_MATH_PLACEHOLDER_RX.sub("[math]", mask_math(str(n))[0]) for n in notes]
 
 
 def run(cmd, text=None, timeout=600):
@@ -339,7 +346,7 @@ def rewrite_once(text, mech, quality_notes, is_html, standard_delta=""):
     mode_note = f"\nMODE TARGET: {standard_delta}\n" if standard_delta else ""
     instr = f"""{STANDARD}
 {mode_note}
-TASK: Rewrite the text piped on stdin so it reads as skilled human writing that
+TASK: Rewrite the text piped on stdin so it reads as skilled writing that
 fully satisfies the standard above. Fix the mechanical tells AND the
 judgment-level weaknesses. Keep the author's meaning and every fact exactly. {html_note}
 
@@ -423,16 +430,22 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
               f"governs); use --judge. No change written.")
         return 0
 
-    judge = judge_fn or quality_judge
+    base_judge = judge_fn or quality_judge
     base_rewrite = rewrite_fn or (lambda t, mech, worst:
                                   rewrite_once(t, mech, worst, is_html, standard_delta))
     if is_tex:
-        # Mask every math span before the rewrite and splice it back after, so a
-        # formula is preserved byte for byte whatever the model returns.
+        # No model call on a math file sees a formula. The quality judge scores
+        # the masked text. The rewrite gets the masked text, a detector summary
+        # built from it, and judge notes with any math scrubbed. Each span is
+        # spliced back byte for byte whatever the model returns.
+        def judge(t):
+            return base_judge(mask_math(t)[0])
+
         def rewrite(t, mech, worst):
-            return masked_rewrite(t, lambda m, mm: base_rewrite(m, mm, worst), prof)
+            notes = scrub_math_notes(worst)
+            return masked_rewrite(t, lambda m, mm: base_rewrite(m, mm, notes), prof)
     else:
-        rewrite = base_rewrite
+        judge, rewrite = base_judge, base_rewrite
 
     def evaluate(t):
         r = assess(t, prof)
@@ -492,7 +505,7 @@ def _fix_instructions(mech, mode_note, is_html):
                  "human-readable text between tags.") if is_html else ""
     return f"""{STANDARD}
 {mode_note}
-TASK: Rewrite the text piped on stdin so it reads as skilled human writing that \
+TASK: Rewrite the text piped on stdin so it reads as skilled writing that \
 fully satisfies the standard above. Fix the mechanical tells AND the \
 judgment-level weaknesses (empty sentences, vague abstraction, hedging with no \
 position, weak verbs, buried points). Keep the author's meaning and every fact \

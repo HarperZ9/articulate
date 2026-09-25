@@ -63,7 +63,7 @@ the flagged word itself must stay secret.
 
 ## The tool abstains when it cannot tell
 
-Below a 30-word floor there are too few tokens to call a text clean human writing,
+Below a 30-word floor there are too few tokens to call a text clean,
 so a device-clean short text reads `unverifiable` and the receipt makes no clean
 claim. This is calibrated uncertainty, and it is deliberate. A banned device is
 unambiguous at any length, so a short text with a device still reads `flagged`.

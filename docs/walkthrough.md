@@ -3,8 +3,7 @@
 This is a full pass over one document, from a first screening to a rewrite to a
 committed audit record a reviewer can replay. Every detector command runs
 locally. The editor steps (3 and 4) send the text to a hosted model. The
-example file is a short blog draft, `post.md`, that was written with an assistant
-and lightly edited by hand.
+example file is a short blog draft, `post.md`.
 
 ## 1. Screen the document
 
@@ -39,7 +38,7 @@ articulate check post.md --spans
 [articulate] post.md [readme]: 4 span(s), 1 flagged
   [ ok ] span 0 L1-1: clean, texture 4/100 (0H/0M): A note on the redesign.
   [FLAG] span 1 L2-8: flagged, texture 88/100 (3H/4M): We leverage cutting-edge
-  [ ok ] span 2 L10-12: clean, texture 6/100 (0H/0M): I wrote the rest by hand.
+  [ ok ] span 2 L10-12: clean, texture 6/100 (0H/0M): The new layout ships in May.
   [ ?? ] span 3 L14-14: unverifiable, texture 0/100 (0H/0M): Thanks for reading.
 ```
 

@@ -1385,8 +1385,9 @@ GATE_TIERS = {
     "strict": frozenset({"HIGH", "MEDIUM"}),
 }
 
-# Below this many prose words there are too few tokens to assert a text is clean
-# human writing; the texture score already returns 0 under the same floor. A short
+# Below this many prose words there are too few tokens to assert a clean verdict;
+# the texture score already returns 0 under the same floor. The floor governs a
+# clean verdict only, never a reading of who or what wrote the text. A short
 # text with no findings at all reads "unverifiable" rather than a confident "clean".
 # A banned device is unambiguous at any length, so a finding still reads "flagged".
 MIN_WORDS_FOR_VERDICT = 30

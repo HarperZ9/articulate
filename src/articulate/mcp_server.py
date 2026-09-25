@@ -29,6 +29,8 @@ from . import editor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 _BACKEND_NOTE = "the editor layer needs the claude CLI, which sends the text to a hosted model"
+_REFUSED_NOTE = ("the rewrite dropped, repeated or invented a masked math span and was "
+                 "refused; the text is unchanged")
 
 
 def _scan_text(text):
@@ -127,6 +129,8 @@ def do_fix(text, is_html=False, is_tex=False):
     """Rewrite to the standard, self-gated on the detector. Needs the LLM backend."""
     try:
         rewrite = _rewrite(text, [], is_html, is_tex)
+    except editor.MathSpliceError as e:
+        return {"ok": False, "error": str(e), "note": _REFUSED_NOTE}
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e),
                 "note": _BACKEND_NOTE}
@@ -137,14 +141,19 @@ def do_fix(text, is_html=False, is_tex=False):
 
 
 def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False):
-    """Quality loop: rewrite and re-score five qualities until every one clears bar."""
+    """Quality loop: rewrite and re-score five qualities until every one clears bar.
+    With is_tex no model call sees a formula: the judge scores the masked text and
+    its notes reach the rewrite with any math scrubbed. A rewrite refused for
+    altering masked math stops the loop and keeps the last accepted text, as the
+    CLI polish does."""
     qualities = ("concreteness", "commitment", "economy", "rhythm", "restatable")
     scorecard = []
     cur = text
+    refused = None
     try:
         for attempt in range(passes + 1):
             chk = do_check(cur)
-            q = editor.quality_judge(cur)
+            q = editor.quality_judge(editor.mask_math(cur)[0] if is_tex else cur)
             sc = {k: int(q.get(k, 0) or 0) for k in qualities}
             scorecard.append({"pass": attempt, "scores": sc,
                               "mechanical_clean": chk["clean"], "verdict": q.get("verdict")})
@@ -152,10 +161,22 @@ def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False):
                 break
             if attempt == passes:
                 break
-            cur = _rewrite(cur, q.get("worst", []), is_html, is_tex)
+            worst = q.get("worst", [])
+            if is_tex:
+                worst = editor.scrub_math_notes(worst)
+            try:
+                cur = _rewrite(cur, worst, is_html, is_tex)
+            except editor.MathSpliceError as e:
+                refused = str(e)
+                break
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e), "scorecard": scorecard,
                 "note": _BACKEND_NOTE}
+    if refused:
+        return {"ok": True, "final_text": cur, "scorecard": scorecard,
+                "refused": refused,
+                "note": ("a rewrite pass altered masked math and was refused; "
+                         "final_text is the last accepted text")}
     return {"ok": True, "final_text": cur, "scorecard": scorecard,
             "note": "gated on writing quality, never on a detector score"}
 
@@ -198,8 +219,9 @@ def build_server():
         """The quality loop: rewrite, then score five qualities (concreteness,
         commitment, economy, rhythm, restatable-fact-per-paragraph) and iterate until
         every one clears `bar` (1-5) and the detector is clean. Gated on writing
-        quality, never on a detector score. With is_tex, LaTeX math is masked from
-        the model and restored byte for byte. Needs an LLM backend."""
+        quality, never on a detector score. With is_tex, LaTeX math is masked before
+        every model call, the quality scorer included, and restored byte for byte.
+        Needs an LLM backend."""
         return do_polish(text, bar, passes, is_html, is_tex)
 
     return mcp

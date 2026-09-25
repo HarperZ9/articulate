@@ -1,8 +1,8 @@
-"""P0-d: per-span (per-paragraph) mixed-authorship verdict.
+"""P0-d: per-span (per-paragraph) writing-quality verdict.
 
-One AI-heavy paragraph in an otherwise human document must be flagged in place,
-with its line range, instead of an aggregate texture score smearing across the
-whole file. The receipt is reportable per span and re-derives per block.
+One paragraph that carries the findings, in an otherwise clean document, must be
+flagged in place with its line range, instead of an aggregate texture score
+smearing across the whole file. The receipt is reportable per span and re-derives per block.
 """
 import articulate
 from articulate import detector, profiles, receipt
@@ -28,29 +28,29 @@ def test_segment_blocks_tracks_line_ranges_and_offsets():
         assert MIXED[b["start"]:b["end"]] == b["text"]
 
 
-def test_mixed_authorship_localizes_to_the_ai_paragraph():
+def test_findings_localize_to_the_flagged_paragraph():
     blocks = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))
-    human, ai = blocks[0], blocks[1]
-    assert human["gate"] == "ok"                 # the clean paragraph is not flagged
-    assert ai["gate"] == "blocked"               # the AI paragraph carries a HIGH device
-    assert ai["texture_score"] > human["texture_score"]
-    assert ai["elevated"] is True and human["texture_score"] == 0
-    # the flag names the AI paragraph's own line range, not the whole file
-    assert (ai["start_line"], ai["end_line"]) == (4, 8)
+    clean, flagged = blocks[0], blocks[1]
+    assert clean["gate"] == "ok"                 # the clean paragraph is not flagged
+    assert flagged["gate"] == "blocked"          # the flagged paragraph carries a HIGH device
+    assert flagged["texture_score"] > clean["texture_score"]
+    assert flagged["elevated"] is True and clean["texture_score"] == 0
+    # the flag names the flagged paragraph's own line range, not the whole file
+    assert (flagged["start_line"], flagged["end_line"]) == (4, 8)
 
 
 def test_whole_file_score_does_not_smear_the_concentration():
     whole = articulate.check_text(MIXED, profile=profiles.load("flavored"))
-    ai = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))[1]
-    # the concentrated AI paragraph scores at least as high on its own as the
-    # diluted whole-document aggregate, so the signal is localized, not averaged away
-    assert ai["texture_score"] >= whole["texture_score"]
+    flagged = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))[1]
+    # the paragraph that carries the findings scores at least as high on its own as
+    # the diluted whole-document aggregate, so the signal is localized, not averaged away
+    assert flagged["texture_score"] >= whole["texture_score"]
 
 
 def test_span_finding_offsets_are_document_relative():
     blocks = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))
     hits = blocks[1]["high"] + blocks[1]["medium"]
-    assert hits, "the AI paragraph must produce findings"
+    assert hits, "the flagged paragraph must produce findings"
     for f in hits:
         assert 4 <= f["line"] <= 8                 # document line, not block line
         assert MIXED[f["start"]:f["end"]] == f["match"]
@@ -74,7 +74,7 @@ def test_per_span_receipt_replays_to_match():
 
 def test_tampered_block_verdict_is_drift():
     rec = receipt.make_receipt(MIXED, "flavored", per_span=True)
-    rec["blocks"][1]["texture_score"] = 0          # forge the AI paragraph clean
+    rec["blocks"][1]["texture_score"] = 0          # forge the flagged paragraph clean
     verdict, _ = receipt.verify_receipt(rec, MIXED)
     assert verdict == "Drift"
 

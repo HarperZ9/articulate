@@ -34,7 +34,8 @@ _IS_HTML = {"is_html": {"type": "boolean", "default": False,
                         "description": "treat the input as HTML and preserve its markup"}}
 _IS_TEX = {"is_tex": {"type": "boolean", "default": False,
                       "description": ("treat the input as LaTeX: mask every math span "
-                                      "from the model and restore it byte for byte")}}
+                                      "before each model call and restore it byte "
+                                      "for byte")}}
 
 TOOLS = [
     {"name": "check",
