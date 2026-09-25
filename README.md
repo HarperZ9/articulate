@@ -44,7 +44,8 @@ say what a verdict and a receipt mean and what they never claim.
   `fix` rewrites to the standard, self-checked against the detector. `polish`
   loops until five qualities (concreteness, commitment, economy, rhythm, a
   restatable fact per paragraph) clear a bar. Gated on writing quality, never a
-  detector score. Needs an LLM backend (local model or the `claude` CLI).
+  detector score. Runs through the `claude` CLI, which sends the text to a
+  hosted Anthropic model.
 
 ## Use
 
@@ -116,9 +117,12 @@ assistants (Lean, Coq, Isabelle), never from this tool.
 
 ## Privacy
 
-The detector never touches the network. The editor layer defaults to a local
-model where configured, and an `--offline` mode is on the roadmap for air-gapped
-use. A content-free audit receipt keeps no verbatim text: it drops the matched
+The detector never touches the network. The editor layer (`judge`, `fix`,
+`polish`, `review`) has one backend today: the `claude` CLI (`claude -p`), which
+sends the full text to a hosted Anthropic model. No local-model backend exists
+yet, so do not run the editor on text you may not upload, such as a manuscript
+you received for review. A local backend and an `--offline` mode are on the
+roadmap. A content-free audit receipt keeps no verbatim text: it drops the matched
 substring and the exact offsets, keeping only which rule fired, its tier and
 category, and the line. A team can retain and replay a record without storing the
 sensitive source. Content-free is not zero-leakage: which rules fired and the line

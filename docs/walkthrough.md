@@ -1,7 +1,8 @@
 # Walkthrough
 
 This is a full pass over one document, from a first screening to a rewrite to a
-committed audit record a reviewer can replay. Every command runs locally. The
+committed audit record a reviewer can replay. Every detector command runs
+locally. The editor steps (3 and 4) send the text to a hosted model. The
 example file is a short blog draft, `post.md`, that was written with an assistant
 and lightly edited by hand.
 
@@ -50,8 +51,8 @@ the word floor, so the tool abstains and does not guess.
 
 The detector catches mechanical tells. The editor layer reads the failures a
 regex cannot see: a fluent paragraph with no fact a reader could restate, hedging
-with no committed position, a weak verb carrying the meaning. It needs a local
-model backend or the `claude` CLI.
+with no committed position, a weak verb carrying the meaning. It runs through
+the `claude` CLI, which sends the document to a hosted Anthropic model.
 
 ```bash
 python -m articulate.editor --judge post.md
@@ -161,5 +162,7 @@ The repository ships a GitHub Action and a pre-commit hook. The Action can also
 re-verify committed receipts and fail the build on drift. See
 [Features](features.md#surfaces) and the `action.yml` in the repository root.
 
-That is the full loop: screen, localize, judge, rewrite, record, and gate. Each
-step is local, and each verdict is one a reviewer can reproduce.
+That is the full loop: screen, locate, judge, rewrite, record, and gate. The
+detector steps run locally, and each detector verdict is one a reviewer can
+reproduce. The judge and rewrite steps send the text to a hosted model and are not
+reproducible.

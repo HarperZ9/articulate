@@ -26,8 +26,8 @@ skilled editor does:
 The rewrite target is WRITING QUALITY, gated by the mechanical tell-checker.
 It is not gated by, or tuned toward, any AI-detector score.
 
-The model runs through the local `claude` CLI (headless `claude -p`), so no API
-key is needed. Usage:
+The model runs through the `claude` CLI (headless `claude -p`), which sends the
+text to a hosted Anthropic model. There is no local-model backend. Usage:
     python articulate-judge.py --judge FILE
     python articulate-judge.py --fix FILE [--out OUT] [--passes N]
     python articulate-judge.py --review FILE

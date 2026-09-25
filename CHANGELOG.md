@@ -39,6 +39,11 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   default profile, so a rewrite under `academic/explain` that kept one of the
   mode's terms of art was reported as "still has tells". Both post-rewrite
   checks now take the mode's profile.
+- The README, the walkthrough, and the MCP "unavailable" notes no longer say the
+  editor defaults to a local model. The only editor backend is the `claude` CLI,
+  which sends the full text to a hosted Anthropic model. The README's Privacy
+  section now says so and warns against running the editor on text you may not
+  upload. A local backend and an `--offline` mode stay on the roadmap.
 
 ## 0.4.1
 
