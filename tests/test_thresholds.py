@@ -1,5 +1,5 @@
 """P0-c: below a word floor a device-clean text has too few tokens to be called
-clean human writing, so it degrades to "unverifiable" and the receipt abstains.
+clean, so it degrades to "unverifiable" and the receipt abstains.
 A banned device is unambiguous at any length, so it still reads "flagged".
 """
 import articulate

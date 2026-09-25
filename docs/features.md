@@ -73,9 +73,16 @@ technique in verse.
 
 `academic/prove` and `science-writing/explain` target hard technical exposition:
 stating the idea before the formalism, keeping a roadmap, defining each symbol
-once. On a `.tex` file the editor masks every math span before a rewrite and
-splices it back byte for byte, so a formula is never altered. The proof mode does
-not rewrite by default, because a wrong change to a quantifier order or an
+once. On a `.tex` file both `fix` and `polish` mask every math span before each
+model call and splice each span back byte for byte. The masking covers the text
+sent for rewriting, the detector summary the prompt quotes, the text the polish
+quality scorer reads, and the scorer's notes. A theorem, lemma, proof or other
+listed environment is masked whole with the math inside it, so its prose is left
+as written. A rewrite that drops or repeats a masked span is refused, so a
+formula is never altered. The MCP `fix` and `polish` tools do the same when
+called with `is_tex: true`. The judge and review send the full text, math
+included. Math in other file types, such as `$...$` in Markdown, is not masked.
+The proof mode does not rewrite by default, because a wrong change to a quantifier order or an
 inequality direction changes a theorem; it routes to the judge, and the fix loop
 is opt-in.
 
@@ -115,16 +122,20 @@ no trust in whoever issued it first. The verdict uses a closed set of three:
 There is deliberately no trusted or approved value. The receipt certifies
 re-derivability, and the issuer's identity is not load-bearing.
 
-## Per-span mixed-authorship
+## Per-paragraph verdicts
 
-`--spans` scores each paragraph on its own and reports its line range, so a single
-generated paragraph in an otherwise clean document is flagged in place, and one
-aggregate score cannot smear across the whole file. A per-span receipt records the
+`--spans` scores each paragraph on its own and reports its line range, so one
+paragraph that carries the findings in an otherwise clean document is flagged in
+place, and one aggregate score cannot smear across the whole file. A span verdict
+reports writing-quality and claim-support findings in that paragraph. It never
+says who or what wrote the paragraph: a flagged span is no proof a model wrote it,
+and a clean span is no evidence a person did. See
+[Boundaries](boundaries.md#no-verdict-is-an-authorship-finding). A per-span receipt records the
 per-block verdicts, each with its own text hash.
 
 ## Sub-threshold calibration
 
-Below a 30-word floor there are too few tokens to call a text clean human writing,
+Below a 30-word floor there are too few tokens to call a text clean,
 so a device-clean short text reads `unverifiable` and the receipt abstains rather
 than emit a confident verdict on noise. A banned device is unambiguous at any
 length, so a short text with a device still reads `flagged`.

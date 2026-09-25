@@ -4,6 +4,70 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+- A Markdown table delimiter row such as `|---|---|` or `|:---:|` no longer raises
+  a HIGH `em-dash` finding. The inline `---` check read the row's hyphen runs as an
+  em-dash, so a Markdown paper with a table failed the gate under every
+  non-fiction profile. `detector.is_md_table_sep` recognizes the row: at least one
+  pipe, and every cell is hyphens with optional alignment colons. A real em-dash
+  or a mid-line `---` inside a table cell still fires. `tests/test_md_tables.py`
+  covers both sides. Findings change for any text with a table, so
+  `RULESET_SEMVER` moves 0.5.0 to 0.5.1 and a receipt issued under 0.5.0 replays
+  as `Unverifiable`, never as a misleading `Drift`. The ruleset fingerprint
+  moves from `sha256:9f78a7484bb20f84` to `sha256:3835c2deace65a1e`.
+- `articulate receipt --mode M` now screens under the mode and records it. The
+  flag was accepted and then ignored: a receipt issued with
+  `--mode academic/argue` recorded the base profile `research` and its gate, so
+  it described a screening the author never ran. The receipt now carries a `mode`
+  field beside the mode's base profile, and `verify` replays under that mode. A
+  receipt whose mode is unknown or malformed, or whose profile is not the mode's
+  base, reads `Unverifiable`. An unknown `--mode` or `--profile` exits 2 with a
+  message and no output. `receipt.make_receipt` takes a `mode` keyword.
+  `tests/test_receipt_mode.py` covers issuance, replay, and tampering.
+- `--fix` now masks math on a `.tex` file. Only `--polish` called `mask_math`, so
+  `--fix` sent every formula to the model while the README said the editor masks
+  every math span before a rewrite. Both paths now go through
+  `editor.masked_rewrite`, which also builds the prompt's detector summary from
+  the masked text, since that summary quotes document lines and carried the math
+  into the prompt under `--polish` as well. `splice_math` now refuses a rewrite
+  that drops, repeats, or invents a placeholder (`MathSpliceError`), where it used
+  to delete the formula silently. Masking runs in one pass, so a theorem, lemma,
+  proof, or other listed environment is masked whole with the math inside it and
+  every span restores byte for byte; before, inline math inside an environment
+  got its own placeholder that the environment span then swallowed, which left a
+  stray placeholder in polish output. Under `--polish` the quality scorer reads
+  the masked text as well, and its notes reach the rewrite prompt with any math
+  scrubbed, so no model call on a math file carries a formula. The MCP `fix` and
+  `polish` tools take an `is_tex` flag with the same behavior. MCP `fix` reports
+  a refused rewrite with a note that names the refusal, where it used to blame
+  the backend, and MCP `polish` keeps the last accepted text, as the CLI does. `tests/test_fix_integrity.py`
+  and `tests/test_math_masking.py` drive each path with a fake model and never
+  call a hosted one.
+- Both rewrite prompts drop "human" from their target and ask for "skilled
+  writing that fully satisfies the standard". The target is the writing
+  standard, never a reading of who wrote the text.
+- `--fix` self-checks its rewrite under the chosen mode. The first pass read the
+  detector under the mode's profile, and the post-rewrite checks ran under the
+  default profile, so a rewrite under `academic/explain` that kept one of the
+  mode's terms of art was reported as "still has tells". Both post-rewrite
+  checks now take the mode's profile.
+- The README, the walkthrough, and the MCP "unavailable" notes no longer say the
+  editor defaults to a local model. The README lead, the hero image, the package
+  docstring, the docs index, and the PyPI description now call only the detector
+  local. The only editor backend is the `claude` CLI,
+  which sends the full text to a hosted Anthropic model. The README's Privacy
+  section now says so and warns against running the editor on text you may not
+  upload. A local backend and an `--offline` mode stay on the roadmap.
+- `--spans` is described as a writing-quality view that finds the paragraph
+  carrying the findings. The help text said "localize mixed authorship", and the
+  walkthrough and features pages framed spans the same way, which invited use as
+  an authorship detector or an origin gate. The boundaries page gains a section
+  stating that no verdict, span verdict, or receipt is an authorship finding. The
+  word-floor text on the boundaries and features pages now says too few tokens
+  "to call a text clean", without "human", and the walkthrough example and the
+  spans tests no longer stage the paragraphs by who wrote them.
+
 ## 0.4.1
 
 Fixed quadratic run time in the markup masks. Findings do not change, and the

@@ -815,6 +815,26 @@ def is_md_hr(line: str) -> bool:
     return re.fullmatch(r"\s*-{3,}\s*", line) is not None
 
 
+_TABLE_CELL = re.compile(r":?-+:?")
+
+
+def is_md_table_sep(line: str) -> bool:
+    """True for a Markdown table delimiter row such as `|---|:---:|` or `---|---`.
+    The row is table structure, so its hyphen runs are never an em-dash. A row needs
+    at least one pipe, which keeps a bare `---` a thematic break. Every cell must be
+    hyphens with optional alignment colons, so a content row that happens to carry
+    `---` or an em-dash stays under the em-dash rule. Split and fullmatch per cell,
+    so the check is linear in the line length."""
+    s = line.strip()
+    if "|" not in s or "-" not in s:
+        return False
+    if s.startswith("|"):
+        s = s[1:]
+    if s.endswith("|"):
+        s = s[:-1]
+    return all(_TABLE_CELL.fullmatch(cell.strip()) for cell in s.split("|"))
+
+
 def split_sentences(text: str):
     # Rough sentence split for cadence stats. Good enough to spot uniformity.
     parts = re.split(r"(?<=[.!?])\s+", text)
@@ -1265,7 +1285,7 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
             if m and not allowed(m.group(0), allow):
                 low.append(_mk(i, off, cat, label, m.start(), m.end(), raw, snippet))
 
-        if is_md_hr(raw):
+        if is_md_hr(raw) or is_md_table_sep(raw):
             continue
 
         text = mask_quotes(slop_text) if mask_q else slop_text
@@ -1365,8 +1385,9 @@ GATE_TIERS = {
     "strict": frozenset({"HIGH", "MEDIUM"}),
 }
 
-# Below this many prose words there are too few tokens to assert a text is clean
-# human writing; the texture score already returns 0 under the same floor. A short
+# Below this many prose words there are too few tokens to assert a clean verdict;
+# the texture score already returns 0 under the same floor. The floor governs a
+# clean verdict only, never a reading of who or what wrote the text. A short
 # text with no findings at all reads "unverifiable" rather than a confident "clean".
 # A banned device is unambiguous at any length, so a finding still reads "flagged".
 MIN_WORDS_FOR_VERDICT = 30
@@ -1482,11 +1503,12 @@ def segment_blocks(text):
 
 
 def analyze_blocks(text, *, profile=None, allow=()):
-    """Per-block (paragraph) verdict for mixed-authorship localization. Each block
-    is scanned on its own, so one AI-heavy paragraph is flagged in place with its
-    line range instead of smearing a whole-file texture score, and a clean document
-    is not moved by an aggregate. Findings are translated back to document
-    coordinates. This is a reporting view over the same ruleset; it changes no gate."""
+    """Per-block (paragraph) verdicts. Each block is scanned on its own, so one
+    paragraph that carries findings is flagged in place with its line range instead
+    of smearing a whole-file texture score, and a clean document is not moved by an
+    aggregate. Findings are translated back to document coordinates. This is a
+    reporting view over the same ruleset; it changes no gate. A block verdict says
+    where the findings are, never who or what wrote the block."""
     out = []
     for b in segment_blocks(text):
         r = check_text(b["text"], profile=profile, allow=allow)
@@ -1538,7 +1560,7 @@ def detect_injection(text):
     return out
 
 
-RULESET_SEMVER = "0.5.0"
+RULESET_SEMVER = "0.5.1"
 
 
 def ruleset_fingerprint():
@@ -1569,8 +1591,8 @@ def ruleset_fingerprint():
     # (sorted JSON) so that editing a profile's keep-list or slop, a genre field, or
     # a mode's gate_promote/slop moves the fingerprint and an old receipt reads
     # Unverifiable, not a misleading Drift. A mode's gate_promote drives check_text's
-    # gate directly, so it must be pinned even though receipts cannot name a mode
-    # yet. INJECTION is deliberately excluded: it never enters a check_text verdict.
+    # gate directly, and a receipt can name a mode, so it must be pinned. INJECTION
+    # is deliberately excluded: it never enters a check_text verdict.
     import json as _json
 
     from . import genres as _genres
