@@ -101,9 +101,12 @@ is all that is needed; no server code lives in the extension.
 stating the idea before the formalism, keeping a roadmap, defining each symbol
 once. The proof mode does not rewrite by default, because a wrong change to a
 quantifier order or an inequality direction changes a theorem; it routes to
-`--judge`, and `--fix` is opt-in. On a `.tex` file the editor masks every math
-span before a rewrite and splices it back byte for byte, so a formula is never
-altered.
+`--judge`, and `--fix` is opt-in. On a `.tex` file `--fix` and `--polish` mask
+every math span before the model call, including in the detector summary the
+prompt quotes, and splice each span back byte for byte. A rewrite that drops or
+repeats a masked span is refused, so a formula is never altered. The MCP `fix`
+and `polish` tools do the same when called with `is_tex: true`. Math in other
+file types, such as `$...$` in Markdown, is not masked.
 
 The boundary is fixed and load-bearing: a clean gate, a low texture score, or a
 Match receipt means the prose was screened under a named ruleset. It says nothing

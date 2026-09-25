@@ -24,6 +24,16 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   base, reads `Unverifiable`. An unknown `--mode` or `--profile` exits 2 with a
   message and no output. `receipt.make_receipt` takes a `mode` keyword.
   `tests/test_receipt_mode.py` covers issuance, replay, and tampering.
+- `--fix` now masks math on a `.tex` file. Only `--polish` called `mask_math`, so
+  `--fix` sent every formula to the model while the README said the editor masks
+  every math span before a rewrite. Both paths now go through
+  `editor.masked_rewrite`, which also builds the prompt's detector summary from
+  the masked text, since that summary quotes document lines and carried the math
+  into the prompt under `--polish` as well. `splice_math` now refuses a rewrite
+  that drops, repeats, or invents a placeholder (`MathSpliceError`), where it used
+  to delete the formula silently. The MCP `fix` and `polish` tools take an
+  `is_tex` flag with the same behavior. `tests/test_fix_integrity.py` drives each
+  path with a fake model and never calls a hosted one.
 
 ## 0.4.1
 

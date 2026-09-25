@@ -73,8 +73,12 @@ technique in verse.
 
 `academic/prove` and `science-writing/explain` target hard technical exposition:
 stating the idea before the formalism, keeping a roadmap, defining each symbol
-once. On a `.tex` file the editor masks every math span before a rewrite and
-splices it back byte for byte, so a formula is never altered. The proof mode does
+once. On a `.tex` file both `fix` and `polish` mask every math span before the
+model call, including in the detector summary the prompt quotes, and splice each
+span back byte for byte. A rewrite that drops or repeats a masked span is refused,
+so a formula is never altered. The MCP `fix` and `polish` tools do the same when
+called with `is_tex: true`. Math in other file types, such as `$...$` in
+Markdown, is not masked. The proof mode does
 not rewrite by default, because a wrong change to a quantifier order or an
 inequality direction changes a theorem; it routes to the judge, and the fix loop
 is opt-in.

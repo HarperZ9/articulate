@@ -111,11 +111,19 @@ def do_judge(text):
                 "note": "detection tools work offline; the editor layer needs a local model or claude CLI credits"}
 
 
-def do_fix(text, is_html=False):
+def _rewrite(text, worst, is_html, is_tex):
+    """One editor rewrite. With is_tex, every LaTeX math span is masked before the
+    model call and spliced back byte for byte, as the CLI does for a .tex file."""
+    if is_tex:
+        return editor.masked_rewrite(
+            text, lambda t, mech: editor.rewrite_once(t, mech, worst, is_html))
+    return editor.rewrite_once(text, _mech_summary(text)[1], worst, is_html)
+
+
+def do_fix(text, is_html=False, is_tex=False):
     """Rewrite to the standard, self-gated on the detector. Needs the LLM backend."""
-    _, mech = _mech_summary(text)
     try:
-        rewrite = editor.rewrite_once(text, mech, [], is_html)
+        rewrite = _rewrite(text, [], is_html, is_tex)
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e),
                 "note": "the editor layer needs a local model or claude CLI credits"}
@@ -125,7 +133,7 @@ def do_fix(text, is_html=False):
             "note": "a suggestion; read it against the original before shipping"}
 
 
-def do_polish(text, bar=4, passes=3, is_html=False):
+def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False):
     """Quality loop: rewrite and re-score five qualities until every one clears bar."""
     qualities = ("concreteness", "commitment", "economy", "rhythm", "restatable")
     scorecard = []
@@ -141,7 +149,7 @@ def do_polish(text, bar=4, passes=3, is_html=False):
                 break
             if attempt == passes:
                 break
-            cur = editor.rewrite_once(cur, _mech_summary(cur)[1], q.get("worst", []), is_html)
+            cur = _rewrite(cur, q.get("worst", []), is_html, is_tex)
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e), "scorecard": scorecard,
                 "note": "the editor layer needs a local model or claude CLI credits"}
@@ -174,19 +182,22 @@ def build_server():
         return do_judge(text)
 
     @mcp.tool
-    def fix(text: str, is_html: bool = False) -> dict:
+    def fix(text: str, is_html: bool = False, is_tex: bool = False) -> dict:
         """Rewrite the text to the plain-writing standard and self-check the rewrite
         against the detector so it introduces no new tell. Offers a suggestion; the
-        human decides. Needs an LLM backend."""
-        return do_fix(text, is_html)
+        human decides. With is_tex, LaTeX math is masked from the model and restored
+        byte for byte. Needs an LLM backend."""
+        return do_fix(text, is_html, is_tex)
 
     @mcp.tool
-    def polish(text: str, bar: int = 4, passes: int = 3, is_html: bool = False) -> dict:
+    def polish(text: str, bar: int = 4, passes: int = 3, is_html: bool = False,
+               is_tex: bool = False) -> dict:
         """The quality loop: rewrite, then score five qualities (concreteness,
         commitment, economy, rhythm, restatable-fact-per-paragraph) and iterate until
         every one clears `bar` (1-5) and the detector is clean. Gated on writing
-        quality, never on a detector score. Needs an LLM backend."""
-        return do_polish(text, bar, passes, is_html)
+        quality, never on a detector score. With is_tex, LaTeX math is masked from
+        the model and restored byte for byte. Needs an LLM backend."""
+        return do_polish(text, bar, passes, is_html, is_tex)
 
     return mcp
 

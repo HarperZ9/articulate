@@ -32,6 +32,9 @@ PROTOCOL = "2025-06-18"
 _TEXT = {"text": {"type": "string", "description": "the passage to read"}}
 _IS_HTML = {"is_html": {"type": "boolean", "default": False,
                         "description": "treat the input as HTML and preserve its markup"}}
+_IS_TEX = {"is_tex": {"type": "boolean", "default": False,
+                      "description": ("treat the input as LaTeX: mask every math span "
+                                      "from the model and restore it byte for byte")}}
 
 TOOLS = [
     {"name": "check",
@@ -54,7 +57,7 @@ TOOLS = [
                      "rewrite against the detector so it introduces no new tell. Offers a "
                      "suggestion; the human decides. Needs an LLM backend."),
      "inputSchema": {"type": "object", "required": ["text"],
-                     "properties": dict(_TEXT, **_IS_HTML)}},
+                     "properties": dict(_TEXT, **_IS_HTML, **_IS_TEX)}},
     {"name": "polish",
      "description": ("The quality loop: rewrite, then score five qualities (concreteness, "
                      "commitment, economy, rhythm, restatable-fact-per-paragraph) and iterate "
@@ -67,7 +70,7 @@ TOOLS = [
                               "description": "the quality bar every dimension must clear"},
                          passes={"type": "integer", "default": 3, "minimum": 1,
                                  "description": "how many rewrite attempts before giving up"},
-                         **_IS_HTML)}},
+                         **_IS_HTML, **_IS_TEX)}},
     {"name": "articulate.status",
      "description": ("Liveness and identity of the articulate MCP server (name, version, "
                      "protocol). Network-free health probe."),
@@ -130,11 +133,13 @@ def _call(params: dict) -> dict:
         elif name == "judge":
             result = do_judge(_text_arg(args))
         elif name == "fix":
-            result = do_fix(_text_arg(args), bool(args.get("is_html", False)))
+            result = do_fix(_text_arg(args), bool(args.get("is_html", False)),
+                            bool(args.get("is_tex", False)))
         elif name == "polish":
             result = do_polish(_text_arg(args), int(args.get("bar", 4)),
                                int(args.get("passes", 3)),
-                               bool(args.get("is_html", False)))
+                               bool(args.get("is_html", False)),
+                               bool(args.get("is_tex", False)))
         else:
             return {"content": [{"type": "text", "text": "unknown tool %r" % (name,)}],
                     "isError": True}
