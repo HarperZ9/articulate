@@ -4,6 +4,18 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+- A Markdown table delimiter row such as `|---|---|` or `|:---:|` no longer raises
+  a HIGH `em-dash` finding. The inline `---` check read the row's hyphen runs as an
+  em-dash, so a Markdown paper with a table failed the gate under every
+  non-fiction profile. `detector.is_md_table_sep` recognizes the row: at least one
+  pipe, and every cell is hyphens with optional alignment colons. A real em-dash
+  or a mid-line `---` inside a table cell still fires. `tests/test_md_tables.py`
+  covers both sides. Findings change for any text with a table, so
+  `RULESET_SEMVER` moves 0.5.0 to 0.5.1 and a receipt issued under 0.5.0 replays
+  as `Unverifiable`, never as a misleading `Drift`.
+
 ## 0.4.1
 
 Fixed quadratic run time in the markup masks. Findings do not change, and the

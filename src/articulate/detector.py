@@ -815,6 +815,26 @@ def is_md_hr(line: str) -> bool:
     return re.fullmatch(r"\s*-{3,}\s*", line) is not None
 
 
+_TABLE_CELL = re.compile(r":?-+:?")
+
+
+def is_md_table_sep(line: str) -> bool:
+    """True for a Markdown table delimiter row such as `|---|:---:|` or `---|---`.
+    The row is table structure, so its hyphen runs are never an em-dash. A row needs
+    at least one pipe, which keeps a bare `---` a thematic break. Every cell must be
+    hyphens with optional alignment colons, so a content row that happens to carry
+    `---` or an em-dash stays under the em-dash rule. Split and fullmatch per cell,
+    so the check is linear in the line length."""
+    s = line.strip()
+    if "|" not in s or "-" not in s:
+        return False
+    if s.startswith("|"):
+        s = s[1:]
+    if s.endswith("|"):
+        s = s[:-1]
+    return all(_TABLE_CELL.fullmatch(cell.strip()) for cell in s.split("|"))
+
+
 def split_sentences(text: str):
     # Rough sentence split for cadence stats. Good enough to spot uniformity.
     parts = re.split(r"(?<=[.!?])\s+", text)
@@ -1265,7 +1285,7 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
             if m and not allowed(m.group(0), allow):
                 low.append(_mk(i, off, cat, label, m.start(), m.end(), raw, snippet))
 
-        if is_md_hr(raw):
+        if is_md_hr(raw) or is_md_table_sep(raw):
             continue
 
         text = mask_quotes(slop_text) if mask_q else slop_text
@@ -1538,7 +1558,7 @@ def detect_injection(text):
     return out
 
 
-RULESET_SEMVER = "0.5.0"
+RULESET_SEMVER = "0.5.1"
 
 
 def ruleset_fingerprint():
@@ -1569,8 +1589,8 @@ def ruleset_fingerprint():
     # (sorted JSON) so that editing a profile's keep-list or slop, a genre field, or
     # a mode's gate_promote/slop moves the fingerprint and an old receipt reads
     # Unverifiable, not a misleading Drift. A mode's gate_promote drives check_text's
-    # gate directly, so it must be pinned even though receipts cannot name a mode
-    # yet. INJECTION is deliberately excluded: it never enters a check_text verdict.
+    # gate directly, and a receipt can name a mode, so it must be pinned. INJECTION
+    # is deliberately excluded: it never enters a check_text verdict.
     import json as _json
 
     from . import genres as _genres
