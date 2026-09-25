@@ -1502,11 +1502,12 @@ def segment_blocks(text):
 
 
 def analyze_blocks(text, *, profile=None, allow=()):
-    """Per-block (paragraph) verdict for mixed-authorship localization. Each block
-    is scanned on its own, so one AI-heavy paragraph is flagged in place with its
-    line range instead of smearing a whole-file texture score, and a clean document
-    is not moved by an aggregate. Findings are translated back to document
-    coordinates. This is a reporting view over the same ruleset; it changes no gate."""
+    """Per-block (paragraph) verdicts. Each block is scanned on its own, so one
+    paragraph that carries findings is flagged in place with its line range instead
+    of smearing a whole-file texture score, and a clean document is not moved by an
+    aggregate. Findings are translated back to document coordinates. This is a
+    reporting view over the same ruleset; it changes no gate. A block verdict says
+    where the findings are, never who or what wrote the block."""
     out = []
     for b in segment_blocks(text):
         r = check_text(b["text"], profile=profile, allow=allow)

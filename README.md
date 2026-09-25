@@ -139,7 +139,7 @@ automatic expiry (bounded retention is a later self-hosted tier). The full
 
 Pre-1.0. The core detector, profile system, writing modes (including the science
 modes for proofs and technical exposition), the genre axis (fiction, memoir,
-screenplay, poetry), the editor injection boundary, per-span mixed-authorship
+screenplay, poetry), the editor injection boundary, per-paragraph span
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this

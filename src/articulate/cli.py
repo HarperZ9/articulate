@@ -155,8 +155,8 @@ def _inputs(files):
 
 
 def _print_spans(name, pname, blocks):
-    """Per-paragraph verdicts, so an AI-heavy block is flagged in place and one
-    aggregate score cannot smear across a whole clean document."""
+    """Per-paragraph verdicts, so a block that carries findings is flagged in place
+    and one aggregate score cannot smear across a whole clean document."""
     flagged = [b for b in blocks if b["gate"] == "blocked" or b["elevated"]]
     print(f"[articulate] {name} [{pname}]: {len(blocks)} span(s), {len(flagged)} flagged")
     for b in blocks:
@@ -429,7 +429,9 @@ def main(argv=None):
             p.add_argument("--gate", action="store_true", help="exit 1 if blocked")
             p.add_argument("--verbose", action="store_true")
             p.add_argument("--spans", action="store_true",
-                           help="per-paragraph verdicts (localize mixed authorship)")
+                           help="per-paragraph verdicts: find the paragraph that carries "
+                                "the findings (a writing-quality view, never an "
+                                "authorship finding)")
             p.add_argument("--content-free", action="store_true",
                            help="omit every verbatim substring from console/JSON/SARIF output")
         if cmd == "receipt":

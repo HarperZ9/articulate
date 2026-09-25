@@ -20,8 +20,9 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
 - `--json`: a machine-readable payload with findings, cadence, and the verdict.
 - `--sarif`: SARIF 2.1.0 for GitHub code scanning, Azure DevOps, and reviewdog.
 - `--verbose`: expand the LOW advisories to line numbers.
-- `--spans`: a per-paragraph verdict, so a mixed-authorship block is flagged in
-  place.
+- `--spans`: a per-paragraph verdict, so the paragraph that carries the findings
+  is flagged in place. It is a writing-quality view and never an authorship
+  finding; see [Boundaries](boundaries.md#no-verdict-is-an-authorship-finding).
 - `--content-free`: omit every verbatim substring and exact offset from the
   console, JSON, and SARIF output.
 

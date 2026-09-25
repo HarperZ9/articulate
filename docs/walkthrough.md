@@ -26,10 +26,10 @@ The verdict is `blocked` because HIGH findings are present. The texture score of
 63 says the whole document reads machine-heavy, beyond the specific device hits.
 Each line points at the exact place to fix.
 
-## 2. Localize mixed authorship
+## 2. Find the paragraph that carries the findings
 
-A whole-file score hides a single generated paragraph inside otherwise clean
-prose. `--spans` scores each paragraph on its own:
+A whole-file score can hide one weak paragraph inside otherwise clean prose.
+`--spans` scores each paragraph on its own:
 
 ```bash
 articulate check post.md --spans
@@ -43,9 +43,12 @@ articulate check post.md --spans
   [ ?? ] span 3 L14-14: unverifiable, texture 0/100 (0H/0M): Thanks for reading.
 ```
 
-The generated paragraph is span 1 on lines 2 to 8. The hand-written paragraphs
-read clean, and the short closing line is `unverifiable` because it falls under
-the word floor, so the tool abstains and does not guess.
+Every finding sits in span 1, on lines 2 to 8, so that is the paragraph to
+rewrite. The other paragraphs read clean, and the short closing line is
+`unverifiable` because it falls under the word floor, so the tool abstains and
+does not guess. A span verdict says where the findings are. It says nothing about
+who or what wrote the paragraph, so never use it as an authorship finding; see
+[Boundaries](boundaries.md#no-verdict-is-an-authorship-finding).
 
 ## 3. Read the judgment-level quality
 

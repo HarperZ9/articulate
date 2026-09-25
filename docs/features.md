@@ -119,11 +119,15 @@ no trust in whoever issued it first. The verdict uses a closed set of three:
 There is deliberately no trusted or approved value. The receipt certifies
 re-derivability, and the issuer's identity is not load-bearing.
 
-## Per-span mixed-authorship
+## Per-paragraph verdicts
 
-`--spans` scores each paragraph on its own and reports its line range, so a single
-generated paragraph in an otherwise clean document is flagged in place, and one
-aggregate score cannot smear across the whole file. A per-span receipt records the
+`--spans` scores each paragraph on its own and reports its line range, so one
+paragraph that carries the findings in an otherwise clean document is flagged in
+place, and one aggregate score cannot smear across the whole file. A span verdict
+reports writing-quality and claim-support findings in that paragraph. It never
+says who or what wrote the paragraph: a flagged span is no proof a model wrote it,
+and a clean span is no evidence a person did. See
+[Boundaries](boundaries.md#no-verdict-is-an-authorship-finding). A per-span receipt records the
 per-block verdicts, each with its own text hash.
 
 ## Sub-threshold calibration

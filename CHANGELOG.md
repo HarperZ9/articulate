@@ -44,6 +44,11 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   which sends the full text to a hosted Anthropic model. The README's Privacy
   section now says so and warns against running the editor on text you may not
   upload. A local backend and an `--offline` mode stay on the roadmap.
+- `--spans` is described as a writing-quality view that finds the paragraph
+  carrying the findings. The help text said "localize mixed authorship", and the
+  walkthrough and features pages framed spans the same way, which invited use as
+  an authorship detector or an origin gate. The boundaries page gains a section
+  stating that no verdict, span verdict, or receipt is an authorship finding.
 
 ## 0.4.1
 
