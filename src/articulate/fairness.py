@@ -10,16 +10,18 @@ per-rule rates and skew states, density distributions, a layout check and the
 pre-registered gates G1 to G7 (fairness_gates, fairness/PREREG.md).
 
   python -m articulate.fairness MANIFEST [--out RECEIPT]
-  python -m articulate.fairness --release-check DIR
+  python -m articulate.fairness --release-check DIR [--published FILE]
 
-The release check reads DIR/<fingerprint>.json for the current ruleset. It
-fails when the receipt is missing, was run on a manifest not listed in
-RELEASE_MANIFESTS, leaves out a required comparison or a bound profile, or when
-the gates recomputed from its own rows fail or disagree with the stored
-summary. A failure blocks every package release, since each release ships the
-ruleset. It never blocks a user's run. A maintainer can record an override in
-DIR/<fingerprint>.override.json with a stated reason; the check then passes and
-prints that reason.
+The release check is scoped to ruleset changes. When the current fingerprint
+equals the one in the published-ruleset record (fairness/published-ruleset.json,
+beside DIR by default), it passes and says the gates were not re-run. A changed
+ruleset needs a receipt DIR/<fingerprint>*.json from every listed manifest, and
+it fails when a receipt is missing, leaves out a required comparison or a bound
+profile, or when the gates recomputed from its own rows fail or disagree with
+the stored summary. A failure blocks the package release. It never blocks a
+user's run. An override in DIR/<fingerprint>.override.json, with a stated
+reason, excuses failing gates only when no gate row that passes in the published
+ruleset's receipt fails in the new one; the check prints that comparison.
 
 Standard library only. No network. The harness never stores or prints text.
 """
@@ -216,11 +218,11 @@ def run(manifest_path, names=None, cadence_gates=False):
     }
 
 
-def release_check(directory):
-    """(ok, reasons) for the committed receipt of the current ruleset. See
-    fairness_release."""
+def release_check(directory, published=None):
+    """(ok, lines) for the current ruleset against the committed receipts and
+    the published-ruleset record. See fairness_release."""
     from .fairness_release import release_check as check
-    return check(directory)
+    return check(directory, published)
 
 
 def main(argv=None):
@@ -229,11 +231,14 @@ def main(argv=None):
     ap.add_argument("manifest", nargs="?")
     ap.add_argument("--out", default=None, help="write the receipt here")
     ap.add_argument("--release-check", metavar="DIR", default=None)
+    ap.add_argument("--published", metavar="FILE", default=None,
+                    help="the published-ruleset record (default: beside DIR)")
     args = ap.parse_args(argv)
     if args.release_check:
-        ok, reasons = release_check(args.release_check)
-        print("[fairness] release check " + ("passed" if ok else "failed")
-              + (": " + "; ".join(reasons) if reasons else ""))
+        ok, lines = release_check(args.release_check, args.published)
+        print("[fairness] release check " + ("passed" if ok else "failed"))
+        for line in lines:
+            print(f"  {line}")
         return 0 if ok else 1
     if not args.manifest:
         ap.print_help()

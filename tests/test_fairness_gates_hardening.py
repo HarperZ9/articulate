@@ -125,7 +125,13 @@ def test_an_override_needs_a_reason_and_names_it(tmp_path, monkeypatch):
     assert fairness_release.release_check(str(tmp_path))[0] is (rec["gates"]["release_ok"])
     over.write_text(json.dumps({"ruleset_version": fp, "reason": "security patch",
                                 "decided_by": "maintainer"}))
-    ok, reasons = fairness_release.release_check(str(tmp_path))
+    # An override is compared with the published ruleset's receipt; here the
+    # published receipt holds the same rows, so nothing regresses.
+    (tmp_path / "published.json").write_text(json.dumps(
+        {"package_version": "0.0.0", "ruleset_version": "sha256:old",
+         "receipts": [fp.replace(":", "-") + ".json"]}))
+    ok, reasons = fairness_release.release_check(str(tmp_path),
+                                                 str(tmp_path / "published.json"))
     assert ok and "security patch" in reasons[0]
 
 
