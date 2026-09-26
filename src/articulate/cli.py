@@ -6,6 +6,7 @@
   articulate score [FILE ...] [--profile P]
   articulate receipt | verify | audit | modes
   articulate process ... | disclose     (a writer-held process record)
+  articulate desk FILE                  (questions for a reviewer)
 
 With no FILE, reads stdin. The profile is chosen by --profile, else an in-file
 `writing-profile:` tag, else the file path, else the default. `--gate` exits 1
@@ -15,7 +16,7 @@ import argparse
 import json
 import sys
 
-from . import cli_process, cli_receipts, modes, profiles, pysource
+from . import cli_desk, cli_process, cli_receipts, modes, profiles, pysource
 from .cli_output import print_check, print_score, print_spans, redact, to_sarif  # noqa: F401
 from .detector import analyze_blocks, binary_reason, check_text
 from .tool_text import DOES_NOT_PROVE, PRODUCT
@@ -183,6 +184,7 @@ def build_parser():
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
     cli_process.register(sub)
+    cli_desk.register(sub)
     return ap
 
 
@@ -198,6 +200,7 @@ def main(argv=None):
         "audit": lambda: cli_receipts.cmd_audit(args, _decode),
         "process": lambda: cli_process.cmd_process(args),
         "disclose": lambda: cli_process.cmd_disclose(args),
+        "desk": lambda: cli_desk.cmd_desk(args),
     }
     if args.cmd in handlers:
         return handlers[args.cmd]()

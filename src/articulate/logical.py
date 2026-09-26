@@ -125,11 +125,18 @@ def units(lines, *, join=True, roles=None):
     return out
 
 
+# A period after one of these never ends a sentence: "Smith et al. (2019)".
+ABBREVIATIONS = re.compile(r"(?i)(?:\bet al|\be\.g|\bi\.e|\bcf|\bvs|\bfig|\beq|\bno|"
+                           r"\bdr|\bmr|\bmrs|\bms|\bprof|\bst)$")
+
+
 def sentences(text):
     """(start, end) of each sentence in a logical line, whitespace excluded."""
     out, pos = [], 0
     for m in SENTENCE_END.finditer(text):
-        out.append((pos, m.start() + 1 + len(m.group(0).rstrip()) - 1))
+        if text[m.start()] == "." and ABBREVIATIONS.search(text[max(0, m.start() - 6):m.start()]):
+            continue
+        out.append((pos, m.start() + len(m.group(0).rstrip())))
         pos = m.end()
     if pos < len(text):
         out.append((pos, len(text)))

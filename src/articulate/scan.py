@@ -28,7 +28,9 @@ MEDIUM = MEDIUM_REGISTER + MEDIUM_STRUCTURE
 #   1  one re.search per rule per physical line
 #   2  logical lines (a paragraph joined, with an offset map), every match
 #      counted, line-start rules run at every sentence start
-SCAN_ALGO = 2
+#   3  a period after a common abbreviation (et al., e.g., i.e., Fig.) no longer
+#      ends a sentence
+SCAN_ALGO = 3
 # A Markdown table delimiter row is structure, never an em-dash.
 SKIP_TABLE_SEP = True
 

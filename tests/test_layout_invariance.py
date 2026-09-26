@@ -117,3 +117,10 @@ def test_a_v1_receipt_reads_unverifiable_with_a_reason():
     rec["ruleset_version"] = "sha256:0000000000000000"
     verdict, detail = receipt.verify_receipt(rec, text)
     assert verdict == "Unverifiable" and "ruleset changed" in detail
+
+
+def test_a_period_after_a_common_abbreviation_does_not_end_a_sentence():
+    from articulate.logical import sentences
+    t = "Unlike Smith et al. (2019), it runs in the field. E.g. this one. Done."
+    assert [t[s:e] for s, e in sentences(t)] == [
+        "Unlike Smith et al. (2019), it runs in the field.", "E.g. this one.", "Done."]
