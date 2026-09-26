@@ -21,7 +21,9 @@ MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "genres.py", "masking.py", "claude_cli.py", "__init__.py",
            "fairness.py", "fairness_gates.py", "fairness_stats.py",
            "fairness_corpora.py", "density.py", "logical.py", "rule_reasons.py",
-           "cadence.py", "gate.py", "scan.py", "fingerprint.py", "binary.py"]
+           "cadence.py", "gate.py", "scan.py", "fingerprint.py", "binary.py",
+           "prompts.py", "polish.py", "fix.py", "mathmask.py", "editor_metrics.py",
+           "tool_text.py", "cli_output.py", "cli_receipts.py", "aliases.py"]
 
 
 def _gate(path, text):

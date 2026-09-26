@@ -94,16 +94,8 @@ def do_score(text):
 def do_judge(text):
     """Skilled-editor read of judgment-level failures. Needs the LLM backend."""
     _, mech = _mech_summary(text)
-    instr = (
-        "You are a demanding copyeditor. Read the text piped on stdin and report "
-        "only its judgment-level quality failures: confident emptiness (a fluent "
-        "sentence with no fact a reader could restate), vague abstraction where a "
-        "concrete term exists, hedging that never commits, a metaphor standing in "
-        "for a literal term, a buried point, weak verbs, hidden-actor passive. "
-        "Quote each offender, name the failure, and say in one line what a skilled "
-        "writer would do. If the prose is strong, say so and stop.\n\n"
-        f"The mechanical detector reports:\n{mech}"
-    )
+    from .prompts import judge_instructions
+    instr = judge_instructions(mech)
     try:
         return {"ok": True, "read": editor.claude_call(instr, text)}
     except (RuntimeError, Exception) as e:  # noqa: BLE001 - report cleanly to the host
@@ -136,45 +128,46 @@ def do_fix(text, is_html=False, is_tex=False):
             "note": "a suggestion; read it against the original before shipping"}
 
 
+def _polish_scores(cur, is_tex):
+    q = editor.quality_judge(editor.mask_math(cur)[0] if is_tex else cur)
+    return q, {k: int(q.get(k, 0) or 0) for k in editor.QUALITIES}
+
+
 def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False):
-    """Quality loop: rewrite and re-score five qualities until every one clears bar.
-    With is_tex no model call sees a formula: the judge scores the masked text and
-    its notes reach the rewrite with any math scrubbed. A rewrite refused for
-    altering masked math stops the loop and keeps the last accepted text, as the
-    CLI polish does."""
-    qualities = ("concreteness", "commitment", "economy", "rhythm", "restatable")
-    scorecard = []
-    cur = text
-    refused = None
+    """The quality loop, with the CLI's acceptance rule (editor.accept): a pass is
+    kept only when no quality score falls and the gate does not go from ok to
+    blocked. With is_tex no model call sees a formula. A rewrite refused for
+    altering masked math stops the loop and keeps the last accepted text."""
+    scorecard, cur, refused = [], text, None
     try:
+        chk = do_check(cur)
+        q, sc = _polish_scores(cur, is_tex)
         for attempt in range(passes + 1):
-            chk = do_check(cur)
-            q = editor.quality_judge(editor.mask_math(cur)[0] if is_tex else cur)
-            sc = {k: int(q.get(k, 0) or 0) for k in qualities}
-            scorecard.append({"pass": attempt, "scores": sc,
-                              "findings": chk["findings"], "overall": q.get("overall")})
-            if chk["findings"] == "no_findings" and sc and min(sc.values()) >= bar:
-                break
-            if attempt == passes:
+            scorecard.append({"pass": attempt, "scores": sc, "gate": chk["gate"],
+                              "overall": q.get("overall")})
+            if (chk["gate"] == "ok" and min(sc.values()) >= bar) or attempt == passes:
                 break
             worst = q.get("worst", [])
-            if is_tex:
-                worst = editor.scrub_math_notes(worst)
             try:
-                cur = _rewrite(cur, worst, is_html, is_tex)
+                cand = _rewrite(cur, editor.scrub_math_notes(worst) if is_tex else worst,
+                                is_html, is_tex)
             except editor.MathSpliceError as e:
                 refused = str(e)
                 break
+            c_chk = do_check(cand)
+            cq, csc = _polish_scores(cand, is_tex)
+            ok, _why = editor.accept(sc, csc, chk["gate"], c_chk["gate"], set(), None)
+            if not ok:
+                break
+            cur, chk, q, sc = cand, c_chk, cq, csc
     except (RuntimeError, Exception) as e:  # noqa: BLE001
-        return {"ok": False, "error": str(e), "scorecard": scorecard,
-                "note": _BACKEND_NOTE}
+        return {"ok": False, "error": str(e), "scorecard": scorecard, "note": _BACKEND_NOTE}
+    out = {"ok": True, "final_text": cur, "scorecard": scorecard,
+           "note": "accepted on the reader's qualities and the gate, never on an outside score"}
     if refused:
-        return {"ok": True, "final_text": cur, "scorecard": scorecard,
-                "refused": refused,
-                "note": ("a rewrite pass altered masked math and was refused; "
-                         "final_text is the last accepted text")}
-    return {"ok": True, "final_text": cur, "scorecard": scorecard,
-            "note": "gated on writing quality, never on a detector score"}
+        out.update(refused=refused, note=("a rewrite pass altered masked math and was "
+                                          "refused; final_text is the last accepted text"))
+    return out
 
 
 def _described(fn, name):
