@@ -38,8 +38,8 @@ from .lexicon import (ADVERB, BOLD_SPAN, BULLET, DIGIT, EMOJI,  # noqa: F401
 from .markup import (ALLOW_EXEMPT_CATEGORIES, ALLOW_TAG, FENCE,  # noqa: F401
                      INLINE_CODE, QUOTED, TAG, TEX, URL, allowed,
                      classify_fountain, is_md_hr, is_md_table_sep, mask_quotes,
-                     read_allowlist, sentence_spans, split_sentences,
-                     strip_markup)
+                     read_allowlist, split_sentences, strip_markup)
+from .logical import sentence_spans, units  # noqa: F401
 from .rules_high import HIGH  # noqa: F401
 from .rules_low import FICTION_SLOP, INJECTION, LOW, REGISTER_JARGON  # noqa: F401
 from .scan import MEDIUM, scan, scan_lines  # noqa: F401

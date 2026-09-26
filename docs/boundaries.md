@@ -38,9 +38,9 @@ that verification step.
 
 A receipt records that a named, fingerprinted ruleset ran against a specific text
 and produced a specific verdict, and that the same screening re-derives on the
-same text. That is the whole claim. A receipt is not a provenance attestation, not
-a correctness claim, and not a regulatory or compliance artifact. It is not an EU
-AI Act Article 50 marking, and it is not a C2PA content credential. The verdict
+same text. That is the whole claim. A receipt makes no claim about provenance or
+correctness, and it is no regulatory or compliance artifact. It carries neither an
+EU AI Act Article 50 marking nor a C2PA content credential. The verdict
 set is `Match`, `Drift`, or `Unverifiable`, with no trusted or approved value, so
 a receipt cannot be read as a final determination against a person.
 

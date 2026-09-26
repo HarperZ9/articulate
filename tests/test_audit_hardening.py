@@ -37,7 +37,9 @@ def test_content_free_findings_carry_no_offsets_or_label():
         rec = receipt.make_receipt(TEXT, "flavored", redact=mode)
         for f in rec["findings"]:
             assert not ({"start", "end", "col", "match", "label"} & set(f))
-            assert set(f) <= {"rule_id", "tier", "category", "line", "match_sha256"}
+            # end_line is a line number, as coarse as line; it carries no offset.
+            assert set(f) <= {"rule_id", "tier", "category", "line", "end_line",
+                              "match_sha256"}
 
 
 def test_content_free_still_replays_match():

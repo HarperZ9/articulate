@@ -18,7 +18,7 @@ value: the receipt certifies re-derivability, never authority.
                 or the receipt schema is unknown. Re-derivation cannot be done,
                 so nothing is asserted.
 
-A content-free AUDIT receipt (schema `articulate/receipt/audit/v1`) keeps no verbatim
+A content-free AUDIT receipt (schema `articulate/receipt/audit/v2`) keeps no verbatim
 document text: it drops the per-finding `match` substring and the exact start/end/col
 offsets, keeping only the rule id, tier, category, and line. A team retains and
 replays such a record without storing the sensitive text. It is content-free, never
@@ -38,8 +38,13 @@ from datetime import datetime, timezone
 
 from . import detector, modes, profiles
 
-SCHEMA = "articulate/receipt/v1"
-AUDIT_SCHEMA = "articulate/receipt/audit/v1"
+SCHEMA = "articulate/receipt/v2"
+AUDIT_SCHEMA = "articulate/receipt/audit/v2"
+# Schema v1 receipts came from the physical-line scanner (SCAN_ALGO 1). They are
+# still read, so a replay names the reason it cannot re-derive them. Their
+# ruleset fingerprint never matches a v2 ruleset.
+LEGACY = {"articulate/receipt/v1": SCHEMA, "articulate/receipt/audit/v1": AUDIT_SCHEMA}
+KNOWN = (SCHEMA, AUDIT_SCHEMA) + tuple(LEGACY)
 
 
 def _sha256(s: str) -> str:
@@ -75,7 +80,7 @@ def _normalize(result, redaction=None) -> list:
     out = []
     for f in result["high"] + result["medium"] + result["low"]:
         rec = {"rule_id": f["rule_id"], "tier": f["tier"], "category": f["category"],
-               "line": f["line"]}
+               "line": f["line"], "end_line": f.get("end_line", f["line"])}
         if not content_free:
             rec["col"] = f["col"]
             rec["start"] = f["start"]
@@ -120,7 +125,7 @@ def make_receipt(text: str, profile_name: str = None, *, mode: str = None,
                  per_span: bool = False, redact: str = None, reviewer: str = None,
                  created_at: str = None) -> dict:
     """Build a receipt. `redact` None gives the full content-bearing receipt;
-    "drop" or "hash" gives a content-free audit receipt (schema audit/v1) that keeps
+    "drop" or "hash" gives a content-free audit receipt (schema audit/v2) that keeps
     no verbatim document text. The per-span blocks are already content-free.
 
     `mode` (for example "academic/argue") screens under that writing mode, which
@@ -164,11 +169,12 @@ def make_receipt(text: str, profile_name: str = None, *, mode: str = None,
 
 def verify_receipt(receipt: dict, text: str):
     """Replay a receipt against text. Returns (verdict, detail)."""
-    if not isinstance(receipt, dict) or receipt.get("schema") not in (SCHEMA, AUDIT_SCHEMA):
+    if not isinstance(receipt, dict) or receipt.get("schema") not in KNOWN:
         return "Unverifiable", "unknown or missing receipt schema"
     # The schema and redaction must be a consistent pair, so a full receipt cannot be
     # relabeled content-free (or the reverse) to smuggle a false claim past verify.
     schema, redaction = receipt.get("schema"), receipt.get("redaction")
+    schema = LEGACY.get(schema, schema)
     if schema == AUDIT_SCHEMA and redaction not in ("drop", "hash"):
         return "Unverifiable", "audit-schema receipt has no valid redaction mode"
     if schema == SCHEMA and redaction is not None:

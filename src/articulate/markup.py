@@ -6,7 +6,6 @@ span-record builder. Standard library only.
 import re
 
 from . import masking
-from .lexicon import WORD
 
 # A file may exempt its terms of art with a line like:
 #   writing-allow: substrate, load-bearing, first-class
@@ -143,9 +142,9 @@ def _rid(category: str, label: str) -> str:
 
 
 def _mk(line_no, offset, category, label, start, end, raw, snippet):
-    """Build a span-level finding record."""
+    """Build a span-level finding record for a match inside one physical line."""
     return {
-        "line": line_no, "col": start + 1,
+        "line": line_no, "end_line": line_no, "col": start + 1,
         "start": offset + start, "end": offset + end,
         "category": category, "label": label,
         "match": raw[start:end], "snippet": snippet,
@@ -181,31 +180,6 @@ def split_sentences(text: str):
     # Rough sentence split for cadence stats. Good enough to spot uniformity.
     parts = re.split(r"(?<=[.!?])\s+", text)
     return [p for p in parts if p.strip()]
-
-
-def sentence_spans(lines):
-    """Yield (line_no, sentence) for prose sentences, skipping code and frontmatter."""
-    out = []
-    in_fence = False
-    in_fm = bool(lines) and lines[0].strip() == "---"
-    for i, raw in enumerate(lines, 1):
-        if FENCE.match(raw):
-            in_fence = not in_fence
-            continue
-        if in_fence:
-            continue
-        if in_fm:
-            if i > 1 and raw.strip() == "---":
-                in_fm = False
-            continue
-        if is_md_hr(raw):
-            continue
-        text = strip_markup(raw)
-        for s in re.split(r"(?<=[.!?])\s+", text):
-            s = s.strip()
-            if len(WORD.findall(s)) >= 3:
-                out.append((i, s))
-    return out
 
 
 def _line_offsets(lines):

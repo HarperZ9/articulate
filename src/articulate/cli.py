@@ -299,7 +299,7 @@ def _load_receipts(paths):
                 rec = json.load(fh)
         except (OSError, ValueError):
             continue
-        if isinstance(rec, dict) and rec.get("schema") in (receipt.SCHEMA, receipt.AUDIT_SCHEMA):
+        if isinstance(rec, dict) and rec.get("schema") in receipt.KNOWN:
             yield fp, rec
 
 

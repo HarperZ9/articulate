@@ -9,8 +9,8 @@ from statistics import mean, pstdev
 
 from .lexicon import (BOLD_SPAN, BULLET, FIRSTWORD, HEADING, HEDGE_WORDS, NEG,
                       NGRAM_STOP, OPENER_STOP, WORD)
-from .markup import (FENCE, _line_offsets, _mk, is_md_hr, sentence_spans,
-                     strip_markup)
+from .logical import sentence_spans
+from .markup import FENCE, _line_offsets, _mk, is_md_hr, strip_markup
 
 PRONOUN_SUBJ = {"you", "we", "i", "they", "he", "she", "it"}
 # 4+ letter function words that do not count as a shared predicate.

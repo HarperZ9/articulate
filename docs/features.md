@@ -136,8 +136,8 @@ per-block verdicts, each with its own text hash.
 ## Sub-threshold calibration
 
 Below a 30-word floor there are too few tokens to call a text clean,
-so a device-clean short text reads `unverifiable` and the receipt abstains rather
-than emit a confident verdict on noise. A banned device is unambiguous at any
+so a device-clean short text reads `unverifiable` and the receipt abstains from a
+confident verdict on noise. A banned device is unambiguous at any
 length, so a short text with a device still reads `flagged`.
 
 ## The content-free audit receipt
