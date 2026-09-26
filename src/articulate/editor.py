@@ -121,17 +121,8 @@ def claude_call(instructions, text, timeout=600):
     r = claude_cli.run(hardened(instructions), text, timeout=timeout)
     out = (r.stdout or "").strip()
     err = (r.stderr or "").strip()
-    blob = (out + " " + err).lower()
-    for sentinel, msg in (
-        ("credit balance is too low", "credit balance too low; add credits or set ANTHROPIC_API_KEY"),
-        ("rate limit", "rate limited; wait for the weekly reset"),
-        ("not authenticated", "claude CLI not authenticated; run `claude login`"),
-        ("invalid api key", "claude CLI auth invalid"),
-    ):
-        if sentinel in blob:
-            raise ClaudeUnavailable(f"claude CLI: {msg}")
-    if r.returncode != 0 and not out:
-        raise RuntimeError(f"claude CLI failed: {err[:300] or 'unknown error'}")
+    if r.returncode != 0:
+        claude_cli.raise_for_failed_call(out, err)
     if not out:
         raise RuntimeError("claude CLI returned empty output")
     return out

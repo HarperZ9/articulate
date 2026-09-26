@@ -4,7 +4,8 @@ A bundled child process can start with a PATH that holds only System32, and
 subprocess without a shell does not turn "claude" into claude.cmd on Windows. So
 the editor resolves the CLI itself: the environment variable first, which must
 be an absolute path, then the absolute PATH entries, with claude.exe ahead of
-any batch shim. The current directory is never searched. No test here starts a
+any batch shim. The current directory is never searched, and the child runs in
+a private empty folder with project settings off. No test here starts a
 process; a fake runner records what would run, and a fake file table stands in
 for the disk.
 """
@@ -14,50 +15,12 @@ import posixpath
 
 import pytest
 
-from articulate import claude_cli, editor
-
-_TMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_tmp_cli")
-_SECRET = "value-that-must-not-leak-7f3a"
-# Written out by hand so the test does not borrow the implementation's own set.
-_CMD_UNSAFE_EXPECTED = frozenset('"%^&|<>!\r\n')
-
-
-class _Runner:
-    def __init__(self, result=None, raises=None):
-        self.calls, self.result, self.raises = [], result, raises
-        self.prompt_file_text = None
-
-    def __call__(self, argv, **kwargs):
-        self.calls.append((list(argv), kwargs))
-        path = argv[argv.index("--append-system-prompt-file") + 1]
-        with open(path, encoding="utf-8") as fh:
-            self.prompt_file_text = fh.read()
-        if self.raises is not None:
-            raise self.raises
-        return self.result
-
-
-class _Disk:
-    """A fake file table that records every path the resolver probes."""
-
-    def __init__(self, *paths):
-        self.paths, self.probed = set(paths), []
-
-    def __call__(self, path):
-        self.probed.append(path)
-        return path in self.paths
+from articulate import claude_cli
+from cli_fakes import _LOCKDOWN_EXPECTED, _SECRET, _Disk, _Runner, work  # noqa: F401
 
 
 def _posix(*paths):
     return _Disk(*paths)
-
-
-@pytest.fixture()
-def work():
-    os.makedirs(_TMP, exist_ok=True)
-    yield _TMP
-    import shutil
-    shutil.rmtree(_TMP, ignore_errors=True)
 
 
 def test_the_environment_variable_wins_over_the_path():
@@ -108,6 +71,15 @@ def test_relative_and_empty_path_entries_are_never_probed():
     assert all(posixpath.isabs(p) for p in pdisk.probed)
 
 
+def test_quoted_path_entries_are_unquoted_and_still_must_be_absolute():
+    # Windows accepts a PATH entry wrapped in double quotes, which is how an
+    # entry with a semicolon is written. A quoted "." is still the current directory.
+    disk = _Disk(r"C:\npm\claude.CMD", r".\claude.CMD")
+    env = {"PATH": r'".";"C:\npm"', "PATHEXT": ".COM;.EXE;.BAT;.CMD"}
+    assert claude_cli.resolve(env, disk, windows=True) == r"C:\npm\claude.CMD"
+    assert all(ntpath.splitdrive(p)[0] for p in disk.probed)
+
+
 def test_claude_exe_later_on_the_path_beats_an_earlier_batch_shim():
     disk = _Disk(r"C:\npm\claude.CMD", r"C:\Users\u\.local\bin\claude.exe")
     env = {"PATH": r"C:\npm;C:\Users\u\.local\bin", "PATHEXT": ".COM;.EXE;.BAT;.CMD"}
@@ -141,8 +113,8 @@ def test_an_unresolvable_variable_fails_closed_without_echoing_its_value():
 def test_every_call_sends_the_prompt_by_file_with_tools_and_mcp_off(work):
     # A long prompt in argv breaks both limits (about 32K characters for a
     # Windows command line, 128 KiB for one Linux argument), so the prompt
-    # always travels in a file. The model gets no built-in tool and no MCP
-    # server, since the document is untrusted input.
+    # always travels in a file. The model gets no built-in tool, no MCP
+    # server and no project settings, since the document is untrusted input.
     prompt = "line one\nline two\n" + "x" * 40000
     runner = _Runner(result="done")
     env = {claude_cli.ENV_VAR: "/opt/tools/claude"}
@@ -153,11 +125,64 @@ def test_every_call_sends_the_prompt_by_file_with_tools_and_mcp_off(work):
     (argv, kwargs), = runner.calls
     assert argv[:3] == ["/opt/tools/claude", "-p", claude_cli.FIXED_PROMPT]
     assert argv[3] == "--append-system-prompt-file"
-    assert argv[5:] == ["--strict-mcp-config", "--tools", ""]
+    assert argv[5:] == _LOCKDOWN_EXPECTED
     assert runner.prompt_file_text == prompt
     assert max(len(a) for a in argv) < 1000
-    assert kwargs == {"input": "doc", "timeout": 5}
+    assert set(kwargs) == {"input", "timeout", "cwd", "env"}
+    assert (kwargs["input"], kwargs["timeout"]) == ("doc", 5)
     assert not os.path.exists(argv[4]), "the prompt file outlives the call"
+
+
+@pytest.mark.parametrize("windows", [False, True])
+def test_the_child_runs_in_a_private_empty_folder(work, windows):
+    # The CLI reads .claude/settings.json and CLAUDE.md from its working
+    # directory, and -p skips the trust prompt. A document folder with a
+    # settings file could run hooks. So the child never starts where the caller
+    # stands, its folder is empty, and only user settings load.
+    cli = r"C:\npm\claude.exe" if windows else "/opt/tools/claude"
+    runner = _Runner(result="done")
+    claude_cli.run("p", "doc", environ={claude_cli.ENV_VAR: cli}, exists=_Disk(cli),
+                   runner=runner, windows=windows, tmpdir=work)
+    (argv, kwargs), = runner.calls
+    cwd = kwargs["cwd"]
+    assert os.path.isabs(cwd)
+    assert os.path.normcase(os.path.abspath(cwd)) != os.path.normcase(os.getcwd())
+    assert runner.cwd_listing == [], "the child's working folder is not empty"
+    assert os.path.dirname(argv[4]) != cwd, "the prompt file sits in the working folder"
+    assert argv[argv.index("--setting-sources") + 1] == "user"
+    assert os.listdir(work) == [], "the private folder outlives the call"
+
+
+def test_windows_children_skip_the_current_directory_in_the_exe_search(work, monkeypatch):
+    # An npm claude.cmd shim runs "node" by bare name, and cmd.exe looks for it
+    # in the current directory before PATH unless this variable is set. An old
+    # value under another spelling must not survive next to the new one.
+    monkeypatch.setitem(os.environ, "NODEFAULTCURRENTDIRECTORYINEXEPATH", "")
+    cli = r"C:\npm\claude.CMD"
+    runner = _Runner(result="done")
+    claude_cli.run("p", "doc", environ={"PATH": r"C:\npm"}, exists=_Disk(cli),
+                   runner=runner, windows=True, tmpdir=work)
+    (_, kwargs), = runner.calls
+    matches = [v for k, v in kwargs["env"].items()
+               if k.lower() == "nodefaultcurrentdirectoryinexepath"]
+    assert matches == ["1"]
+    assert kwargs["env"].get("PATH") == os.environ.get("PATH"), "the rest of the environment is kept"
+    runner = _Runner(result="done")
+    claude_cli.run("p", "doc", environ={claude_cli.ENV_VAR: "/opt/claude"},
+                   exists=_Disk("/opt/claude"), runner=runner, windows=False, tmpdir=work)
+    assert runner.calls[0][1]["env"] is None, "a POSIX child inherits the environment unchanged"
+
+
+def test_an_unwritable_temp_folder_is_a_closed_error_without_the_path(work):
+    missing = os.path.join(work, "missing", _SECRET)
+    runner = _Runner(result="done")
+    with pytest.raises(claude_cli.ClaudeUnavailable) as info:
+        claude_cli.run("p", "t", environ={claude_cli.ENV_VAR: "/opt/claude"},
+                       exists=_Disk("/opt/claude"), runner=runner, windows=False,
+                       tmpdir=missing)
+    assert runner.calls == []
+    assert _SECRET not in str(info.value)
+    assert "temporary" in str(info.value)
 
 
 def test_a_start_failure_is_a_closed_error_without_the_path(work):
@@ -170,64 +195,3 @@ def test_a_start_failure_is_a_closed_error_without_the_path(work):
     assert _SECRET not in str(info.value)
     assert claude_cli.ENV_VAR in str(info.value)
     assert os.listdir(work) == [], "the prompt file outlives the start failure"
-
-
-def test_the_unsafe_set_is_exactly_what_cmd_reinterprets():
-    assert claude_cli.CMD_UNSAFE == _CMD_UNSAFE_EXPECTED
-
-
-@pytest.mark.parametrize("suffix", [".cmd", ".CMD", ".bat", ".Bat"])
-def test_batch_suffixes_are_recognised(suffix):
-    assert claude_cli.is_batch(r"C:\npm\claude" + suffix, windows=True)
-    assert not claude_cli.is_batch(r"C:\npm\claude" + suffix, windows=False)
-    assert not claude_cli.is_batch(r"C:\npm\claude.exe", windows=True)
-
-
-def test_a_batch_shim_gets_a_fixed_argv(work):
-    # cmd.exe re-parses a .cmd file's arguments and cuts one at its first
-    # newline, so nothing from the prompt may travel in argv.
-    prompt = 'first line\nsecond "line" with %PATH% & ^ | < > !'
-    runner = _Runner(result="done")
-    claude_cli.run(prompt, "doc", environ={"PATH": r"C:\npm"},
-                   exists=_Disk(r"C:\npm\claude.CMD"), runner=runner, windows=True,
-                   tmpdir=work)
-    (argv, _), = runner.calls
-    assert argv[0] == r"C:\npm\claude.CMD"
-    assert runner.prompt_file_text == prompt
-    assert not any(set(a) & _CMD_UNSAFE_EXPECTED for a in argv[1:])
-
-
-@pytest.mark.parametrize("suffix", [".cmd", ".bat"])
-@pytest.mark.parametrize("char", sorted(_CMD_UNSAFE_EXPECTED))
-def test_a_batch_shim_with_an_unsafe_path_fails_closed(work, suffix, char):
-    runner = _Runner(result="done")
-    cli = "C:\\a" + char + "b\\claude" + suffix
-    with pytest.raises(claude_cli.ClaudeUnavailable) as info:
-        claude_cli.run("p", "t", environ={claude_cli.ENV_VAR: cli}, exists=_Disk(cli),
-                       runner=runner, windows=True, tmpdir=work)
-    assert runner.calls == []
-    assert claude_cli.ENV_VAR in str(info.value)
-    assert os.listdir(work) == [], "the prompt file outlives the refusal"
-
-
-def test_editor_reports_a_missing_cli_through_its_closed_error(monkeypatch, capsys, work):
-    monkeypatch.delenv(claude_cli.ENV_VAR, raising=False)
-    monkeypatch.setenv("PATH", "")
-    assert editor.ClaudeUnavailable is claude_cli.ClaudeUnavailable
-    monkeypatch.setattr(claude_cli.subprocess, "Popen", _Runner(raises=AssertionError("started")))
-    with pytest.raises(editor.ClaudeUnavailable) as info:
-        editor.claude_call("instructions", "text")
-    assert claude_cli.ENV_VAR in str(info.value)
-    doc = os.path.join(work, "d.md")
-    with open(doc, "w", encoding="utf-8") as fh:
-        fh.write("Some prose.\n")
-    editor.judge(doc)
-    out = capsys.readouterr().out
-    assert "model layer unavailable" in out and claude_cli.ENV_VAR in out
-
-
-def test_the_old_editor_hooks_are_gone():
-    # editor.CLAUDE and editor.run no longer steer the model call. Keeping either
-    # would let a caller patch it and still reach the real CLI.
-    assert not hasattr(editor, "CLAUDE")
-    assert not hasattr(editor, "run")

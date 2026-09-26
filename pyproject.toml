@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.4.2"
+version = "0.5.0"
 description = "Local prose checks: named writing patterns, where they occur, and what each costs a reader. Register profiles, writing modes, content-free receipts, and an optional editor that runs through a hosted model."
 readme = "README.md"
 requires-python = ">=3.9"

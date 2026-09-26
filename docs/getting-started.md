@@ -9,7 +9,7 @@ a first receipt, and an editor squiggle in about five minutes.
 
 The core checks need only Python 3.9 or newer and the standard library.
 
-From PyPI (once published):
+From PyPI:
 
 ```bash
 pip install articulate-writing
@@ -122,7 +122,9 @@ name the CLI by its absolute path:
 
 On macOS or Linux the value looks like `/home/you/.local/bin/claude`. Without
 the variable, the editor searches the absolute PATH entries and never the
-current directory. The check tools (`check`, `score`) need no CLI.
+current directory. The CLI runs in a private empty folder with your user
+settings only, so a document folder's `.claude/settings.json` never loads. The
+check tools (`check`, `score`) need no CLI.
 
 ## Where to next
 

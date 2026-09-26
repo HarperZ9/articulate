@@ -106,7 +106,7 @@ its salts never leave through an export.
 
 ## Status
 
-Pre-1.0. Version 0.4.2 is on PyPI as `articulate-writing`; the changes on this
+Pre-1.0. Version 0.5.0 is on PyPI as `articulate-writing`; the changes on this
 page are unreleased and listed in the [changelog](CHANGELOG.md). The fairness
 harness has run on proxy corpora only. No arm yet covers adult academic writers,
 dictated text, disabled writers or World Englishes, and the release gate for the
