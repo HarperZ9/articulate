@@ -3,7 +3,8 @@
 """articulate.fingerprint -- the ruleset fingerprint a receipt pins, and the
 closed set of category names. Standard library only.
 """
-from .lexicon import ADVERB, EMOJI, EXPLETIVE, NEG, NOMINAL, PASSIVE, VAGUE_QUANT
+from .lexicon import (ADVERB, CLAIM_ANCHOR, EMOJI, EXPLETIVE, NEG, NOMINAL,
+                      PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT)
 from .advisories import FRAGMENT_OPENER, PRONOUN_SUBJ, STOP4
 from . import aliases, cadence, density, markup, rule_reasons, scan
 from .gate import GATE_TIERS
@@ -56,7 +57,10 @@ def ruleset_fingerprint():
     for nm, rx in (("EMOJI", EMOJI), ("VAGUE_QUANT", VAGUE_QUANT),
                    ("EXPLETIVE", EXPLETIVE), ("NOMINAL", NOMINAL), ("NEG", NEG),
                    ("PASSIVE", PASSIVE), ("ADVERB", ADVERB),
-                   ("FRAGMENT_OPENER", FRAGMENT_OPENER)):
+                   ("FRAGMENT_OPENER", FRAGMENT_OPENER),
+                   ("PADDED_PURPOSE", PADDED_PURPOSE),
+                   ("UNANCHORED_CLAIM", UNANCHORED_CLAIM),
+                   ("CLAIM_ANCHOR", CLAIM_ANCHOR)):
         parts.append(f"X|{nm}|{rx.pattern}")
     parts.append(f"PRONOUN_SUBJ={sorted(PRONOUN_SUBJ)}|STOP4={sorted(STOP4)}")
     parts.append(f"BEHAVIOR={sorted(behavior_constants().items())}")
@@ -92,6 +96,7 @@ def known_categories():
     validated (fail closed on a typo) the way the flywheel `hard` tuple was."""
     cats = {"emoji", "emoji-structure", "em-dash", "vague-quantifier",
             "expletive-opener", "nominalization", "contrast-pair", "anaphora",
+            "padded-purpose", "unanchored-claim",
             "fragment-opener", "header-reflex", "list-reflex", "bold-density",
             "ngram-repetition", "paragraph-uniformity", "hedge-cluster"}
     for lst in (HIGH, MEDIUM, REGISTER_JARGON, LOW, FICTION_SLOP, INJECTION):

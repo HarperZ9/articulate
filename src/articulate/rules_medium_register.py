@@ -43,7 +43,7 @@ MEDIUM_REGISTER = [
                 r"the fact of the matter)\b", re.I)),
     # --- marketing superlatives ------------------------------------------- #
     ("marketing", "marketing superlative",
-     re.compile(r"\b(?:game[- ]?chang(?:er|ing)|cutting[- ]edge|state[- ]of[- ]the[- ]art|"
+     re.compile(r"\b(?:game[- ]?chang(?:er|ing)|cutting[- ]edge|"
                 r"revolutioni[sz]e[sd]?|revolutionary|next[- ]level|world[- ]class|"
                 r"supercharge[sd]?|best[- ]in[- ]class|unparalleled|top[- ]notch|"
                 r"the power of\b)\b", re.I)),
@@ -125,8 +125,9 @@ MEDIUM_REGISTER = [
     ("blog-stock-phrase", "promotional filler (boasts a / nestled in)",
      re.compile(r"\bboasts (?:a |an )?\w+|\bnestled (?:in|amid|among|between)\b", re.I)),    # --- deletable padding circumlocutions ------------------------------- #
     # MEDIUM: it blocks under a strict profile and reports under the default.
+    # "in order to" is a LOW note of its own (lexicon.PADDED_PURPOSE).
     ("wordiness", "deletable padding circumlocution",
-     re.compile(r"\b(?:in order to|due to the fact that|for the purpose of|"
+     re.compile(r"\b(?:due to the fact that|for the purpose of|"
                 r"at this point in time|with regard to|with respect to(?!\s+(?:\$|\\\(|[b-zB-HJ-Z]\b(?!')))|"
                 r"a wide range of|in the process of|in a timely manner|"
                 r"it should be noted that)\b", re.I)),

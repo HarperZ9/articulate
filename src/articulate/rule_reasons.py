@@ -56,9 +56,20 @@ REASONS = {
         "and spell check, and can hide text the reader never sees.",
         "The Unicode Standard, chapter 23, layout controls (U+200B, U+2060)"),
     "wordiness": (
-        "A padded phrase such as 'in order to' or 'due to the fact that' makes the "
-        "reader process words that add no meaning.",
+        "A padded phrase such as 'due to the fact that' or 'at this point in time' "
+        "makes the reader process words that add no meaning.",
         _STRUNK + ", omit needless words; " + _PLAIN + ", omit unnecessary words"),
+    # LOW notes: they never block, and they carry a reason so the note can say
+    # what the reader loses.
+    "padded-purpose": (
+        "In 'in order to', usually 'to' does the same work; keep it where it "
+        "separates a purpose from a complement.",
+        "Garner's Modern English Usage, in order to; Merriam-Webster, usage note "
+        "on in order to"),
+    "unanchored-claim": (
+        "Name the comparison: 'state of the art' with no benchmark, number, year "
+        "or citation in the sentence gives the reader nothing to check.",
+        _ORWELL + ", pretentious diction; " + _PLAIN + ", be specific"),
     "idiom-cliche": (
         "A worn figure of speech asks the reader to translate it back into a plain "
         "claim, and many readers of English as a second language cannot.",

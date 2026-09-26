@@ -22,6 +22,16 @@ EMOJI = re.compile(
 # and suppressed when the same line already carries a digit (spec #23).
 VAGUE_QUANT = re.compile(r"\b(?:various|numerous|a number of|several)\b", re.I)
 DIGIT = re.compile(r"\d")
+# "in order to": usually "to" does the same work, but usage guides accept it
+# where it separates a purpose from a complement, so it is a LOW note and never
+# blocks.
+PADDED_PURPOSE = re.compile(r"\bin order to\b", re.I)
+# "state of the art" is a term of art for the best published result, usually tied
+# to a named benchmark. It is a LOW note only when its sentence carries no
+# number, year or citation marker (the idea of the unsupported-authority
+# lookahead, read over the whole sentence).
+UNANCHORED_CLAIM = re.compile(r"\bstate[- ]of[- ]the[- ]art\b", re.I)
+CLAIM_ANCHOR = re.compile(r"\d|https?://|\bet al\.|\\cite|\[@", re.I)
 
 WORD = re.compile(r"\b\w+\b")
 # Orwell/Williams structural signals, measured as document rates (length-

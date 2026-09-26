@@ -44,10 +44,9 @@ articulate check notes.md
 You get one line per file, then a line for each HIGH or MEDIUM finding:
 
 ```
-[articulate] notes.md [flavored]: 0 high, 4 medium, 3 low, gate ok
+[articulate] notes.md [flavored]: 0 high, 3 medium, 4 low, gate ok
   L3 [MEDIUM throat-clearing] throat-clearing opener: The survey ran twice in May. It is important to note that studies show the second run was cleaner, a
   L3 [MEDIUM unsupported-authority] authority appeal, no citation nearby: It is important to note that studies show the second run was cleaner, and we need more data in orde
-  L4 [MEDIUM wordiness] deletable padding circumlocution: leaner, and we need more data in order to decide.
   L3 [MEDIUM throat-clearing] worth-noting preamble: The survey ran twice in May. It is important to note that studies show the second run was cleaner, a
 ```
 
@@ -55,7 +54,7 @@ Read it this way:
 
 - The gate, `ok` or `blocked`, is the only pass-or-block signal. It depends on
   the profile shown in brackets. Under the strict `essay` profile the same file
-  is blocked by the four MEDIUM findings, and by the reply opener on line 1,
+  is blocked by the three MEDIUM findings, and by the reply opener on line 1,
   which `essay` promotes.
 - Each finding carries a tier. HIGH is a narrow tier, such as an interface
   markup token or a hidden character inside Latin text. MEDIUM rules carry a

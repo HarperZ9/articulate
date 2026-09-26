@@ -9,8 +9,8 @@ from .binary import binary_reason
 from .cadence import cadence_stats
 import re
 
-from .lexicon import (ADVERB, DIGIT, EMOJI, EXPLETIVE, NOMINAL, PASSIVE, VAGUE_QUANT,
-                      WORD)
+from .lexicon import (ADVERB, CLAIM_ANCHOR, DIGIT, EMOJI, EXPLETIVE, NOMINAL,
+                      PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT, WORD)
 from .logical import sentences, units
 from .markup import (ALLOW_EXEMPT_CATEGORIES, _rid, allowed, classify_fountain,
                      mask_c2pa, mask_quotes, read_allowlist, strip_markup)
@@ -32,7 +32,9 @@ MEDIUM = MEDIUM_REGISTER + MEDIUM_STRUCTURE
 #      ends a sentence
 #   4  a line that ends in a hyphen after a letter joins the next line with no
 #      space, so a hard wrap inside "state-of-the-art" reads as one word
-SCAN_ALGO = 4
+#   5  a sentence pass adds LOW notes for "in order to" and for "state of the
+#      art" in a sentence with no number, year or citation marker
+SCAN_ALGO = 5
 # A Markdown table delimiter row is structure, never an em-dash.
 SKIP_TABLE_SEP = True
 
@@ -129,10 +131,24 @@ def _sentence_passes(sc, unit, text):
         if mex:
             sc.add(sc.low, unit, "expletive-opener", "empty opener (there is / it is important)",
                    s + lead + mex.start(), s + lead + mex.end(), True)
+        _phrase_notes(sc, unit, text, s, sent)
         noms = list(NOMINAL.finditer(sent))
         if len(noms) >= 4:
             sc.add(sc.low, unit, "nominalization", f"{len(noms)} nominalizations in one sentence",
                    s + noms[0].start(), s + noms[0].end(), True)
+
+
+def _phrase_notes(sc, unit, text, s, sent):
+    """LOW notes on two phrases that usage guides accept in some uses: "in order
+    to", and "state of the art" in a sentence with no number, year or citation."""
+    for m in PADDED_PURPOSE.finditer(sent):
+        sc.add(sc.low, unit, "padded-purpose", "padded purpose (in order to)",
+               s + m.start(), s + m.end(), text=text)
+    if not CLAIM_ANCHOR.search(sent):
+        for m in UNANCHORED_CLAIM.finditer(sent):
+            sc.add(sc.low, unit, "unanchored-claim",
+                   "unanchored claim (state of the art, no comparison named)",
+                   s + m.start(), s + m.end(), text=text)
 
 
 def _device_passes(sc, unit, text):

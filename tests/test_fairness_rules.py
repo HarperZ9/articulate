@@ -82,10 +82,11 @@ def test_house_findings_are_marked_as_house():
 
 
 def test_wordiness_is_medium_with_a_reason():
-    r = _r("We met early in order to plan the route.", "flavored")
+    text = "We met early due to the fact that the road was closed."
+    r = _r(text, "flavored")
     assert r["gate"] == "ok"
     assert "wordiness" in _cats(r, ("medium",))
-    assert _r("We met early in order to plan the route.", "essay")["gate"] == "blocked"
+    assert _r(text, "essay")["gate"] == "blocked"
 
 
 def test_no_path_rule_resolves_to_a_house_profile():

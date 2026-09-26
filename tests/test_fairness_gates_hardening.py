@@ -155,12 +155,14 @@ def test_g4_counts_a_layout_change(tmp_path, monkeypatch):
 
 def test_a_hard_wrap_at_a_hyphen_keeps_the_finding():
     from articulate import profiles
-    text = ("Our method reaches state-of-the-art accuracy on three benchmarks while "
+    text = ("Our method reaches cutting-edge accuracy on three benchmarks while "
             "using far fewer parameters than earlier work on the same tasks.\n")
     wrapped = fairness.hardwrap(text, 30)
     assert "-\n" in wrapped
     prof = profiles.load("essay")
-    assert fairness.measure(text, prof)["hm"] == fairness.measure(wrapped, prof)["hm"]
+    before = fairness.measure(text, prof)["hm"]
+    assert before    # control: a finding exists, so equality is not vacuous
+    assert before == fairness.measure(wrapped, prof)["hm"]
 
 
 def test_g8_marks_house_notes_for_the_default_profile(tmp_path):
