@@ -16,11 +16,11 @@ nothing about who wrote any text here.
 | `control/declaration-preamble.txt` | US Declaration of Independence (1776), preamble | Public domain |
 | `control/gettysburg.txt` | Lincoln, Gettysburg Address (1863) | Public domain |
 | `control/lincoln-2nd-inaugural.txt` | Lincoln, second inaugural address (1865), excerpt | Public domain |
-| `control/ptacek-tweets.txt` | Posts by Thomas Ptacek on writing | Unknown: no licence note has been found. Kept pending a maintainer decision |
+| `control/nws-thunderstorms.txt` | National Weather Service, "Understanding Lightning Science", the first two paragraphs on thunderstorm development, retrieved 26 September 2026 from https://www.weather.gov/safety/lightning-science-overview | Public domain: a work of the United States federal government (NOAA/NWS, see https://www.weather.gov/disclaimer). Copied without change |
 | `patterns/*` | Written for this project | Same licence as the repository |
 
 The control set is small and narrow: historic public-domain prose and one
-writer's posts. It includes no learner English, no spoken-register text and no
+passage of present-day United States federal government prose. It includes no learner English, no spoken-register text and no
 World Englishes. The fairness harness measures those groups on corpora that stay
 outside this repository. The one run so far, the Liang et al. (2023) release,
 has no licence file (its README shows an MIT badge), so its texts are used
