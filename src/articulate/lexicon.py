@@ -49,11 +49,13 @@ NEG = re.compile(r"\b(?:cannot|can ?not|can't|is ?n't|is not|are ?n't|are not|"
 FIRSTWORD = re.compile(r"^\W*(\w+)")
 
 # Williams, "Style: Lessons in Clarity and Grace" (the basis Ptacek names).
-# Expletive opener: a sentence that starts with empty "there is" / "it is
-# important" instead of a real subject. Advisory (existential "there is" is
-# often the clearest phrasing), matched on the stripped-markup line start.
-EXPLETIVE = re.compile(r"(?i)^(?:there (?:is|are|was|were)|"
-                       r"it (?:is|was) (?:important|worth|crucial|essential|necessary))\b")
+# Expletive opener: "it is important / worth / crucial / essential / necessary"
+# at a sentence start is metadiscourse that delays the subject. A default LOW
+# note that never blocks, matched on the stripped-markup sentence start.
+EXPLETIVE = re.compile(r"(?i)^it (?:is|was) (?:important|worth|crucial|essential|necessary)\b")
+# Existential "there is / are / was / were" is grammatical and often the
+# clearest phrasing, so it is a house note, shown only on request.
+EXISTENTIAL = re.compile(r"(?i)^there (?:is|are|was|were)\b")
 # Nominalization: action buried in an abstract noun. Advisory, and only when
 # several stack in one line, because this domain uses "verification",
 # "evaluation", "attribution" as real terms.

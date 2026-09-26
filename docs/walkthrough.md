@@ -18,7 +18,7 @@ articulate check post.md --verbose
   L3 [MEDIUM throat-clearing] throat-clearing opener: ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
   L4 [MEDIUM unsupported-authority] authority appeal, no citation nearby: a feature, but a philosophy. Studies show that clear docs cut support tickets. Moreover, the result
   L3 [MEDIUM throat-clearing] worth-noting preamble: ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
-  L3 [LOW expletive-opener] empty opener (there is / it is important): ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
+  L3 [LOW expletive-opener] empty opener (it is important / worth): ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
 ```
 
 The gate reads `ok`: the default profile blocks only the narrow HIGH tier, and
@@ -60,7 +60,7 @@ articulate check post.md --spans
 ```
 [articulate] post.md [flavored]: 4 paragraph(s)
   L1-1 (0H/0M/0L): no findings
-  L3-6 (0H/4M/1L): expletive-opener/empty-opener-there-is-it-is-important x1, marketing/marketing-superlative x1, throat-clearing/throat-clearing-opener x1, throat-clearing/worth-noting-preamble x1, unsupported-authority/authority-appeal-no-citation-nearby x1
+  L3-6 (0H/4M/1L): expletive-opener/empty-opener-it-is-important-worth x1, marketing/marketing-superlative x1, throat-clearing/throat-clearing-opener x1, throat-clearing/worth-noting-preamble x1, unsupported-authority/authority-appeal-no-citation-nearby x1
   L8-8 (0H/0M/0L): no findings
   L10-10 (0H/0M/0L): no findings
 [articulate] These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.

@@ -27,6 +27,8 @@ HOUSE_CATEGORIES = frozenset({
     "negative-parallel", "contrast-pair",
     # single words and word lists
     "intensifier", "corporate-verb", "inflated-word", "register-jargon",
+    # typography and phrasing with no reliable reader cost
+    "curly-quote", "existential-opener",
     # structure that learners are taught, or that fires on ordinary speech
     "enumeration", "stock-transition", "closer", "both-sides", "cadence",
     "participial-closer", "sweeping-range", "setup", "reveal", "scaffold",

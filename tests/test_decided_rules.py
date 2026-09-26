@@ -109,3 +109,51 @@ def test_the_new_notes_carry_reader_cost_reasons():
     assert "in order to" not in wordiness
     marketing = rule_reasons.reason_for("marketing")[0]
     assert "state of the art" not in marketing
+
+
+# --- decision 3: curly quotes and the empty opener -------------------------- #
+
+def _plain(text, name, house_notes):
+    return articulate.check_text(text + "\n", profile=fairness.load_any(name),
+                                 house_notes=house_notes)
+
+
+def _by_cat(r, cat):
+    return [f for t in ("high", "medium", "low") for f in r[t] if f["category"] == cat]
+
+
+HOUSE_NOTES = {
+    "curly-quote": "She said \u201cyes\u201d and left, and it\u2019s done.",
+    "existential-opener": "There is a bus at noon. There were two stops.",
+}
+
+
+@pytest.mark.parametrize("cat", sorted(HOUSE_NOTES))
+def test_house_notes_hide_by_default_and_never_block(cat):
+    text = HOUSE_NOTES[cat]
+    assert rule_reasons.is_house(cat)
+    assert not _by_cat(_plain(text, "flavored", False), cat)
+    shown = _by_cat(_plain(text, "flavored", True), cat)
+    assert shown and all(f["house"] and f["tier"] == "LOW" for f in shown)
+    for name in EVERY:
+        r = _plain(text, name, True)
+        assert not [f for f in _by_cat(r, cat) if f["gates"]], name
+        assert r["gate"] == "ok", name
+
+
+def test_bare_there_is_is_no_longer_an_expletive_opener():
+    r = _plain(HOUSE_NOTES["existential-opener"], "flavored", True)
+    assert not _by_cat(r, "expletive-opener")
+
+
+@pytest.mark.parametrize("line", ["It is worth a visit in spring.",
+                                  "It was essential for the crew.",
+                                  "It is necessary for every student."])
+def test_the_it_is_important_form_stays_a_default_low_note(line):
+    r = _plain(line, "flavored", False)
+    (f,) = _by_cat(r, "expletive-opener")
+    assert f["tier"] == "LOW" and not f["house"] and not f["gates"]
+    for name in EVERY:
+        r = _plain(line, name, False)
+        assert not [f for f in _by_cat(r, "expletive-opener") if f["gates"]], name
+        assert r["gate"] == "ok", (name, line)

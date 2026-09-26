@@ -9,8 +9,8 @@ from .binary import binary_reason
 from .cadence import cadence_stats
 import re
 
-from .lexicon import (ADVERB, CLAIM_ANCHOR, DIGIT, EMOJI, EXPLETIVE, NOMINAL,
-                      PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT, WORD)
+from .lexicon import (ADVERB, CLAIM_ANCHOR, DIGIT, EMOJI, EXISTENTIAL, EXPLETIVE,
+                      NOMINAL, PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT, WORD)
 from .logical import sentences, units
 from .markup import (ALLOW_EXEMPT_CATEGORIES, _rid, allowed, classify_fountain,
                      mask_c2pa, mask_quotes, read_allowlist, strip_markup)
@@ -118,6 +118,14 @@ def _raw_passes(sc, unit):
     sc.table(sc.low, unit, raw, LOW_INLINE, LOW_START)
 
 
+# Sentence-start openers. The first is a default LOW note; the second is a house
+# note (rule_reasons.HOUSE_CATEGORIES). Neither blocks.
+_OPENERS = (
+    ("expletive-opener", "empty opener (it is important / worth)", EXPLETIVE),
+    ("existential-opener", "existential opener (there is / there are)", EXISTENTIAL),
+)
+
+
 def _sentence_passes(sc, unit, text):
     """Advisories read per sentence, so a wrap cannot split or merge them."""
     for s, e in sentences(text):
@@ -127,10 +135,11 @@ def _sentence_passes(sc, unit, text):
                 sc.add(sc.low, unit, "vague-quantifier", "vague quantifier, no number given",
                        s + mq.start(), s + mq.end(), text=text)
         lead = len(sent) - len(sent.lstrip())
-        mex = EXPLETIVE.match(sent.lstrip())
-        if mex:
-            sc.add(sc.low, unit, "expletive-opener", "empty opener (there is / it is important)",
-                   s + lead + mex.start(), s + lead + mex.end(), True)
+        for cat, label, rx in _OPENERS:
+            mex = rx.match(sent.lstrip())
+            if mex:
+                sc.add(sc.low, unit, cat, label,
+                       s + lead + mex.start(), s + lead + mex.end(), True)
         _phrase_notes(sc, unit, text, s, sent)
         noms = list(NOMINAL.finditer(sent))
         if len(noms) >= 4:
