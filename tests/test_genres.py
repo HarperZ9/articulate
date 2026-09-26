@@ -67,11 +67,11 @@ SOMATIC = "A shiver ran down her spine as she read the note, and she could not h
 
 def test_fiction_slop_is_advisory_never_gates():
     lit = articulate.check_text(SOMATIC, profile=profiles.load("literary-fiction"))
-    assert "fiction-slop-lexicon" in _cats(lit)
+    assert "fiction-stock-phrase" in _cats(lit)
     assert lit["gate"] == "ok"      # it is a LOW advisory; it never blocks
     # off the genre axis, the lexicon does not run at all
     flav = articulate.check_text(SOMATIC, profile=profiles.load("flavored"))
-    assert "fiction-slop-lexicon" not in _cats(flav)
+    assert "fiction-stock-phrase" not in _cats(flav)
 
 
 # --- poetry: the line is the unit; craft devices are technique ------------- #

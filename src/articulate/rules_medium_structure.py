@@ -103,7 +103,7 @@ MEDIUM_STRUCTURE = [
     # COMPREHENSIVE tell set (delivery / structural / lexical / formatting).
     # Deduped against every entry above; each is a strong, low-false-positive
     # frontier-model tell. Single dual-use words are NOT here (they live in the
-    # register-word lists and the SOFT density score); high-false-positive
+    # inflated-word lists and the SOFT density score); high-false-positive
     # formatting and density signals are LOW advisories or heuristics, not here.
     # ===================================================================== #
 
@@ -113,7 +113,7 @@ MEDIUM_STRUCTURE = [
                 r"fantastic|really\s+good|very\s+good|insightful|thoughtful|"
                 r"brilliant|smart|wonderful)\s+(?:point|question|idea|observation|"
                 r"catch|example|call)\b")),
-    ("assistant-closer", "boilerplate helpful closer",
+    ("closing-boilerplate", "boilerplate helpful closer",
      re.compile(r"(?i)\bi\s+hope\s+(?:this|that|these|the\s+above)\s+(?:helps?|"
                 r"is\s+helpful|clarifies|answers?\s+your\s+question|makes\s+sense)\b"
                 r"|\bhope\s+(?:this|that)\s+helps\b"

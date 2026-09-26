@@ -9,7 +9,7 @@ import re
 
 MEDIUM_REGISTER = [
     # --- the "delve" register: words that spike in frontier-model prose ---- #
-    ("register-word", "AI-register vocabulary",
+    ("inflated-word", "inflated word",
      re.compile(r"\b(?:delve[sd]?|delving|utili[sz]e[sd]?|utili[sz]ing|showcas(?:e[sd]?|ing)|"
                 r"seamless(?:ly)?|robust(?:ness)?|pivotal|crucial(?:ly)?|realm|landscape|"
                 r"tapestry|testament|nuanced|multifaceted|holistic(?:ally)?|myriad|plethora|"
@@ -23,7 +23,7 @@ MEDIUM_REGISTER = [
     # generic dual-use words (key, essential, enable, ensure, framework, domain,
     # efficient, effective, significant, robust-as-adjective) are deliberately
     # excluded to protect precision. The research pass will vet the rest.
-    ("register-word", "AI-register vocabulary (extended)",
+    ("inflated-word", "inflated word (extended list)",
      re.compile(r"\b(?:ever[- ](?:evolving|changing|growing|expanding)|fast[- ]paced|"
                 r"transformative|groundbreaking|unprecedented|profound(?:ly)?|"
                 r"remark(?:able|ably)|versatile|cornerstone|hallmark|catalyst|"
@@ -83,7 +83,7 @@ MEDIUM_REGISTER = [
      re.compile(r"(?i)\b(?:in conclusion|in summary|to sum up|at the end of the day|"
                 r"when all is said and done|the bottom line(?: is)?)\b")),
     # --- elevated-Latinate verb inflations (research spec #11) ------------ #
-    ("register-word", "elevated-Latinate verb",
+    ("inflated-word", "elevated-Latinate verb",
      re.compile(r"\b(?:commenc(?:e|es|ed|ing)|ascertain(?:s|ed|ing)?|"
                 r"conceptuali[sz]e(?:s|d)?|cataly[sz]e(?:s|d)?|"
                 r"galvani[sz]e(?:s|d)?|epitomi[sz]e(?:s|d)?)\b", re.I)),
@@ -98,18 +98,18 @@ MEDIUM_REGISTER = [
     ("cadence", "triplet negation (No X. No Y. Just Z.)",
      re.compile(r"\bno \w+\.\s*no \w+\.\s*just\b", re.I)),
     # --- outbound email/blog tells (spec #5, #6, #15, #16, #17) ------------ #
-    ("email-tell", "AI email opener (hope this finds you well)",
+    ("email-stock-phrase", "stock email opener (hope this finds you well)",
      re.compile(r"\bi (?:hope|trust) (?:this|that) (?:e-?mail|message|note)\b"
                 r"[^.]{0,30}\bfinds you (?:well|in good)\b", re.I)),
-    ("email-tell", "blanket permission closer (don't hesitate to reach out)",
+    ("email-stock-phrase", "blanket permission closer (don't hesitate to reach out)",
      re.compile(r"\b(?:please )?(?:don'?t|do not) hesitate to (?:reach out|contact|ask)\b", re.I)),
-    ("email-tell", "corporate follow-up jargon (circling back / touching base)",
+    ("email-stock-phrase", "corporate follow-up jargon (circling back / touching base)",
      re.compile(r"\b(?:circl(?:e|ing) back|touch(?:ing)? base|loop(?:ing)? (?:in|back))\b", re.I)),
-    ("email-tell", "pre-labeled excitement (thrilled to announce)",
+    ("email-stock-phrase", "pre-labeled excitement (thrilled to announce)",
      re.compile(r"\b(?:i'?m|i am|we'?re|we are) (?:so |really |very )?"
                 r"(?:excited|thrilled|delighted|pleased) to "
                 r"(?:announce|share|introduce|let you know)\b", re.I)),
-    ("email-tell", "cold-outreach flattery (came across, impressed)",
+    ("email-stock-phrase", "cold-outreach flattery (came across, impressed)",
      re.compile(r"\bi came across (?:your|the)\b[^.]{0,50}"
                 r"\b(?:and (?:was|am) (?:impressed|inspired|blown away))\b", re.I)),
     # --- authority appeal with no citation nearby (research spec #3) ------- #
@@ -118,10 +118,10 @@ MEDIUM_REGISTER = [
                 r"experts agree|scientists say|data shows?)\b"
                 r"(?![^.]{0,80}(?:\d{4}|https?://|et al\.|\[\d))")),
     # --- false-inclusivity framing (research spec #13) -------------------- #
-    ("blog-tell", "false-inclusivity (whether you're X or Y)",
+    ("blog-stock-phrase", "false-inclusivity (whether you're X or Y)",
      re.compile(r"\bwhether you'?re (?:an?\s+)?\w+(?:\s+\w+){0,3}\s+or\s+(?:an?\s+)?\w+", re.I)),
     # --- promotional descriptive filler (research spec #14) --------------- #
-    ("blog-tell", "promotional filler (boasts a / nestled in)",
+    ("blog-stock-phrase", "promotional filler (boasts a / nestled in)",
      re.compile(r"\bboasts (?:a |an )?\w+|\bnestled (?:in|amid|among|between)\b", re.I)),    # --- deletable padding circumlocutions ------------------------------- #
     # MEDIUM: it blocks under a strict profile and reports under the default.
     ("wordiness", "deletable padding circumlocution",

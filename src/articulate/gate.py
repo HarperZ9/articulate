@@ -4,7 +4,7 @@
 instruction-injection scan. Standard library only.
 """
 from .markup import FENCE, _mk
-from .rule_reasons import HOUSE_CATEGORIES
+from .rule_reasons import HOUSE_CATEGORIES, resolve_all
 from .rules_low import INJECTION
 from .scan import scan_lines
 
@@ -46,7 +46,7 @@ def gates_finding(tier, category, profile):
     slop = (profile or {}).get("slop", "flavored")
     if tier in GATE_TIERS.get(slop, frozenset({"HIGH"})):
         return True
-    return category in set((profile or {}).get("gate_promote", ()))
+    return category in set(resolve_all((profile or {}).get("gate_promote", ())))
 
 
 def check_text(text, *, profile=None, allow=()):

@@ -50,7 +50,7 @@ def test_could_not_help_but_is_not_antithesis():
 
 def _register_hits(r):
     return {f["match"].lower() for t in ("high", "medium", "low") for f in r[t]
-            if f["category"] == "register-word"}
+            if f["category"] == "inflated-word"}
 
 
 def test_esl_formal_words_kept_in_research_register():
@@ -78,7 +78,7 @@ def test_keep_does_not_suppress_a_real_device():
     r = articulate.check_text(txt, profile=profiles.load("house"), allow=("utiliz",))
     assert "antithesis" in {f["category"] for f in r["high"]}
     assert r["gate"] == "blocked"                       # HIGH device gates
-    assert "register-word" not in {f["category"] for f in r["medium"]}  # word still kept
+    assert "inflated-word" not in {f["category"] for f in r["medium"]}  # word still kept
 
 
 def test_genuine_help_but_antithesis_is_flagged():
@@ -258,14 +258,14 @@ def _has_cat(text, category):
 # --- new HIGH tells (mechanically unambiguous) ------------------------------ #
 
 def test_high_ai_self_disclosure():
-    assert ("HIGH", "assistant-residue") in _hm(
+    assert ("HIGH", "chat-interface-text") in _hm(
         "As an AI language model, I cannot provide medical advice here.")
-    assert ("HIGH", "assistant-residue") in _hm(
+    assert ("HIGH", "chat-interface-text") in _hm(
         "As of my last knowledge update, I do not have real-time access to prices.")
 
 
 def test_high_leaked_markup_token():
-    assert ("HIGH", "assistant-residue") in _hm(
+    assert ("HIGH", "chat-interface-text") in _hm(
         "The finding held :contentReference[oaicite:0]{index=0} across every run.")
 
 
@@ -279,17 +279,17 @@ def test_high_invisible_unicode():
 def test_high_affirmation_opener_extended():
     # A spoken affirmation alone reports at LOW; a chat reply that hands over a
     # deliverable after it stays HIGH.
-    assert ("HIGH", "assistant-residue") in _hm("Good question! Here is the answer you asked for.")
-    assert not _has_cat("Good question! The build caches responses.", "assistant-residue")
+    assert ("HIGH", "chat-interface-text") in _hm("Good question! Here is the answer you asked for.")
+    assert not _has_cat("Good question! The build caches responses.", "chat-interface-text")
     assert not _has_cat("Good tooling makes the difference on a long project.",
-                        "assistant-residue")
+                        "chat-interface-text")
 
 
 # --- new MEDIUM tells: one positive per new category ------------------------ #
 
 MEDIUM_POSITIVES = {
     "sycophancy": "That is a great question, and it gets at the core tradeoff.",
-    "assistant-closer": "The config lives in one file. I hope this helps you get unstuck.",
+    "closing-boilerplate": "The config lives in one file. I hope this helps you get unstuck.",
     "delivery": "Setup takes two commands. Don't worry, it is simpler than it sounds.",
     "over-apology": "I apologize for the confusion in my earlier note about the flags.",
     "disclaimer": "The deduction may apply. This is not financial advice, of course.",

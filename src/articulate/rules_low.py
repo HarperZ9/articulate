@@ -93,21 +93,21 @@ LOW = [
 # single hit, is the signal, and the whole set is low-confidence until it runs
 # against non-Western and translated corpora, so it is labeled optional review.
 FICTION_SLOP = [
-    ("fiction-slop-lexicon", "somatic-emotion cliche",
+    ("fiction-stock-phrase", "somatic-emotion cliche",
      re.compile(r"\b(?:shiver|chill|tingle|jolt)s?\s+(?:ran|shot|went|crept|traced)?\s*"
                 r"(?:down|up|through)\s+(?:his|her|their|my|its)\s+spine\b", re.I)),
-    ("fiction-slop-lexicon", "breath / whisper stock beat",
+    ("fiction-stock-phrase", "breath / whisper stock beat",
      re.compile(r"\b(?:breath (?:she|he|they|i) (?:did ?n'?t|had ?n'?t) (?:realize|know) "
                 r"(?:she|he|they|i) (?:was|were) holding|barely above a whisper|"
                 r"voice (?:barely )?(?:above|louder than) a whisper)\b", re.I)),
-    ("fiction-slop-lexicon", "ministrations / orbs / other AI-fiction tell",
+    ("fiction-stock-phrase", "ministrations / orbs / other stock fiction phrase",
      re.compile(r"\b(?:ministrations|(?:her|his|their) orbs|"
                 r"a mix(?:ture)? of \w+ and \w+ (?:washed over|flooded|coursed through)|"
                 r"the air (?:was |grew )?(?:thick|heavy) with|"
                 r"little did (?:he|she|they|i) know)\b", re.I)),
-    ("fiction-slop-lexicon", "reflexive 'could not help but'",
+    ("fiction-stock-phrase", "reflexive 'could not help but'",
      re.compile(r"\b(?:could|can|would|did)(?:\s*n'?t|\s+not)\s+help but\b", re.I)),
-    ("fiction-slop-lexicon", "scene-transition filler (in that moment)",
+    ("fiction-stock-phrase", "scene-transition filler (in that moment)",
      re.compile(r"\b(?:in that (?:moment|instant)|as (?:the|a) [\w ]{0,20}?"
                 r"(?:washed over|settled over|filled the room))\b", re.I)),
 ]
@@ -136,7 +136,7 @@ INJECTION = [
     ("prompt-injection", "system-prompt or secret exfiltration",
      re.compile(r"(?i)\b(?:reveal|repeat|print|show|leak|disclose|output)\b[^.\n]{0,30}?"
                 r"\b(?:your |the )?(?:system prompt|instructions?|prompt|guidelines|rules?|api key|secret|token)s?\b")),
-    ("prompt-injection", "assistant-directive framing",
+    ("prompt-injection", "role header or model-addressed line",
      re.compile(r"(?im)^[ \t]{0,8}#{0,3}[ \t]{0,4}(?:system|assistant|developer|user)[ \t]{0,4}:[ \t]|"
                 r"\b(?:as an ai|as a language model)\b")),
 ]

@@ -39,7 +39,7 @@ def test_intensifiers_report_without_blocking_outside_the_house_pack(word):
     for name in NON_HOUSE:
         r = _r(text, name)
         assert r["gate"] == "ok", (name, _gating(r))
-        assert "filler-intensifier" in _cats(r, ("low",)), name
+        assert "intensifier" in _cats(r, ("low",)), name
     for name in HOUSE:
         assert _r(text, name)["gate"] == "blocked", name
 
@@ -48,7 +48,7 @@ def test_intensifiers_report_without_blocking_outside_the_house_pack(word):
 def test_a_valediction_is_never_an_intensifier(closing):
     for name in NON_HOUSE + HOUSE:
         r = _r(f"Thanks for the notes.\n\n{closing}\nMaria", name)
-        assert "filler-intensifier" not in _cats(r), (name, closing)
+        assert "intensifier" not in _cats(r), (name, closing)
 
 
 # --- F2: the house pack ------------------------------------------------------ #
@@ -114,7 +114,7 @@ def test_a_spoken_affirmation_reports_without_blocking(text):
 def test_an_affirmation_that_hands_over_a_deliverable_blocks():
     r = _r("Certainly! Here is your essay:\n\nThe rain fell.", "flavored")
     assert r["gate"] == "blocked"
-    assert "assistant-residue" in _cats(r, ("high",))
+    assert "chat-interface-text" in _cats(r, ("high",))
 
 
 ARTICLE_2_12 = ("Open-source systems are exempt unless they are placed on the market or "
@@ -125,7 +125,7 @@ ARTICLE_2_12 = ("Open-source systems are exempt unless they are placed on the ma
 def test_quoting_the_ai_act_raises_nothing():
     for name in NON_HOUSE + HOUSE:
         r = _r(ARTICLE_2_12, name)
-        assert "assistant-residue" not in _cats(r), name
+        assert "chat-interface-text" not in _cats(r), name
 
 
 def test_first_person_self_identification_still_blocks():

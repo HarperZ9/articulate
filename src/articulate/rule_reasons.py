@@ -24,13 +24,13 @@ HOUSE_CATEGORIES = frozenset({
     "em-dash", "antithesis", "corrective-negation", "substitution",
     "negative-parallel", "contrast-pair",
     # single words and word lists
-    "filler-intensifier", "corporate-verb", "register-word", "register-jargon",
+    "intensifier", "corporate-verb", "inflated-word", "register-jargon",
     # structure that learners are taught, or that fires on ordinary speech
     "enumeration", "stock-transition", "closer", "both-sides", "cadence",
     "participial-closer", "sweeping-range", "setup", "reveal", "scaffold",
     "rhetorical-we", "delivery", "over-apology", "disclaimer", "evasive",
     # stock phrases of a genre
-    "email-tell", "blog-tell", "cta", "continuation-cliche", "significance",
+    "email-stock-phrase", "blog-stock-phrase", "cta", "continuation-cliche", "significance",
 })
 
 _PLAIN = "Federal Plain Language Guidelines (plainlanguage.gov, 2011)"
@@ -39,7 +39,7 @@ _ORWELL = "Orwell, Politics and the English Language (1946)"
 _STRUNK = "Strunk and White, The Elements of Style"
 
 REASONS = {
-    "assistant-residue": (
+    "chat-interface-text": (
         "Text addressed to a chat user, or a chat tool's internal token, speaks to "
         "someone other than the reader and gives them nothing to act on.",
         _PLAIN + ", write for your audience"),
@@ -87,7 +87,7 @@ REASONS = {
         "Praise of a question addresses a chat partner; in a document it tells the "
         "reader nothing about the subject.",
         _PLAIN + ", write for your audience"),
-    "assistant-closer": (
+    "closing-boilerplate": (
         "A closing line such as 'I hope this helps' addresses a chat partner and "
         "adds nothing the reader can use.",
         _PLAIN + ", write for your audience"),
@@ -100,6 +100,28 @@ REASONS = {
 # Words that state a model-frequency reason. No reason may use them.
 ORIGIN_WORDS = ("model", "ai ", "llm", "frontier", "machine", "generated", "chatgpt",
                 "gpt", "detector")
+
+
+# Category ids that carried an origin word, renamed in ruleset 0.7.0. The old id
+# stays readable for one minor version wherever a user names a category.
+ALIASES = {
+    "assistant-residue": "chat-interface-text",
+    "assistant-closer": "closing-boilerplate",
+    "email-tell": "email-stock-phrase",
+    "blog-tell": "blog-stock-phrase",
+    "fiction-slop-lexicon": "fiction-stock-phrase",
+    "register-word": "inflated-word",
+    "filler-intensifier": "intensifier",
+}
+
+
+def resolve_category(name):
+    """The current id for a category name, reading an old id as its new one."""
+    return ALIASES.get(name, name)
+
+
+def resolve_all(names):
+    return tuple(resolve_category(n) for n in (names or ()))
 
 
 def is_house(category):

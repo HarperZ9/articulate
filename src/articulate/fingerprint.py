@@ -28,6 +28,7 @@ def behavior_constants():
         "C2PA_MIN_SELECTORS": markup.C2PA_MIN_SELECTORS,
         "HOUSE_CATEGORIES": sorted(rule_reasons.HOUSE_CATEGORIES),
         "REASONS": sorted(rule_reasons.REASONS),
+        "ALIASES": sorted(rule_reasons.ALIASES.items()),
         "CADENCE_CV_MAX": cadence.CADENCE_CV_MAX,
         "CADENCE_MEAN_MIN": cadence.CADENCE_MEAN_MIN,
         "OPENER_MIN_CONTENT": cadence.OPENER_MIN_CONTENT,

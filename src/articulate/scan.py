@@ -14,6 +14,7 @@ from .lexicon import (ADVERB, DIGIT, EMOJI, EXPLETIVE, NOMINAL, PASSIVE, SOFT,
 from .logical import sentences, units
 from .markup import (ALLOW_EXEMPT_CATEGORIES, _rid, allowed, classify_fountain,
                      mask_c2pa, mask_quotes, read_allowlist, strip_markup)
+from .rule_reasons import resolve_all
 from .rules_high import HIGH
 from .rules_low import FICTION_SLOP, LOW, REGISTER_JARGON
 from .rules_medium_register import MEDIUM_REGISTER
@@ -195,7 +196,7 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
     if masked != joined:           # a C2PA text credential is never prose
         lines = masked.splitlines(keepends=True)
     fountain = genre.get("structural_classify") == "fountain"
-    suppress = set(genre.get("suppress_categories", ()))
+    suppress = set(resolve_all(genre.get("suppress_categories", ())))
     roles = classify_fountain(lines) if fountain else None
     join = genre.get("unit", "sentence") != "line" and not fountain
     sc = _Scan(lines, extra_allow, genre)

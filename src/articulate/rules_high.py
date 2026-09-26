@@ -32,7 +32,7 @@ HIGH = [
      re.compile(r"\s\u2013\s")),
     # --- named filler intensifiers (house pack) ---------------------------- #
     # "Yours truly" and "truly yours" close a letter; they are never an intensifier.
-    ("filler-intensifier", "genuinely / really / truly / actually",
+    ("intensifier", "genuinely / really / truly / actually",
      re.compile(r"\b(?:genuinely|really|actually|(?<!yours )truly(?!\s+yours))\b", re.I)),
     # --- named corporate-register verbs (house pack) ---------------------- #
     ("corporate-verb", "leverage / underscore (as corporate verb)",
@@ -41,19 +41,19 @@ HIGH = [
     # A bare "Of course," or "Absolutely." is ordinary spoken English and is a LOW
     # advisory (rules_low). This rule needs the delivery line that follows it in
     # a chat reply: "Certainly! Here is your essay:".
-    ("assistant-residue", "chat reply opener that hands over a deliverable",
+    ("chat-interface-text", "chat reply opener that hands over a deliverable",
      re.compile(r"(?i)(?:^|(?<=[.!?]\s))\s*(?:certainly|absolutely|of course|sure thing|great question|"
                 r"good question|happy to help)[!,.]\s*(?:here(?:'s|\s+is|\s+are)\b|"
                 r"below\s+(?:is|are)\b|i'?(?:ve|\s+have)\s+(?:written|drafted|prepared|"
                 r"put\s+together|created|revised|rewritten)\b|i'?d\s+be\s+happy\s+to\b)")),
     # --- vague-change blog intro (house pack) ----------------------------- #
-    ("blog-tell", "vague-change intro (as X continues to evolve)",
+    ("blog-stock-phrase", "vague-change intro (as X continues to evolve)",
      re.compile(r"\bas (?:the )?[\w-]+(?:\s+\w+){0,2}\s+continues to "
                 r"(?:evolve|grow|change|develop|advance|expand)\b", re.I)),
     # --- first-person self-identification of a chat tool ------------------- #
     # First person only. "as an AI system" in a quoted law or a policy essay is a
     # third-person description and raises nothing.
-    ("assistant-residue", "chat tool self-identification / knowledge-cutoff line",
+    ("chat-interface-text", "chat tool self-identification / knowledge-cutoff line",
      re.compile(r"(?i)\bas\s+(?:an\s+ai(?:\s+language\s+model)?|a\s+(?:large\s+)?language"
                 r"\s+model|an?\s+(?:helpful\s+)?(?:ai\s+)?assistant),?\s+i\b"
                 r"|\bi'?m\s+(?:just\s+|only\s+)?an?\s+ai\b"
@@ -63,7 +63,7 @@ HIGH = [
     # --- leaked chat interface / citation markup tokens -------------------- #
     # Literal substrings chat interfaces emit. Case-sensitive on purpose: these
     # are exact interface tokens, not words.
-    ("assistant-residue", "leaked chat interface / citation markup token",
+    ("chat-interface-text", "leaked chat interface / citation markup token",
      re.compile(r"contentReference|oaicite|turn0search|turn0news|citeturn"
                 r"|grok_render_citation_card_json|ppl-ai-file-upload"
                 r"|:::writing|\[oai_citation")),

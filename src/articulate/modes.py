@@ -209,7 +209,8 @@ def load(mode_id: str) -> dict:
         raise ModeError(
             f"unknown mode {mode_id!r}; known: {', '.join(sorted(MODES))}")
     base = profiles.load(m["base"])
-    promote = tuple(m["gate_promote"])
+    from .rule_reasons import resolve_all
+    promote = resolve_all(m["gate_promote"])
     bad = set(promote) - detector.known_categories()
     if bad:
         raise ModeError(
