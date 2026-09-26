@@ -105,8 +105,11 @@ def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail
         "gate": "blocked" if blocking else "ok",
         "gate_level": gate_level(profile),
         "house": bool(p.get("house")),
+        "blocking": blocking,
         "blocking_count": blocking,
         "findings": "has_findings" if tiers["HIGH"] or tiers["MEDIUM"] else "no_findings",
+        # Deprecated: `clean` echoes the retired verdict (no HIGH or MEDIUM
+        # finding). Read `blocking` or `gate`. It is removed in 0.7.0.
         "clean": not (tiers["HIGH"] or tiers["MEDIUM"]),
         "words": doc.get("words", 0),
         "counts": {"high": len(high), "medium": len(medium), "low": len(low)},

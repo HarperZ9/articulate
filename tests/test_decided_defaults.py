@@ -57,3 +57,21 @@ def test_a_tex_file_can_name_the_strict_essay_profile(tmp_path, capsys):
                          "% writing-profile: essay\n" + TEX)
     assert result["profile"] == "essay"
     assert result["gate"] == "blocked"
+
+
+# --- decision 8: `blocking` joins check JSON; `clean` is deprecated --------- #
+
+def test_check_json_counts_blocking_findings_and_keeps_clean(tmp_path, capsys):
+    text = "Certainly! Here is the essay you asked for:\n\nThe trial ended early.\n"
+    result = _check_json(tmp_path, capsys, "a.md", text, "--profile", "essay")
+    gating = [f for t in ("high", "medium", "low") for f in result[t] if f["gates"]]
+    assert result["blocking"] == len(gating) >= 1
+    assert result["gate"] == "blocked"
+    # `clean` keeps its 0.5.0 meaning (no HIGH or MEDIUM finding) until 0.7.0.
+    assert result["clean"] is (not (result["high"] or result["medium"]))
+
+
+def test_blocking_is_zero_when_nothing_blocks(tmp_path, capsys):
+    result = _check_json(tmp_path, capsys, "b.md", "The trial ended early.\n")
+    assert result["blocking"] == 0 and result["gate"] == "ok"
+    assert result["clean"] is True
