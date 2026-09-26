@@ -270,3 +270,15 @@ def test_density_counts_overlapping_matches_of_one_category_once():
                   {"category": "c", "gates": True, "start": 20, "end": 25}],
          "medium": [], "low": [], "cadence": {"words": 300}}
     assert density.density(r)["count"] == 2
+
+
+@pytest.mark.parametrize("field,value", [("findings_state", "no_findings"),
+                                         ("words", 9999), ("counts", {"high": 0, "medium": 0,
+                                                                      "low": 0})])
+def test_an_edited_receipt_summary_reads_drift(field, value):
+    from articulate import receipt
+    text = "It is important to note that studies show the rain fell in order to flood.\n"
+    rec = receipt.make_receipt(text, "essay")
+    assert receipt.verify_receipt(rec, text)[0] == "Match"
+    rec[field] = value
+    assert receipt.verify_receipt(rec, text)[0] == "Drift"
