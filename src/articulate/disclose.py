@@ -101,8 +101,8 @@ def build(entries, contributions=None, template="general", include=(), omit=(), 
         out += ["", CREDIT_HEADING]
         out += [f"- {a['name']}: {'; '.join(_norm_role(r) for r in a.get('roles', []))}."
                 for a in authors]
-    out += ["", "Responsibility",
-            "The authors named above take responsibility for every line of this text."]
+    owner = ("The authors named above take" if authors else "The writer takes")
+    out += ["", "Responsibility", f"{owner} responsibility for every line of this text."]
     if claim:
         out += ["", claim]
     return "\n".join(out) + "\n"

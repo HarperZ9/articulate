@@ -4,7 +4,8 @@ design canon: a luminous aperture on a near-black ground, drawn from a field of
 prose lines that bow around a verified core, with drift-marked spans, one
 spectral flare, and a scanline grain veil. Verdict-only palette, two type
 families. Output is 1280x640 so it doubles as the social preview."""
-import math, random
+import math
+import random
 
 W, H = 1280, 640
 CX, CY = 848, 300           # aperture core, right of centre

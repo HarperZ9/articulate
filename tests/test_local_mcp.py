@@ -166,7 +166,7 @@ def test_serve_round_trips_over_stdio_and_survives_a_bad_line():
     ]
     out = io.StringIO()
     assert local_mcp.serve(io.StringIO("\n".join(lines) + "\n"), out) == 0
-    responses = [json.loads(l) for l in out.getvalue().splitlines() if l.strip()]
+    responses = [json.loads(ln) for ln in out.getvalue().splitlines() if ln.strip()]
     # initialize, the parse error, and tools/list. The blank line and the
     # notification produce nothing, and one bad line does not kill the loop.
     assert [r.get("id") for r in responses] == [1, None, 2]

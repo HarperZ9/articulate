@@ -6,6 +6,97 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+### Fair signals, no origin claims, a writer-held process record (ruleset 0.7.0)
+
+A 2023 study (Liang et al., Patterns 100779) found that perplexity detectors
+flag plain, predictable English, common in second-language writing, as machine
+text. An audit of Articulate 0.4.1 on the study's released texts found its
+default profile blocked 38 of 91 learner exam texts against 21 of 70 US college
+essay windows and 31 of 145 student abstract windows, and one rule fired about
+11 times as often per word on the learner texts. This release answers that. The
+measured before and after are in `docs/fairness-audit.md`; the new ruleset's
+release gate does not yet pass on that corpus, and the page says why.
+
+Rules and scanning:
+
+- A house pack holds one writer's style: the em dash in every form, the contrast
+  devices, the intensifiers, corporate verbs, register word lists and jargon,
+  ordinal enumeration, stock transitions, closers, cadence beats and stock
+  email, blog and marketing phrases. Only the new `house` and `house-essay`
+  profiles gate it; every other profile reports it at LOW with `house: true`. No
+  path rule resolves to a house profile.
+- Every rule that can block outside the house pack carries a reader-cost reason
+  and a published source (`rule_reasons.py`). No reason is how often a model
+  uses a pattern.
+- The old `essay` profile is now `house-essay`. The new `essay` is strict
+  without the house pack, and `.tex`, `essays/`, `blog/` and `writing/` paths
+  resolve to it.
+- The four intensifiers report only outside the house pack; a valediction such as
+  "Yours truly" is never one. A bare spoken affirmation reports only; a chat
+  reply that hands over a deliverable still blocks. Self-identification needs
+  the first person, so a quoted AI Act Article 2(12) raises nothing. A
+  zero-width space blocks only inside Latin text. `wordiness` moves to MEDIUM.
+- Paragraphs are read as logical lines with an offset map, so soft-wrapping and
+  one sentence per line give the same findings; every match counts; line-start
+  rules run at every sentence start; findings gain `end_line`. A period after
+  "et al." or "e.g." no longer ends a sentence.
+- Cadence flags need 12 sentences and 200 words and never block. The adverb rate
+  leaves out the intensifiers. C2PA text manifests (Annex A.8 and A.9) are
+  blanked before any rule runs.
+- The ruleset fingerprint now covers the scanner's constants, the house pack, the
+  reasons and a `SCAN_ALGO` counter, and a golden test pins every finding over
+  `corpus/` to it.
+- Seven category ids that named an origin are renamed (`assistant-residue` to
+  `chat-interface-text`, `filler-intensifier` to `intensifier`, `register-word`
+  to `inflated-word`, and four more). The profile field `slop` is now
+  `gate_level`. Old names stay readable for one minor version.
+
+Outputs:
+
+- The texture score and `verdict` (with its 30-word floor) are retired. Results
+  carry `findings` (`has_findings` or `no_findings`), `words`, per-rule counts,
+  density per 1,000 words with an exact interval at 250 words or more, and
+  `gates` on each finding. The gate is the only pass-or-block signal.
+- Every machine-readable output carries `does_not_prove`. SARIF puts it, with
+  the rule's reason, in each rule's help text and records the profile on each
+  result.
+- `--spans` reports per-paragraph counts by rule with no per-paragraph gate or
+  label. Receipts are schema v2; a v1 receipt replays to Unverifiable with the
+  reason.
+- Product text everywhere reads "Local prose checks: named writing patterns,
+  where they occur, and what each costs a reader." Both MCP servers read one
+  description table (`tool_text.py`).
+- The benchmark is an expected-findings regression over `corpus/patterns/` with
+  a false-finding control over `corpus/control/`. The `.pangram` sidecars and
+  the recall target are gone.
+
+Editor:
+
+- Every instruction targets the intended reader (`prompts.py`). No template
+  names an outside score, a sentence-length target or a vocabulary level. The
+  house writing standard reaches the model only under a house profile. The
+  model-input block is now `CHECKER FINDINGS`, renamed together with the trust
+  boundary.
+- `editor.accept()` is the whole acceptance rule for the CLI and MCP `polish`.
+  `fix` and `polish` take `--profile`.
+
+New:
+
+- `python -m articulate.fairness`: a harness that runs every bound profile over
+  a hash-checked corpus manifest and writes a content-free receipt with the
+  pre-registered gates G1 to G7 (`fairness/PREREG.md`), plus `--release-check`,
+  now a step in the publish workflow.
+- `articulate process`: a local, opt-in record of your own drafts as salted
+  commitments, with order and day by default, private input methods, reveals a
+  reader can check, and a C2PA-shaped process summary.
+- `articulate disclose`: a statement of tool use and CRediT credit from the log
+  that never lists a model as an author and refuses a no-tool claim when the log
+  records assistance.
+- `articulate desk`: the questions a reviewer should ask, inside the document and
+  across the field, with no score, verdict or ranking.
+
+Other changes on this branch:
+
 - A Markdown table delimiter row such as `|---|---|` or `|:---:|` no longer raises
   a HIGH `em-dash` finding. The inline `---` check read the row's hyphen runs as an
   em-dash, so a Markdown paper with a table failed the gate under every

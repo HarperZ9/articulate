@@ -15,7 +15,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 DOCS = ["README.md", "editors/vscode/README.md",
         "docs/README.md", "docs/getting-started.md", "docs/walkthrough.md",
-        "docs/features.md", "docs/cli.md", "docs/boundaries.md"]
+        "docs/features.md", "docs/cli.md", "docs/boundaries.md",
+        "docs/fairness-audit.md", "corpus/README.md"]
 MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "receipt.py", "lsp_server.py", "pysource.py", "modes.py",
            "genres.py", "masking.py", "claude_cli.py", "__init__.py",
