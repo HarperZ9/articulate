@@ -43,9 +43,11 @@ jobs:
           echo "version gate: tag $TAG_VER == pyproject $PKG_VER"
 
       # A ruleset ships only with a committed fairness receipt for its exact
-      # fingerprint that passes the pre-registered gates and covers every bound
-      # profile (fairness/PREREG.md). A failed gate blocks the release; it never
-      # blocks anyone's run of the tool.
+      # fingerprint whose recomputed gates pass, from a listed manifest, covering
+      # every bound profile and required comparison (fairness/PREREG.md). Every
+      # package release ships the ruleset, so a failed gate blocks every release
+      # unless fairness/receipts/<fingerprint>.override.json records a reason and
+      # who decided. It never blocks anyone's run of the tool.
       - name: the ruleset has a passing fairness receipt
         run: |
           python -m pip install -e .

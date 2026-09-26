@@ -31,8 +31,13 @@ runs:
     - run: pip install "${{ github.action_path }}"
       shell: bash
     - run: |
+        shopt -s globstar nullglob
         PROFILE=""
         if [ -n "${{ inputs.profile }}" ]; then PROFILE="--profile ${{ inputs.profile }}"; fi
+        case "${{ inputs.profile }}" in
+          house|house-essay)
+            echo "::notice::This workflow applies the house profile to every contributor's text. It is one writer's style, and on the corpus run so far it blocked learner writing more often than other writing (docs/fairness-audit.md)." ;;
+        esac
         python -m articulate.cli check ${{ inputs.files }} $PROFILE --sarif > articulate.sarif
       shell: bash
     - uses: github/codeql-action/upload-sarif@v3

@@ -42,10 +42,16 @@ Articulate affects any outside detector.
 
 The em dash, the contrast devices, the intensifiers, stock transitions and the
 other house-pack patterns are one writer's style. Only the `house` and
-`house-essay` profiles block on them. Every other profile reports them as
-low-tier notes that never block, and no path rule selects a house profile for
-you. The fairness audit shows why: the house pack blocked learner exam texts far
-more often than other writing. See [fairness-audit.md](fairness-audit.md).
+`house-essay` profiles block on them. No other profile shows them unless you
+pass `--house-notes`, and then they are low-tier notes that never block. No path
+rule selects a house profile for you.
+
+On the corpus run so far, the `house` profile blocked learner exam texts more
+often than student abstracts (a gap of 24.8 points, 95% interval 13.1 to 36.2).
+Against US college essay windows the gap was 12.1 points, and that interval
+(-2.8 to 25.9) includes zero. A house profile is for your own text or your own
+project's. Applying it to other people's writing, such as a course's
+submissions, carries that gap to them. See [fairness-audit.md](fairness-audit.md).
 
 ## Exposition quality is no proof of correctness
 
@@ -68,18 +74,22 @@ nor a C2PA content credential. The replay result is `Match`, `Drift` or
 ## A process summary is declared provenance
 
 A process summary shows that texts with its commitments were logged in its
-order, which tools the writer declared, and, with an anchor, that the log
-existed by the anchor's time. It does not show who composed the words, when
-anything happened before the first anchor, or that the record is complete. A
-writer can build a log after the fact, and an absent record shows nothing about
-a writer. The summary is unsigned: it is no Content Credential and no Article 50
-marking.
+order and which tools the writer declared. An anchor entry holds a git commit id
+or a token hash as the writer recorded it. Articulate checks neither, and a
+commit id shows only that the entry was written after that commit existed. The
+summary does not show who composed the words, when anything happened, or that
+the record is complete. Removing entries from the end of a log leaves a shorter
+log that still checks. A writer can build a log after the fact, and an absent
+record shows nothing about a writer. The summary is unsigned: it is no Content
+Credential and no Article 50 marking.
 
 The record keeps order and day by default. Word counts, change sizes and times
 are opt-in and stay out of a default export, because paste size and typing time
-are the signals that surveillance tools show graders. How a writer put words
-down (dictation, a screen reader, drafting in another language) is private
-unless the writer includes it.
+are the signals that surveillance tools show graders. A default export carries
+no value computed from them, so a reader cannot test guesses against it. How a
+writer put words down (dictation, a screen reader, drafting in another
+language) lives in a private file outside the log and stays out of every export
+and statement unless the writer includes it.
 
 ## The desk asks and never ranks
 

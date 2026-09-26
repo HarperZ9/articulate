@@ -18,21 +18,22 @@ before you rely on any output.
   source. The gate says `ok` or `blocked` under the profile in use, and that is
   the only pass-or-block signal. `score` reports per-rule counts and density per
   1,000 words with an exact interval, shown at 250 words or more.
-- **Stay fair by default.** One writer's house style (the em dash, contrast
-  devices, intensifiers, stock transitions and similar patterns) blocks only
-  under the `house` or `house-essay` profile, which you choose. Every other
-  profile reports those patterns as notes. The [fairness audit](docs/fairness-audit.md)
-  shows the before and after on learner, college and academic texts, including
-  the gate that still fails.
+- **Measure fairness in the open.** One writer's house style (the em dash,
+  contrast devices, intensifiers, stock transitions and similar patterns) blocks
+  only under the `house` or `house-essay` profile, which you choose, and no other
+  profile shows it unless you ask with `--house-notes`. On the corpus run so far
+  the default profile blocks none of 306 human texts. Fourteen stricter profiles
+  and modes, `essay` among them, still block student abstracts more often than
+  learner texts, so the release gate fails. The [fairness audit](docs/fairness-audit.md)
+  has the before and after with intervals.
 - **Adapt by register, mode and genre.** Profiles (procedure, commit, research,
   readme, essay, narrative and more) set which findings block. Writing modes
   such as `memo/argue` and genres such as `memoir`, `screenplay` and `poetry`
   read each kind of writing by its own convention.
-- **Edit for the reader.** `judge` reads judgment-level failures. `fix` and
-  `polish` rewrite so the intended reader can follow the text on one read, and
-  accept a pass only when no quality score falls and the gate stays ok. No
-  instruction names an outside score, a sentence-length target or a vocabulary
-  level.
+- **Edit for the reader.** `judge` reads judgment-level failures. `fix` writes
+  each rewrite and re-checks it. `polish` keeps a pass only when no quality score
+  falls and the gate does not go from ok to blocked. No instruction names an
+  outside score, a sentence-length target or a vocabulary level.
 - **Keep your own process record.** `articulate process` keeps a local,
   opt-in log of your drafts as salted commitments, with order and day only by
   default, and exports a process summary you control. `articulate disclose`
@@ -87,12 +88,16 @@ the [feature reference](docs/features.md), the [CLI reference](docs/cli.md), the
 
 ## Scientific and mathematical writing
 
-`academic/prove` and `science-writing/explain` target technical exposition. The
-proof mode does not rewrite by default, because a wrong change to a quantifier
-order or an inequality direction changes a theorem. On a `.tex` file `fix` and
-`polish` mask every math span before each model call and splice each span back
-byte for byte; a rewrite that drops or repeats a masked span is refused. An ok
-gate or a `Match` receipt says nothing about whether a theorem is true.
+`academic/prove` and `science-writing/explain` target technical exposition. A
+`.tex` file checks under `research`, which blocks only the HIGH tier; add
+`% writing-profile: essay` in the first ten lines for the strict gate. "With
+respect to $t$" and other phrases followed by a math variable raise no padding
+finding. The proof mode does not rewrite by default, because a wrong change to a
+quantifier order or an inequality direction changes a theorem. On a `.tex` file
+`fix` and `polish` mask every math span before each model call and splice each
+span back byte for byte; a rewrite that drops or repeats a masked span is
+refused. An ok gate or a `Match` receipt says nothing about whether a theorem is
+true.
 
 ## Privacy
 
@@ -101,13 +106,16 @@ editor layer (`judge`, `fix`, `polish`, `review`) has one backend today, the
 `claude` CLI, which sends the full text to a hosted Anthropic model, so do not run
 it on text you may not upload. A content-free receipt drops the matched text and
 exact offsets; which rule fired and the line remain. The process log lives in
-`.articulate/process/` beside your document with a `.gitignore` of its own, and
-its salts never leave through an export.
+`.articulate/process/` beside your document with a `.gitignore` of its own. A
+default export carries no salt; `--reveal N` exports draft N's salt with its
+text, and nothing else.
 
 ## Status
 
 Pre-1.0. Version 0.5.0 is on PyPI as `articulate-writing`; the changes on this
 page are unreleased and listed in the [changelog](CHANGELOG.md). The fairness
-harness has run on proxy corpora only. No arm yet covers adult academic writers,
-dictated text, disabled writers or World Englishes, and the release gate for the
-new ruleset does not pass on the corpus run so far.
+harness has run on proxy corpora only. No arm yet groups adult academic writers
+by first language, and none covers dictated text, disabled writers or World
+Englishes. The release gate for the new ruleset does not pass on the corpus run
+so far, and while it fails no package release can publish without a recorded
+override.

@@ -2,7 +2,8 @@
 
 The command is `articulate`. With no file, a command reads standard input. A
 profile is chosen by an explicit flag, then an in-file `writing-profile:` tag,
-then the file path, then the default.
+then the file path, then the default. The editor commands resolve it the same
+way.
 
 ## check
 
@@ -10,7 +11,7 @@ Screen one or more files and report the findings.
 
 ```bash
 articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
-                 [--sarif] [--verbose] [--spans] [--content-free]
+                 [--sarif] [--verbose] [--spans] [--content-free] [--house-notes]
 ```
 
 - `--profile P`: force a profile. `house` and `house-essay` apply the house style;
@@ -19,12 +20,16 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
   inference.
 - `--gate`: exit 1 when any file is blocked or cannot be screened, otherwise 0.
 - `--json`: a machine-readable payload with the findings, whether each one
-  blocks, per-rule counts, the gate, density, cadence statistics and the
-  `does_not_prove` line.
+  blocks, per-rule counts, the gate, density, passive-voice and adverb rates and
+  the `does_not_prove` line.
 - `--sarif`: SARIF 2.1.0 for GitHub code scanning, Azure DevOps, and reviewdog.
   Each rule's help text carries its reader-cost reason and the does-not-prove
   line, and each result records the profile.
-- `--verbose`: expand the LOW advisories to line numbers.
+- `--verbose`: expand the LOW advisories to line numbers. A LOW finding that the
+  profile promotes to blocking always prints.
+- `--house-notes`: also report the house style's patterns as LOW notes marked
+  `house style` (SARIF: `house: true`). Without it no profile but `house` and
+  `house-essay` shows them.
 - `--spans`: per-paragraph counts by rule, in document order. No paragraph gets
   a gate, a label or a score; see
   [Boundaries](boundaries.md#no-output-is-an-authorship-finding).
@@ -37,7 +42,7 @@ Print the gate, the word count, density per 1,000 words with an exact interval
 (shown at 250 words or more) and per-rule counts.
 
 ```bash
-articulate score [FILE ...] [--profile P] [--mode M]
+articulate score [FILE ...] [--profile P] [--mode M] [--house-notes]
 ```
 
 ## receipt
@@ -113,11 +118,14 @@ articulate process review DOC --role R --reviewed W --outcome O [--editorial] [-
 articulate process anchor DOC [--commit ID | --token-sha256 H]
 articulate process continue DOC --reason R
 articulate process export DOC [--include F,...] [--reveal N[=FILE]] [--contributions F]
-articulate process verify (DOC | DOC.process-summary.json)
+articulate process verify (DOC | SUMMARY.json)
 ```
 
 `export --include` names the fields a default export leaves out: `words`, `diff`,
-`time`, `labels`, `citations`, `review_names` and `input_method`.
+`time`, `labels`, `citations`, `review_names` and `input_method`. `continue` works
+only on a broken log. `verify` reads a file as a summary when its `schema` field
+says so, whatever its name; on a document it reports `intact`, `broken` or
+`missing`, and exits 0 only for `intact`.
 
 ## disclose
 
@@ -128,7 +136,8 @@ articulate disclose DOC [--template {general,pip}] [--contributions F]
                     [--include input_method] [--claim SENTENCE]
 ```
 
-It exits 2 and writes nothing when the request would misstate the log.
+It exits 2 and writes nothing when the log is missing or broken, or when the
+request would misstate the log.
 
 ## desk
 
@@ -139,12 +148,20 @@ field.
 articulate desk FILE [--venue {none,paper,course}] [--disclosure F] [--author] [--json]
 ```
 
+An unknown `--venue` exits 2 with the list of venues. The JSON output carries a
+`does_not_prove` line.
+
 ## The fairness harness
 
 ```bash
 python -m articulate.fairness MANIFEST [--out RECEIPT]
 python -m articulate.fairness --release-check DIR
 ```
+
+The release check recomputes the gates from `DIR/<fingerprint>.json`. A
+maintainer can let a release publish while a gate fails by committing
+`DIR/<fingerprint>.override.json` with `ruleset_version`, `reason` and
+`decided_by`; the check prints the reason and every failure.
 
 ## Editor commands
 
@@ -189,5 +206,7 @@ command with an error that says to upgrade.
 - `audit --reverify --gate`: 1 on a real integrity break, else 0.
 - `desk`: 0 whenever the run completes, 2 on unreadable or binary input.
 - `disclose`: 2 when the statement is refused.
-- `python -m articulate.fairness --release-check`: 1 when the release gate fails.
+- `process verify`: 0 when intact, 1 when broken or missing.
+- `python -m articulate.fairness --release-check`: 1 when the release gate fails
+  and no override names the current ruleset.
 - `articulate.bench`: the number of failed expectations, so 0 means every one held.

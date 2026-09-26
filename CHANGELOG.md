@@ -23,24 +23,33 @@ Rules and scanning:
   devices, the intensifiers, corporate verbs, register word lists and jargon,
   ordinal enumeration, stock transitions, closers, cadence beats and stock
   email, blog and marketing phrases. Only the new `house` and `house-essay`
-  profiles gate it; every other profile reports it at LOW with `house: true`. No
-  path rule resolves to a house profile.
+  profiles gate it. No other profile shows it in the console, the editor, SARIF,
+  the MCP tools or receipts unless the writer passes `--house-notes`; then it
+  reports at LOW with `house: true`. The library call `check_text` still returns
+  it, marked. No path rule resolves to a house profile.
 - Every rule that can block outside the house pack carries a reader-cost reason
   and a published source (`rule_reasons.py`). No reason is how often a model
   uses a pattern.
 - The old `essay` profile is now `house-essay`. The new `essay` is strict
-  without the house pack, and `.tex`, `essays/`, `blog/` and `writing/` paths
-  resolve to it.
-- The four intensifiers report only outside the house pack; a valediction such as
-  "Yours truly" is never one. A bare spoken affirmation reports only; a chat
-  reply that hands over a deliverable still blocks. Self-identification needs
-  the first person, so a quoted AI Act Article 2(12) raises nothing. A
-  zero-width space blocks only inside Latin text. `wordiness` moves to MEDIUM.
+  without the house pack, and `essays/`, `blog/` and `writing/` paths resolve to
+  it. A `.tex` file resolves to `research` (to `proof` under `proofs/`).
+- The four intensifiers are house style; a valediction such as "Yours truly" is
+  never one. A bare spoken affirmation reports only, and so does a reply opener
+  that hands over a deliverable (`reply-opener`, LOW), which `essay` and the
+  house profiles promote to blocking. Self-description needs the first person
+  beside "AI" or "language model", so a job title, a sentence about training
+  data, an email about real-time access and a quoted AI Act Article 2(12) raise
+  nothing. A zero-width space blocks only inside Latin text. `wordiness` moves
+  to MEDIUM and skips `with respect to` before a math variable.
 - Paragraphs are read as logical lines with an offset map, so soft-wrapping and
   one sentence per line give the same findings; every match counts; line-start
   rules run at every sentence start; findings gain `end_line`. A period after
-  "et al." or "e.g." no longer ends a sentence.
-- Cadence flags need 12 sentences and 200 words and never block. The adverb rate
+  "et al." or "e.g." no longer ends a sentence. A line that ends in a hyphen
+  after a letter joins the next with no space, so a hard wrap inside
+  `state-of-the-art` gives the same finding (`SCAN_ALGO` 4).
+- Cadence flags need 12 sentences and 200 words and never block. The
+  sentence-length variation figures (`cv`, `uniform`) leave `check --json` and
+  the MCP `score` tool; only the fairness harness reads them. The adverb rate
   leaves out the intensifiers. C2PA text manifests (Annex A.8 and A.9) are
   blanked before any rule runs.
 - The ruleset fingerprint now covers the scanner's constants, the house pack, the
@@ -83,17 +92,51 @@ Editor:
 New:
 
 - `python -m articulate.fairness`: a harness that runs every bound profile over
-  a hash-checked corpus manifest and writes a content-free receipt with the
-  pre-registered gates G1 to G7 (`fairness/PREREG.md`), plus `--release-check`,
-  now a step in the publish workflow.
+  a hash-checked corpus manifest and writes a content-free receipt with the gates
+  G1 to G8 (`fairness/PREREG.md`), plus `--release-check`, now a step in the
+  publish workflow. The check recomputes the gates from the receipt's rows and
+  pins the manifest and the comparisons. While a gate fails it blocks every
+  package release unless a maintainer commits an override for that exact
+  ruleset with a reason.
 - `articulate process`: a local, opt-in record of your own drafts as salted
   commitments, with order and day by default, private input methods, reveals a
   reader can check, and a C2PA-shaped process summary.
-- `articulate disclose`: a statement of tool use and CRediT credit from the log
-  that never lists a model as an author and refuses a no-tool claim when the log
-  records assistance.
+- `articulate disclose`: a statement of tool use and CRediT credit from an
+  intact log. It refuses an author whose whole name is a product name unless the
+  entry says `"type": "person"`, and refuses a claim that matches its list of
+  no-tool phrases when the log records assistance.
 - `articulate desk`: the questions a reviewer should ask, inside the document and
   across the field, with no score, verdict or ranking.
+
+Review fixes on this branch (three reviews: correctness, fairness, product
+truth):
+
+- The process summary no longer exports entry hashes, which let a reader
+  brute-force withheld word counts and times. Input methods live in a private
+  file outside the chain. `continue` refuses an intact log and carries
+  assistance forward; `disclose` refuses a broken or missing log; `verify`
+  reports a missing log as `missing` with exit 1, reads a summary by its schema
+  and fails one whose chain is not intact. The git anchor follows a worktree
+  `.git` file. Salts and snapshots are keyed per document and by commitment.
+  `--track` keeps the private files out of git. `fix` and `polish` log a
+  rewrite even when a later pass fails.
+- The release check fails with nothing to compare, recomputes every gate, and
+  names an override path. The smallest detectable gap uses the Newcombe
+  interval. G4 also hard-wraps at 60 columns. G8 reports the notes a writer
+  sees, by group.
+- The desk's hidden-text check no longer flags `background-color:#fff`,
+  `font-size:0.9em` or `#fff8dc`, and now finds `display:none`,
+  `visibility:hidden`, zero opacity, bidirectional controls and Unicode tag
+  characters, whose hidden sentence it spells out. Desk and audit JSON carry
+  `does_not_prove`; an unknown venue exits 2 with the list.
+- `verify_receipt` re-derives the findings state, word count and counts, so an
+  edited summary reads `Drift`.
+- The judge and scorer notes pass through a filter that removes guesses about a
+  text's origin; the prompts ask the model to keep the writer's variety of
+  English. MCP `judge`, `fix` and `polish` carry `does_not_prove`.
+- The editor resolves a profile from the path and tag as `check` does, and a
+  blocked console result prints the does-not-prove line. Docs show real output
+  from `examples/`, and a test reruns it.
 
 Other changes on this branch:
 

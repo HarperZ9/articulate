@@ -28,5 +28,5 @@ npm run compile      # tsc -> out/extension.js
 npx vsce package     # optional: produce a .vsix
 ```
 
-Diagnostics map HIGH tells to warnings, MEDIUM to information, and LOW advisories
+Diagnostics map HIGH findings to warnings, MEDIUM to information, and LOW advisories
 to hints, each carrying its rule id.

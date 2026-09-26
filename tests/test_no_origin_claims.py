@@ -37,11 +37,13 @@ CLAIMS = re.compile(
     r"|\bmachine[- ]texture\b|\breads as generated\b|\bhuman writing\b"
     r"|\bhuman[- ]written\b|\bai[- ]generated\b|\bai[- ]authored\b|\bpercent ai\b"
     r"|\blikely ai\b|\bdetect(?:s|ing)? ai\b|\bhumani[sz]e|\bundetectable\b"
-    r"|\bauthorship\b|\bpangram\b"
+    r"|\bauthorship\b|\bpangram\b|\bai[- ]register\b|\bai prose\b|\bchat tool\b"
+    r"|\bchat reply\b"
     r"|\btells?\b(?!\s+(?:the|a|an|you|them|us|me|him|her|it|who|what|how|whether|"
     r"which|apart|anyone|readers?|writers?|reviewers?|nothing|each|every|if|when|from))")
 # "AI" followed by a hyphen or a space, in an id or a label.
-ID_CLAIM = re.compile(r"(?i)\bai[- ]|\bassistant|\bslop\b|\btells?\b")
+ID_CLAIM = re.compile(r"(?i)\bai[- ]|\bassistant|\bslop\b|\btells?\b|\bchat tool|\bchat reply"
+                      r"|\bchatbot|\blanguage model")
 BANNED_KEYS = {"ai_score", "human_score", "origin", "probability", "likelihood",
                "verdict", "texture_score", "elevated"}
 # Modules whose job is to hold text a writer declares about their own process.
@@ -167,3 +169,30 @@ def test_sarif_rules_carry_does_not_prove_in_help():
 
 def test_the_audit_regex_is_recorded():
     assert re.compile(ORIGIN_WORDING_AUDIT, re.I).search("Pangram")
+
+
+# Surfaces outside the package that a user reads: the docs, the editor READMEs,
+# the GitHub Action and the pre-commit hook. They may state what Articulate does
+# not claim, so the pattern here is narrower: wording that names a pattern by its
+# supposed origin.
+SURFACE_CLAIM = re.compile(
+    r"(?i)\bai[- ](?:tells?|register|prose|generated|authored|written)\b|\bai prose\b"
+    r"|\b(?:HIGH|MEDIUM|LOW|prose|writing) tells?\b|\btells appear\b|\bchat tool\b"
+    r"|\bchat reply\b|\bdetects? ai\b|\bhuman[- ]written\b|\bmachine[- ]written\b")
+ROOT = PKG.parent.parent
+
+
+def _surfaces():
+    paths = sorted((ROOT / "docs").glob("*.md")) + sorted((ROOT / "editors").glob("*/README.md"))
+    paths += [ROOT / "README.md", ROOT / "action.yml", ROOT / ".pre-commit-hooks.yaml",
+              ROOT / "corpus" / "README.md"]
+    return [p for p in paths if p.is_file()]
+
+
+def test_no_origin_wording_on_user_facing_surfaces():
+    assert len(_surfaces()) >= 6
+    hits = [f"{p.name}:{n}: {m.group(0)!r}"
+            for p in _surfaces()
+            for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1)
+            for m in [SURFACE_CLAIM.search(line)] if m]
+    assert not hits, "\n".join(hits)

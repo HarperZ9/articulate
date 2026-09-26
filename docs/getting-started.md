@@ -23,8 +23,10 @@ cd articulate
 pip install -e .
 ```
 
-Two console commands are installed: `articulate` (the CLI) and `articulate-lsp`
-(the editor language server). The MCP server surface needs one extra package:
+Three console commands are installed: `articulate` (the CLI), `articulate-lsp`
+(the editor language server) and `articulate-mcp` (a standard-library MCP
+server). A second MCP server, `articulate.mcp_server`, uses the MCP Python SDK
+and needs one extra package:
 
 ```bash
 pip install "articulate-writing[mcp]"
@@ -32,7 +34,8 @@ pip install "articulate-writing[mcp]"
 
 ## Your first check
 
-Point it at a Markdown or text file:
+Point it at a Markdown or text file. The repository's `examples/notes.md` is a
+four-line note:
 
 ```bash
 articulate check notes.md
@@ -41,20 +44,25 @@ articulate check notes.md
 You get one line per file, then a line for each HIGH or MEDIUM finding:
 
 ```
-[articulate] notes.md [flavored]: 1 high, 3 medium, 4 low, gate blocked
-  L1 [HIGH chat-interface-text] chat reply opener that hands over a deliverable: Certainly! Here is the summary you asked for:
-  L3 [MEDIUM throat-clearing] throat-clearing opener: ... It is important to note that ...
-  L3 [MEDIUM unsupported-authority] authority appeal, no citation nearby: ... studies show ...
+[articulate] notes.md [flavored]: 0 high, 4 medium, 3 low, gate ok
+  L3 [MEDIUM throat-clearing] throat-clearing opener: The survey ran twice in May. It is important to note that studies show the second run was cleaner, a
+  L3 [MEDIUM unsupported-authority] authority appeal, no citation nearby: It is important to note that studies show the second run was cleaner, and we need more data in orde
+  L4 [MEDIUM wordiness] deletable padding circumlocution: leaner, and we need more data in order to decide.
+  L3 [MEDIUM throat-clearing] worth-noting preamble: The survey ran twice in May. It is important to note that studies show the second run was cleaner, a
 ```
 
 Read it this way:
 
 - The gate, `ok` or `blocked`, is the only pass-or-block signal. It depends on
-  the profile shown in brackets.
-- Each finding carries a tier. HIGH is a narrow tier, such as text left over from
-  a chat interface. MEDIUM rules carry a cited reader cost and block under a
-  strict profile. LOW notes never block and show only with `--verbose`; they
-  include the house style, which blocks only under a house profile you choose.
+  the profile shown in brackets. Under the strict `essay` profile the same file
+  is blocked by the four MEDIUM findings, and by the reply opener on line 1,
+  which `essay` promotes.
+- Each finding carries a tier. HIGH is a narrow tier, such as an interface
+  markup token or a hidden character inside Latin text. MEDIUM rules carry a
+  cited reader cost and block under a strict profile. LOW notes never block
+  unless a profile promotes one, and show only with `--verbose`. The house style
+  blocks only under a house profile you choose and shows elsewhere only with
+  `--house-notes`.
 - `articulate score` adds per-rule counts and, at 250 words or more, density per
   1,000 words with an interval. No output scores the text as a whole.
 
