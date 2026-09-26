@@ -1,9 +1,9 @@
 # Walkthrough
 
 This is a full pass over one document, from a first screening to a rewrite to a
-committed audit record a reviewer can replay. Every command runs locally. The
-example file is a short blog draft, `post.md`, that was written with an assistant
-and lightly edited by hand.
+committed audit record a reviewer can replay. Every detector command runs
+locally. The editor steps (3 and 4) send the text to a hosted model. The
+example file is a short blog draft, `post.md`.
 
 ## 1. Screen the document
 
@@ -25,10 +25,10 @@ The verdict is `blocked` because HIGH findings are present. The texture score of
 63 says the whole document reads machine-heavy, beyond the specific device hits.
 Each line points at the exact place to fix.
 
-## 2. Localize mixed authorship
+## 2. Find the paragraph that carries the findings
 
-A whole-file score hides a single generated paragraph inside otherwise clean
-prose. `--spans` scores each paragraph on its own:
+A whole-file score can hide one weak paragraph inside otherwise clean prose.
+`--spans` scores each paragraph on its own:
 
 ```bash
 articulate check post.md --spans
@@ -38,20 +38,23 @@ articulate check post.md --spans
 [articulate] post.md [readme]: 4 span(s), 1 flagged
   [ ok ] span 0 L1-1: clean, texture 4/100 (0H/0M): A note on the redesign.
   [FLAG] span 1 L2-8: flagged, texture 88/100 (3H/4M): We leverage cutting-edge
-  [ ok ] span 2 L10-12: clean, texture 6/100 (0H/0M): I wrote the rest by hand.
+  [ ok ] span 2 L10-12: clean, texture 6/100 (0H/0M): The new layout ships in May.
   [ ?? ] span 3 L14-14: unverifiable, texture 0/100 (0H/0M): Thanks for reading.
 ```
 
-The generated paragraph is span 1 on lines 2 to 8. The hand-written paragraphs
-read clean, and the short closing line is `unverifiable` because it falls under
-the word floor, so the tool abstains and does not guess.
+Every finding sits in span 1, on lines 2 to 8, so that is the paragraph to
+rewrite. The other paragraphs read clean, and the short closing line is
+`unverifiable` because it falls under the word floor, so the tool abstains and
+does not guess. A span verdict says where the findings are. It says nothing about
+who or what wrote the paragraph, so never use it as an authorship finding; see
+[Boundaries](boundaries.md#no-verdict-is-an-authorship-finding).
 
 ## 3. Read the judgment-level quality
 
 The detector catches mechanical tells. The editor layer reads the failures a
 regex cannot see: a fluent paragraph with no fact a reader could restate, hedging
-with no committed position, a weak verb carrying the meaning. It needs a local
-model backend or the `claude` CLI.
+with no committed position, a weak verb carrying the meaning. It runs through
+the `claude` CLI, which sends the document to a hosted Anthropic model.
 
 ```bash
 python -m articulate.editor --judge post.md
@@ -161,5 +164,7 @@ The repository ships a GitHub Action and a pre-commit hook. The Action can also
 re-verify committed receipts and fail the build on drift. See
 [Features](features.md#surfaces) and the `action.yml` in the repository root.
 
-That is the full loop: screen, localize, judge, rewrite, record, and gate. Each
-step is local, and each verdict is one a reviewer can reproduce.
+That is the full loop: screen, locate, judge, rewrite, record, and gate. The
+detector steps run locally, and each detector verdict is one a reviewer can
+reproduce. The judge and rewrite steps send the text to a hosted model and are not
+reproducible.

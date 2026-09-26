@@ -26,9 +26,10 @@ skilled editor does:
 The rewrite target is WRITING QUALITY, gated by the mechanical tell-checker.
 It is not gated by, or tuned toward, any AI-detector score.
 
-The model runs through the local `claude` CLI (headless `claude -p`), so no API
-key is needed. The CLI is found through ARTICULATE_CLAUDE_CLI when that is set,
-and on the PATH otherwise (see claude_cli.py). Usage:
+The model runs through the `claude` CLI (headless `claude -p`), which sends the
+text to a hosted Anthropic model. There is no local-model backend. The CLI is
+found through ARTICULATE_CLAUDE_CLI when that is set, and on the PATH otherwise
+(see claude_cli.py). Usage:
     python articulate-judge.py --judge FILE
     python articulate-judge.py --fix FILE [--out OUT] [--passes N]
     python articulate-judge.py --review FILE
@@ -39,6 +40,7 @@ import os
 import re
 import subprocess
 import sys
+from collections import Counter
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -148,18 +150,34 @@ def injection_warning(text):
 
 
 # Math spans a rewrite must never touch: a changed symbol, quantifier order, or
-# inequality direction changes a theorem. Longest and display forms first so an
-# inline pass does not split a display span.
-_MATH_PATTERNS = [
-    re.compile(r"\$\$.*?\$\$", re.S),
-    re.compile(r"\\\[.*?\\\]", re.S),
-    re.compile(r"\\\(.*?\\\)", re.S),
-    re.compile(r"\$(?:\\.|[^$\\])*\$", re.S),
-    re.compile(r"\\begin\{(equation|align|gather|multline|eqnarray|split|theorem"
-               r"|lemma|proof|definition|proposition|corollary|claim)\*?\}"
-               r".*?\\end\{\1\*?\}", re.S),
-]
+# inequality direction changes a theorem. One pass, one alternation: at each
+# position the environment form is tried first, then display, then inline. An
+# environment that holds inline or display math is masked whole, so no span ever
+# contains another span's placeholder and every span restores byte for byte.
+_MATH_RX = re.compile(
+    r"\\begin\{(?P<env>equation|align|gather|multline|eqnarray|split|theorem"
+    r"|lemma|proof|definition|proposition|corollary|claim)\*?\}"
+    r".*?\\end\{(?P=env)\*?\}"
+    r"|\$\$.*?\$\$"
+    r"|\\\[.*?\\\]"
+    r"|\\\(.*?\\\)"
+    r"|\$(?:\\.|[^$\\])*\$",
+    re.S)
 _MATH_PLACEHOLDER = "\u2983MATH{}\u2984"   # a distinctive bracket unlikely to be edited
+_MATH_PLACEHOLDER_RX = re.compile("\u2983MATH(\\d+)\u2984")
+
+# File types whose math every rewrite path masks before a model call.
+MATH_EXTS = (".tex",)
+
+
+class MathSpliceError(RuntimeError):
+    """A rewrite dropped, duplicated, or invented a masked math placeholder, so the
+    formulas cannot be restored byte for byte. The rewrite is refused."""
+
+
+def is_math_file(path):
+    """True when the file's type carries LaTeX math that a rewrite must mask."""
+    return os.path.splitext(path)[1].lower() in MATH_EXTS
 
 
 def mask_math(text):
@@ -172,16 +190,43 @@ def mask_math(text):
         spans.append(m.group(0))
         return _MATH_PLACEHOLDER.format(len(spans) - 1)
 
-    for rx in _MATH_PATTERNS:
-        text = rx.sub(repl, text)
-    return text, spans
+    return _MATH_RX.sub(repl, text), spans
 
 
 def splice_math(text, spans):
-    """Restore masked math spans by placeholder, byte for byte."""
+    """Restore masked math spans by placeholder, byte for byte. Each placeholder
+    must appear exactly once. A rewrite that dropped one would delete a formula,
+    and one that repeated or invented one would duplicate or corrupt it. Either
+    case raises MathSpliceError, and the caller keeps the text it had."""
+    found = Counter(_MATH_PLACEHOLDER_RX.findall(text))
+    expected = Counter(str(i) for i in range(len(spans)))
+    if found != expected:
+        lost = sorted(int(k) for k in expected - found)
+        extra = sorted(int(k) for k in found - expected)
+        raise MathSpliceError(
+            f"rewrite altered masked math (lost spans {lost}, extra placeholders "
+            f"{extra}); the rewrite is refused and the math left as it was")
     for i, original in enumerate(spans):
         text = text.replace(_MATH_PLACEHOLDER.format(i), original)
     return text
+
+
+def masked_rewrite(text, rewrite_fn, profile=None):
+    """Run rewrite_fn(masked_text, detector_summary) with every math span hidden,
+    then splice the spans back byte for byte. The detector summary is built from
+    the masked text as well, because it quotes document lines and would otherwise
+    carry the math into the prompt. Every rewrite path on a math file goes through
+    here. Raises MathSpliceError when the rewrite lost or doubled a placeholder."""
+    masked, spans = mask_math(text)
+    _, mech = mechanical_text(masked, profile)
+    return splice_math(rewrite_fn(masked, mech), spans)
+
+
+def scrub_math_notes(notes):
+    """Editor notes with every formula and every math placeholder replaced by
+    '[math]'. A quality judge quotes the text it read, so its notes would carry a
+    formula (or a placeholder) into the next rewrite prompt."""
+    return [_MATH_PLACEHOLDER_RX.sub("[math]", mask_math(str(n))[0]) for n in notes]
 
 
 def mechanical(path, profile=None):
@@ -296,7 +341,7 @@ def rewrite_once(text, mech, quality_notes, is_html, standard_delta=""):
     mode_note = f"\nMODE TARGET: {standard_delta}\n" if standard_delta else ""
     instr = f"""{STANDARD}
 {mode_note}
-TASK: Rewrite the text piped on stdin so it reads as skilled human writing that
+TASK: Rewrite the text piped on stdin so it reads as skilled writing that
 fully satisfies the standard above. Fix the mechanical tells AND the
 judgment-level weaknesses. Keep the author's meaning and every fact exactly. {html_note}
 
@@ -365,7 +410,7 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
     if not out_path:
         out_path = os.path.splitext(path)[0] + ".polished" + ext
     is_html = ext.lower() in (".html", ".htm")
-    is_tex = ext.lower() == ".tex"
+    is_tex = is_math_file(path)
     text = open(path, encoding="utf-8", errors="replace").read()
     warn = injection_warning(text)
     if warn:
@@ -380,17 +425,22 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
               f"governs); use --judge. No change written.")
         return 0
 
-    judge = judge_fn or quality_judge
+    base_judge = judge_fn or quality_judge
     base_rewrite = rewrite_fn or (lambda t, mech, worst:
                                   rewrite_once(t, mech, worst, is_html, standard_delta))
     if is_tex:
-        # Mask every math span before the rewrite and splice it back after, so a
-        # formula is preserved byte for byte whatever the model returns.
+        # No model call on a math file sees a formula. The quality judge scores
+        # the masked text. The rewrite gets the masked text, a detector summary
+        # built from it, and judge notes with any math scrubbed. Each span is
+        # spliced back byte for byte whatever the model returns.
+        def judge(t):
+            return base_judge(mask_math(t)[0])
+
         def rewrite(t, mech, worst):
-            masked, spans = mask_math(t)
-            return splice_math(base_rewrite(masked, mech, worst), spans)
+            notes = scrub_math_notes(worst)
+            return masked_rewrite(t, lambda m, mm: base_rewrite(m, mm, notes), prof)
     else:
-        rewrite = base_rewrite
+        judge, rewrite = base_judge, base_rewrite
 
     def evaluate(t):
         r = assess(t, prof)
@@ -450,30 +500,16 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
     return 0
 
 
-def fix(path, out_path, passes, mode=None):
-    ext = os.path.splitext(path)[1]
-    if not out_path:
-        out_path = os.path.splitext(path)[0] + ".fixed" + ext
-    text = open(path, encoding="utf-8", errors="replace").read()
-    is_html = ext.lower() in (".html", ".htm")
-    warn = injection_warning(text)
-    if warn:
-        print(warn + "\n")
-    prof, ecfg = _resolve_mode(mode)
-    delta = ecfg.get("standard_delta", "")
-    mode_note = f"\nMODE TARGET: {delta}\n" if delta else ""
-
-    for attempt in range(1, passes + 1):
-        clean_before, mech = mechanical(path if attempt == 1 else out_path, prof)
-        if attempt > 1 and clean_before:
-            break
-        instr = f"""{STANDARD}
+def _fix_instructions(mech, mode_note, is_html):
+    html_note = ("Preserve all HTML tags and structure; rewrite only the "
+                 "human-readable text between tags.") if is_html else ""
+    return f"""{STANDARD}
 {mode_note}
-TASK: Rewrite the text piped on stdin so it reads as skilled human writing that \
+TASK: Rewrite the text piped on stdin so it reads as skilled writing that \
 fully satisfies the standard above. Fix the mechanical tells AND the \
 judgment-level weaknesses (empty sentences, vague abstraction, hedging with no \
 position, weak verbs, buried points). Keep the author's meaning and every fact \
-exactly. {"Preserve all HTML tags and structure; rewrite only the human-readable text between tags." if is_html else ""}
+exactly. {html_note}
 
 EXCELLENCE BAR: do not settle for merely removing tells. Aim for prose a \
 discerning editor would call excellent. Every sentence earns its place. Every \
@@ -487,8 +523,36 @@ Where the source is thin, do not pad; tighten.
 
 Output ONLY the rewritten text, with nothing before or after it. No commentary, \
 no code fences, no explanation."""
+
+
+def fix(path, out_path, passes, mode=None):
+    """Rewrite to the standard, then re-run the detector for up to `passes` rounds.
+    On a math file every span is masked before the model call and spliced back
+    after. Every detector check, before and after a rewrite, runs under the chosen
+    mode's profile."""
+    ext = os.path.splitext(path)[1]
+    if not out_path:
+        out_path = os.path.splitext(path)[0] + ".fixed" + ext
+    text = open(path, encoding="utf-8", errors="replace").read()
+    is_html = ext.lower() in (".html", ".htm")
+    is_tex = is_math_file(path)
+    warn = injection_warning(text)
+    if warn:
+        print(warn + "\n")
+    prof, ecfg = _resolve_mode(mode)
+    delta = ecfg.get("standard_delta", "")
+    mode_note = f"\nMODE TARGET: {delta}\n" if delta else ""
+
+    def call(t, mech):
+        return strip_preamble(claude_call(_fix_instructions(mech, mode_note, is_html), t))
+
+    for attempt in range(1, passes + 1):
+        clean_before, mech = mechanical(path if attempt == 1 else out_path, prof)
+        if attempt > 1 and clean_before:
+            break
         try:
-            result = strip_preamble(claude_call(instr, text))
+            # On a math file the model sees placeholders, never a formula.
+            result = masked_rewrite(text, call, prof) if is_tex else call(text, mech)
         except (RuntimeError, subprocess.TimeoutExpired) as e:
             print(f"[fix] pass {attempt} failed: {e}")
             return 1
@@ -496,13 +560,14 @@ no code fences, no explanation."""
             print(f"[fix] pass {attempt}: empty result, stopping")
             return 1
         open(out_path, "w", encoding="utf-8").write(result + ("\n" if not result.endswith("\n") else ""))
-        clean_after, mech_after = mechanical(out_path)
+        # The self-check reads the rewrite under the same mode as the first pass.
+        clean_after, _ = mechanical(out_path, prof)
         print(f"[fix] pass {attempt}: {'CLEAN' if clean_after else 'still has tells'} -> {out_path}")
         text = result
         if clean_after:
             break
 
-    clean_final, mech_final = mechanical(out_path)
+    _, mech_final = mechanical(out_path, prof)
     print(f"\n[fix] final: {os.path.basename(out_path)}")
     print(f"[fix] {mech_final.splitlines()[0]}")
     print("[fix] the rewrite is a suggestion; read it against the original before you ship it.")

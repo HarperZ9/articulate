@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "articulate-writing"
 version = "0.4.2"
-description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
+description = "Local, re-derivable writing-quality and AI-tell detection, with an optional editor that runs through a hosted model: register profiles, writing modes, a genre axis, and content-free audit receipts."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "LicenseRef-FSL-1.1-MIT"

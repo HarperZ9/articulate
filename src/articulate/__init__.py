@@ -1,7 +1,8 @@
-"""Articulate: a local writing-quality and AI-tell detection and editing tool.
+"""Articulate: a local writing-quality and AI-tell detector, with an optional editor.
 
-The core detector runs standard-library-only with no network call. The optional
-editor layer (judge / fix / polish) needs an LLM backend. The register-adaptive
+The detector runs standard-library-only with no network call. The optional
+editor layer (judge / fix / polish) sends the text to a hosted model through the
+claude CLI. The register-adaptive
 profile system decides which findings gate.
 """
 from . import genres, profiles

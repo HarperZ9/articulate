@@ -1,12 +1,13 @@
 # Articulate
 
-![Articulate: a local writing-quality and AI-tell detection and editing tool. Lines of prose bow around a verified core, one span is marked as drift, and the verdict lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
+![Articulate: a local writing-quality and AI-tell detector. Lines of prose bow around a verified core, one span is marked as drift, and the verdict lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
 
-A local writing-quality and AI-tell detection and editing tool. It flags the
-prose devices and machine-writing tells that make text read as generated, scores
-how machine-textured a passage is, and (with an LLM backend) rewrites prose to a
-plain, skilled standard. The core runs standard-library-only with no network
-call. Detection quality and writing quality are the goals; a detector score is a
+A writing-quality and AI-tell detector that runs locally with no network call,
+plus an optional editor that sends text to a hosted model through the `claude`
+CLI. The detector flags the prose devices and machine-writing tells that make
+text read as generated and scores how machine-textured a passage is. It runs
+standard-library-only. The editor rewrites prose to a plain, skilled standard.
+Detection quality and writing quality are the goals; a detector score is a
 benchmark and a byproduct, never something the tool optimizes toward, and it is
 not an evasion tool.
 
@@ -44,7 +45,8 @@ say what a verdict and a receipt mean and what they never claim.
   `fix` rewrites to the standard, self-checked against the detector. `polish`
   loops until five qualities (concreteness, commitment, economy, rhythm, a
   restatable fact per paragraph) clear a bar. Gated on writing quality, never a
-  detector score. Needs an LLM backend (local model or the `claude` CLI).
+  detector score. Runs through the `claude` CLI, which sends the text to a
+  hosted Anthropic model.
 
 ## Use
 
@@ -101,9 +103,16 @@ is all that is needed; no server code lives in the extension.
 stating the idea before the formalism, keeping a roadmap, defining each symbol
 once. The proof mode does not rewrite by default, because a wrong change to a
 quantifier order or an inequality direction changes a theorem; it routes to
-`--judge`, and `--fix` is opt-in. On a `.tex` file the editor masks every math
-span before a rewrite and splices it back byte for byte, so a formula is never
-altered.
+`--judge`, and `--fix` is opt-in. On a `.tex` file `--fix` and `--polish` mask
+every math span before each model call and splice each span back byte for byte.
+The masking covers the text sent for rewriting, the detector summary the prompt
+quotes, the text the polish quality scorer reads, and the scorer's notes. A
+theorem, lemma, proof or other listed environment is masked whole with the math
+inside it, so its prose is left as written. A rewrite that drops or repeats a
+masked span is refused, so a formula is never altered. The MCP `fix` and
+`polish` tools do the same when called with `is_tex: true`. `--judge` and
+`--review` send the full text, math included. Math in other file types, such as
+`$...$` in Markdown, is not masked.
 
 The boundary is fixed and load-bearing: a clean gate, a low texture score, or a
 Match receipt means the prose was screened under a named ruleset. It says nothing
@@ -113,9 +122,12 @@ assistants (Lean, Coq, Isabelle), never from this tool.
 
 ## Privacy
 
-The detector never touches the network. The editor layer defaults to a local
-model where configured, and an `--offline` mode is on the roadmap for air-gapped
-use. A content-free audit receipt keeps no verbatim text: it drops the matched
+The detector never touches the network. The editor layer (`judge`, `fix`,
+`polish`, `review`) has one backend today: the `claude` CLI (`claude -p`), which
+sends the full text to a hosted Anthropic model. No local-model backend exists
+yet, so do not run the editor on text you may not upload, such as a manuscript
+you received for review. A local backend and an `--offline` mode are on the
+roadmap. A content-free audit receipt keeps no verbatim text: it drops the matched
 substring and the exact offsets, keeping only which rule fired, its tier and
 category, and the line. A team can retain and replay a record without storing the
 sensitive source. Content-free is not zero-leakage: which rules fired and the line
@@ -132,7 +144,7 @@ automatic expiry (bounded retention is a later self-hosted tier). The full
 
 Pre-1.0. The core detector, profile system, writing modes (including the science
 modes for proofs and technical exposition), the genre axis (fiction, memoir,
-screenplay, poetry), the editor injection boundary, per-span mixed-authorship
+screenplay, poetry), the editor injection boundary, per-paragraph span
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this

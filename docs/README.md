@@ -1,10 +1,12 @@
 # Articulate documentation
 
-Articulate is a local writing-quality and AI-tell tool. It flags the prose and
-formatting tells that make text read as generated, scores how machine-textured a
-passage is, and rewrites prose to a plain, skilled standard. The core runs on the
-standard library with no network call, and every verdict is one a reviewer can
-reproduce.
+Articulate is a writing-quality and AI-tell detector that runs locally, plus an
+optional editor. The detector flags the prose and formatting tells that make text
+read as generated and scores how machine-textured a passage is. It runs on the
+standard library with no network call, and a reviewer can reproduce every
+detector verdict. The editor rewrites prose to a plain, skilled standard. It
+sends the text to a hosted model through the `claude` CLI, and its output is a
+suggestion that no receipt reproduces.
 
 ## Read in this order
 
