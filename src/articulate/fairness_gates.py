@@ -6,7 +6,8 @@ Each function takes per-document measurements (see fairness.measure) for two
 sets and returns a plain dict for the receipt. Thresholds live in THRESHOLDS
 and in fairness/PREREG.md, and a test pins that the two agree.
 
-  G1  block-rate gap, two-sided, raw and within score bands
+  G1  block-rate gap, two-sided, raw, within score bands and, when the
+      documents name a prompt, within prompt-and-score cells
   G2  per-rule skew in four states: skewed, not skewed, bounded, inconclusive
   G3  paired rewrites (report only; it concerns origin, so it never gates)
   G4  layout invariance (computed in fairness.py, which owns the rewrap)
@@ -39,8 +40,38 @@ def _pct(x):
     return None if x is None else round(100 * x, 1)
 
 
+def _order(cell):
+    """Scores in numeric order, prompts by name, so the pooled sum is the same
+    on every run."""
+    parts = cell if isinstance(cell, tuple) else (cell,)
+    return tuple((0, p, "") if isinstance(p, (int, float)) else (1, 0, str(p)) for p in parts)
+
+
+def _strata(prot, ref, key):
+    """(CMH-weighted difference, interval) over the strata `key` gives, or None
+    when no document carries one or no stratum holds both arms."""
+    cells = sorted({key(x) for x in prot + ref if key(x) is not None}, key=_order)
+    if not cells:
+        return None
+    strata = [(sum(x["blocked"] for x in prot if key(x) == c),
+               sum(1 for x in prot if key(x) == c),
+               sum(x["blocked"] for x in ref if key(x) == c),
+               sum(1 for x in ref if key(x) == c)) for c in cells]
+    return S.stratified_diff(strata)
+
+
+def _score_key(x):
+    return x.get("score")
+
+
+def _prompt_score_key(x):
+    """A prompt-and-score cell. Documents with no prompt have none."""
+    return None if x.get("prompt") is None else (x["prompt"], x.get("score"))
+
+
 def g1(prot, ref):
-    """Block-rate gap for one comparison under one profile."""
+    """Block-rate gap for one comparison under one profile: raw, within score
+    bands, and within prompt-and-score cells when the documents name a prompt."""
     t = THRESHOLDS
     kp, np_ = sum(d["blocked"] for d in prot), len(prot)
     kr, nr = sum(d["blocked"] for d in ref), len(ref)
@@ -51,19 +82,14 @@ def g1(prot, ref):
     out = {"protected": [kp, np_], "reference": [kr, nr],
            "diff": _pct(d), "ci": [_pct(lo), _pct(hi)],
            "reverse_diff": _pct(-d), "reverse_ci": [_pct(-hi), _pct(-lo)],
-           "min_detectable": _pct(S.min_detectable(np_, nr, kr)),
-           "pass": ok}
-    bands = sorted({x.get("score") for x in prot + ref if x.get("score") is not None})
-    if bands:
-        strata = [(sum(x["blocked"] for x in prot if x.get("score") == b),
-                   sum(1 for x in prot if x.get("score") == b),
-                   sum(x["blocked"] for x in ref if x.get("score") == b),
-                   sum(1 for x in ref if x.get("score") == b)) for b in bands]
-        st = S.stratified_diff(strata)
+           "min_detectable": _pct(S.min_detectable(np_, nr, kr))}
+    for name, key in (("banded", _score_key), ("matched", _prompt_score_key)):
+        st = _strata(prot, ref, key)
         if st is not None:
-            out["banded_diff"] = _pct(st[0])
-            out["banded_ci"] = [_pct(st[1][0]), _pct(st[1][1])]
-            out["pass"] = ok and abs(st[0]) <= t["g1_point"]
+            out[f"{name}_diff"] = _pct(st[0])
+            out[f"{name}_ci"] = [_pct(st[1][0]), _pct(st[1][1])]
+            ok = ok and abs(st[0]) <= t["g1_point"]
+    out["pass"] = ok
     dp = [x["density"] for x in prot if x["density"] is not None]
     dr = [x["density"] for x in ref if x["density"] is not None]
     if dp and dr:

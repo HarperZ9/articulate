@@ -59,6 +59,12 @@ def layout(tmp_path, monkeypatch):
     """receipts/ plus a published record for OLD_FP, with the current ruleset
     fingerprint set to NEW_FP."""
     monkeypatch.setattr(fairness_release, "ruleset_fingerprint", lambda: NEW_FP)
+    # The cases below are built from one Liang et al. receipt, so only its
+    # manifest is required here; the confirmatory requirement has its own test.
+    man = _after()["manifest_sha256"]
+    req = {man: fairness_release.REQUIREMENTS[man]}
+    monkeypatch.setattr(fairness_release, "REQUIREMENTS", req)
+    monkeypatch.setattr(fairness_release, "RELEASE_MANIFESTS", tuple(req))
     receipts = tmp_path / "receipts"
     receipts.mkdir()
 

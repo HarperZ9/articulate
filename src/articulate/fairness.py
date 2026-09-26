@@ -9,7 +9,7 @@ The receipt records block rates by group with intervals in both directions,
 per-rule rates and skew states, density distributions, a layout check and the
 pre-registered gates G1 to G7 (fairness_gates, fairness/PREREG.md).
 
-  python -m articulate.fairness MANIFEST [--out RECEIPT]
+  python -m articulate.fairness MANIFEST [--root DIR] [--out RECEIPT]
   python -m articulate.fairness --release-check DIR [--published FILE]
 
 The release check is scoped to ruleset changes. When the current fingerprint
@@ -201,9 +201,12 @@ def _gate_summary(results, bound):
             "G8": "report only", "release_ok": g1 and g2 and g4 and g5}
 
 
-def run(manifest_path, names=None, cadence_gates=False):
+def run(manifest_path, names=None, cadence_gates=False, root=None):
+    """The receipt for one manifest. `root` is the folder the corpus files sit
+    in; by default the manifest's own `root`, beside the manifest."""
     man, man_hash = corpora.load_manifest(manifest_path)
-    base = os.path.join(os.path.dirname(os.path.abspath(manifest_path)), man.get("root", "."))
+    base = root or os.path.join(os.path.dirname(os.path.abspath(manifest_path)),
+                                man.get("root", "."))
     bound = bound_profiles()
     names = names or (bound + list(house_profiles()))
     configs, members = {}, {}
@@ -242,6 +245,8 @@ def main(argv=None):
                                  description="Measure the checker on labeled corpora.")
     ap.add_argument("manifest", nargs="?")
     ap.add_argument("--out", default=None, help="write the receipt here")
+    ap.add_argument("--root", default=None,
+                    help="the folder the corpus files sit in (default: the manifest's root)")
     ap.add_argument("--release-check", metavar="DIR", default=None)
     ap.add_argument("--published", metavar="FILE", default=None,
                     help="the published-ruleset record (default: beside DIR)")
@@ -256,7 +261,7 @@ def main(argv=None):
         ap.print_help()
         return 2
     try:
-        rec = run(args.manifest)
+        rec = run(args.manifest, root=args.root)
     except (corpora.CorpusError, OSError, ValueError) as e:
         print(f"[fairness] {e}", file=sys.stderr)
         return 2

@@ -1,0 +1,56 @@
+{
+ "schema": "articulate/fairness-manifest/v1",
+ "corpora": {
+  "persuade2": {
+   "licence": "CC BY-NC-SA 4.0 (stated in the corpus repository README)",
+   "upstream": "https://github.com/scrosseye/persuade_corpus_2.0 (README at commit 67d182ac88ea4a4dda736de859cfdb0bc360ee9b), training-set link: Google Drive file 13phHyDzIsb0MHyJr6q-B-qIa9P2tM135, persuade_corpus_2.0_train.csv, 616894963 bytes",
+   "citation": "Crossley, Baffour, Tian, Franklin, Benner and Boser (2024). A large-scale corpus for assessing written argumentation: PERSUADE 2.0. Assessing Writing 61.",
+   "retrieved": "2026-09-26"
+  }
+ },
+ "sets": {
+  "persuade_ell": {
+   "corpus": "persuade2",
+   "groups": {
+    "first_language": "English learner (school-recorded ELL status Yes)",
+    "register": "argumentative essay, grades 6 to 12"
+   }
+  },
+  "persuade_non_ell": {
+   "corpus": "persuade2",
+   "groups": {
+    "first_language": "not an English learner (school-recorded ELL status No)",
+    "register": "argumentative essay, grades 6 to 12"
+   }
+  }
+ },
+ "tables": [
+  {
+   "corpus": "persuade2",
+   "path": "persuade_corpus_2.0_train.csv",
+   "sha256": "sha256:f61319edd8bf16a982711ea0399fad59c05afaec05cdf0767f16a2c05c467e23",
+   "format": "csv",
+   "id": "essay_id_comp",
+   "text": "full_text",
+   "prompt": "prompt_name",
+   "score": "holistic_essay_score",
+   "sets": {
+    "persuade_ell": {
+     "ell_status": "Yes"
+    },
+    "persuade_non_ell": {
+     "ell_status": "No"
+    }
+   }
+  }
+ ],
+ "comparisons": [
+  {
+   "name": "persuade-ell-vs-non-ell",
+   "dimension": "first_language",
+   "protected": "persuade_ell",
+   "reference": "persuade_non_ell",
+   "design": "matched"
+  }
+ ]
+}

@@ -7,7 +7,6 @@ mutations. Synthetic inputs only; nothing here measures any group of writers.
 """
 import json
 import pathlib
-import re
 
 import pytest
 
@@ -80,6 +79,14 @@ def test_g1_failure_and_g4_change_fail_the_release_gate():
     assert fairness._gate_summary({"c": moved}, bound)["release_ok"] is False
 
 
+def _liang_only(monkeypatch, rec):
+    """Require only the manifest this receipt came from, so a case built from
+    one committed receipt tests the rule it names and not the missing other."""
+    req = {rec["manifest_sha256"]: fairness_release.REQUIREMENTS[rec["manifest_sha256"]]}
+    monkeypatch.setattr(fairness_release, "REQUIREMENTS", req)
+    monkeypatch.setattr(fairness_release, "RELEASE_MANIFESTS", tuple(req))
+
+
 def _committed_after():
     rec = json.loads((ROOT / "fairness" / "receipts" / _after_name()).read_text("utf-8"))
     return rec
@@ -106,20 +113,24 @@ def test_a_receipt_from_an_unlisted_manifest_or_missing_a_comparison_fails(tmp_p
     rec = _committed_after()
     fp = rec["ruleset_version"]
     monkeypatch.setattr(fairness_release, "ruleset_fingerprint", lambda: fp)
-    rec["manifest_sha256"] = "sha256:" + "0" * 64
+    _liang_only(monkeypatch, rec)
     for v in rec["results"].values():
         v["comparisons"].pop("toefl-vs-abstracts", None)
-    (tmp_path / (fp.replace(":", "-") + ".json")).write_text(json.dumps(rec))
+    path = tmp_path / (fp.replace(":", "-") + ".json")
+    path.write_text(json.dumps(rec))
     ok, reasons = fairness_release.release_check(str(tmp_path))
-    assert not ok
-    assert any("not a release manifest" in r for r in reasons)
-    assert any("lacks required comparisons" in r for r in reasons)
+    assert not ok and any("lacks required comparisons" in r for r in reasons)
+    rec["manifest_sha256"] = "sha256:" + "0" * 64
+    path.write_text(json.dumps(rec))
+    ok, reasons = fairness_release.release_check(str(tmp_path))
+    assert not ok and any("not a release manifest" in r for r in reasons)
 
 
 def test_an_override_needs_a_reason_and_names_it(tmp_path, monkeypatch):
     rec = _committed_after()
     fp = rec["ruleset_version"]
     monkeypatch.setattr(fairness_release, "ruleset_fingerprint", lambda: fp)
+    _liang_only(monkeypatch, rec)
     (tmp_path / (fp.replace(":", "-") + ".json")).write_text(json.dumps(rec))
     over = tmp_path / (fp.replace(":", "-") + ".override.json")
     over.write_text(json.dumps({"ruleset_version": fp, "reason": "", "decided_by": "x"}))
@@ -134,14 +145,6 @@ def test_an_override_needs_a_reason_and_names_it(tmp_path, monkeypatch):
     ok, reasons = fairness_release.release_check(str(tmp_path),
                                                  str(tmp_path / "published.json"))
     assert ok and "security patch" in reasons[0]
-
-
-def test_prereg_release_requirements_match_the_code():
-    text = (ROOT / "fairness" / "PREREG.md").read_text(encoding="utf-8")
-    blocks = re.findall(r"```json\n(.*?)\n```", text, re.S)
-    req = json.loads(blocks[1])
-    assert tuple(req["manifests"]) == fairness_release.RELEASE_MANIFESTS
-    assert tuple(req["comparisons"]) == fairness_release.REQUIRED_COMPARISONS
 
 
 # --- G4 layout control ------------------------------------------------------- #

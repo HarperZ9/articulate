@@ -9,9 +9,9 @@ commit updates it.
 - When the current fingerprint equals the published one, nothing the gates
   measure has changed. The check passes and says the gates were not re-run.
 - A changed ruleset needs a receipt DIR/<fingerprint>*.json from every manifest
-  in RELEASE_MANIFESTS. Each must hold every bound profile and required
-  comparison, and every gate recomputed from its own rows must pass. The stored
-  `release_ok` is never trusted on its own.
+  in REQUIREMENTS. Each must hold every bound profile and the comparisons
+  listed for its manifest, and every gate recomputed from its own rows must
+  pass. The stored `release_ok` is never trusted on its own.
 - A maintainer can record an override for one exact ruleset in
   DIR/<fingerprint>.override.json, with a reason and who decided. It excuses
   failing gates only, never a malformed receipt, and only when no gate row that
@@ -29,12 +29,18 @@ from . import fairness as F
 from .fairness_regress import compare, gate_rows
 from .fingerprint import ruleset_fingerprint
 
-# The manifests a release receipt may come from, and the comparisons it must
-# hold. fairness/PREREG.md lists the same values, and a test pins that they agree.
-RELEASE_MANIFESTS = (
-    "sha256:71ab34e241bd4315f81d4f0fefcd47eb4538c918b9584cebbca1ca848b73404a",  # Liang et al. v1.0.0
-)
-REQUIRED_COMPARISONS = ("toefl-vs-abstracts", "toefl-vs-college")
+# The manifests a release needs a receipt from, each with the comparisons its
+# receipt must hold. fairness/PREREG.md lists the same values, and a test pins
+# that they agree.
+REQUIREMENTS = {
+    # Liang et al. (2023) v1.0.0 build: exploratory, the gates were tuned on it.
+    "sha256:71ab34e241bd4315f81d4f0fefcd47eb4538c918b9584cebbca1ca848b73404a":
+        ("toefl-vs-abstracts", "toefl-vs-college"),
+    # PERSUADE 2.0 training file, fairness/manifests/persuade-2.0.json: confirmatory.
+    "sha256:8de8a1e6414e18f03730156ef6c4e8c87dc2f68fe73f0549d42cf4ea0788b4c3":
+        ("persuade-ell-vs-non-ell",),
+}
+RELEASE_MANIFESTS = tuple(REQUIREMENTS)
 GATE_FAILS = "a release gate fails"
 
 
@@ -51,7 +57,8 @@ def _receipt_problems(rec, fp):
     results = rec.get("results") or {}
     for key, v in results.items():
         if set(v.get("profiles", ())) & set(F.bound_profiles()):
-            absent = set(REQUIRED_COMPARISONS) - set(v.get("comparisons", {}))
+            required = REQUIREMENTS.get(rec.get("manifest_sha256"), ())
+            absent = set(required) - set(v.get("comparisons", {}))
             if absent:
                 reasons.append(f"{key} lacks required comparisons {sorted(absent)}")
     recomputed = F._gate_summary(results, F.bound_profiles())

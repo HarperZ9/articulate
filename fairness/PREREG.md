@@ -7,11 +7,13 @@ The harness is `python -m articulate.fairness`. Its code lives in
 
 ## Status and honest limits
 
-- Written 26 September 2026. It is not yet anchored anywhere outside this
-  repository. A git commit date can be set by whoever makes the commit, so this
-  file alone does not prove when it was written. An outside anchor (a pull
-  request's creation time, an RFC 3161 token or a Zenodo deposit) is pending a
-  maintainer decision.
+- Written 26 September 2026. A git commit date can be set by whoever makes the
+  commit, so the repository alone does not prove when this file was written.
+  The file as it stands with the confirmatory amendment below carries an RFC
+  3161 timestamp from a public time-stamping authority (FreeTSA) over its
+  SHA-256. `fairness/anchor/README.md` holds the token and the command that
+  verifies it. The pull request's creation time on GitHub is a second, weaker
+  anchor.
 - The thresholds below were chosen after an exploratory audit had already read
   the Liang et al. (2023) release. On that corpus these gates are therefore not
   pre-registered. They bind every licensed corpus added after this file lands.
@@ -126,6 +128,61 @@ table and the machine-readable blocks state them.
 - A receipt keys the n-gram repetition and anaphora rules by category, because
   their labels quote the text. This changes no gate.
 
+### Amendment of 26 September 2026: the confirmatory corpus
+
+Dated 26 September 2026, before any run on the corpus it names. It adds a
+corpus the rules were not tuned on, a stricter reading of G1 for documents that
+name a prompt, and a second required receipt. No threshold changes.
+
+- Corpus. PERSUADE 2.0 (Crossley et al., 2024, Assessing Writing 61):
+  argumentative essays by US students in grades 6 to 12 on 15 prompts, under
+  CC BY-NC-SA 4.0. The run uses the training file,
+  `persuade_corpus_2.0_train.csv`, 616,894,963 bytes, SHA-256
+  `f61319edd8bf16a982711ea0399fad59c05afaec05cdf0767f16a2c05c467e23`, downloaded
+  on 26 September 2026 from the link in the corpus repository's README. The
+  test split is distributed as an encrypted archive and is not used.
+- What was read before this amendment: the file's header and the value counts
+  of its non-text columns, and nothing else. The file holds 15,594 essays. The
+  school-recorded English-learner field (`ell_status`) reads Yes for 1,330, No
+  for 13,467 and blank for 797; every essay on one prompt ("Phones and driving",
+  701 essays) is blank. Blank essays are left out. The prompt field
+  (`prompt_name`) and the holistic score (`holistic_essay_score`, 1 to 6) are
+  present on every essay.
+- Manifest. `fairness/manifests/persuade-2.0.json`, SHA-256
+  `8de8a1e6414e18f03730156ef6c4e8c87dc2f68fe73f0549d42cf4ea0788b4c3`. It lists no
+  document rows. It pins the file's hash and names the id, text, prompt and
+  score columns and the values that select each set. The file stays outside the
+  repository; the harness reads it with `--root`.
+- Comparison. `persuade-ell-vs-non-ell`, design matched: essays whose writer the
+  school records as an English learner (protected) against essays whose writer
+  it records as not one (reference). The unit is the whole essay, with no
+  window. Every bound profile is measured, and the house profiles are reported.
+- G1 on this comparison: the raw gap, the gap within holistic-score bands and
+  the gap within prompt-and-score cells (Cochran-Mantel-Haenszel weights over
+  cells that hold both arms) each lie within plus or minus 5.0 points. Both arms
+  hold more than 500 essays, so both 95% limits of the raw gap must also lie
+  within plus or minus 10.0 points. The prompt-and-score reading applies to any
+  comparison whose documents name a prompt; the Liang et al. documents name
+  none, so it changes nothing there.
+- G2 is read both ways, as for every matched pair. G4, G5 and G7 apply as the
+  table states. G8 is reported for the default and house profiles.
+- Release requirement. A changed ruleset needs a passing receipt from both
+  manifests in the block below. The Liang et al. receipt stays exploratory.
+- When the result counts. The receipt counts as confirmatory only if the commit
+  that holds this amendment and the RFC 3161 token over this file both predate
+  the run. The run's own time rests on the commit that adds its receipt, which
+  its author can set. The order therefore rests on the token for this file and
+  on the public history of the pull request.
+- The decision it serves: whether a changed ruleset ships. A failing gate blocks a
+  release that changes the ruleset. Decision 2 on pull request 9 names one more
+  outcome: if G8 shows the two new LOW notes skewed toward learner essays, they
+  move to the house pack.
+- Limits. The learner field is a school record and does not name a writer's
+  first language. The writers are school students in grades 6 to 12, and no
+  adult academic writer is in this corpus. Learner status can track writing
+  proficiency, so the raw gap can mix the two; the banded and matched readings
+  address that and cannot remove it.
+
 ## Statistics
 
 Wilson intervals for a proportion; Newcombe hybrid-score intervals for a
@@ -154,13 +211,23 @@ A test checks that this block equals `fairness_gates.THRESHOLDS`.
 
 ## Release requirements, machine-readable
 
-A test checks that this block equals `fairness_release.RELEASE_MANIFESTS` and
-`REQUIRED_COMPARISONS`. The manifest is the Liang et al. (2023) v1.0.0 build.
+A test checks that this block equals `fairness_release.REQUIREMENTS`. The first
+manifest is the Liang et al. (2023) v1.0.0 build; the second is
+`fairness/manifests/persuade-2.0.json` (amended 26 September 2026, see the
+confirmatory corpus above).
 
 ```json
 {
-  "manifests": ["sha256:71ab34e241bd4315f81d4f0fefcd47eb4538c918b9584cebbca1ca848b73404a"],
-  "comparisons": ["toefl-vs-abstracts", "toefl-vs-college"]
+  "manifests": [
+    "sha256:71ab34e241bd4315f81d4f0fefcd47eb4538c918b9584cebbca1ca848b73404a",
+    "sha256:8de8a1e6414e18f03730156ef6c4e8c87dc2f68fe73f0549d42cf4ea0788b4c3"
+  ],
+  "comparisons": {
+    "sha256:71ab34e241bd4315f81d4f0fefcd47eb4538c918b9584cebbca1ca848b73404a":
+      ["toefl-vs-abstracts", "toefl-vs-college"],
+    "sha256:8de8a1e6414e18f03730156ef6c4e8c87dc2f68fe73f0549d42cf4ea0788b4c3":
+      ["persuade-ell-vs-non-ell"]
+  }
 }
 ```
 
