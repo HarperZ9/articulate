@@ -23,9 +23,19 @@ GATE_TIERS = {
 MIN_WORDS_FOR_VERDICT = 30
 
 
-def _finding(tier, f):
-    """Attach the precision tier to a span-level finding record."""
-    return {**f, "tier": tier}
+def _finding(tier, f, gates=False):
+    """Attach the precision tier, and whether the finding blocks under the
+    profile in use, to a span-level finding record."""
+    return {**f, "tier": tier, "gates": gates}
+
+
+def gates_finding(tier, category, profile):
+    """True when a finding of this tier and category blocks under the profile:
+    its tier is gated by the slop level, or a mode promotes its category."""
+    slop = (profile or {}).get("slop", "flavored")
+    if tier in GATE_TIERS.get(slop, frozenset({"HIGH"})):
+        return True
+    return category in set((profile or {}).get("gate_promote", ()))
 
 
 def check_text(text, *, profile=None, allow=()):
@@ -49,17 +59,15 @@ def check_text(text, *, profile=None, allow=()):
     lines = text.splitlines(keepends=True)
     high, medium, low, doc = scan_lines(lines, keep, genre=genre)
     slop = (profile or {}).get("slop", "flavored")
-    gate = GATE_TIERS.get(slop, frozenset({"HIGH"}))
     # gate_promote: a mode may block a specific category even when its tier is not
     # gated by the slop level (porting the flywheel per-category `hard` tuple). It
     # only ADDS gating, so the HIGH banned-device floor can never be removed.
-    promote = set((profile or {}).get("gate_promote", ()))
+    tiers = {}
     blocking = 0
     for tier, arr in (("HIGH", high), ("MEDIUM", medium), ("LOW", low)):
-        if tier in gate:
-            blocking += len(arr)
-        elif promote:
-            blocking += sum(1 for f in arr if f["category"] in promote)
+        tiers[tier] = [_finding(tier, f, gates_finding(tier, f["category"], profile))
+                       for f in arr]
+        blocking += sum(1 for f in tiers[tier] if f["gates"])
     # Calibrated three-way verdict, separate from the device gate. A device is
     # valid at any length, so it reads "flagged"; a device-clean text with no
     # findings and too few words reads "unverifiable"; otherwise "clean".
@@ -81,9 +89,9 @@ def check_text(text, *, profile=None, allow=()):
         "blocking_count": blocking,
         "texture_score": doc.get("score", 0),
         "elevated": doc.get("elevated", False),
-        "high": [_finding("HIGH", f) for f in high],
-        "medium": [_finding("MEDIUM", f) for f in medium],
-        "low": [_finding("LOW", f) for f in low],
+        "high": tiers["HIGH"],
+        "medium": tiers["MEDIUM"],
+        "low": tiers["LOW"],
         "cadence": {
             "words": doc.get("words", 0),
             "mean_sentence_len": doc.get("mean_len"),
