@@ -96,6 +96,14 @@ python -m articulate.editor --polish FILE [--out OUT] [--bar 1-5] [--mode M]
 python -m articulate.editor --review FILE
 ```
 
+These commands run the model through the `claude` CLI, which must be installed
+and logged in. The editor looks for it in two places. If `ARTICULATE_CLAUDE_CLI`
+is set, its value is the path of the CLI. Otherwise the editor searches the
+PATH, and on Windows that search also finds the `claude.cmd` shim from an npm
+install. Set the variable when the editor runs from a process whose PATH does
+not hold the CLI, such as an MCP host or a bundled app. When neither place
+gives a runnable file, the command stops with an error that names the variable.
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.

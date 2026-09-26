@@ -4,6 +4,46 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.4.2
+
+The editor commands `judge`, `fix` and `polish` now find the `claude` CLI in
+more setups. Detector findings and the ruleset fingerprint do not change.
+
+The editor started the CLI by the bare name `claude`. That failed in two cases.
+A process that an MCP host or a bundled app starts can inherit a PATH that
+holds only System32. And on Windows, subprocess without a shell looks only for
+`claude.exe`, so it never found the `claude.cmd` shim that an npm install puts
+on the PATH. In both cases the start raised an uncaught `FileNotFoundError`.
+
+- New module `articulate.claude_cli` resolves the CLI. The environment variable
+  `ARTICULATE_CLAUDE_CLI` names its path and wins when set. Otherwise
+  `shutil.which` searches the PATH, which on Windows also tries `.cmd`.
+- When neither gives a runnable file, the editor raises `ClaudeUnavailable`.
+  Its message names the variable and says the CLI must be installed and logged
+  in. A start that fails with an `OSError` raises the same error. No message
+  prints the value of the variable or the resolved path.
+- `ClaudeUnavailable` moved to `articulate.claude_cli`. `articulate.editor`
+  still exports it, so existing imports keep working.
+- A `.cmd` file runs under cmd.exe, which parses its arguments again. It cuts an
+  argument at the first newline and treats `%`, `^`, `&`, `|`, `<`, `>` and `!`
+  as commands. So resolving `claude.cmd` alone would have sent only the first
+  line of each prompt, and detector snippets from the document could have run
+  as commands. For a batch file the prompt now goes into a temporary file,
+  passed with `--append-system-prompt-file`, and removed after the call. The
+  argument list holds only a fixed line and that path. A path with one of those
+  characters is refused with the closed error. A native `claude.exe` still
+  gets the prompt as the `-p` argument, as before.
+- `tests/test_claude_cli.py` covers the variable winning over the PATH, the
+  PATH fallback, the closed errors, the absence of `shell=True` in every
+  module, and the batch path. On Windows one test runs a stand-in `claude.cmd`
+  through cmd.exe and checks that the full multi-line prompt and the document
+  arrive intact.
+- Not verified: a model reply through the batch path. A stand-in shim around
+  the real CLI accepted the arguments and reached the backend, which answered
+  with a credit error on the test machine.
+
+Tests: 192 pass on Windows. The cmd.exe test is skipped elsewhere.
+
 ## 0.4.1
 
 Fixed quadratic run time in the markup masks. Findings do not change, and the
