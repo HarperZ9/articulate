@@ -22,10 +22,11 @@ before you rely on any output.
   contrast devices, intensifiers, stock transitions and similar patterns) blocks
   only under the `house` or `house-essay` profile, which you choose, and no other
   profile shows it unless you ask with `--house-notes`. On the corpus run so far
-  the default profile blocks none of 306 human texts. Fourteen stricter profiles
-  and modes, `essay` among them, still block student abstracts more often than
-  learner texts, so the release gate fails. The [fairness audit](docs/fairness-audit.md)
-  has the before and after with intervals.
+  the default profile blocks none of 306 human texts, the strict `essay`
+  profile blocks 5 of them, and every release gate passes. The rules were tuned
+  on that corpus, so the pass is exploratory until a held-out corpus confirms
+  it. The [fairness audit](docs/fairness-audit.md) has the before and after with
+  intervals.
 - **Adapt by register, mode and genre.** Profiles (procedure, commit, research,
   readme, essay, narrative and more) set which findings block. Writing modes
   such as `memo/argue` and genres such as `memoir`, `screenplay` and `poetry`
@@ -116,6 +117,6 @@ Pre-1.0. Version 0.5.0 is on PyPI as `articulate-writing`; the changes on this
 page are unreleased and listed in the [changelog](CHANGELOG.md). The fairness
 harness has run on proxy corpora only. No arm yet groups adult academic writers
 by first language, and none covers dictated text, disabled writers or World
-Englishes. The release gate for the new ruleset does not pass on the corpus run
-so far, and while it fails no package release can publish without a recorded
-override.
+Englishes. The release gate for the new ruleset passes on the corpus run so far,
+which is the corpus the rules were tuned on, so that pass is exploratory. The
+gate runs only when a release changes the ruleset.

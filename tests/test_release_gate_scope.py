@@ -23,10 +23,13 @@ NEW_FP = "sha256:" + "ab" * 8
 OLD_FP = "sha256:" + "cd" * 8
 
 
+# The first run of ruleset 0.7.0, which failed G1 and G2: a committed receipt
+# with real failing rows to build the synthetic cases from.
+FIRST_RUN = "sha256-22a7b980e3dba991.json"
+
+
 def _after():
-    page = (ROOT / "docs" / "fairness-audit.md").read_text(encoding="utf-8")
-    name = re.search(r"after = `fairness/receipts/([^`]+)`", page).group(1)
-    return json.loads((ROOT / "fairness" / "receipts" / name).read_text("utf-8"))
+    return json.loads((ROOT / "fairness" / "receipts" / FIRST_RUN).read_text("utf-8"))
 
 
 def _as(rec, fp):

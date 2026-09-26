@@ -20,8 +20,11 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
   inference.
 - `--gate`: exit 1 when any file is blocked or cannot be screened, otherwise 0.
 - `--json`: a machine-readable payload with the findings, whether each one
-  blocks, per-rule counts, the gate, density, passive-voice and adverb rates and
-  the `does_not_prove` line.
+  blocks, `blocking` (the count of blocking findings), per-rule counts, the gate,
+  density, passive-voice and adverb rates and the `does_not_prove` line. The
+  `clean` key (no HIGH or MEDIUM finding) is deprecated: it echoes the retired
+  verdict, keeps its value in 0.6.0 and is removed in 0.7.0. Read `blocking` or
+  `gate`.
 - `--sarif`: SARIF 2.1.0 for GitHub code scanning, Azure DevOps, and reviewdog.
   Each rule's help text carries its reader-cost reason and the does-not-prove
   line, and each result records the profile.
@@ -155,13 +158,19 @@ An unknown `--venue` exits 2 with the list of venues. The JSON output carries a
 
 ```bash
 python -m articulate.fairness MANIFEST [--out RECEIPT]
-python -m articulate.fairness --release-check DIR
+python -m articulate.fairness --release-check DIR [--published FILE]
 ```
 
-The release check recomputes the gates from `DIR/<fingerprint>.json`. A
-maintainer can let a release publish while a gate fails by committing
-`DIR/<fingerprint>.override.json` with `ruleset_version`, `reason` and
-`decided_by`; the check prints the reason and every failure.
+The release check reads the published-ruleset record, `published-ruleset.json`
+beside `DIR` unless `--published` names another. When the current ruleset
+fingerprint equals the published one, it passes and prints
+`ruleset unchanged since X (FINGERPRINT); gates not re-run`. Otherwise it
+recomputes the gates from `DIR/<fingerprint>*.json`, one receipt per listed
+manifest. A maintainer can let a changed ruleset publish while a gate fails by
+committing `DIR/<fingerprint>.override.json` with `ruleset_version`, `reason`
+and `decided_by`. The check accepts it only when no gate row that passes in the
+published ruleset's receipt fails in the new one; it prints that comparison, the
+reason and every failure. An override never excuses a malformed receipt.
 
 ## Editor commands
 
@@ -207,6 +216,8 @@ command with an error that says to upgrade.
 - `desk`: 0 whenever the run completes, 2 on unreadable or binary input.
 - `disclose`: 2 when the statement is refused.
 - `process verify`: 0 when intact, 1 when broken or missing.
-- `python -m articulate.fairness --release-check`: 1 when the release gate fails
-  and no override names the current ruleset.
+- `python -m articulate.fairness --release-check`: 0 when the ruleset is
+  unchanged since the published one or every gate passes; 1 when a gate fails
+  and no accepted override names the current ruleset, or a receipt is missing
+  or malformed.
 - `articulate.bench`: the number of failed expectations, so 0 means every one held.

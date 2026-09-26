@@ -35,9 +35,13 @@ def _config(receipt, profile):
 
 
 def _rows(first_header):
-    table = PAGE.split(first_header, 1)[1].split("\n\n", 1)[0]
-    return [[c.strip() for c in re.split(r"(?<!\\)\|", ln.strip().strip("|"))]
-            for ln in table.splitlines()[2:] if ln.startswith("|")]
+    """Rows of every table on the page that opens with this header."""
+    rows = []
+    for part in PAGE.split(first_header)[1:]:
+        table = part.split("\n\n", 1)[0]
+        rows += [[c.strip() for c in re.split(r"(?<!\\)\|", ln.strip().strip("|"))]
+                 for ln in table.splitlines()[2:] if ln.startswith("|")]
+    return rows
 
 
 def _num(cell):
@@ -107,12 +111,25 @@ def test_the_g1_row_names_every_failing_bound_profile():
     failing = {p for v in RECS["after"]["results"].values() for p in v["profiles"]
                if p in bound and not all(c["g1"]["pass"] for c in v["comparisons"].values())}
     row = PAGE.split("| G1 gap within 5 points", 1)[1].split("\n", 1)[0]
-    assert failing == set(re.findall(r"`([a-z/-]+)`", row)), failing
     assert f"{len(failing)} of the {len(bound)} bound profiles" in row
+    if failing:
+        assert failing == set(re.findall(r"`([a-z/-]+)`", row)), failing
 
 
 def test_the_page_states_the_release_gate_result():
     after = RECS["after"]
-    assert after["gates"]["release_ok"] is False
-    assert after["gates"]["G7_review"] == ["abstracts"]
-    assert "does not pass on this corpus" in PAGE
+    assert after["gates"]["release_ok"] is True
+    assert after["gates"]["G7_review"] == []
+    assert "the release gate passes on this corpus" in PAGE
+    assert "The pass is\nexploratory" in PAGE
+
+
+def test_the_gate_row_counts_match_the_receipts():
+    from articulate.fairness_regress import compare, gate_rows
+    rows = gate_rows(RECS["after"])
+    assert all(rows.values())
+    assert f"all {len(rows)} gate rows" in PAGE
+    line, regressed = compare(gate_rows(RECS["before"]), rows)
+    fixed = int(re.search(r"(\d+) fail before and pass now", line).group(1))
+    assert not regressed
+    assert f"{fixed} rows move from fail\nto pass and none from pass to fail" in PAGE

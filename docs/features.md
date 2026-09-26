@@ -20,7 +20,10 @@ tiers:
 - LOW: notes that never block and expand only with `--verbose`. A reply opener
   that hands over a deliverable ("Certainly! Here is ...") is a LOW note, since
   an email reply does that on purpose; the `essay` and house profiles promote it
-  to a blocking finding.
+  to a blocking finding. "In order to" (`padded-purpose`) and "state of the
+  art" in a sentence with no number, year or citation (`unanchored-claim`) are
+  LOW notes that never block, because usage guides accept both in some uses.
+  "It is important to" at a sentence start (`expletive-opener`) is one too.
 
 Every rule that can block a writer who did not choose a house style carries a
 one-sentence reader-cost reason and a published source. SARIF shows both in each
@@ -45,8 +48,9 @@ text.
 One writer's standard lives in a house pack: the em dash in every form, the
 contrast devices (`not X but Y`, a trailing `, not Y`, `never ... always`), the
 intensifiers, corporate verbs, register word lists and jargon, ordinal
-enumeration, stock transitions, closers, cadence beats, and the stock phrases of
-email, blog and marketing hooks. Only the `house` and `house-essay` profiles block
+enumeration, stock transitions, closers, cadence beats, curly quotation marks, a
+bare "There is" opener, and the stock phrases of email, blog and marketing
+hooks. Only the `house` and `house-essay` profiles block
 on it. No other profile shows those findings in the console, the editor, SARIF,
 the MCP tools or receipts unless you pass `--house-notes`; then they are LOW
 notes marked `house: true`. The library call `check_text` reports them, marked,
@@ -186,12 +190,14 @@ corpus under every profile a writer can land on without choosing it, and writes 
 content-free receipt with block rates by group, both gap directions, per-rule
 skew states, the report-only notes a writer sees, and a layout check that
 rewraps each text to one sentence per line and hard-wraps it at 60 columns.
-`--release-check` recomputes the gates from the committed receipt's own rows and
-fails when the receipt is missing, came from an unlisted manifest, leaves out a
-required comparison or a bound profile, or a gate fails. Every package release
-runs it, so a failing gate blocks every release until the gate passes or a
-maintainer records an override with a reason. The results so far are in the
-[fairness audit](fairness-audit.md).
+`--release-check` gates only a release that changes the ruleset: when the
+fingerprint equals the one in `fairness/published-ruleset.json`, it passes and
+says the gates were not re-run. For a changed ruleset it recomputes the gates
+from the committed receipts' own rows and fails when a receipt is missing, came
+from an unlisted manifest, leaves out a required comparison or a bound profile,
+or a gate fails. A maintainer's override with a reason is accepted only when no
+gate row that passed under the published ruleset fails under the new one. The
+results so far are in the [fairness audit](fairness-audit.md).
 
 ## Binary inputs fail closed
 

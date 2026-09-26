@@ -86,8 +86,9 @@ def _committed_after():
 
 
 def _after_name():
-    page = (ROOT / "docs" / "fairness-audit.md").read_text(encoding="utf-8")
-    return re.search(r"after = `fairness/receipts/([^`]+)`", page).group(1)
+    # The first run of ruleset 0.7.0, whose gates fail: the override and
+    # hand-edit cases need a receipt with failing rows.
+    return "sha256-22a7b980e3dba991.json"
 
 
 def test_a_hand_edited_release_ok_does_not_pass(tmp_path, monkeypatch):
