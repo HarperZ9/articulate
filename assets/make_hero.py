@@ -4,7 +4,8 @@ design canon: a luminous aperture on a near-black ground, drawn from a field of
 prose lines that bow around a verified core, with drift-marked spans, one
 spectral flare, and a scanline grain veil. Verdict-only palette, two type
 families. Output is 1280x640 so it doubles as the social preview."""
-import math, random
+import math
+import random
 
 W, H = 1280, 640
 CX, CY = 848, 300           # aperture core, right of centre
@@ -142,7 +143,7 @@ svg.append(f'<rect width="{W}" height="{H}" filter="url(#grain)" opacity="0.05"/
 
 # wordmark + tagline (grotesk) and the verdict metadata row (mono)
 svg.append(f'<text x="96" y="452" fill="{INK}" font-size="82" font-weight="700" letter-spacing="-1.5">Articulate</text>')
-svg.append(f'<text x="99" y="490" fill="{INK2}" font-size="20" font-weight="400" letter-spacing="0.3">A local writing-quality and AI-tell detection and editing tool.</text>')
+svg.append(f'<text x="99" y="490" fill="{INK2}" font-size="20" font-weight="400" letter-spacing="0.3">Local prose checks, named and located.</text>')
 # mono metadata row with tiny verdict dots
 mono = 'font-family="ui-monospace, \'DejaVu Sans Mono\', Menlo, Consolas, monospace"'
 svg.append(f'<g {mono} font-size="14.5" letter-spacing="1.5">')

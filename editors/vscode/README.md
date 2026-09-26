@@ -1,6 +1,6 @@
 # Articulate for VS Code
 
-Inline writing-quality and AI-tell diagnostics, powered by the Articulate
+Inline prose-pattern diagnostics, powered by the Articulate
 language server. The server runs locally with no network call; this extension is
 a thin client that launches it.
 
@@ -28,5 +28,5 @@ npm run compile      # tsc -> out/extension.js
 npx vsce package     # optional: produce a .vsix
 ```
 
-Diagnostics map HIGH tells to warnings, MEDIUM to information, and LOW advisories
+Diagnostics map HIGH findings to warnings, MEDIUM to information, and LOW advisories
 to hints, each carrying its rule id.

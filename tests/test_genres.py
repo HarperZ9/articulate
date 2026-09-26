@@ -18,7 +18,7 @@ def _cats(r):
 def test_genres_load_and_expose_fields():
     for name in genres.names():
         g = genres.load(name)
-        assert g["slop"] in {"off", "flavored", "strict"}
+        assert g["gate_level"] in {"off", "flavored", "strict"}
         assert "unit" in g and "fiction_slop" in g and "dialogue_exempt" in g
     assert "poetry" in genres.names()
     assert genres.load("poetry")["unit"] == "line"
@@ -27,14 +27,14 @@ def test_genres_load_and_expose_fields():
 
 def test_profiles_resolve_a_genre_name():
     p = profiles.load("literary-fiction")
-    assert p["genre"] == "literary-fiction" and p["slop"] == "off"
+    assert p["genre"] == "literary-fiction" and p["gate_level"] == "off"
 
 
 def test_genre_modes_carry_their_genre_fields():
     m = modes.load("screenplay/narrate")
-    assert m["structural_classify"] == "fountain" and m["slop"] == "flavored"
+    assert m["structural_classify"] == "fountain" and m["gate_level"] == "flavored"
     m2 = modes.load("poetry/express")
-    assert m2["unit"] == "line" and m2["slop"] == "off"
+    assert m2["unit"] == "line" and m2["gate_level"] == "off"
 
 
 # --- P0-a: quoted speech is not the author's prose ------------------------- #
@@ -67,11 +67,11 @@ SOMATIC = "A shiver ran down her spine as she read the note, and she could not h
 
 def test_fiction_slop_is_advisory_never_gates():
     lit = articulate.check_text(SOMATIC, profile=profiles.load("literary-fiction"))
-    assert "fiction-slop-lexicon" in _cats(lit)
+    assert "fiction-stock-phrase" in _cats(lit)
     assert lit["gate"] == "ok"      # it is a LOW advisory; it never blocks
     # off the genre axis, the lexicon does not run at all
     flav = articulate.check_text(SOMATIC, profile=profiles.load("flavored"))
-    assert "fiction-slop-lexicon" not in _cats(flav)
+    assert "fiction-stock-phrase" not in _cats(flav)
 
 
 # --- poetry: the line is the unit; craft devices are technique ------------- #
@@ -83,7 +83,7 @@ VERSE = ("I do not weep, but sing,\n"
 
 
 def test_poetry_removes_device_categories():
-    poem = articulate.check_text(VERSE, profile=profiles.load("poetry"))
+    poem = articulate.check_text(VERSE, profile=profiles.load("poetry"), cadence_detail=True)
     cats = _cats(poem)
     for banned in ("antithesis", "rule-of-three", "contrast-pair",
                    "negative-parallel", "cadence"):
@@ -116,10 +116,10 @@ def test_screenplay_dialogue_is_exempt():
     assert r["gate"] == "ok"
 
 
-def test_screenplay_action_keeps_the_device_gate():
+def test_screenplay_action_reports_house_devices():
     r = articulate.check_text(SCREEN_ACTION, profile=profiles.load("screenplay"))
-    assert r["gate"] == "blocked"         # a banned device on an action line gates
-    assert any(f["category"] == "corrective-negation" for f in r["high"])
+    assert r["gate"] == "ok"              # a house-style device reports on an action line
+    assert any(f["category"] == "corrective-negation" for f in r["low"])
 
 
 def test_fountain_classifier_types_lines():
@@ -141,8 +141,8 @@ def test_genre_receipt_replays_to_match():
 # --- the floor still holds: a genre never re-enables a gated device on prose #
 
 def test_screenplay_action_floor_is_not_liftable():
-    # Screenplay sits at flavored, so HIGH devices on action lines gate; the
+    # Screenplay sits at flavored, so HIGH findings on action lines gate; the
     # genre layer only exempts dialogue and structure, it does not un-gate prose.
-    r = articulate.check_text("Sam leaves, not the way he came.\n",
+    r = articulate.check_text("Sam reads: As an AI language model, I cannot help.\n",
                               profile=profiles.load("screenplay"))
     assert r["gate"] == "blocked"

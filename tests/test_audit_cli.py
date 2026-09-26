@@ -17,7 +17,8 @@ import pytest
 from articulate import receipt
 from articulate.cli import main as cli_main
 
-TEXT = "In today's landscape, we leverage cutting-edge synergy to unlock value.\n"
+TEXT = ("<!-- writing-profile: house -->\n"
+        "In today's landscape, we leverage cutting-edge synergy to unlock value.\n")
 LONG_CLEAN = (
     "The team met on Tuesday to plan the next release. They agreed on the dates, "
     "assigned each task to a named owner, and set a short check-in for Friday "
@@ -41,7 +42,7 @@ def _commit(dirpath, rec_name, src_name, content, **kw):
     # Hash exactly what lands on disk, the way the CLI reads it (rb -> decode).
     with open(src, "rb") as fh:
         text = fh.read().decode("utf-8")
-    rec = receipt.make_receipt(text, "flavored", **kw)
+    rec = receipt.make_receipt(text, "house", **kw)
     rec["file"] = src
     with open(os.path.join(dirpath, rec_name), "w", encoding="utf-8") as fh:
         json.dump(rec, fh)
@@ -51,19 +52,19 @@ def _commit(dirpath, rec_name, src_name, content, **kw):
 # --- the envelope ---------------------------------------------------------- #
 
 def test_receipt_carries_created_at_and_reviewer():
-    rec = receipt.make_receipt(TEXT, "flavored", reviewer="alice",
+    rec = receipt.make_receipt(TEXT, "house", reviewer="alice",
                                created_at="2026-01-01T00:00:00+00:00")
     assert rec["created_at"] == "2026-01-01T00:00:00+00:00" and rec["reviewer"] == "alice"
 
 
 def test_created_at_defaults_to_valid_iso_and_reviewer_is_none():
-    rec = receipt.make_receipt(TEXT, "flavored")
+    rec = receipt.make_receipt(TEXT, "house")
     datetime.fromisoformat(rec["created_at"])       # parses without error
     assert rec["reviewer"] is None
 
 
 def test_envelope_is_provenance_not_load_bearing():
-    rec = receipt.make_receipt(TEXT, "flavored", reviewer="alice",
+    rec = receipt.make_receipt(TEXT, "house", reviewer="alice",
                                created_at="2026-01-01T00:00:00+00:00")
     assert receipt.verify_receipt(rec, TEXT)[0] == "Match"
     rec["reviewer"] = "mallory"
@@ -130,8 +131,10 @@ def test_reverify_source_missing_is_informational(work, capsys):
     assert out["reverify"].get("source-missing") == 1 and rc == 0   # missing is not drift
 
 
-def test_reverify_subthreshold_does_not_fail_the_gate(work, capsys):
-    _commit(work, "a.json", "a.md", "Thanks, will review shortly.\n")   # short + clean
+def test_reverify_short_text_matches(work, capsys):
+    # There is no word floor: a short text with no findings replays to Match like
+    # any other, because the receipt claims only which rules fired.
+    _commit(work, "a.json", "a.md", "Thanks, will review shortly.\n")
     rc = cli_main(["audit", work, "--reverify", "--gate", "--json"])
     out = json.loads(capsys.readouterr().out)
-    assert out["reverify"].get("Unverifiable") == 1 and rc == 0        # honest abstention
+    assert out["reverify"].get("Match") == 1 and rc == 0

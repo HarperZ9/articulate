@@ -46,8 +46,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e .
-      # Dogfood in CI: our shipped docs must pass our own gate.
-      - run: python -m articulate.cli check README.md CHANGELOG.md docs/*.md --gate
+      # Dogfood in CI: our shipped docs must pass our own gate under the house
+      # profile, the style this project chose. No path rule selects it for anyone.
+      - run: python -m articulate.cli check README.md CHANGELOG.md docs/*.md --gate --profile house
 
   build:
     runs-on: ubuntu-latest

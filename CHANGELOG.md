@@ -4,6 +4,204 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+### Fair signals, no origin claims, a writer-held process record (ruleset 0.7.0)
+
+A 2023 study (Liang et al., Patterns 100779) found that perplexity detectors
+flag plain, predictable English, common in second-language writing, as machine
+text. An audit of Articulate 0.4.1 on the study's released texts found its
+default profile blocked 38 of 91 learner exam texts against 21 of 70 US college
+essay windows and 31 of 145 student abstract windows, and one rule fired about
+11 times as often per word on the learner texts. This release answers that. The
+measured before and after are in `docs/fairness-audit.md`; the new ruleset's
+release gate does not yet pass on that corpus, and the page says why.
+
+Rules and scanning:
+
+- A house pack holds one writer's style: the em dash in every form, the contrast
+  devices, the intensifiers, corporate verbs, register word lists and jargon,
+  ordinal enumeration, stock transitions, closers, cadence beats and stock
+  email, blog and marketing phrases. Only the new `house` and `house-essay`
+  profiles gate it. No other profile shows it in the console, the editor, SARIF,
+  the MCP tools or receipts unless the writer passes `--house-notes`; then it
+  reports at LOW with `house: true`. The library call `check_text` still returns
+  it, marked. No path rule resolves to a house profile.
+- Every rule that can block outside the house pack carries a reader-cost reason
+  and a published source (`rule_reasons.py`). No reason is how often a model
+  uses a pattern.
+- The old `essay` profile is now `house-essay`. The new `essay` is strict
+  without the house pack, and `essays/`, `blog/` and `writing/` paths resolve to
+  it. A `.tex` file resolves to `research` (to `proof` under `proofs/`).
+- The four intensifiers are house style; a valediction such as "Yours truly" is
+  never one. A bare spoken affirmation reports only, and so does a reply opener
+  that hands over a deliverable (`reply-opener`, LOW), which `essay` and the
+  house profiles promote to blocking. Self-description needs the first person
+  beside "AI" or "language model", so a job title, a sentence about training
+  data, an email about real-time access and a quoted AI Act Article 2(12) raise
+  nothing. A zero-width space blocks only inside Latin text. `wordiness` moves
+  to MEDIUM and skips `with respect to` before a math variable.
+- Paragraphs are read as logical lines with an offset map, so soft-wrapping and
+  one sentence per line give the same findings; every match counts; line-start
+  rules run at every sentence start; findings gain `end_line`. A period after
+  "et al." or "e.g." no longer ends a sentence. A line that ends in a hyphen
+  after a letter joins the next with no space, so a hard wrap inside
+  `state-of-the-art` gives the same finding (`SCAN_ALGO` 4).
+- Cadence flags need 12 sentences and 200 words and never block. The
+  sentence-length variation figures (`cv`, `uniform`) leave `check --json` and
+  the MCP `score` tool; only the fairness harness reads them. The adverb rate
+  leaves out the intensifiers. C2PA text manifests (Annex A.8 and A.9) are
+  blanked before any rule runs.
+- The ruleset fingerprint now covers the scanner's constants, the house pack, the
+  reasons and a `SCAN_ALGO` counter, and a golden test pins every finding over
+  `corpus/` to it.
+- Seven category ids that named an origin are renamed (`assistant-residue` to
+  `chat-interface-text`, `filler-intensifier` to `intensifier`, `register-word`
+  to `inflated-word`, and four more). The profile field `slop` is now
+  `gate_level`. Old names stay readable for one minor version.
+
+Outputs:
+
+- The texture score and `verdict` (with its 30-word floor) are retired. Results
+  carry `findings` (`has_findings` or `no_findings`), `words`, per-rule counts,
+  density per 1,000 words with an exact interval at 250 words or more, and
+  `gates` on each finding. The gate is the only pass-or-block signal.
+- Every machine-readable output carries `does_not_prove`. SARIF puts it, with
+  the rule's reason, in each rule's help text and records the profile on each
+  result.
+- `--spans` reports per-paragraph counts by rule with no per-paragraph gate or
+  label. Receipts are schema v2; a v1 receipt replays to Unverifiable with the
+  reason.
+- Product text everywhere reads "Local prose checks: named writing patterns,
+  where they occur, and what each costs a reader." Both MCP servers read one
+  description table (`tool_text.py`).
+- The benchmark is an expected-findings regression over `corpus/patterns/` with
+  a false-finding control over `corpus/control/`. The `.pangram` sidecars and
+  the recall target are gone.
+
+Editor:
+
+- Every instruction targets the intended reader (`prompts.py`). No template
+  names an outside score, a sentence-length target or a vocabulary level. The
+  house writing standard reaches the model only under a house profile. The
+  model-input block is now `CHECKER FINDINGS`, renamed together with the trust
+  boundary.
+- `editor.accept()` is the whole acceptance rule for the CLI and MCP `polish`.
+  `fix` and `polish` take `--profile`.
+
+New:
+
+- `python -m articulate.fairness`: a harness that runs every bound profile over
+  a hash-checked corpus manifest and writes a content-free receipt with the gates
+  G1 to G8 (`fairness/PREREG.md`), plus `--release-check`, now a step in the
+  publish workflow. The check recomputes the gates from the receipt's rows and
+  pins the manifest and the comparisons. While a gate fails it blocks every
+  package release unless a maintainer commits an override for that exact
+  ruleset with a reason.
+- `articulate process`: a local, opt-in record of your own drafts as salted
+  commitments, with order and day by default, private input methods, reveals a
+  reader can check, and a C2PA-shaped process summary.
+- `articulate disclose`: a statement of tool use and CRediT credit from an
+  intact log. It refuses an author whose whole name is a product name unless the
+  entry says `"type": "person"`, and refuses a claim that matches its list of
+  no-tool phrases when the log records assistance.
+- `articulate desk`: the questions a reviewer should ask, inside the document and
+  across the field, with no score, verdict or ranking.
+
+Review fixes on this branch (three reviews: correctness, fairness, product
+truth):
+
+- The process summary no longer exports entry hashes, which let a reader
+  brute-force withheld word counts and times. Input methods live in a private
+  file outside the chain. `continue` refuses an intact log and carries
+  assistance forward; `disclose` refuses a broken or missing log; `verify`
+  reports a missing log as `missing` with exit 1, reads a summary by its schema
+  and fails one whose chain is not intact. The git anchor follows a worktree
+  `.git` file. Salts and snapshots are keyed per document and by commitment.
+  `--track` keeps the private files out of git. `fix` and `polish` log a
+  rewrite even when a later pass fails.
+- The release check fails with nothing to compare, recomputes every gate, and
+  names an override path. The smallest detectable gap uses the Newcombe
+  interval. G4 also hard-wraps at 60 columns. G8 reports the notes a writer
+  sees, by group.
+- The desk's hidden-text check no longer flags `background-color:#fff`,
+  `font-size:0.9em` or `#fff8dc`, and now finds `display:none`,
+  `visibility:hidden`, zero opacity, bidirectional controls and Unicode tag
+  characters, whose hidden sentence it spells out. Desk and audit JSON carry
+  `does_not_prove`; an unknown venue exits 2 with the list.
+- `verify_receipt` re-derives the findings state, word count and counts, so an
+  edited summary reads `Drift`.
+- The judge and scorer notes pass through a filter that removes guesses about a
+  text's origin; the prompts ask the model to keep the writer's variety of
+  English. MCP `judge`, `fix` and `polish` carry `does_not_prove`.
+- The editor resolves a profile from the path and tag as `check` does, and a
+  blocked console result prints the does-not-prove line. Docs show real output
+  from `examples/`, and a test reruns it.
+
+Other changes on this branch:
+
+- A Markdown table delimiter row such as `|---|---|` or `|:---:|` no longer raises
+  a HIGH `em-dash` finding. The inline `---` check read the row's hyphen runs as an
+  em-dash, so a Markdown paper with a table failed the gate under every
+  non-fiction profile. `detector.is_md_table_sep` recognizes the row: at least one
+  pipe, and every cell is hyphens with optional alignment colons. A real em-dash
+  or a mid-line `---` inside a table cell still fires. `tests/test_md_tables.py`
+  covers both sides. Findings change for any text with a table, so
+  `RULESET_SEMVER` moves 0.5.0 to 0.5.1 and a receipt issued under 0.5.0 replays
+  as `Unverifiable`, never as a misleading `Drift`. The ruleset fingerprint
+  moves from `sha256:9f78a7484bb20f84` to `sha256:3835c2deace65a1e`.
+- `articulate receipt --mode M` now screens under the mode and records it. The
+  flag was accepted and then ignored: a receipt issued with
+  `--mode academic/argue` recorded the base profile `research` and its gate, so
+  it described a screening the author never ran. The receipt now carries a `mode`
+  field beside the mode's base profile, and `verify` replays under that mode. A
+  receipt whose mode is unknown or malformed, or whose profile is not the mode's
+  base, reads `Unverifiable`. An unknown `--mode` or `--profile` exits 2 with a
+  message and no output. `receipt.make_receipt` takes a `mode` keyword.
+  `tests/test_receipt_mode.py` covers issuance, replay, and tampering.
+- `--fix` now masks math on a `.tex` file. Only `--polish` called `mask_math`, so
+  `--fix` sent every formula to the model while the README said the editor masks
+  every math span before a rewrite. Both paths now go through
+  `editor.masked_rewrite`, which also builds the prompt's detector summary from
+  the masked text, since that summary quotes document lines and carried the math
+  into the prompt under `--polish` as well. `splice_math` now refuses a rewrite
+  that drops, repeats, or invents a placeholder (`MathSpliceError`), where it used
+  to delete the formula silently. Masking runs in one pass, so a theorem, lemma,
+  proof, or other listed environment is masked whole with the math inside it and
+  every span restores byte for byte; before, inline math inside an environment
+  got its own placeholder that the environment span then swallowed, which left a
+  stray placeholder in polish output. Under `--polish` the quality scorer reads
+  the masked text as well, and its notes reach the rewrite prompt with any math
+  scrubbed, so no model call on a math file carries a formula. The MCP `fix` and
+  `polish` tools take an `is_tex` flag with the same behavior. MCP `fix` reports
+  a refused rewrite with a note that names the refusal, where it used to blame
+  the backend, and MCP `polish` keeps the last accepted text, as the CLI does. `tests/test_fix_integrity.py`
+  and `tests/test_math_masking.py` drive each path with a fake model and never
+  call a hosted one.
+- Both rewrite prompts drop "human" from their target and ask for "skilled
+  writing that fully satisfies the standard". The target is the writing
+  standard, never a reading of who wrote the text.
+- `--fix` self-checks its rewrite under the chosen mode. The first pass read the
+  detector under the mode's profile, and the post-rewrite checks ran under the
+  default profile, so a rewrite under `academic/explain` that kept one of the
+  mode's terms of art was reported as "still has tells". Both post-rewrite
+  checks now take the mode's profile.
+- The README, the walkthrough, and the MCP "unavailable" notes no longer say the
+  editor defaults to a local model. The README lead, the hero image, the package
+  docstring, the docs index, and the PyPI description now call only the detector
+  local. The only editor backend is the `claude` CLI,
+  which sends the full text to a hosted Anthropic model. The README's Privacy
+  section now says so and warns against running the editor on text you may not
+  upload. A local backend and an `--offline` mode stay on the roadmap.
+- `--spans` is described as a writing-quality view that finds the paragraph
+  carrying the findings. The help text said "localize mixed authorship", and the
+  walkthrough and features pages framed spans the same way, which invited use as
+  an authorship detector or an origin gate. The boundaries page gains a section
+  stating that no verdict, span verdict, or receipt is an authorship finding. The
+  word-floor text on the boundaries and features pages now says too few tokens
+  "to call a text clean", without "human", and the walkthrough example and the
+  spans tests no longer stage the paragraphs by who wrote them.
+
 ## 0.5.0
 
 A document folder can no longer run commands through `judge`, `fix` or

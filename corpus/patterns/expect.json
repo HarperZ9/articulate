@@ -1,0 +1,56 @@
+{
+ "patterns": {
+  "blog-intro.md": {
+   "profile": "house",
+   "categories": [
+    "blog-stock-phrase",
+    "inflated-word",
+    "stock-transition",
+    "unsupported-authority"
+   ]
+  },
+  "dense-patterns.md": {
+   "profile": "house",
+   "categories": [
+    "antithesis",
+    "corporate-verb",
+    "cta",
+    "inflated-word",
+    "marketing",
+    "stock-transition",
+    "throat-clearing"
+   ]
+  },
+  "email-outreach.md": {
+   "profile": "house",
+   "categories": [
+    "corporate-verb",
+    "email-stock-phrase",
+    "inflated-word",
+    "throat-clearing"
+   ]
+  },
+  "long-draft.txt": {
+   "profile": "house",
+   "categories": [
+    "cadence",
+    "contrast-pair"
+   ]
+  },
+  "medium.md": {
+   "profile": "house",
+   "categories": [
+    "throat-clearing"
+   ]
+  }
+ },
+ "control": {
+  "profiles": [
+   "flavored",
+   "essay",
+   "research",
+   "readme",
+   "house"
+  ]
+ }
+}

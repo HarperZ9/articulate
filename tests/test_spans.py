@@ -1,10 +1,10 @@
-"""P0-d: per-span (per-paragraph) mixed-authorship verdict.
+"""--spans: per-paragraph counts by rule, in document order.
 
-One AI-heavy paragraph in an otherwise human document must be flagged in place,
-with its line range, instead of an aggregate texture score smearing across the
-whole file. The receipt is reportable per span and re-derives per block.
+A paragraph that carries findings shows them in place with its line range. No
+paragraph carries a gate, a label or a score: the gate belongs to the document,
+and a per-paragraph flag would point a reader at a paragraph as if it were
+different in kind. The receipt records the same per-paragraph counts.
 """
-import articulate
 from articulate import detector, profiles, receipt
 
 MIXED = (
@@ -28,31 +28,25 @@ def test_segment_blocks_tracks_line_ranges_and_offsets():
         assert MIXED[b["start"]:b["end"]] == b["text"]
 
 
-def test_mixed_authorship_localizes_to_the_ai_paragraph():
-    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))
-    human, ai = blocks[0], blocks[1]
-    assert human["gate"] == "ok"                 # the clean paragraph is not flagged
-    assert ai["gate"] == "blocked"               # the AI paragraph carries a HIGH device
-    assert ai["texture_score"] > human["texture_score"]
-    assert ai["elevated"] is True and human["texture_score"] == 0
-    # the flag names the AI paragraph's own line range, not the whole file
-    assert (ai["start_line"], ai["end_line"]) == (4, 8)
+def test_findings_localize_to_their_paragraph():
+    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("house"))
+    first, second = blocks
+    assert sum(first["counts"].values()) < sum(second["counts"].values())
+    assert second["rule_counts"]
+    assert (second["start_line"], second["end_line"]) == (4, 8)
 
 
-def test_whole_file_score_does_not_smear_the_concentration():
-    whole = articulate.check_text(MIXED, profile=profiles.load("flavored"))
-    ai = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))[1]
-    # the concentrated AI paragraph scores at least as high on its own as the
-    # diluted whole-document aggregate, so the signal is localized, not averaged away
-    assert ai["texture_score"] >= whole["texture_score"]
+def test_no_paragraph_carries_a_gate_label_or_score():
+    for b in detector.analyze_blocks(MIXED, profile=profiles.load("house")):
+        assert not {"gate", "verdict", "texture_score", "elevated", "clean"} & set(b)
 
 
 def test_span_finding_offsets_are_document_relative():
-    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))
+    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("house"))
     hits = blocks[1]["high"] + blocks[1]["medium"]
-    assert hits, "the AI paragraph must produce findings"
+    assert hits, "the second paragraph must produce findings"
     for f in hits:
-        assert 4 <= f["line"] <= 8                 # document line, not block line
+        assert 4 <= f["line"] <= f["end_line"] <= 8     # document lines, not block lines
         assert MIXED[f["start"]:f["end"]] == f["match"]
 
 
@@ -63,23 +57,19 @@ def test_fenced_code_block_stays_one_span():
     assert len(fenced) == 1 and "more code" in fenced[0]["text"]
 
 
-# --- the per-span receipt --------------------------------------------------- #
-
 def test_per_span_receipt_replays_to_match():
-    rec = receipt.make_receipt(MIXED, "flavored", per_span=True)
+    rec = receipt.make_receipt(MIXED, "house", per_span=True)
     assert "blocks" in rec and len(rec["blocks"]) == 2
-    verdict, _ = receipt.verify_receipt(rec, MIXED)
-    assert verdict == "Match"
+    assert receipt.verify_receipt(rec, MIXED)[0] == "Match"
 
 
-def test_tampered_block_verdict_is_drift():
-    rec = receipt.make_receipt(MIXED, "flavored", per_span=True)
-    rec["blocks"][1]["texture_score"] = 0          # forge the AI paragraph clean
-    verdict, _ = receipt.verify_receipt(rec, MIXED)
-    assert verdict == "Drift"
+def test_tampered_block_counts_are_drift():
+    rec = receipt.make_receipt(MIXED, "house", per_span=True)
+    rec["blocks"][1]["counts"]["high"] = 0
+    assert receipt.verify_receipt(rec, MIXED)[0] == "Drift"
 
 
 def test_default_receipt_has_no_blocks():
-    rec = receipt.make_receipt(MIXED, "flavored")
+    rec = receipt.make_receipt(MIXED, "house")
     assert "blocks" not in rec                      # opt-in, backward compatible
     assert receipt.verify_receipt(rec, MIXED)[0] == "Match"

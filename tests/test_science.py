@@ -33,7 +33,7 @@ def _scored(v=4):
 
 def test_academic_prove_wires():
     m = modes.load("academic/prove")
-    assert m["slop"] == "flavored"             # inherits the proof base
+    assert m["gate_level"] == "flavored"             # inherits the proof base
     assert "theorem" in m["keep"] and "at scale" in m["keep"]
     assert m["gate_promote"] == ()
     assert m["editor"]["run_fix_by_default"] is False
@@ -41,7 +41,7 @@ def test_academic_prove_wires():
 
 def test_science_writing_explain_wires():
     m = modes.load("science-writing/explain")
-    assert m["slop"] == "flavored"
+    assert m["gate_level"] == "flavored"
     assert "vorticity" in m["keep"] and "at scale" in m["keep"]
 
 
@@ -61,13 +61,15 @@ def test_there_exists_is_not_an_expletive_opener():
     assert "expletive-opener" not in {f["category"] for f in r["low"]}
 
 
-def test_two_sentence_contrast_passes_but_the_device_still_gates():
+def test_two_sentence_contrast_passes_and_the_device_reports():
     ok = articulate.check_text("This establishes existence. It does not establish uniqueness.\n",
                                profile=modes.load("academic/prove"))
-    banned = articulate.check_text("This is not a bound but an identity.\n",
+    device = articulate.check_text("This is not a bound but an identity.\n",
                                    profile=modes.load("academic/prove"))
     assert ok["gate"] == "ok"
-    assert banned["gate"] == "blocked"   # not-X-but-Y still gates, even in a proof
+    # not-X-but-Y is house style: reported in a proof, gated only by a house profile
+    assert device["gate"] == "ok"
+    assert "antithesis" in {f["category"] for f in device["low"]}
 
 
 # --- routing and the in-source tag ----------------------------------------- #
@@ -75,7 +77,11 @@ def test_two_sentence_contrast_passes_but_the_device_still_gates():
 def test_tex_under_papers_routes_math_aware():
     assert profiles.profile_for("papers/proof.tex") != "essay"
     assert profiles.profile_for("proofs/main.tex") == "proof"
-    assert profiles.profile_for("essays/piece.tex") == "essay"   # essays stay device-free
+    # Any other .tex is academic writing: research, which gates HIGH only. The
+    # strict essay gate is one tag away (`% writing-profile: essay`).
+    assert profiles.profile_for("essays/piece.tex") == "research"
+    assert profiles.profile_for("thesis/chapter1.tex") == "research"
+    assert profiles.profile_for("essays/piece.md") == "essay"
 
 
 def test_latex_comment_profile_tag():
