@@ -27,7 +27,8 @@ The rewrite target is WRITING QUALITY, gated by the mechanical tell-checker.
 It is not gated by, or tuned toward, any AI-detector score.
 
 The model runs through the local `claude` CLI (headless `claude -p`), so no API
-key is needed. Usage:
+key is needed. The CLI is found through ARTICULATE_CLAUDE_CLI when that is set,
+and on the PATH otherwise (see claude_cli.py). Usage:
     python articulate-judge.py --judge FILE
     python articulate-judge.py --fix FILE [--out OUT] [--passes N]
     python articulate-judge.py --review FILE
@@ -44,8 +45,10 @@ try:
 except (AttributeError, ValueError):
     pass
 
+from .claude_cli import ClaudeUnavailable  # noqa: F401  (re-exported for callers)
+from . import claude_cli
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-CLAUDE = "claude"
 
 STANDARD = """\
 WRITING STANDARD (non-negotiable):
@@ -181,11 +184,6 @@ def splice_math(text, spans):
     return text
 
 
-def run(cmd, text=None, timeout=600):
-    return subprocess.run(cmd, input=text, capture_output=True, text=True,
-                          encoding="utf-8", timeout=timeout)
-
-
 def mechanical(path, profile=None):
     """Return (clean, summary_text) from the deterministic detector, for a file."""
     try:
@@ -215,14 +213,10 @@ def mechanical_text(text, profile=None):
     return len(hits) == 0, summary
 
 
-class ClaudeUnavailable(RuntimeError):
-    """The model backend could not be reached (credits, auth, rate limit)."""
-
-
 def claude_call(instructions, text, timeout=600):
     # The trust boundary is appended to every call so the document on stdin can
     # never be read as instructions, whatever it contains.
-    r = run([CLAUDE, "-p", hardened(instructions)], text=text, timeout=timeout)
+    r = claude_cli.run(hardened(instructions), text, timeout=timeout)
     out = (r.stdout or "").strip()
     err = (r.stderr or "").strip()
     blob = (out + " " + err).lower()
@@ -435,8 +429,13 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
         if not cand or not cand.strip():
             print("[polish] empty rewrite; stopping")
             break
+        try:
+            cq = judge(cand)
+        except (RuntimeError, subprocess.TimeoutExpired) as e:
+            # The backend can drop halfway through, for example on a rate limit.
+            print(f"[polish] judge failed: {e}; kept the best version so far")
+            break
         cr, clow = evaluate(cand)
-        cq = judge(cand)
         csc = {k: int(cq.get(k, 0) or 0) for k in QUALITIES}
         regresses = any(csc[k] < sc[k] for k in QUALITIES)
         gate_worse = cr["gate"] == "blocked" and r["gate"] == "ok"

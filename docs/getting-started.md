@@ -102,6 +102,28 @@ vim.lsp.start({ name = "articulate", cmd = { "articulate-lsp" },
 For VS Code, a thin client that launches the same command is in
 `editors/vscode/`. See [Features](features.md#surfaces) for every surface.
 
+## From an MCP host
+
+`articulate-mcp` serves the tools over stdio from a bare install. Register it
+in the host's MCP configuration. The editor tools (`judge`, `fix`, `polish`)
+run the `claude` CLI, and a host often starts servers with a short PATH, so
+name the CLI by its absolute path:
+
+```json
+{
+  "mcpServers": {
+    "articulate": {
+      "command": "articulate-mcp",
+      "env": { "ARTICULATE_CLAUDE_CLI": "C:\\Users\\you\\.local\\bin\\claude.exe" }
+    }
+  }
+}
+```
+
+On macOS or Linux the value looks like `/home/you/.local/bin/claude`. Without
+the variable, the editor searches the absolute PATH entries and never the
+current directory. The detection tools (`check`, `score`) need no CLI.
+
 ## Where to next
 
 - [Walkthrough](walkthrough.md): a full pass over a real document, from screening
