@@ -33,7 +33,7 @@ def _scored(v=4):
 
 def test_academic_prove_wires():
     m = modes.load("academic/prove")
-    assert m["slop"] == "flavored"             # inherits the proof base
+    assert m["gate_level"] == "flavored"             # inherits the proof base
     assert "theorem" in m["keep"] and "at scale" in m["keep"]
     assert m["gate_promote"] == ()
     assert m["editor"]["run_fix_by_default"] is False
@@ -41,7 +41,7 @@ def test_academic_prove_wires():
 
 def test_science_writing_explain_wires():
     m = modes.load("science-writing/explain")
-    assert m["slop"] == "flavored"
+    assert m["gate_level"] == "flavored"
     assert "vorticity" in m["keep"] and "at scale" in m["keep"]
 
 

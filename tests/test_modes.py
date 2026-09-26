@@ -7,7 +7,7 @@ from articulate import detector, modes, profiles
 def test_all_modes_load_and_are_valid():
     for name in modes.names():
         prof = modes.load(name)
-        assert prof["slop"] in {"off", "flavored", "strict"}
+        assert prof["gate_level"] in {"off", "flavored", "strict"}
         assert "gate_promote" in prof and "editor" in prof
 
 
@@ -40,7 +40,7 @@ def test_argue_promotes_unsupported_authority():
 def test_narrative_off_gates_nothing():
     txt = "You can watch what a model does. You cannot watch what it is.\n"
     r = articulate.check_text(txt, profile=modes.load("narrative/narrate"))
-    assert r["gate"] == "ok"             # slop=off: reported, never gated
+    assert r["gate"] == "ok"             # gate level off: reported, never gated
 
 
 def test_gate_promote_only_adds_never_removes_the_floor():
@@ -49,5 +49,5 @@ def test_gate_promote_only_adds_never_removes_the_floor():
     for name in ("marketing/explain", "narrative/narrate"):
         prof = modes.load(name)
         r = articulate.check_text(txt, profile=prof)
-        if prof["slop"] != "off":
+        if prof["gate_level"] != "off":
             assert r["gate"] == "blocked"

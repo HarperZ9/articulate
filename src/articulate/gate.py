@@ -1,32 +1,40 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """articulate.gate -- the library API: check_text, the per-block view and the
-instruction-injection scan. Standard library only.
+instruction-injection scan.
+
+check_text returns the findings, whether each one blocks under the profile in
+use, and one pass-or-block signal: the gate. It returns no score and no verdict
+about the text. `findings` says only whether any HIGH or MEDIUM finding exists.
+
+Standard library only.
 """
+from .aliases import profile_field
+from .density import density
 from .markup import FENCE, _mk
 from .rule_reasons import HOUSE_CATEGORIES, resolve_all
 from .rules_low import INJECTION
 from .scan import scan_lines
+from .tool_text import DOES_NOT_PROVE
 
-# slop level -> which precision tiers hard-gate (block). HIGH is the precise
-# device tier; MEDIUM adds the frontier-model register tells; LOW never gates.
+# gate level -> which tiers block. HIGH is the narrow tier; MEDIUM adds rules
+# with a cited reader cost; LOW never blocks.
 GATE_TIERS = {
     "off": frozenset(),
     "flavored": frozenset({"HIGH"}),
     "strict": frozenset({"HIGH", "MEDIUM"}),
 }
 
-# Below this many prose words there are too few tokens to assert a clean verdict;
-# the texture score already returns 0 under the same floor. The floor governs a
-# clean verdict only, never a reading of who or what wrote the text. A short
-# text with no findings at all reads "unverifiable", with no confident "clean".
-# A banned device is unambiguous at any length, so a finding still reads "flagged".
-MIN_WORDS_FOR_VERDICT = 30
+
+def gate_level(profile):
+    """A profile's gate level. The field's pre-0.7.0 name is read for one minor
+    version (articulate.aliases)."""
+    return profile_field(profile, "gate_level", "flavored")
 
 
 def _finding(tier, f, gates=False):
-    """Attach the precision tier, whether the finding blocks under the profile in
-    use, and whether it belongs to the house pack, to a span-level record."""
+    """Attach the tier, whether the finding blocks under the profile in use, and
+    whether it belongs to the house pack, to a span-level record."""
     return {**f, "tier": tier, "gates": gates, "house": f["category"] in HOUSE_CATEGORIES}
 
 
@@ -42,24 +50,14 @@ def house_retier(high, medium, low, profile):
 
 def gates_finding(tier, category, profile):
     """True when a finding of this tier and category blocks under the profile:
-    its tier is gated by the slop level, or a mode promotes its category."""
-    slop = (profile or {}).get("slop", "flavored")
-    if tier in GATE_TIERS.get(slop, frozenset({"HIGH"})):
+    its tier is gated by the gate level, or a mode promotes its category."""
+    if tier in GATE_TIERS.get(gate_level(profile), frozenset({"HIGH"})):
         return True
     return category in set(resolve_all((profile or {}).get("gate_promote", ())))
 
 
-def check_text(text, *, profile=None, allow=()):
-    """The library API. Scan text under an optional register profile (a dict from
-    articulate.profiles.load). Returns findings, a profile-aware gate verdict, the
-    graded texture score, and cadence. No filesystem, no network."""
-    keep = tuple(allow)
-    if profile:
-        keep += tuple(profile.get("keep", ()))
-    # Genre-layer options, read straight off the profile/mode dict. A plain
-    # register profile carries none of these, so the scan is unchanged for it.
-    p = profile or {}
-    genre = {
+def _genre(p):
+    return {
         "unit": p.get("unit", "sentence"),
         "structural_classify": p.get("structural_classify"),
         "dialogue_exempt": p.get("dialogue_exempt", False),
@@ -67,40 +65,41 @@ def check_text(text, *, profile=None, allow=()):
         "fiction_slop": p.get("fiction_slop", False),
         "suppress_categories": p.get("suppress_categories", ()),
     }
-    lines = text.splitlines(keepends=True)
-    high, medium, low, doc = scan_lines(lines, keep, genre=genre)
+
+
+def rule_counts(findings):
+    out = {}
+    for f in findings:
+        out[f["rule_id"]] = out.get(f["rule_id"], 0) + 1
+    return dict(sorted(out.items()))
+
+
+def check_text(text, *, profile=None, allow=()):
+    """The library API. Scan text under an optional profile (a dict from
+    articulate.profiles.load or modes.load). Returns the findings, per-rule
+    counts, the gate, density and cadence statistics. No filesystem, no network."""
+    p = profile or {}
+    keep = tuple(allow) + tuple(p.get("keep", ()))
+    high, medium, low, doc = scan_lines(text.splitlines(keepends=True), keep,
+                                        genre=_genre(p))
     high, medium, low = house_retier(high, medium, low, profile)
-    slop = (profile or {}).get("slop", "flavored")
-    # gate_promote: a mode may block a specific category even when its tier is not
-    # gated by the slop level (porting the flywheel per-category `hard` tuple). It
-    # only ADDS gating, so the HIGH banned-device floor can never be removed.
-    tiers = {}
-    blocking = 0
-    for tier, arr in (("HIGH", high), ("MEDIUM", medium), ("LOW", low)):
-        tiers[tier] = [_finding(tier, f, gates_finding(tier, f["category"], profile))
-                       for f in arr]
-        blocking += sum(1 for f in tiers[tier] if f["gates"])
-    # Calibrated three-way verdict, separate from the device gate. A device is
-    # valid at any length, so it reads "flagged"; a device-clean text with no
-    # findings and too few words reads "unverifiable"; otherwise "clean".
-    words = doc.get("words", 0)
-    sufficient = words >= MIN_WORDS_FOR_VERDICT
-    n_dev = len(high) + len(medium)
-    if n_dev:
-        verdict = "flagged"
-    elif not sufficient and (n_dev + len(low)) == 0:
-        verdict = "unverifiable"
-    else:
-        verdict = "clean"
-    return {
-        "clean": len(high) + len(medium) == 0,
+    # gate_promote lets a mode block a category its tier would not block. It only
+    # adds gating, so it can never lift the HIGH tier.
+    tiers = {tier: [_finding(tier, f, gates_finding(tier, f["category"], profile))
+                    for f in arr]
+             for tier, arr in (("HIGH", high), ("MEDIUM", medium), ("LOW", low))}
+    blocking = sum(1 for arr in tiers.values() for f in arr if f["gates"])
+    everything = tiers["HIGH"] + tiers["MEDIUM"] + tiers["LOW"]
+    result = {
         "gate": "blocked" if blocking else "ok",
-        "verdict": verdict,
-        "sufficient": sufficient,
-        "slop": slop,
+        "gate_level": gate_level(profile),
+        "house": bool(p.get("house")),
         "blocking_count": blocking,
-        "texture_score": doc.get("score", 0),
-        "elevated": doc.get("elevated", False),
+        "findings": "has_findings" if tiers["HIGH"] or tiers["MEDIUM"] else "no_findings",
+        "clean": not (tiers["HIGH"] or tiers["MEDIUM"]),
+        "words": doc.get("words", 0),
+        "counts": {"high": len(high), "medium": len(medium), "low": len(low)},
+        "rule_counts": rule_counts(everything),
         "high": tiers["HIGH"],
         "medium": tiers["MEDIUM"],
         "low": tiers["LOW"],
@@ -113,7 +112,10 @@ def check_text(text, *, profile=None, allow=()):
             "passive_rate": doc.get("passive_rate", 0),
             "adverb_rate": doc.get("adverb_rate", 0),
         },
+        "does_not_prove": DOES_NOT_PROVE,
     }
+    result["density"] = density(result)
+    return result
 
 
 def segment_blocks(text):
@@ -141,41 +143,29 @@ def segment_blocks(text):
             start = i
     if start is not None:
         ranges.append((start, len(lines) - 1))
-    out = []
-    for idx, (s, e) in enumerate(ranges):
-        out.append({
-            "index": idx,
-            "start_line": s + 1, "end_line": e + 1,
-            "start": offsets[s], "end": offsets[e] + len(lines[e]),
-            "text": "".join(lines[s:e + 1]),
-        })
-    return out
+    return [{"index": idx, "start_line": s + 1, "end_line": e + 1,
+             "start": offsets[s], "end": offsets[e] + len(lines[e]),
+             "text": "".join(lines[s:e + 1])} for idx, (s, e) in enumerate(ranges)]
 
 
 def analyze_blocks(text, *, profile=None, allow=()):
-    """Per-block (paragraph) findings. Each block is scanned on its own, so the
-    paragraph that carries findings shows them in place with its line range, and a
-    whole-file aggregate never hides where they are. Findings are translated back to document coordinates. This is a
-    reporting view over the same ruleset; it changes no gate. A block verdict says
-    where the findings are, never who or what wrote the block."""
+    """Per-paragraph findings in document order: each block's line range, counts
+    by tier and by rule, and its findings in document coordinates. It carries no
+    per-paragraph gate, no label and no score; the gate belongs to the document."""
     out = []
     for b in segment_blocks(text):
         r = check_text(b["text"], profile=profile, allow=allow)
         for tier in ("high", "medium", "low"):
             for f in r[tier]:
                 f["line"] += b["start_line"] - 1
+                f["end_line"] += b["start_line"] - 1
                 f["start"] += b["start"]
                 f["end"] += b["start"]
         out.append({
             "index": b["index"],
             "start_line": b["start_line"], "end_line": b["end_line"],
             "start": b["start"], "end": b["end"],
-            "gate": r["gate"], "clean": r["clean"],
-            "verdict": r["verdict"], "sufficient": r["sufficient"],
-            "blocking_count": r["blocking_count"],
-            "texture_score": r["texture_score"], "elevated": r["elevated"],
-            "counts": {"high": len(r["high"]), "medium": len(r["medium"]),
-                       "low": len(r["low"])},
+            "counts": r["counts"], "rule_counts": r["rule_counts"],
             "high": r["high"], "medium": r["medium"], "low": r["low"],
             "snippet": b["text"].strip()[:100],
         })
@@ -183,16 +173,17 @@ def analyze_blocks(text, *, profile=None, allow=()):
 
 
 def detect_injection(text):
-    """Flag lines that read as an instruction to an assistant, where prose to edit
-    was expected. The editor calls this to warn before a rewrite and to keep the model on
-    a content-as-data footing. Report-only and separate from check_text: it never
-    gates a verdict and is not part of the pinned ruleset, because a document may
-    quote these patterns legitimately (a paper about prompt injection, say).
+    """Flag lines that read as instructions to a model reading the document, where
+    prose to edit was expected. The editor calls this to warn before a rewrite and
+    to keep the model on a content-as-data footing. Report-only and separate from
+    check_text: it never gates and is not part of the pinned ruleset, because a
+    document may quote these patterns legitimately (a paper about prompt
+    injection, say).
 
     It is a literal-ASCII heuristic, so it will miss paraphrased jailbreaks,
     homoglyph or base64-obfuscated directives, and inline (mid-line) role headers.
-    The content-as-data boundary in the editor, not this warning, is the actual
-    guardrail; the warning is a reviewer-facing signal on top of it."""
+    The content-as-data boundary in the editor is the guardrail; this warning is a
+    reviewer-facing signal on top of it."""
     lines = text.splitlines(keepends=True)
     offsets, acc = [], 0
     for raw in lines:

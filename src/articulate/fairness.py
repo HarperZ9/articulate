@@ -54,7 +54,7 @@ def bound_profiles():
     names = {profiles.DEFAULT} | {name for _rx, name in profiles.PATH_RULES}
     for mid in modes.names():
         m = modes.load(mid)
-        if m["slop"] != "off" or m.get("gate_promote"):
+        if m["gate_level"] != "off" or m.get("gate_promote"):
             names.add(mid)
     return sorted(n for n in names if n not in house_profiles())
 
@@ -65,7 +65,7 @@ def load_any(name):
 
 def config_key(prof):
     """The fields the checker reads. Profiles with the same key behave the same."""
-    keys = ("slop", "keep", "gate_promote", "unit", "structural_classify",
+    keys = ("gate_level", "keep", "gate_promote", "unit", "structural_classify",
             "dialogue_exempt", "quote_exempt_all", "fiction_slop", "suppress_categories",
             "house")
     return json.dumps({k: prof.get(k) for k in keys}, sort_keys=True, default=list)

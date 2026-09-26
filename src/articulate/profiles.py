@@ -5,7 +5,7 @@ articulate.profiles -- the register-adaptive profile system.
 
 Ported from the flywheel writing_lint profile library and adapted to drive the
 Articulate detector's precision tiers. A profile is a register configuration
-(Halliday field/tenor/mode) expressed as data: it sets a `slop` level that
+(Halliday field/tenor/mode) expressed as data: it sets a `gate_level` that
 decides which detector tiers hard-gate, a `keep` list of terms of art the
 detector must never flag, and provenance fields. Adding a prose type is adding a
 record here, not editing the engine.
@@ -24,7 +24,7 @@ import re
 
 DEFAULT = "flavored"
 
-# slop level -> which detector tiers block. Mirrors detector.GATE_TIERS; the
+# gate level -> which tiers block. Mirrors detector.GATE_TIERS; the
 # detector is the authority, this is the human-readable statement of it.
 #   off       nothing gates (report only): narrative, literary essays
 #   flavored  the HIGH tier gates: docs, research, chat, readme
@@ -51,10 +51,10 @@ _TERMS = (
 )
 
 
-def _p(slop, *, keep=(), house=False, max_words=None,
+def _p(level, *, keep=(), house=False, max_words=None,
        register=("general", "peer", "written")):
     return {
-        "slop": slop,
+        "gate_level": level,
         "keep": tuple(_TERMS) + tuple(keep),
         "house": house,
         "max_sentence_words": max_words,
@@ -83,7 +83,7 @@ PROFILES: dict[str, dict] = {
                    register=("findings", "peer-review", "written-argument"),
                    keep=("utiliz", "utilis", "facilitat", "comprehensive")),
     # A pure-proof register. The keep-list clears ordinary rigor vocabulary that
-    # the register tells would otherwise flag: analytic and geometric idioms plus
+    # the register rules would otherwise flag: analytic and geometric idioms plus
     # the research Latinate stems. The banned HIGH devices still gate; a proof
     # rephrases them. This screens prose only and says nothing about a theorem's truth.
     "proof": _p("flavored",
@@ -139,7 +139,7 @@ PATH_RULES: list[tuple[str, str]] = [
 def load(name: str) -> dict:
     rec = PROFILES.get(name)
     if rec is None:
-        # A genre id is a profile too: it carries slop, keep, and register plus
+        # A genre id is a profile too: it carries a gate level, keep, and register plus
         # the genre fields. Deferred import breaks the profiles<->genres cycle.
         from . import genres
         if name in genres.GENRES:

@@ -18,6 +18,8 @@ Standard library only.
 """
 from __future__ import annotations
 
+from .aliases import CATEGORY_ALIASES, resolve_all, resolve_category  # noqa: F401
+
 # Categories in the house pack: one writer's standard, applied only by choice.
 HOUSE_CATEGORIES = frozenset({
     # punctuation and contrast devices
@@ -102,26 +104,9 @@ ORIGIN_WORDS = ("model", "ai ", "llm", "frontier", "machine", "generated", "chat
                 "gpt", "detector")
 
 
-# Category ids that carried an origin word, renamed in ruleset 0.7.0. The old id
-# stays readable for one minor version wherever a user names a category.
-ALIASES = {
-    "assistant-residue": "chat-interface-text",
-    "assistant-closer": "closing-boilerplate",
-    "email-tell": "email-stock-phrase",
-    "blog-tell": "blog-stock-phrase",
-    "fiction-slop-lexicon": "fiction-stock-phrase",
-    "register-word": "inflated-word",
-    "filler-intensifier": "intensifier",
-}
-
-
-def resolve_category(name):
-    """The current id for a category name, reading an old id as its new one."""
-    return ALIASES.get(name, name)
-
-
-def resolve_all(names):
-    return tuple(resolve_category(n) for n in (names or ()))
+# Retired category ids live in articulate.aliases; these names are re-exported
+# for callers that import them from here.
+ALIASES = CATEGORY_ALIASES
 
 
 def is_house(category):

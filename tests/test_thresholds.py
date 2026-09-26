@@ -1,66 +1,46 @@
-"""P0-c: below a word floor a device-clean text has too few tokens to be called
-clean, so it degrades to "unverifiable" and the receipt abstains.
-A banned device is unambiguous at any length, so it still reads "flagged".
+"""N3: no verdict about the text, and no word floor.
+
+Before 0.7.0 a result carried `verdict` (flagged, clean, unverifiable) beside
+the gate, and a 30-word floor made a short text read "unverifiable" when it had
+no finding. "clean" meant clean writing, a claim the tool cannot make. Now the
+gate (ok or blocked) is the only pass-or-block signal, `findings` says only
+whether any HIGH or MEDIUM finding exists, and `words` is reported as a count.
 """
 import articulate
 from articulate import profiles, receipt
 
 SHORT_CLEAN = "Thanks for the update. I will review it and reply tomorrow.\n"
 SHORT_DEVICE = "We leverage synergy to unlock value.\n"
-SHORT_LOW_ONLY = "Great work today \U0001F389\n"
-LONG_CLEAN = (
-    "The team met on Tuesday to plan the next release. They agreed on the dates, "
-    "assigned each task to a named owner, and set a short check-in for Friday "
-    "morning to confirm the work had landed before the weekend arrived.\n"
-)
+ENUMERATION = "Firstly, the survey is short. Secondly, it is cheap.\n"
 
 
-def _v(text, prof="house"):
+def _v(text, prof="flavored"):
     return articulate.check_text(text, profile=profiles.load(prof))
 
 
-def test_short_clean_text_is_unverifiable():
+def test_no_result_carries_a_verdict_or_a_floor():
     r = _v(SHORT_CLEAN)
-    assert r["verdict"] == "unverifiable"
-    assert r["sufficient"] is False
-    assert r["clean"] is True          # device-clean stays a fact; the verdict abstains
-    assert r["gate"] == "ok"
+    assert "verdict" not in r and "sufficient" not in r
+    assert r["findings"] == "no_findings" and r["gate"] == "ok"
+    assert r["words"] == 11
 
 
-def test_short_device_text_is_flagged_at_any_length():
-    r = _v(SHORT_DEVICE)
-    assert r["verdict"] == "flagged"
-    assert r["gate"] == "blocked"      # leverage is a HIGH device
+def test_a_short_finding_is_a_finding():
+    r = _v(SHORT_DEVICE, "house")
+    assert r["findings"] == "has_findings" and r["gate"] == "blocked"
 
 
-def test_short_text_with_only_an_advisory_is_not_unverifiable():
-    r = _v(SHORT_LOW_ONLY)
-    assert r["verdict"] != "unverifiable"   # an emoji is a real signal to report
-    assert r["low"]
+def test_findings_and_gate_can_differ():
+    # A MEDIUM finding that the profile does not gate: findings exist, gate ok.
+    r = _v("It is important to note that the survey ran twice.\n", "flavored")
+    assert r["findings"] == "has_findings" and r["gate"] == "ok"
+    # The house-style enumeration reports at LOW outside the house pack.
+    r2 = _v(ENUMERATION, "flavored")
+    assert r2["findings"] == "no_findings" and r2["gate"] == "ok"
 
 
-def test_long_clean_text_is_a_confident_clean():
-    r = _v(LONG_CLEAN)
-    assert r["verdict"] == "clean"
-    assert r["sufficient"] is True
-
-
-# --- the receipt abstains too ---------------------------------------------- #
-
-def test_short_clean_receipt_verifies_unverifiable():
-    rec = receipt.make_receipt(SHORT_CLEAN, "house")
-    assert rec["verdict"] == "unverifiable"
-    verdict, _ = receipt.verify_receipt(rec, SHORT_CLEAN)
-    assert verdict == "Unverifiable"
-
-
-def test_short_device_receipt_still_matches():
-    rec = receipt.make_receipt(SHORT_DEVICE, "house")
-    verdict, _ = receipt.verify_receipt(rec, SHORT_DEVICE)
-    assert verdict == "Match"          # device evidence is re-derivable and valid
-
-
-def test_long_clean_receipt_matches():
-    rec = receipt.make_receipt(LONG_CLEAN, "house")
-    verdict, _ = receipt.verify_receipt(rec, LONG_CLEAN)
-    assert verdict == "Match"
+def test_a_short_receipt_replays_to_match():
+    for text in (SHORT_CLEAN, SHORT_DEVICE):
+        rec = receipt.make_receipt(text, "house")
+        assert "verdict" not in rec
+        assert receipt.verify_receipt(rec, text)[0] == "Match"

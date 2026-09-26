@@ -6,7 +6,7 @@ Standard library only.
 from .advisories import (document_advisories, find_anaphora_runs,
                          find_contrast_pairs, find_fragment_openers)
 from .binary import binary_reason
-from .cadence import cadence_stats, texture_score
+from .cadence import cadence_stats
 import re
 
 from .lexicon import (ADVERB, DIGIT, EMOJI, EXPLETIVE, NOMINAL, PASSIVE, SOFT,
@@ -151,18 +151,18 @@ def _device_passes(sc, unit, text):
 
 def _scan_unit(sc, unit):
     g = sc.genre
-    slop_text = strip_markup(unit.text)          # the fiction lexicon reads the words
+    word_text = strip_markup(unit.text)          # the fiction lexicon reads the words
     if g.get("fiction_slop") and unit.role in ("prose", "dialogue"):
         for cat, label, rx in FICTION_SLOP:
-            for m in rx.finditer(slop_text):
-                sc.add(sc.low, unit, cat, label, m.start(), m.end(), text=slop_text)
+            for m in rx.finditer(word_text):
+                sc.add(sc.low, unit, cat, label, m.start(), m.end(), text=word_text)
     if unit.role not in ("prose", "action"):     # screenplay dialogue keeps its voice
         return
     _raw_passes(sc, unit)
     if unit.kind == "hr" or (unit.kind == "tablesep" and SKIP_TABLE_SEP):
         return
     masked = g.get("dialogue_exempt") or g.get("quote_exempt_all")
-    _device_passes(sc, unit, mask_quotes(slop_text) if masked else slop_text)
+    _device_passes(sc, unit, mask_quotes(word_text) if masked else word_text)
 
 
 def _document_passes(sc, lines, suppress, mask_q):
@@ -224,6 +224,4 @@ def _cadence(sc, genre):
     if genre.get("unit", "sentence") == "line":
         doc["uniform"] = False
         doc["repetitive_openers"] = False
-    doc["score"], doc["elevated"] = texture_score(
-        len(sc.high) + len(sc.medium), sc.soft, doc, w)
     return doc

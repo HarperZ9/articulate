@@ -6,7 +6,7 @@ closed set of category names. Standard library only.
 from .lexicon import (ADVERB, EMOJI, EXPLETIVE, NEG, NOMINAL, PASSIVE, SOFT,
                       VAGUE_QUANT)
 from .advisories import FRAGMENT_OPENER, PRONOUN_SUBJ, STOP4
-from . import cadence, gate, markup, rule_reasons, scan
+from . import aliases, cadence, density, markup, rule_reasons, scan
 from .gate import GATE_TIERS
 from .rules_high import HIGH
 from .rules_low import FICTION_SLOP, INJECTION, LOW, REGISTER_JARGON
@@ -22,18 +22,18 @@ def behavior_constants():
     return {
         "SCAN_ALGO": scan.SCAN_ALGO,
         "SKIP_TABLE_SEP": scan.SKIP_TABLE_SEP,
-        "MIN_WORDS_FOR_VERDICT": gate.MIN_WORDS_FOR_VERDICT,
+        "DENSITY_MIN_WORDS": density.DENSITY_MIN_WORDS,
         "CADENCE_MIN_SENTENCES": cadence.CADENCE_MIN_SENTENCES,
         "CADENCE_MIN_WORDS": cadence.CADENCE_MIN_WORDS,
         "C2PA_MIN_SELECTORS": markup.C2PA_MIN_SELECTORS,
         "HOUSE_CATEGORIES": sorted(rule_reasons.HOUSE_CATEGORIES),
         "REASONS": sorted(rule_reasons.REASONS),
         "ALIASES": sorted(rule_reasons.ALIASES.items()),
+        "PROFILE_KEY_ALIASES": sorted(aliases.PROFILE_KEY_ALIASES.items()),
         "CADENCE_CV_MAX": cadence.CADENCE_CV_MAX,
         "CADENCE_MEAN_MIN": cadence.CADENCE_MEAN_MIN,
         "OPENER_MIN_CONTENT": cadence.OPENER_MIN_CONTENT,
         "OPENER_RATIO_MAX": cadence.OPENER_RATIO_MAX,
-        "TEXTURE_WEIGHTS": sorted(cadence.TEXTURE_WEIGHTS.items()),
     }
 
 
@@ -63,8 +63,8 @@ def ruleset_fingerprint():
     parts.append(f"BEHAVIOR={sorted(behavior_constants().items())}")
     # A receipt records a profile or mode name and re-derives by loading it, so the
     # profile, genre, and mode definitions are all part of the ruleset. Fold them in
-    # (sorted JSON) so that editing a profile's keep-list or slop, a genre field, or
-    # a mode's gate_promote/slop moves the fingerprint and an old receipt reads
+    # (sorted JSON) so that editing a profile's keep-list or gate level, a genre field, or
+    # a mode's gate_promote or gate level moves the fingerprint and an old receipt reads
     # Unverifiable, never a misleading Drift. A mode's gate_promote drives check_text's
     # gate directly, and a receipt can name a mode, so it must be pinned. INJECTION
     # is deliberately excluded: it never enters a check_text verdict.

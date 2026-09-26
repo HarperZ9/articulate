@@ -8,7 +8,7 @@ phrase frames. Standard library only.
 import re
 
 MEDIUM_REGISTER = [
-    # --- the "delve" register: words that spike in frontier-model prose ---- #
+    # --- inflated words (house pack): a long word where a short one serves #
     ("inflated-word", "inflated word",
      re.compile(r"\b(?:delve[sd]?|delving|utili[sz]e[sd]?|utili[sz]ing|showcas(?:e[sd]?|ing)|"
                 r"seamless(?:ly)?|robust(?:ness)?|pivotal|crucial(?:ly)?|realm|landscape|"
@@ -33,7 +33,7 @@ MEDIUM_REGISTER = [
                 r"amplif(?:y|ies|ied|ying)|prowess|beacon|gateway to|springboard|"
                 r"navigat(?:e[sd]?|ing) the (?:complexit|landscape|challeng|nuance|maze)|"
                 r"intricac(?:y|ies)|complexities of|delve deeper|ripe for)\b", re.I)),
-    # --- idioms and set-phrase cliches (tells in any register) ------------ #
+    # --- idioms and set-phrase cliches ----------------------------------- #
     ("idiom-cliche", "idiom / set-phrase cliche",
      re.compile(r"\b(?:low[- ]hanging fruit|move the needle|boil the ocean|"
                 r"double[- ]edged sword|elephant in the room|rabbit hole|"
@@ -97,7 +97,7 @@ MEDIUM_REGISTER = [
     # --- marketing punch cadence "No X. No Y. Just Z." (spec #9) ----------- #
     ("cadence", "triplet negation (No X. No Y. Just Z.)",
      re.compile(r"\bno \w+\.\s*no \w+\.\s*just\b", re.I)),
-    # --- outbound email/blog tells (spec #5, #6, #15, #16, #17) ------------ #
+    # --- stock email and blog phrases (house pack) ------------------------ #
     ("email-stock-phrase", "stock email opener (hope this finds you well)",
      re.compile(r"\bi (?:hope|trust) (?:this|that) (?:e-?mail|message|note)\b"
                 r"[^.]{0,30}\bfinds you (?:well|in good)\b", re.I)),

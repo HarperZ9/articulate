@@ -5,13 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "articulate-writing"
 version = "0.4.2"
-description = "Local, re-derivable writing-quality and AI-tell detection, with an optional editor that runs through a hosted model: register profiles, writing modes, a genre axis, and content-free audit receipts."
+description = "Local prose checks: named writing patterns, where they occur, and what each costs a reader. Register profiles, writing modes, content-free receipts, and an optional editor that runs through a hosted model."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "LicenseRef-FSL-1.1-MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Zain Dana Harper" }]
-keywords = ["writing", "linter", "prose", "ai-detection", "editor", "quality", "receipt", "audit"]
+keywords = ["writing", "linter", "prose", "plain-language", "editor", "quality", "receipt", "audit"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Text Processing :: Linguistic",

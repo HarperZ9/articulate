@@ -7,13 +7,13 @@ A mode crosses a DOMAIN register (a base profile) with an ARTICULATION (explain,
 persuade, instruct, narrate, argue, prove: what the prose does to the reader). The
 `prove` articulation makes a proof legible for a reader; it never means the tool
 verified the theorem. A mode is
-the base profile plus a small delta: an optional slop override, terms of art to
+the base profile plus a small delta: an optional gate-level override, terms of art to
 keep, categories to gate even under a flavored base (gate_promote), and editor
 guidance. Adding a mode is adding one record, not editing the engine.
 
 A mode tunes style WITHIN the plain-writing standard. It may tighten the gate and
 add terms of art. It may not re-enable a banned HIGH device, with one exception:
-literary narrative maps to slop=off, where authorial voice governs and nothing
+literary narrative maps to gate level off, where authorial voice governs and nothing
 gates. Detection and quality only; never evasion.
 
 Source: the domain x articulation study (2026-09-17). Two proposed detector
@@ -29,12 +29,12 @@ class ModeError(ValueError):
     """An unknown or malformed mode."""
 
 
-def _m(base, articulation, *, slop=None, keep_add=(), gate_promote=(),
+def _m(base, articulation, *, level=None, keep_add=(), gate_promote=(),
        weights=(), require_fix=(), standard_delta="", run_fix_by_default=True):
     return {
         "base": base,
         "articulation": articulation,
-        "slop": slop,                       # None inherits the base profile's slop
+        "gate_level": level,                # None inherits the base profile's level
         "keep_add": tuple(keep_add),
         "gate_promote": tuple(gate_promote),  # detector categories that block
         "editor": {
@@ -115,7 +115,7 @@ MODES: dict[str, dict] = {
             "with its scope of validity, and keep the precise statement beside an "
             "informally-marked gloss. This is exposition and makes no correctness claim.")),
     "journalism/explain": _m(
-        "journalism", "explain", slop="strict",
+        "journalism", "explain", level="strict",
         weights=("economy", "concreteness", "commitment"),
         require_fix=("closer", "meta"),
         standard_delta="Inverted pyramid: the lede answers the question; attribute every claim or cut it; no closer."),
@@ -133,11 +133,11 @@ MODES: dict[str, dict] = {
         weights=("commitment", "economy"),
         standard_delta="One obligation per sentence; condition, obligation, consequence; cut doublets and triplets."),
     "legal/argue": _m(
-        "legal", "argue", slop="strict", gate_promote=("unsupported-authority",),
+        "legal", "argue", level="strict", gate_promote=("unsupported-authority",),
         weights=("commitment", "concreteness"),
         standard_delta="An unstated ask is top severity; name the controlling case or statute in the same sentence as the rule."),
     "marketing/persuade": _m(
-        "social", "persuade", slop="strict",
+        "social", "persuade", level="strict",
         keep_add=("conversion", "funnel", "positioning"),
         weights=("commitment", "concreteness"),
         standard_delta="Every benefit claim carries a number, mechanism, or comparison in the same or next sentence, or the adjective is cut. (Proposed: unproven-claim + a proof-density quality.)"),
@@ -169,7 +169,7 @@ MODES: dict[str, dict] = {
         "essay", "argue", weights=("commitment", "restatable"),
         standard_delta="Decision and ask in sentence one; a named-alternatives comparison must attach a number or consequence to each side; close on the action and deadline."),
     "narrative/narrate": _m(
-        "narrative", "narrate", slop="off",
+        "narrative", "narrate", level="off",
         weights=("rhythm", "concreteness"), run_fix_by_default=False,
         standard_delta="Authorial voice governs; nothing gates. Route to --judge, not --fix; a model-picked replacement word is itself the contamination."),
     # The genre axis: narrative and expressive prose, read by its own convention.
@@ -201,7 +201,7 @@ MODES: dict[str, dict] = {
 
 
 def load(mode_id: str) -> dict:
-    """Resolve a mode to a profile-like dict the detector consumes: slop, keep,
+    """Resolve a mode to a profile-like dict the checker consumes: gate level, keep,
     gate_promote, register, plus editor guidance. Fails closed on an unknown mode
     or an unknown promoted category."""
     m = MODES.get(mode_id)
@@ -216,7 +216,7 @@ def load(mode_id: str) -> dict:
         raise ModeError(
             f"mode {mode_id!r} promotes unknown categories: {sorted(bad)}")
     out = {
-        "slop": m["slop"] or base["slop"],
+        "gate_level": m["gate_level"] or base["gate_level"],
         "keep": tuple(base.get("keep", ())) + tuple(m["keep_add"]),
         "gate_promote": promote,
         "register": base.get("register"),

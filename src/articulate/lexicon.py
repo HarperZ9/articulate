@@ -66,7 +66,7 @@ NOMINAL = re.compile(r"\b\w{4,}(?:tion|ment|ance|ence|ancy|ency)\b", re.I)
 HEADING = re.compile(r"^\s{0,3}#{1,6}\s")
 BULLET = re.compile(r"^\s*(?:[-*+]|\d+\.)\s")
 BOLD_SPAN = re.compile(r"\*\*[^*\n]+\*\*|__[^_\n]+__")
-# Stopword-only n-grams are not repetition tells, so they are excluded.
+# Stopword-only n-grams are not repetition signals, so they are excluded.
 NGRAM_STOP = frozenset({
     "the", "a", "an", "and", "or", "but", "of", "to", "in", "on", "for", "with",
     "as", "at", "by", "is", "are", "was", "were", "be", "been", "it", "its",

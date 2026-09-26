@@ -10,7 +10,7 @@ These tests guard the replay contract. They measure nothing about fairness.
 """
 import pytest
 
-from articulate import cadence, detector, fingerprint, gate, scan
+from articulate import cadence, density, detector, fingerprint, scan
 
 import test_golden_findings as golden
 
@@ -21,7 +21,7 @@ CONSTANTS = [
     (cadence, "CADENCE_MEAN_MIN", 2),
     (cadence, "OPENER_MIN_CONTENT", 2),
     (cadence, "OPENER_RATIO_MAX", 0.99),
-    (gate, "MIN_WORDS_FOR_VERDICT", 3),
+    (density, "DENSITY_MIN_WORDS", 3),
     (scan, "SKIP_TABLE_SEP", False),
     (scan, "SCAN_ALGO", 999),
 ]
@@ -34,9 +34,11 @@ def test_each_behavior_constant_moves_the_fingerprint(monkeypatch, module, name,
     assert detector.ruleset_fingerprint() != before, name
 
 
-def test_a_texture_weight_moves_the_fingerprint(monkeypatch):
+def test_the_house_pack_moves_the_fingerprint(monkeypatch):
+    from articulate import rule_reasons
     before = detector.ruleset_fingerprint()
-    monkeypatch.setitem(cadence.TEXTURE_WEIGHTS, "uniform", 99)
+    monkeypatch.setattr(rule_reasons, "HOUSE_CATEGORIES",
+                        rule_reasons.HOUSE_CATEGORIES - {"em-dash"})
     assert detector.ruleset_fingerprint() != before
 
 

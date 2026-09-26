@@ -131,8 +131,10 @@ def test_reverify_source_missing_is_informational(work, capsys):
     assert out["reverify"].get("source-missing") == 1 and rc == 0   # missing is not drift
 
 
-def test_reverify_subthreshold_does_not_fail_the_gate(work, capsys):
-    _commit(work, "a.json", "a.md", "Thanks, will review shortly.\n")   # short + clean
+def test_reverify_short_text_matches(work, capsys):
+    # There is no word floor: a short text with no findings replays to Match like
+    # any other, because the receipt claims only which rules fired.
+    _commit(work, "a.json", "a.md", "Thanks, will review shortly.\n")
     rc = cli_main(["audit", work, "--reverify", "--gate", "--json"])
     out = json.loads(capsys.readouterr().out)
-    assert out["reverify"].get("Unverifiable") == 1 and rc == 0        # honest abstention
+    assert out["reverify"].get("Match") == 1 and rc == 0

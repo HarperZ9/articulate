@@ -8,8 +8,8 @@ Standard library only.
 """
 import re
 
-# Abstract-metaphor jargon that spikes in model prose. These are HITS to fix by
-# default. Several are also legitimate terms of art in a technical paper
+# Abstract-metaphor jargon (house pack): a metaphor where a literal term exists.
+# Several are also legitimate terms of art in a technical paper
 # ("substrate", "load-bearing"); when a use is genuinely load-bearing, keep that
 # one with a `writing-allow:` line rather than by suppressing the whole category.
 REGISTER_JARGON = [
@@ -49,8 +49,8 @@ LOW = [
                 r"[a-z][\w-]*\s+(?:the|a|an|your|our|my|their|its|his|her)\s+"
                 r"\w+(?:\s+\w+){0,2}\s*[.!?]?\s*$")),
     # --- comprehensive-set LOW advisories (higher FP; never gate) --------- #
-    # Formatting glyph tells. Editors auto-insert curly quotes and ellipses for
-    # human authors, so these are advisory density signals, not hits.
+    # Formatting glyphs. Word processors insert curly quotes and ellipses on
+    # their own, so these are advisories and never block.
     ("ellipsis-char", "ellipsis character (U+2026)",
      re.compile(r"\u2026")),
     ("arrow-glyph", "arrow glyph in prose",
@@ -87,11 +87,11 @@ LOW = [
                 "|[\u200b\u2060](?![A-Za-z0-9!-/:-@\\[-`{-~])")),
 ]
 
-# Generation artifacts documented in AI-written fiction. This is a report-only
-# advisory that stays on even where authorial voice governs (slop=off), because
-# a machine-drafting tell is not a style choice. It never gates. Density, not a
-# single hit, is the signal, and the whole set is low-confidence until it runs
-# against non-Western and translated corpora, so it is labeled optional review.
+# Stock phrases of genre fiction (the shiver down the spine, the breath held
+# unknowingly). A report-only advisory that stays on even where authorial voice
+# governs (gate level off). It never gates, and the whole set is low-confidence
+# until it runs against non-Western and translated corpora, so it is labeled
+# optional review.
 FICTION_SLOP = [
     ("fiction-stock-phrase", "somatic-emotion cliche",
      re.compile(r"\b(?:shiver|chill|tingle|jolt)s?\s+(?:ran|shot|went|crept|traced)?\s*"
@@ -112,10 +112,9 @@ FICTION_SLOP = [
                 r"(?:washed over|settled over|filled the room))\b", re.I)),
 ]
 
-# Instruction-injection tells: text that tries to steer an assistant that is
-# reading the document, rather than being prose to edit. The editor treats the
-# document strictly as data, so these never change a detector verdict and are
-# kept out of check_text. detect_injection surfaces them so the editor can warn
+# Instruction injection: text that tries to steer a model reading the document,
+# where prose to edit was expected. The editor treats the document strictly as
+# data, so these never change a gate and are kept out of check_text. detect_injection surfaces them so the editor can warn
 # before a rewrite. Detection, not a filter: a security paper may quote these in
 # good faith, so the editor warns and proceeds under a content-as-data boundary,
 # it does not refuse.

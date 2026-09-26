@@ -27,13 +27,13 @@ def test_every_old_id_resolves_to_a_known_new_id():
 
 
 def test_gate_promote_reads_an_old_id():
-    prof = {"slop": "flavored", "gate_promote": ("register-word",)}
+    prof = {"gate_level": "flavored", "gate_promote": ("register-word",)}
     r = articulate.check_text("We delve into the data.\n", profile=prof)
     assert r["gate"] == "blocked"
 
 
 def test_suppress_categories_reads_an_old_id():
-    prof = {"slop": "flavored", "suppress_categories": ("filler-intensifier",)}
+    prof = {"gate_level": "flavored", "suppress_categories": ("filler-intensifier",)}
     r = articulate.check_text("It was really late.\n", profile=prof)
     assert not [f for t in ("high", "medium", "low") for f in r[t]
                 if f["category"] == "intensifier"]

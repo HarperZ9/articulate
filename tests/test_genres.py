@@ -18,7 +18,7 @@ def _cats(r):
 def test_genres_load_and_expose_fields():
     for name in genres.names():
         g = genres.load(name)
-        assert g["slop"] in {"off", "flavored", "strict"}
+        assert g["gate_level"] in {"off", "flavored", "strict"}
         assert "unit" in g and "fiction_slop" in g and "dialogue_exempt" in g
     assert "poetry" in genres.names()
     assert genres.load("poetry")["unit"] == "line"
@@ -27,14 +27,14 @@ def test_genres_load_and_expose_fields():
 
 def test_profiles_resolve_a_genre_name():
     p = profiles.load("literary-fiction")
-    assert p["genre"] == "literary-fiction" and p["slop"] == "off"
+    assert p["genre"] == "literary-fiction" and p["gate_level"] == "off"
 
 
 def test_genre_modes_carry_their_genre_fields():
     m = modes.load("screenplay/narrate")
-    assert m["structural_classify"] == "fountain" and m["slop"] == "flavored"
+    assert m["structural_classify"] == "fountain" and m["gate_level"] == "flavored"
     m2 = modes.load("poetry/express")
-    assert m2["unit"] == "line" and m2["slop"] == "off"
+    assert m2["unit"] == "line" and m2["gate_level"] == "off"
 
 
 # --- P0-a: quoted speech is not the author's prose ------------------------- #

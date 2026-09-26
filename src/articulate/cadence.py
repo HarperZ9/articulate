@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""articulate.cadence -- sentence-length statistics and the texture score.
+"""articulate.cadence -- sentence-length statistics. Reported only; no cadence
+statistic blocks, scores a text or enters an editing target.
 Standard library only.
 """
 import re
@@ -9,7 +10,7 @@ from statistics import mean, pstdev
 from .lexicon import OPENER_STOP
 from . import markup
 
-# Every constant that decides a cadence flag or the texture score. The ruleset
+# Every constant that decides a cadence flag. The ruleset
 # fingerprint folds them in, so changing one moves the fingerprint.
 CADENCE_MIN_SENTENCES = 12     # fewer sentences than this: no cadence flag at all
 CADENCE_MIN_WORDS = 200        # ... and fewer words than this: no cadence flag at all
@@ -17,34 +18,6 @@ CADENCE_CV_MAX = 0.45          # "uniform" needs a coefficient of variation belo
 CADENCE_MEAN_MIN = 12          # ... and a mean sentence length at or above this
 OPENER_MIN_CONTENT = 12        # content openers needed before opener variety is read
 OPENER_RATIO_MAX = 0.6         # "repetitive openers" below this distinct-opener ratio
-TEXTURE_WEIGHTS = {
-    "min_words": 30, "hard": 8.0, "soft": 4.5, "uniform": 10, "openers": 10,
-    "adverb_floor": 4.0, "adverb": 1.2, "passive_floor": 3.0, "passive": 1.5,
-    "elevated": 30,
-}
-
-def texture_score(n_hard, n_soft, doc, words):
-    """A graded 0-100 estimate of machine texture, accumulating weak evidence.
-    Separate from the clean/flagged device gate: this never changes "clean",
-    it is an extra detection signal for benchmarking and for a graded read.
-    Regex cannot see token probability, so device-clean AI can still score low;
-    that ceiling is honest and expected."""
-    w = TEXTURE_WEIGHTS
-    if words < w["min_words"]:
-        return 0, False
-    per = 100.0 / words
-    score = (n_hard * per) * w["hard"] + (n_soft * per) * w["soft"]
-    if doc.get("uniform"):
-        score += w["uniform"]
-    if doc.get("repetitive_openers"):
-        score += w["openers"]
-    # Orwell/Williams structural excess, above a threshold so ordinary prose
-    # (which carries some adverbs and some passive) is not penalized.
-    score += max(0.0, doc.get("adverb_rate", 0) - w["adverb_floor"]) * w["adverb"]
-    score += max(0.0, doc.get("passive_rate", 0) - w["passive_floor"]) * w["passive"]
-    score = int(min(100, round(score)))
-    return score, score >= w["elevated"]
-
 
 def cadence_stats(text: str) -> dict:
     sents = markup.split_sentences(text)
@@ -57,8 +30,8 @@ def cadence_stats(text: str) -> dict:
     sd = pstdev(counts)
     cv = sd / mu if mu else 0.0
     # Distinct-opener ratio over CONTENT openers only. Everyone repeats "The",
-    # "It", "You" at sentence start, so counting those flags good prose. The real
-    # tell is reusing the same content word to open sentence after sentence.
+    # "It", "You" at sentence start, so counting those flags good prose. The
+    # pattern is reusing the same content word to open sentence after sentence.
     content = [f for f in firsts if f not in OPENER_STOP]
     opener_ratio = len(set(content)) / len(content) if content else 1.0
     return {

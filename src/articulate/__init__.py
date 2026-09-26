@@ -1,9 +1,10 @@
-"""Articulate: a local writing-quality and AI-tell detector, with an optional editor.
+"""Articulate: local prose checks. Named writing patterns, where they occur, and
+what each costs a reader, with an optional editor.
 
-The detector runs standard-library-only with no network call. The optional
-editor layer (judge / fix / polish) sends the text to a hosted model through the
-claude CLI. The register-adaptive
-profile system decides which findings gate.
+The checks run standard-library-only with no network call. The optional editor
+layer (judge / fix / polish) sends the text to a hosted model through the claude
+CLI. Profiles decide which findings block. No output shows who or what wrote a
+text.
 """
 from . import genres, profiles
 from .detector import (GATE_TIERS, analyze_blocks, binary_reason, check_text,

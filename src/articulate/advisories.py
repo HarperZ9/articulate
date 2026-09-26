@@ -127,7 +127,7 @@ def find_fragment_openers(lines):
     beat at the START of a paragraph ("Strong foundation.", "Solid architecture.").
     Report-only (LOW): the fragment shape is legitimate human prose too, so it
     never gates. Paragraph-initial only, because a fragment mid-paragraph is a
-    stylistic choice; the machine tell is opening a paragraph with it. Fenced code
+    stylistic choice; the pattern is opening a paragraph with it. Fenced code
     and frontmatter are skipped, and a heading, list item, table row, block quote,
     or horizontal rule is not a prose paragraph, so it is passed over."""
     offsets = _line_offsets(lines)

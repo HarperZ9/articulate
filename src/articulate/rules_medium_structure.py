@@ -8,11 +8,11 @@ Standard library only.
 import re
 
 MEDIUM_STRUCTURE = [
-    # --- AI CADENCE tells (frontier-model reply/essay rhythm) ------------- #
-    # These catch prose that is free of banned constructions yet still reads as
-    # machine-written because of its shape. They are strong frontier-model tells,
-    # so they sit in MEDIUM. Anything that would fire on ordinary prose (bare "the
-    # first", ordinary "that is") is deliberately excluded or moved to LOW.
+    # --- cadence beats (house pack) --------------------------------------- #
+    # Sentence shapes that restate or label a point in place of adding one. They
+    # are one writer's house style, so only a house profile gates them. Anything
+    # that would fire on ordinary prose (bare "the first", ordinary "that is") is
+    # excluded or moved to LOW.
     #
     # A summary-beat is a structural device, not a vocabulary choice, so the
     # "cadence" category is exempt from the terms-of-art allowlist (see
@@ -100,14 +100,14 @@ MEDIUM_STRUCTURE = [
      re.compile(r"(?i)\b(?:the\s+)?through[- ]?line\b|\bconnective\s+tissue\b")),
 
     # ===================================================================== #
-    # COMPREHENSIVE tell set (delivery / structural / lexical / formatting).
-    # Deduped against every entry above; each is a strong, low-false-positive
-    # frontier-model tell. Single dual-use words are NOT here (they live in the
-    # inflated-word lists and the SOFT density score); high-false-positive
-    # formatting and density signals are LOW advisories or heuristics, not here.
+    # Reply templates, scaffolding, reveals, framing pivots and puffery frames.
+    # Deduped against every entry above. Single dual-use words are not here (they
+    # live in the inflated-word lists); formatting and density signals that fire
+    # on ordinary prose are LOW advisories. Which of these gate outside the house
+    # pack is set in rule_reasons.
     # ===================================================================== #
 
-    # --- assistant reply / closer register ------------------------------- #
+    # --- chat reply and closer phrases ----------------------------------- #
     ("sycophancy", "sycophantic flattery of the interlocutor",
      re.compile(r"(?i)\b(?:that|this)(?:'s| is)\s+(?:a|an)\s+(?:great|excellent|"
                 r"fantastic|really\s+good|very\s+good|insightful|thoughtful|"

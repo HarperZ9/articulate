@@ -1,6 +1,6 @@
 # Articulate for VS Code
 
-Inline writing-quality and AI-tell diagnostics, powered by the Articulate
+Inline prose-pattern diagnostics, powered by the Articulate
 language server. The server runs locally with no network call; this extension is
 a thin client that launches it.
 

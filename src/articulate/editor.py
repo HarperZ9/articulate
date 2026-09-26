@@ -4,7 +4,7 @@
 articulate-judge.py  --  the editor layer for Articulate.
 
 check-writing-devices.py is the fast, deterministic detector: it flags the
-mechanical tells (devices, register, cadence) and scores machine texture. This
+named prose patterns (devices, register, cadence) with their spans. This
 layer adds the two things a detector cannot do on its own, the two things a
 skilled editor does:
 
@@ -23,7 +23,7 @@ skilled editor does:
 
   --review FILE  Mechanical detect + judge in one report. No rewrite.
 
-The rewrite target is WRITING QUALITY, gated by the mechanical tell-checker.
+The rewrite target is WRITING QUALITY, gated by the pattern checker.
 It is not gated by, or tuned toward, any AI-detector score.
 
 The model runs through the `claude` CLI (headless `claude -p`), which sends the
@@ -136,7 +136,7 @@ def hardened(instructions):
 
 
 def injection_warning(text):
-    """A one-block warning listing document lines that read as an assistant
+    """A one-block warning listing document lines that read as a model-addressed
     directive, or "" if none. The editor prints this before a rewrite; it does not
     block, because a document may quote such patterns in good faith."""
     from . import detector
@@ -145,7 +145,7 @@ def injection_warning(text):
         return ""
     lines = [f"  L{h['line']} [{h['category']}] {h['label']}: {h['snippet']}" for h in hits]
     return ("[editor] WARNING: the document contains lines that read as instructions "
-            "to an assistant. They are treated as content to edit, never obeyed:\n"
+            "to a model reading it. They are treated as content to edit, never obeyed:\n"
             + "\n".join(lines))
 
 
@@ -252,9 +252,8 @@ def mechanical_text(text, profile=None):
     hits = r["high"] + r["medium"]
     lines = [f"  L{h['line']} [{h['tier']} {h['category']}] {h['label']}: {h['snippet']}"
              for h in hits]
-    tex = f"texture score {r['texture_score']}/100"
-    summary = (f"{len(hits)} mechanical tell(s); {tex}\n" + "\n".join(lines)) if hits \
-        else f"clean of mechanical tells; {tex}"
+    summary = (f"{len(hits)} finding(s)\n" + "\n".join(lines)) if hits \
+        else "no HIGH or MEDIUM findings"
     return len(hits) == 0, summary
 
 
@@ -342,10 +341,10 @@ def rewrite_once(text, mech, quality_notes, is_html, standard_delta=""):
     instr = f"""{STANDARD}
 {mode_note}
 TASK: Rewrite the text piped on stdin so it reads as skilled writing that
-fully satisfies the standard above. Fix the mechanical tells AND the
+fully satisfies the standard above. Fix the named findings AND the
 judgment-level weaknesses. Keep the author's meaning and every fact exactly. {html_note}
 
-EXCELLENCE BAR: do not settle for merely removing tells. Aim for prose a
+EXCELLENCE BAR: do not settle for merely clearing findings. Aim for prose a
 discerning editor would call excellent. Every sentence earns its place. Every
 paragraph leaves the reader with a specific fact, name, number, or cause they
 could restate. Strong verbs, real actors as subjects, varied rhythm, committed
@@ -372,7 +371,7 @@ def quality_judge(text):
         "5 means a discerning editor would change nothing. Score strictly; most drafts are 2-3.\n"
         "Return ONLY a JSON object, no prose, no code fences:\n"
         '{"concreteness":N,"commitment":N,"economy":N,"rhythm":N,"restatable":N,'
-        '"verdict":"excellent" or "revise","worst":["one concrete fix","another"]}'
+        '"overall":"excellent" or "revise","worst":["one concrete fix","another"]}'
     )
     out = claude_call(instr, text)
     m = re.search(r"\{.*\}", out, re.S)
@@ -506,12 +505,12 @@ def _fix_instructions(mech, mode_note, is_html):
     return f"""{STANDARD}
 {mode_note}
 TASK: Rewrite the text piped on stdin so it reads as skilled writing that \
-fully satisfies the standard above. Fix the mechanical tells AND the \
+fully satisfies the standard above. Fix the named findings AND the \
 judgment-level weaknesses (empty sentences, vague abstraction, hedging with no \
 position, weak verbs, buried points). Keep the author's meaning and every fact \
 exactly. {html_note}
 
-EXCELLENCE BAR: do not settle for merely removing tells. Aim for prose a \
+EXCELLENCE BAR: do not settle for merely clearing findings. Aim for prose a \
 discerning editor would call excellent. Every sentence earns its place. Every \
 paragraph leaves the reader with a specific fact, name, number, or cause they \
 could restate. The verbs are strong and the subjects are real actors. The \
@@ -562,7 +561,7 @@ def fix(path, out_path, passes, mode=None):
         open(out_path, "w", encoding="utf-8").write(result + ("\n" if not result.endswith("\n") else ""))
         # The self-check reads the rewrite under the same mode as the first pass.
         clean_after, _ = mechanical(out_path, prof)
-        print(f"[fix] pass {attempt}: {'CLEAN' if clean_after else 'still has tells'} -> {out_path}")
+        print(f"[fix] pass {attempt}: {'CLEAN' if clean_after else 'findings remain'} -> {out_path}")
         text = result
         if clean_after:
             break

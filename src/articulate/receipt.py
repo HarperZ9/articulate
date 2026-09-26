@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-articulate.receipt -- re-derivable verdicts.
+articulate.receipt -- re-derivable screenings.
 
-A receipt records a detection result together with the exact text hash and
+A receipt records a check result together with the exact text hash and
 ruleset fingerprint that produced it. Anyone can replay it: recompute the
 findings on the same text under the same ruleset and confirm they match, without
 trusting whoever issued the receipt first. The verdict uses a closed lattice,
@@ -12,7 +12,7 @@ value: the receipt certifies re-derivability, never authority.
 
   Match         same text, same ruleset, identical findings and gate.
   Drift         same text and ruleset, but the re-derived findings differ
-                (the detector code changed outside the pinned patterns, or the
+                (the checker code changed outside the pinned patterns, or the
                 receipt was altered).
   Unverifiable  the ruleset changed, the text does not match the receipt's hash,
                 or the receipt schema is unknown. Re-derivation cannot be done,
@@ -29,6 +29,9 @@ against a known string; it is not confidentiality, because most rules draw from 
 public closed vocabulary a holder can enumerate and hash. Use "drop" when the flagged
 word must stay secret.
 
+A receipt records which rules fired, where, and whether the gate held. It does
+not show who or what wrote the text, and it carries the does-not-prove line.
+
 Standard library only; no network.
 """
 from __future__ import annotations
@@ -37,6 +40,7 @@ import hashlib
 from datetime import datetime, timezone
 
 from . import detector, modes, profiles
+from .tool_text import DOES_NOT_PROVE
 
 SCHEMA = "articulate/receipt/v2"
 AUDIT_SCHEMA = "articulate/receipt/audit/v2"
@@ -94,18 +98,16 @@ def _normalize(result, redaction=None) -> list:
 
 
 def _block_receipt(text, prof) -> list:
-    """Per-span (per-paragraph) verdicts for the receipt: which block is flagged,
-    its line range, its own text hash, and its localized texture. This is what
-    makes the receipt reportable per span, beyond the whole-document verdict."""
+    """Per-paragraph counts for the receipt: each block's line range, its own
+    text hash, and its counts by tier and by rule, in document order. No block
+    carries a gate or a label; the gate belongs to the document."""
     out = []
     for b in detector.analyze_blocks(text, profile=prof):
         out.append({
             "index": b["index"],
             "start_line": b["start_line"], "end_line": b["end_line"],
             "text_sha256": _sha256(text[b["start"]:b["end"]]),
-            "gate": b["gate"], "clean": b["clean"], "verdict": b["verdict"],
-            "texture_score": b["texture_score"], "elevated": b["elevated"],
-            "counts": b["counts"],
+            "counts": b["counts"], "rule_counts": b["rule_counts"],
         })
     return out
 
@@ -152,13 +154,11 @@ def make_receipt(text: str, profile_name: str = None, *, mode: str = None,
         **({"mode": mode} if mode else {}),
         "text_sha256": _sha256(text),
         "gate": r["gate"],
-        "clean": r["clean"],
-        "verdict": r["verdict"],
-        "sufficient": r["sufficient"],
-        "texture_score": r["texture_score"],
-        "counts": {"high": len(r["high"]), "medium": len(r["medium"]),
-                   "low": len(r["low"])},
+        "findings_state": r["findings"],
+        "words": r["words"],
+        "counts": r["counts"],
         "findings": _normalize(r, redact),
+        "does_not_prove": DOES_NOT_PROVE,
     }
     if content_free:
         rec["redaction"] = redact
@@ -212,19 +212,12 @@ def verify_receipt(receipt: dict, text: str):
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.
     same = (_normalize(r, redaction) == receipt.get("findings")
-            and r["gate"] == receipt.get("gate")
-            and r["texture_score"] == receipt.get("texture_score"))
+            and r["gate"] == receipt.get("gate"))
     if not same:
-        return "Drift", "re-derived findings or verdict differ from the receipt"
-    # Below the word floor a device-clean text with no findings has too little
-    # signal to assert; the receipt abstains and makes no confident clean claim.
-    if r["verdict"] == "unverifiable":
-        return ("Unverifiable",
-                f"below the {detector.MIN_WORDS_FOR_VERDICT}-word signal floor; "
-                f"no confident clean verdict on this little text")
-    # A per-span receipt also re-derives its per-block verdicts.
+        return "Drift", "re-derived findings or gate differ from the receipt"
+    # A per-span receipt also re-derives its per-paragraph counts.
     if "blocks" in receipt and _block_receipt(text, prof) != receipt["blocks"]:
-        return "Drift", "re-derived per-span block verdicts differ from the receipt"
+        return "Drift", "re-derived per-paragraph counts differ from the receipt"
     n = len(r["high"]) + len(r["medium"]) + len(r["low"])
-    span = f", {len(receipt['blocks'])} spans" if "blocks" in receipt else ""
-    return "Match", f"re-derived {n} findings, gate {r['gate']}, texture {r['texture_score']}{span}"
+    span = f", {len(receipt['blocks'])} paragraphs" if "blocks" in receipt else ""
+    return "Match", f"re-derived {n} findings, gate {r['gate']}{span}"

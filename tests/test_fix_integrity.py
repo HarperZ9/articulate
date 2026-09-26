@@ -153,7 +153,7 @@ def test_fix_self_check_uses_the_chosen_mode(work, monkeypatch, capsys):
     assert editor.fix(src, out, passes=1, mode="technical-docs/argue") == 0
     printed = capsys.readouterr().out
     assert "pass 1: CLEAN" in printed
-    assert "[fix] clean of mechanical tells" in printed
+    assert "[fix] no HIGH or MEDIUM findings" in printed
 
 
 def test_fix_self_check_without_a_mode_still_uses_the_default(work, monkeypatch, capsys):
@@ -162,4 +162,4 @@ def test_fix_self_check_without_a_mode_still_uses_the_default(work, monkeypatch,
     monkeypatch.setattr(editor, "claude_call", FakeModel(lambda t: MODE_CLEAN))
     editor.fix(src, out, passes=1)
     printed = capsys.readouterr().out
-    assert "pass 1: still has tells" in printed
+    assert "pass 1: findings remain" in printed

@@ -9,7 +9,7 @@ HUMAN = ("Four score and seven years ago our fathers brought forth on this "
 def test_spans_slice_the_matched_text():
     r = articulate.check_text(SLOP, profile=profiles.load("flavored"))
     hits = r["high"] + r["medium"] + r["low"]
-    assert hits, "slop must produce findings"
+    assert hits, "this text must produce findings"
     for f in hits:
         assert SLOP[f["start"]:f["end"]] == f["match"]
         assert f["rule_id"] and "/" in f["rule_id"] or f["rule_id"]
@@ -27,7 +27,7 @@ def test_profile_gating_off_flavored_strict():
 def test_human_prose_is_clean():
     r = articulate.check_text(HUMAN, profile=profiles.load("flavored"))
     assert r["clean"] is True
-    assert r["texture_score"] == 0
+    assert r["findings"] == "no_findings" and r["gate"] == "ok"
 
 
 def test_british_english_not_flagged():
@@ -90,14 +90,13 @@ def test_genuine_help_but_antithesis_is_flagged():
     assert "antithesis" not in {f["category"] for f in idiom["high"]}
 
 
-def test_kept_word_does_not_inflate_texture_under_research():
-    # 'comprehensive' is kept for research, so it must not count toward texture
-    # either; a clean paper is not scored elevated on its own normal vocabulary.
+def test_kept_word_raises_nothing_under_research():
+    # 'comprehensive' is kept for research, so a paper is not flagged for its own
+    # normal vocabulary, at any tier.
     txt = ("comprehensive " * 20) + "analysis of the corpus and the broader field of study.\n"
     research = articulate.check_text(txt, profile=profiles.load("research"))
     flavored = articulate.check_text(txt, profile=profiles.load("flavored"))
-    assert flavored["texture_score"] > research["texture_score"]
-    assert research["elevated"] is False
+    assert _register_hits(flavored) and not _register_hits(research)
 
 
 # --------------------------------------------------------------------------- #
