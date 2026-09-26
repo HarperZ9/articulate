@@ -38,14 +38,17 @@ def _finding(tier, f, gates=False):
     return {**f, "tier": tier, "gates": gates, "house": f["category"] in HOUSE_CATEGORIES}
 
 
-def house_retier(high, medium, low, profile):
-    """Outside a house profile, a house-pack finding reports at LOW and never
-    blocks. Under a house profile it keeps its table tier."""
+def house_retier(high, medium, low, profile, house_notes=False):
+    """Under a house profile a house-pack finding keeps its table tier. Outside
+    one it never blocks: with `house_notes` it reports at LOW, and without it the
+    finding is left out, unless a mode asks the editor to clear that category."""
     if (profile or {}).get("house"):
         return high, medium, low
-    moved = [f for f in high + medium if f["category"] in HOUSE_CATEGORIES]
+    required = set(resolve_all(((profile or {}).get("editor") or {}).get("require_fix", ())))
+    shown = lambda f: house_notes or f["category"] in required  # noqa: E731
+    moved = [f for f in high + medium + low if f["category"] in HOUSE_CATEGORIES and shown(f)]
     keep = lambda arr: [f for f in arr if f["category"] not in HOUSE_CATEGORIES]  # noqa: E731
-    return keep(high), keep(medium), low + moved
+    return keep(high), keep(medium), keep(low) + moved
 
 
 def gates_finding(tier, category, profile):
@@ -74,15 +77,23 @@ def rule_counts(findings):
     return dict(sorted(out.items()))
 
 
-def check_text(text, *, profile=None, allow=()):
+def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail=False):
     """The library API. Scan text under an optional profile (a dict from
     articulate.profiles.load or modes.load). Returns the findings, per-rule
-    counts, the gate, density and cadence statistics. No filesystem, no network."""
+    counts, the gate, density and rate statistics. No filesystem, no network.
+
+    house_notes: outside a house profile, report the house-pack patterns at LOW.
+    The library reports them, each marked `house: true`; the command line, the
+    editor diagnostics, the MCP tools and receipts leave them out unless the
+    writer asks, because they skewed toward learner writing on the corpus run.
+    cadence_detail: add the sentence-length variation figures (`cv`, `uniform`).
+    They are left out by default: that statistic is the burstiness signal
+    perplexity detectors use, and the fairness harness is its only reader."""
     p = profile or {}
     keep = tuple(allow) + tuple(p.get("keep", ()))
     high, medium, low, doc = scan_lines(text.splitlines(keepends=True), keep,
                                         genre=_genre(p))
-    high, medium, low = house_retier(high, medium, low, profile)
+    high, medium, low = house_retier(high, medium, low, profile, house_notes)
     # gate_promote lets a mode block a category its tier would not block. It only
     # adds gating, so it can never lift the HIGH tier.
     tiers = {tier: [_finding(tier, f, gates_finding(tier, f["category"], profile))
@@ -106,14 +117,14 @@ def check_text(text, *, profile=None, allow=()):
         "cadence": {
             "words": doc.get("words", 0),
             "mean_sentence_len": doc.get("mean_len"),
-            "cv": doc.get("cv"),
-            "uniform": doc.get("uniform", False),
             "repetitive_openers": doc.get("repetitive_openers", False),
             "passive_rate": doc.get("passive_rate", 0),
             "adverb_rate": doc.get("adverb_rate", 0),
         },
         "does_not_prove": DOES_NOT_PROVE,
     }
+    if cadence_detail:
+        result["cadence"].update(cv=doc.get("cv"), uniform=doc.get("uniform", False))
     result["density"] = density(result)
     return result
 
@@ -148,13 +159,13 @@ def segment_blocks(text):
              "text": "".join(lines[s:e + 1])} for idx, (s, e) in enumerate(ranges)]
 
 
-def analyze_blocks(text, *, profile=None, allow=()):
+def analyze_blocks(text, *, profile=None, allow=(), house_notes=True):
     """Per-paragraph findings in document order: each block's line range, counts
     by tier and by rule, and its findings in document coordinates. It carries no
     per-paragraph gate, no label and no score; the gate belongs to the document."""
     out = []
     for b in segment_blocks(text):
-        r = check_text(b["text"], profile=profile, allow=allow)
+        r = check_text(b["text"], profile=profile, allow=allow, house_notes=house_notes)
         for tier in ("high", "medium", "low"):
             for f in r[tier]:
                 f["line"] += b["start_line"] - 1

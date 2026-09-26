@@ -18,6 +18,7 @@ Standard library only.
 from __future__ import annotations
 
 from . import desk_field, desk_inside
+from .tool_text import DOES_NOT_PROVE
 
 HEADER = ("Prepares the questions a reviewer should ask, inside the document and across "
           "the field. It checks the document's own statements and cannot judge "
@@ -41,4 +42,5 @@ def review(text, venue=None, disclosure=None, author=False):
     return {"schema": SCHEMA, "header": HEADER, "venue": venue or "none",
             "side": "author" if author else "reviewer",
             "inside": {"title": "Inside the document", "items": items},
-            "across_field": {"title": "Across the field", **field}}
+            "across_field": {"title": "Across the field", **field},
+            "does_not_prove": DOES_NOT_PROVE}

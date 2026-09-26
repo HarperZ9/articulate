@@ -93,10 +93,11 @@ def _screen(args):
             pname, prof = _resolve(name, text, args)
         except (profiles.ProfileError, modes.ModeError) as e:
             raise ValueError(str(e)) from e
-        r = check_text(text, profile=prof)
+        notes = getattr(args, "house_notes", False)
+        r = check_text(text, profile=prof, house_notes=notes)
         r["file"], r["profile"] = name, pname
         if getattr(args, "spans", False):
-            r["blocks"] = analyze_blocks(text, profile=prof)
+            r["blocks"] = analyze_blocks(text, profile=prof, house_notes=notes)
         yield name, pname, r
 
 
@@ -147,6 +148,10 @@ def _add_check_args(p, cmd):
     p.add_argument("--profile", default=None, help="force a profile (house, essay, ...)")
     p.add_argument("--mode", default=None,
                    help="a writing mode (domain/articulation, e.g. memo/argue)")
+    if cmd in ("check", "score"):
+        p.add_argument("--house-notes", action="store_true",
+                       help="also report the house style's patterns as low notes "
+                            "(a house profile gates them; no other profile shows them)")
     if cmd == "check":
         p.add_argument("--json", action="store_true")
         p.add_argument("--sarif", action="store_true", help="emit SARIF 2.1.0")

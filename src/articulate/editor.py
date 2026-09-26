@@ -41,6 +41,8 @@ except (AttributeError, ValueError):
     pass
 
 from . import claude_cli
+from .origin_guard import clean_notes, strip_origin_guesses
+from .origin_guard import note as origin_note
 from .claude_cli import ClaudeUnavailable  # noqa: F401  (re-exported for callers)
 from .mathmask import (MATH_EXTS, MathSpliceError, _MATH_PLACEHOLDER,  # noqa: F401
                        _MATH_PLACEHOLDER_RX, _MATH_RX, is_math_file, mask_math,
@@ -64,7 +66,8 @@ def injection_warning(text):
         return ""
     lines = [f"  L{h['line']} [{h['category']}] {h['label']}: {h['snippet']}" for h in hits]
     return ("[editor] WARNING: the document contains lines that read as instructions "
-            "to a model reading it. They are treated as content to edit, never obeyed:\n"
+            "to a model reading it. The editor tells the model to treat them as content "
+            "to edit and not to follow them; a prompt cannot guarantee that:\n"
             + "\n".join(lines))
 
 
@@ -172,7 +175,10 @@ def judge(path, mode=None, profile=None):
     if warn:
         print(warn + "\n")
     try:
-        print(claude_call(instr, text))
+        read, removed = strip_origin_guesses(claude_call(instr, text))
+        print(read)
+        if removed:
+            print(origin_note(removed))
     except _UNAVAILABLE as e:
         print(f"[judge] model layer unavailable: {e}")
 
@@ -190,9 +196,12 @@ def quality_judge(text):
     if not m:
         return {}
     try:
-        return json.loads(m.group(0))
+        q = json.loads(m.group(0))
     except ValueError:
         return {}
+    if isinstance(q, dict) and isinstance(q.get("worst"), list):
+        q["worst"] = clean_notes(q["worst"])
+    return q
 
 
 def accept(before_scores, after_scores, before_gate, after_gate, required_open, guard):

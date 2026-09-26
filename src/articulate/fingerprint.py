@@ -3,8 +3,7 @@
 """articulate.fingerprint -- the ruleset fingerprint a receipt pins, and the
 closed set of category names. Standard library only.
 """
-from .lexicon import (ADVERB, EMOJI, EXPLETIVE, NEG, NOMINAL, PASSIVE, SOFT,
-                      VAGUE_QUANT)
+from .lexicon import ADVERB, EMOJI, EXPLETIVE, NEG, NOMINAL, PASSIVE, VAGUE_QUANT
 from .advisories import FRAGMENT_OPENER, PRONOUN_SUBJ, STOP4
 from . import aliases, cadence, density, markup, rule_reasons, scan
 from .gate import GATE_TIERS
@@ -56,7 +55,7 @@ def ruleset_fingerprint():
             parts.append(f"{name}|{cat}|{label}|{rx.pattern}")
     for nm, rx in (("EMOJI", EMOJI), ("VAGUE_QUANT", VAGUE_QUANT),
                    ("EXPLETIVE", EXPLETIVE), ("NOMINAL", NOMINAL), ("NEG", NEG),
-                   ("SOFT", SOFT), ("PASSIVE", PASSIVE), ("ADVERB", ADVERB),
+                   ("PASSIVE", PASSIVE), ("ADVERB", ADVERB),
                    ("FRAGMENT_OPENER", FRAGMENT_OPENER)):
         parts.append(f"X|{nm}|{rx.pattern}")
     parts.append(f"PRONOUN_SUBJ={sorted(PRONOUN_SUBJ)}|STOP4={sorted(STOP4)}")

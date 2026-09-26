@@ -36,7 +36,7 @@ from .gate import (GATE_TIERS, analyze_blocks,  # noqa: F401
                    check_text, detect_injection, segment_blocks)
 from .lexicon import (ADVERB, BOLD_SPAN, BULLET, DIGIT, EMOJI,  # noqa: F401
                       EXPLETIVE, FIRSTWORD, HEADING, HEDGE_WORDS, NEG,
-                      NGRAM_STOP, NOMINAL, OPENER_STOP, PASSIVE, SOFT,
+                      NGRAM_STOP, NOMINAL, OPENER_STOP, PASSIVE,
                       VAGUE_QUANT, WORD)
 from .markup import (ALLOW_EXEMPT_CATEGORIES, ALLOW_TAG, FENCE,  # noqa: F401
                      INLINE_CODE, QUOTED, TAG, TEX, URL, allowed,

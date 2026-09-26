@@ -83,7 +83,7 @@ VERSE = ("I do not weep, but sing,\n"
 
 
 def test_poetry_removes_device_categories():
-    poem = articulate.check_text(VERSE, profile=profiles.load("poetry"))
+    poem = articulate.check_text(VERSE, profile=profiles.load("poetry"), cadence_detail=True)
     cats = _cats(poem)
     for banned in ("antithesis", "rule-of-three", "contrast-pair",
                    "negative-parallel", "cadence"):

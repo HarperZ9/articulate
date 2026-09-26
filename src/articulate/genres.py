@@ -28,8 +28,8 @@ detector consumes:
   quote_exempt_all     the stricter memoir rule: quoted testimony is excluded
                        from every category, because those quotes are often
                        recalled and rescoring or rewriting them is a factual error.
-  fiction_slop         run the report-only fiction lexicon (generation artifacts
-                       such as the somatic cliche). It is an advisory, never a gate.
+  fiction_slop         run the report-only fiction lexicon (stock phrases such as
+                       the somatic cliche). It is an advisory, never a gate.
   suppress_categories  craft-device categories a genre removes from the report
                        outright, because they name legitimate technique in that
                        genre. Verse removes antithesis, the triad, the contrast

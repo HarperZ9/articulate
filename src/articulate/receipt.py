@@ -102,7 +102,7 @@ def _block_receipt(text, prof) -> list:
     text hash, and its counts by tier and by rule, in document order. No block
     carries a gate or a label; the gate belongs to the document."""
     out = []
-    for b in detector.analyze_blocks(text, profile=prof):
+    for b in detector.analyze_blocks(text, profile=prof, house_notes=False):
         out.append({
             "index": b["index"],
             "start_line": b["start_line"], "end_line": b["end_line"],
@@ -142,7 +142,7 @@ def make_receipt(text: str, profile_name: str = None, *, mode: str = None,
     if redact not in (None, "drop", "hash"):
         raise ValueError(f"redact must be None, 'drop', or 'hash'; got {redact!r}")
     pname, prof = _load_screening(profile_name, mode)
-    r = detector.check_text(text, profile=prof)
+    r = detector.check_text(text, profile=prof, house_notes=False)
     content_free = redact in ("drop", "hash")
     rec = {
         "schema": AUDIT_SCHEMA if content_free else SCHEMA,
@@ -214,13 +214,18 @@ def verify_receipt(receipt: dict, text: str):
     prof, problem = _replay_profile(receipt)
     if problem:
         return "Unverifiable", problem
-    r = detector.check_text(text, profile=prof)
+    r = detector.check_text(text, profile=prof, house_notes=False)
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.
     same = (_normalize(r, redaction) == receipt.get("findings")
             and r["gate"] == receipt.get("gate"))
     if not same:
         return "Drift", "re-derived findings or gate differ from the receipt"
+    # The summary fields are re-derived too: `audit` reports them, so a receipt
+    # whose counts or findings state were edited never reads Match.
+    summary = {"findings_state": r["findings"], "words": r["words"], "counts": r["counts"]}
+    if any(receipt.get(k) != v for k, v in summary.items()):
+        return "Drift", "re-derived findings state, word count or counts differ from the receipt"
     # A per-span receipt also re-derives its per-paragraph counts.
     if "blocks" in receipt and _block_receipt(text, prof) != receipt["blocks"]:
         return "Drift", "re-derived per-paragraph counts differ from the receipt"

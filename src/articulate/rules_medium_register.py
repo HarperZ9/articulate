@@ -19,10 +19,11 @@ MEDIUM_REGISTER = [
                 r"meticulous(?:ly)?|comprehensive(?:ly)?|vibrant|bustling|"
                 r"garner(?:s|ing|ed)?|foster(?:s|ing|ed)?|cultivat(?:e[sd]?|ing)|"
                 r"underpin(?:s|ning|ned)?|streamlin(?:e[sd]?|ing)|paramount)\b", re.I)),
-    # More AI-register words. Kept to terms rarely needed in plain writing;
-    # generic dual-use words (key, essential, enable, ensure, framework, domain,
-    # efficient, effective, significant, robust-as-adjective) are deliberately
-    # excluded to protect precision. The research pass will vet the rest.
+    # More inflated words from the house standard's list. The list began as
+    # vocabulary that one writer's editing pass removed, so it is house style
+    # and never blocks outside a house profile. Generic dual-use words (key,
+    # essential, enable, ensure, framework, domain, efficient, effective,
+    # significant, robust as an adjective) stay out to protect precision.
     ("inflated-word", "inflated word (extended list)",
      re.compile(r"\b(?:ever[- ](?:evolving|changing|growing|expanding)|fast[- ]paced|"
                 r"transformative|groundbreaking|unprecedented|profound(?:ly)?|"
@@ -126,7 +127,7 @@ MEDIUM_REGISTER = [
     # MEDIUM: it blocks under a strict profile and reports under the default.
     ("wordiness", "deletable padding circumlocution",
      re.compile(r"\b(?:in order to|due to the fact that|for the purpose of|"
-                r"at this point in time|with regard to|with respect to|"
+                r"at this point in time|with regard to|with respect to(?!\s+(?:\$|\\\(|[b-zB-HJ-Z]\b(?!')))|"
                 r"a wide range of|in the process of|in a timely manner|"
                 r"it should be noted that)\b", re.I)),
 ]

@@ -13,6 +13,7 @@ from collections import Counter
 
 from . import modes, profiles, receipt
 from .detector import binary_reason, ruleset_fingerprint
+from .tool_text import DOES_NOT_PROVE
 
 
 def cmd_receipt(args, inputs, profile_name):
@@ -154,7 +155,8 @@ def cmd_audit(args, decode):
     summary = {"receipts": len(recs), "by_gate": dict(by_gate),
                "by_findings_state": dict(by_state), "stale_ruleset": stale,
                f"recent_{args.days}d": recent,
-               "blocked_by_rule": dict(blocked_rules.most_common(10))}
+               "blocked_by_rule": dict(blocked_rules.most_common(10)),
+               "does_not_prove": DOES_NOT_PROVE}
     if args.reverify:
         summary["reverify"] = dict(reverify)
     _print_audit(args, summary, blocked_rules)

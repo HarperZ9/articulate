@@ -82,7 +82,8 @@ def to_sarif(results):
                 "locations": [{"physicalLocation": {
                     "artifactLocation": {"uri": uri}, "region": _region(f)}}],
                 "properties": {"profile": r.get("profile"), "tier": f["tier"],
-                               "blocks": bool(f.get("gates"))},
+                               "blocks": bool(f.get("gates")),
+                               "house": bool(f.get("house"))},
             })
     return {
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
@@ -95,18 +96,24 @@ def to_sarif(results):
     }
 
 
+def _tag(f):
+    return f"{f['tier']} {f['category']}" + (", house style" if f.get("house") else "")
+
+
 def print_check(name, pname, r, verbose):
     n = r["counts"]
     state = ("no findings" if r["findings"] == "no_findings"
              else f"{n['high']} high, {n['medium']} medium")
     print(f"[articulate] {name} [{pname}]: {state}, {n['low']} low, gate {r['gate']}")
-    for f in r["high"] + r["medium"]:
-        print(f"  L{f['line']} [{f['tier']} {f['category']}] "
-              f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
+    # A LOW finding that a profile promotes blocks, so it always prints.
+    for f in r["high"] + r["medium"] + [f for f in r["low"] if f.get("gates")]:
+        print(f"  L{f['line']} [{_tag(f)}] {f.get('label', f['category'])}: {f.get('snippet', '')}")
     if verbose:
-        for f in r["low"]:
-            print(f"  L{f['line']} [LOW {f['category']}] "
+        for f in (f for f in r["low"] if not f.get("gates")):
+            print(f"  L{f['line']} [{_tag(f)}] "
                   f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
+    if r["gate"] == "blocked":
+        print(f"  {DOES_NOT_PROVE}")
 
 
 def print_spans(name, pname, blocks):

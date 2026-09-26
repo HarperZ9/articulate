@@ -36,9 +36,23 @@ _CITED = re.compile(r"\[\d+(?:[,–-]\s*\d+)*\]|\([^()]*\b(?:1[89]|20)\d\d[a-z]?
                     r"|https?://|\bdoi:|\b(?:Table|Figure|Fig\.|Section|Appendix)\s+\d")
 _COMMENT = re.compile(r"<!--.*?-->", re.S)
 _OWN_TAGS = re.compile(r"(?i)writing-(?:profile|allow):|BEGIN C2PA MANIFEST")
-_INVISIBLE = re.compile("(?<=[A-Za-z0-9])[​⁠]+(?=[A-Za-z0-9])")
-_STYLED = re.compile(r"(?i)<[^>]+style\s*=\s*\"[^\"]*(?:color\s*:\s*(?:#fff(?:fff)?|white)"
-                     r"|font-size\s*:\s*0)[^\"]*\"[^>]*>[^<]*"
+# Characters that do not render: zero-width joiners and spaces between Latin
+# letters (ZWNJ and ZWJ are ordinary inside Arabic, Persian, Indic and emoji
+# sequences, so only a Latin run counts), a byte-order mark after the first
+# character, bidirectional controls, and Unicode tag characters (U+E0000 block),
+# which can carry a whole hidden sentence.
+_INVISIBLE = re.compile(
+    "(?<=[A-Za-z0-9])[\u200b\u200c\u200d\u2060]+(?=[A-Za-z0-9])"
+    "|(?<=.)\ufeff|[\u202a-\u202e\u2066-\u2069]+|[\U000e0000-\U000e007f]+", re.S)
+# Styling that hides text. Each value must hide it: white text, a zero size,
+# display none, visibility hidden, zero opacity. `background-color` and a size
+# such as 0.9em are ordinary styling and never match.
+_HIDE = (r"(?:(?<![-\w])color\s*:\s*(?:#fff(?:fff)?(?![\w])|white\b)"
+         r"|font-size\s*:\s*0(?:px|em|rem|pt|%)?(?![\w.])"
+         r"|display\s*:\s*none\b|visibility\s*:\s*hidden\b"
+         r"|opacity\s*:\s*0(?:\.0+)?(?![\w.]))")
+_STYLED = re.compile(r"(?i)<[^>]+style\s*=\s*(?:\"[^\"]*" + _HIDE + r"[^\"]*\""
+                     r"|'[^']*" + _HIDE + r"[^']*')[^>]*>[^<]*"
                      r"|\\textcolor\{white\}\{[^}]*\}|\\color\{white\}[^\n}]*")
 _HEADING = re.compile(r"^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$|\\(?:sub)*section\*?\{([^}]*)\}", re.M)
 
@@ -93,6 +107,31 @@ def _outside_quotes_and_code(text):
     return "".join(out)
 
 
+def _untag(span):
+    """Tag characters mirror ASCII (U+E0020 is a space, U+E0041 is 'A'), so the
+    hidden sentence they carry can be read for the injection check."""
+    return "".join(chr(ord(c) - 0xE0000) if 0xE0020 <= ord(c) <= 0xE007E else c
+                   for c in span)
+
+
+def _shown(span):
+    """The span with each invisible character written as its code point, and a
+    run of tag characters written as the text it spells."""
+    out, tags = [], []
+    for c in span + " ":
+        if 0xE0000 <= ord(c) <= 0xE007F:
+            tags.append(c)
+            continue
+        if tags:
+            out.append(f"[tag characters spelling: {_untag(''.join(tags))}]")
+            tags = []
+        out.append(f"[U+{ord(c):04X}]" if _INVISIBLE.fullmatch(c) or c in _MARKS else c)
+    return "".join(out)[:-1]
+
+
+_MARKS = "\u200b\u200c\u200d\u2060\ufeff"
+
+
 def hidden_items(text):
     """Text that does not render for a reader, outside quotations and code."""
     visible = _outside_quotes_and_code(text)
@@ -103,9 +142,8 @@ def hidden_items(text):
             if rx is _COMMENT and _OWN_TAGS.search(span):
                 continue
             line = text.count("\n", 0, m.start()) + 1
-            out.append(_item("hidden-text", line, span.replace("​", "[U+200B]")
-                             .replace("⁠", "[U+2060]"), HIDDEN_QUESTION,
-                             addressed_to_model=bool(detect_injection(span))))
+            out.append(_item("hidden-text", line, _shown(span), HIDDEN_QUESTION,
+                             addressed_to_model=bool(detect_injection(_untag(span)))))
     return out
 
 

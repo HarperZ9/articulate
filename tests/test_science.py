@@ -77,7 +77,11 @@ def test_two_sentence_contrast_passes_and_the_device_reports():
 def test_tex_under_papers_routes_math_aware():
     assert profiles.profile_for("papers/proof.tex") != "essay"
     assert profiles.profile_for("proofs/main.tex") == "proof"
-    assert profiles.profile_for("essays/piece.tex") == "essay"   # essays stay device-free
+    # Any other .tex is academic writing: research, which gates HIGH only. The
+    # strict essay gate is one tag away (`% writing-profile: essay`).
+    assert profiles.profile_for("essays/piece.tex") == "research"
+    assert profiles.profile_for("thesis/chapter1.tex") == "research"
+    assert profiles.profile_for("essays/piece.md") == "essay"
 
 
 def test_latex_comment_profile_tag():

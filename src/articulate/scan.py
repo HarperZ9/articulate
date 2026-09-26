@@ -9,8 +9,8 @@ from .binary import binary_reason
 from .cadence import cadence_stats
 import re
 
-from .lexicon import (ADVERB, DIGIT, EMOJI, EXPLETIVE, NOMINAL, PASSIVE, SOFT,
-                      VAGUE_QUANT, WORD)
+from .lexicon import (ADVERB, DIGIT, EMOJI, EXPLETIVE, NOMINAL, PASSIVE, VAGUE_QUANT,
+                      WORD)
 from .logical import sentences, units
 from .markup import (ALLOW_EXEMPT_CATEGORIES, _rid, allowed, classify_fountain,
                      mask_c2pa, mask_quotes, read_allowlist, strip_markup)
@@ -30,7 +30,9 @@ MEDIUM = MEDIUM_REGISTER + MEDIUM_STRUCTURE
 #      counted, line-start rules run at every sentence start
 #   3  a period after a common abbreviation (et al., e.g., i.e., Fig.) no longer
 #      ends a sentence
-SCAN_ALGO = 3
+#   4  a line that ends in a hyphen after a letter joins the next line with no
+#      space, so a hard wrap inside "state-of-the-art" reads as one word
+SCAN_ALGO = 4
 # A Markdown table delimiter row is structure, never an em-dash.
 SKIP_TABLE_SEP = True
 
@@ -70,7 +72,7 @@ class _Scan:
         self.genre = genre
         self.allow = read_allowlist(lines) | {a.lower() for a in extra_allow}
         self.high, self.medium, self.low = [], [], []
-        self.prose, self.words, self.soft, self.adv, self.passive = [], 0, 0, 0, 0
+        self.prose, self.words, self.adv, self.passive = [], 0, 0, 0
         self.doc = "".join(lines)
 
     def add(self, dest, unit, cat, label, s, e, exempt=False, text=None):
@@ -144,7 +146,6 @@ def _device_passes(sc, unit, text):
     _sentence_passes(sc, unit, text)
     # Counts for the cadence and rate statistics. A kept term of art does not count.
     sc.words += len(WORD.findall(text))
-    sc.soft += sum(1 for w in SOFT.findall(text) if not allowed(w, sc.allow))
     sc.adv += len(ADVERB.findall(text))
     sc.passive += len(PASSIVE.findall(text))
     if unit.kind in ("prose", "quote"):
@@ -218,7 +219,7 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
 def _cadence(sc, genre):
     doc = cadence_stats(" ".join(sc.prose))
     w = sc.words
-    doc.update({"words": w, "soft": sc.soft,
+    doc.update({"words": w,
                 "adverb_rate": round(sc.adv / w * 100, 1) if w else 0,
                 "passive_rate": round(sc.passive / w * 100, 1) if w else 0})
     # Verse is measured by the line. A punctuation-free stanza would otherwise

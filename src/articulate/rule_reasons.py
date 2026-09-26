@@ -42,9 +42,15 @@ _STRUNK = "Strunk and White, The Elements of Style"
 
 REASONS = {
     "chat-interface-text": (
-        "Text addressed to a chat user, or a chat tool's internal token, speaks to "
-        "someone other than the reader and gives them nothing to act on.",
+        "A first-person line in which the speaker calls itself software, or an "
+        "interface markup token, is addressed to a chat session and gives this "
+        "document's reader nothing to act on.",
         _PLAIN + ", write for your audience"),
+    "reply-opener": (
+        "An opener that hands the text over ('Certainly! Here is ...') addresses "
+        "whoever asked for it; in a finished document the reader must skip it to "
+        "reach the content.",
+        _PLAIN + ", write for your audience; " + _WILLIAMS + ", metadiscourse"),
     "invisible-unicode": (
         "A hidden character inside a run of Latin text breaks search, copy and paste "
         "and spell check, and can hide text the reader never sees.",

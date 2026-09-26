@@ -23,17 +23,6 @@ EMOJI = re.compile(
 VAGUE_QUANT = re.compile(r"\b(?:various|numerous|a number of|several)\b", re.I)
 DIGIT = re.compile(r"\d")
 
-# SOFT signals: dual-use words too common to hard-flag one at a time (they fire
-# on legitimate human prose), but whose DENSITY is diagnostic. Counted only for
-# the graded texture score, never as a HIGH/MEDIUM hit. This is how a real
-# detector accumulates weak evidence instead of convicting on a single word.
-SOFT = re.compile(r"(?i)\b(?:essential|significant(?:ly)?|enhance[sd]?|enhancing|"
-                  r"accelerate[sd]?|deliver(?:s|ed|ing)?|ensure[sd]?|ensuring|"
-                  r"crucial(?:ly)?|vital(?:ly)?|optimi[sz]e[sd]?|streamlin(?:e[sd]?|ing)|"
-                  r"effective(?:ly)?|efficient(?:ly)?|innovat(?:e|es|ed|ive|ion)|"
-                  r"solutions?|impact(?:ful)?|meaningful|valuable|powerful|"
-                  r"comprehensive|thoughtful(?:ly)?|significantly|productivity|"
-                  r"outcomes?|workflows?|capabilit(?:y|ies))\b")
 WORD = re.compile(r"\b\w+\b")
 # Orwell/Williams structural signals, measured as document rates (length-
 # independent, unlike raw type-token ratio, which is why TTR is not used here).

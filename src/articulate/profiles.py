@@ -51,10 +51,11 @@ _TERMS = (
 )
 
 
-def _p(level, *, keep=(), house=False, max_words=None,
+def _p(level, *, keep=(), house=False, max_words=None, promote=(),
        register=("general", "peer", "written")):
     return {
         "gate_level": level,
+        "gate_promote": tuple(promote),
         "keep": tuple(_TERMS) + tuple(keep),
         "house": house,
         "max_sentence_words": max_words,
@@ -103,11 +104,12 @@ PROFILES: dict[str, dict] = {
     # The essay register gates HIGH and MEDIUM findings that carry a cited
     # reader cost. It holds no house-pack pattern against a writer who never
     # chose that style.
-    "essay": _p("strict", register=("argument", "reader", "written-argument")),
+    "essay": _p("strict", register=("argument", "reader", "written-argument"),
+                promote=("reply-opener",)),
     "narrative": _p("off", register=("story", "reader", "literary")),
     # House profiles: the full house pack, by choice only.
-    "house": _p("flavored", house=True),
-    "house-essay": _p("strict", house=True,
+    "house": _p("flavored", house=True, promote=("reply-opener",)),
+    "house-essay": _p("strict", house=True, promote=("reply-opener",),
                       register=("argument", "reader", "written-argument")),
 }
 
@@ -118,12 +120,13 @@ PATH_RULES: list[tuple[str, str]] = [
     (r"(?i)(^|/)RELEASE[_-]?NOTES(\.md)?$", "release-notes"),
     (r"(?i)(^|/)MODEL_CARD(\.md)?$", "model-card"),
     (r"(?i)(^|/)README(\.md)?$", "readme"),
-    # A .tex under a proofs/ or papers/ tree is math and belongs in a math register,
-    # so it routes there ahead of the .tex-is-essay default. Any other .tex lands
-    # on essay, which holds no house-pack pattern.
+    # A .tex under a proofs/ tree is math and belongs in a math register. Any
+    # other .tex is academic writing and lands on research, which blocks only the
+    # HIGH tier. A writer who wants the strict essay gate on a .tex file asks for
+    # it with `% writing-profile: essay`.
     (r"(?i)(^|/)(proofs?)/", "proof"),
     (r"(?i)(^|/)(papers?|research|whitepapers?)/", "research"),
-    (r"(?i)\.tex$", "essay"),
+    (r"(?i)\.tex$", "research"),
     (r"(?i)\.fountain$", "screenplay"),
     (r"(?i)(^|/)(specs?|rfc)/", "normative-spec"),
     (r"(?i)(^|/)(poems?|poetry|verse)/", "poetry"),

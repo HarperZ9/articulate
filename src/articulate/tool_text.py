@@ -24,8 +24,8 @@ TOOLS = {
     "check": ("Check a passage for named prose patterns. Runs fully local with no "
               "network call. Returns each finding with its rule, tier, line and span, "
               "whether it blocks under the profile, per-rule counts, the gate "
-              "(ok or blocked), density with an interval above 250 words, and cadence "
-              "statistics. " + DOES_NOT_PROVE),
+              "(ok or blocked), density with an interval above 250 words, and passive-voice "
+              "and adverb rates. " + DOES_NOT_PROVE),
     "score": ("Per-rule counts, density per 1,000 words with an exact interval (shown "
               "at 250 words or more), and passive-voice and adverb rates for a passage. "
               "Local, no network. " + DOES_NOT_PROVE),
@@ -33,12 +33,13 @@ TOOLS = {
               "cannot see: confident emptiness, vague abstraction, uncommitted hedging, "
               "weak verbs, a buried point. Reports; does not rewrite. " + _EDITOR),
     "fix": ("Rewrite the text so its intended reader can follow it on one read, then "
-            "re-check the rewrite so it adds no new finding. Offers a suggestion; the "
-            "writer decides. With is_tex, LaTeX math is masked from the model and "
+            "re-check the rewrite and return it with the findings and gate after the "
+            "rewrite. Offers a suggestion; the writer decides. With is_tex, LaTeX math is masked from the model and "
             "restored byte for byte. " + _EDITOR),
     "polish": ("The quality loop: rewrite, then score five qualities (concreteness, "
                "commitment, economy, rhythm read aloud, a restatable fact per paragraph) "
-               "and keep a pass only when no score falls and the gate stays ok. The "
+               "and keep a pass only when no score falls and the gate does not go from "
+               "ok to blocked. The "
                "target is the reader, never an outside score. With is_tex, LaTeX math "
                "is masked before every model call. " + _EDITOR),
     "articulate.status": ("Liveness and identity of the articulate MCP server (name, "

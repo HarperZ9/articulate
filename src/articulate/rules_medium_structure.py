@@ -93,7 +93,7 @@ MEDIUM_STRUCTURE = [
                 r"(?:part|bit|point|game))\b"
                 r"|\bwhich\s+is\s+(?:rather\s+|exactly\s+|precisely\s+|"
                 r"kind of\s+)?the\s+point\b")),
-    # 5. Dead-metaphor connector overused in AI prose. "load-bearing" (as summary
+    # 5. Dead-metaphor connector that names a link without saying what it is. "load-bearing" (as summary
     #    metaphor) is caught by the summary-beat above; "at its core" is a HIGH
     #    throat-clearing opener already. These two are the remaining connectors.
     ("cadence", "dead-metaphor connector (throughline / connective tissue)",
@@ -107,7 +107,7 @@ MEDIUM_STRUCTURE = [
     # pack is set in rule_reasons.
     # ===================================================================== #
 
-    # --- chat reply and closer phrases ----------------------------------- #
+    # --- reply and closer phrases ----------------------------------------- #
     ("sycophancy", "sycophantic flattery of the interlocutor",
      re.compile(r"(?i)\b(?:that|this)(?:'s| is)\s+(?:a|an)\s+(?:great|excellent|"
                 r"fantastic|really\s+good|very\s+good|insightful|thoughtful|"

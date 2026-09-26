@@ -167,8 +167,8 @@ def find_fragment_openers(lines):
 
 
 def find_repeated_ngrams(text, n=3, min_repeat=3):
-    """A content n-gram repeated >= min_repeat times (a mode-collapse repetition
-    signal). Grams that are entirely stopwords, or carry fewer than two content
+    """A content n-gram repeated >= min_repeat times, which makes a reader meet
+    the same phrase again and again. Grams that are entirely stopwords, or carry fewer than two content
     tokens, are skipped so ordinary function-word runs and a repeated two-word term
     do not fire. Returns (gram_text, count) or None. Report-only (LOW)."""
     words = [w.lower() for w in re.findall(r"[a-zA-Z']+", text)]
@@ -213,21 +213,8 @@ def paragraph_word_counts(lines):
     return [c for c in counts if c > 0]
 
 
-def document_advisories(lines, word_total):
-    """Document-level LOW advisories over structure and repetition: header,
-    list, and bold density on short/expository text; a repeated content n-gram;
-    a hedge cluster in one sentence; and near-uniform paragraph lengths. Each has
-    a minimum-size guard so a short human snippet cannot trip it. Report-only:
-    none of these gate, and none change the clean/flagged verdict."""
-    offsets = _line_offsets(lines)
-    out = []
-
-    def add(line_no, cat, label):
-        raw = lines[line_no - 1] if 0 < line_no <= len(lines) else "\n"
-        out.append(_mk(line_no, offsets[line_no - 1] if line_no <= len(offsets) else 0,
-                       cat, label, 0, 0, raw, raw.strip()[:100]))
-
-    # Markdown structure density. Fenced code is masked out of the counts.
+def _structure_counts(lines):
+    """(non-blank, header, list, bold-span) counts outside fenced code."""
     nonblank = headers = list_lines = bold_spans = 0
     in_fence = False
     for raw in lines:
@@ -242,7 +229,24 @@ def document_advisories(lines, word_total):
         if BULLET.match(raw):
             list_lines += 1
         bold_spans += len(BOLD_SPAN.findall(raw))
+    return nonblank, headers, list_lines, bold_spans
 
+
+def document_advisories(lines, word_total):
+    """Document-level LOW advisories over structure and repetition: header,
+    list, and bold density on short expository text; a repeated content n-gram;
+    a hedge cluster in one sentence; and near-uniform paragraph lengths. Each has
+    a minimum-size guard so a short text cannot trip it. Report-only: none of
+    these block, and none change the gate."""
+    offsets = _line_offsets(lines)
+    out = []
+
+    def add(line_no, cat, label):
+        raw = lines[line_no - 1] if 0 < line_no <= len(lines) else "\n"
+        out.append(_mk(line_no, offsets[line_no - 1] if line_no <= len(offsets) else 0,
+                       cat, label, 0, 0, raw, raw.strip()[:100]))
+
+    nonblank, headers, list_lines, bold_spans = _structure_counts(lines)
     if headers >= 3 and word_total and word_total < 300:
         add(1, "header-reflex", f"{headers} headers in {word_total} words (structure on short text)")
     if nonblank >= 6 and list_lines / nonblank > 0.6:

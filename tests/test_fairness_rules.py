@@ -111,10 +111,10 @@ def test_a_spoken_affirmation_reports_without_blocking(text):
     assert "affirmation-opener" in _cats(_r(text, "flavored"), ("low",))
 
 
-def test_an_affirmation_that_hands_over_a_deliverable_blocks():
-    r = _r("Certainly! Here is your essay:\n\nThe rain fell.", "flavored")
+def test_an_affirmation_that_hands_over_a_deliverable_blocks_in_a_document():
+    r = _r("Certainly! Here is your essay:\n\nThe rain fell.", "essay")
     assert r["gate"] == "blocked"
-    assert "chat-interface-text" in _cats(r, ("high",))
+    assert "reply-opener" in _cats(r, ("low",))
 
 
 ARTICLE_2_12 = ("Open-source systems are exempt unless they are placed on the market or "
@@ -131,9 +131,38 @@ def test_quoting_the_ai_act_raises_nothing():
 def test_first_person_self_identification_still_blocks():
     for text in ("As an AI language model, I cannot give medical advice.",
                  "I'm an AI, so I cannot see the file.",
-                 "As of my last knowledge update, the law was different."):
+                 "As a large language model, I cannot browse."):
         r = _r(text, "flavored")
         assert r["gate"] == "blocked", text
+
+
+# Human lines that the old self-identification and reply-opener rules blocked
+# under the default profile. None may block there; the reply openers block only
+# under a document profile that promotes them.
+HUMAN_CONTROLS = (
+    "As an assistant, I managed the calendars for four partners.",
+    "We held out ten percent of my training data for the test split.",
+    "I don't have real-time access to the production logs from home.",
+    "Sure thing! Here's the spreadsheet you asked for.",
+    "Of course! Here is the report you wanted by Friday.",
+    "Absolutely. I've drafted the letter to the landlord.",
+    "Good question! Here's how I fixed it.",
+)
+
+
+@pytest.mark.parametrize("text", HUMAN_CONTROLS)
+def test_ordinary_human_lines_never_block_under_the_default(text):
+    r = _r(text, "flavored")
+    assert r["gate"] == "ok", _gating(r)
+    assert "chat-interface-text" not in _cats(r)
+
+
+def test_a_reply_opener_blocks_only_under_a_document_profile():
+    text = "Certainly! Here is your essay:\n\nThe rain fell."
+    assert _r(text, "flavored")["gate"] == "ok"
+    assert "reply-opener" in _cats(_r(text, "flavored"), ("low",))
+    for name in ("essay", "house", "house-essay"):
+        assert _r(text, name)["gate"] == "blocked", name
 
 
 # --- F4: zero-width characters ---------------------------------------------- #
@@ -188,7 +217,8 @@ def test_ordinal_enumeration_and_stock_transitions_report_only():
 
 def test_nine_short_even_sentences_are_not_uniform_cadence():
     text = " ".join(f"The team met on day {i} to plan the next round of work." for i in range(9))
-    assert _r(text, "flavored")["cadence"]["uniform"] is False
+    r = articulate.check_text(text, profile=profiles.load("flavored"), cadence_detail=True)
+    assert r["cadence"]["uniform"] is False
 
 
 # --- F6: inflated words ------------------------------------------------------ #

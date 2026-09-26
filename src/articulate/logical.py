@@ -5,7 +5,8 @@
 A writer who soft-wraps a paragraph and a writer who puts one sentence per line
 wrote the same text. The scanner reads both the same way: consecutive prose lines
 of one paragraph join into one logical line, with a single space where each line
-break was, and an offset map carries every match back to its file position.
+break was (none after a hyphen that ends a line after a letter), and an offset
+map carries every match back to its file position.
 
 What never joins: headings, table rows, table delimiter rows and horizontal rules
 (each stands alone); a list item starts a new logical line that its continuation
@@ -36,7 +37,10 @@ class Unit:
         self.kind, self.role, self.text, self.pieces = kind, role, "", []
 
     def add(self, line_no, doc_start, content):
-        if self.pieces:
+        # A hard wrap at a hyphen ("state-of-the-" then "art") joins with no
+        # space, so the word reads the same as on one line.
+        if self.pieces and not (len(self.text) > 1 and self.text[-1] == "-"
+                                and self.text[-2].isalpha() and content[:1].isalpha()):
             self.text += " "
         self.pieces.append((len(self.text), doc_start, line_no, len(content)))
         self.text += content

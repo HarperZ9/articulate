@@ -76,6 +76,15 @@ LOW = [
                 r"undoubtedly|arguably)\s*,")),    # A spoken affirmation at a sentence start ("Of course, ...", "Absolutely.").
     # Ordinary speech and dictation produce it, so it only reports. The chat
     # reply that follows it with a deliverable is a HIGH rule (rules_high).
+    # A reply opener that hands over a deliverable ("Certainly! Here is your
+    # essay:") addresses whoever asked for the text. An email reply or a message
+    # to a colleague does that on purpose, so it reports here; a document profile
+    # (essay and the house profiles) promotes it to a blocking finding.
+    ("reply-opener", "reply opener that hands over a deliverable",
+     re.compile(r"(?i)(?:^|(?<=[.!?]\s))\s*(?:certainly|absolutely|of course|sure thing|great question|"
+                r"good question|happy to help)[!,.]\s*(?:here(?:'s|\s+is|\s+are)\b|"
+                r"below\s+(?:is|are)\b|i'?(?:ve|\s+have)\s+(?:written|drafted|prepared|"
+                r"put\s+together|created|revised|rewritten)\b|i'?d\s+be\s+happy\s+to\b)")),
     ("affirmation-opener", "affirmation opener",
      re.compile(r"(?i)^\s*(?:certainly|absolutely|great question|good question|"
                 r"excellent question|excellent point|fantastic question|sure thing|"

@@ -20,6 +20,8 @@ import tempfile
 
 from . import detector as core
 from . import editor
+from .origin_guard import note as origin_note
+from .origin_guard import strip_origin_guesses
 from .tool_text import DOES_NOT_PROVE, TOOLS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -61,7 +63,7 @@ def _mech_summary(text):
 
 def do_check(text):
     """Named prose patterns with span records. Local, no network."""
-    r = core.check_text(text)
+    r = core.check_text(text, house_notes=False)
     hits = sorted(r["high"] + r["medium"], key=lambda h: h["start"])
     return {
         "gate": r["gate"],
@@ -77,7 +79,7 @@ def do_check(text):
 
 def do_score(text):
     """Per-rule counts, density with an interval and structural rates."""
-    r = core.check_text(text)
+    r = core.check_text(text, house_notes=False)
     cad = r["cadence"]
     return {
         "gate": r["gate"],
@@ -86,7 +88,6 @@ def do_score(text):
         "density": r["density"],
         "passive_rate": cad["passive_rate"],
         "adverb_rate": cad["adverb_rate"],
-        "uniform_cadence": cad["uniform"],
         "does_not_prove": DOES_NOT_PROVE,
     }
 
@@ -97,7 +98,11 @@ def do_judge(text):
     from .prompts import judge_instructions
     instr = judge_instructions(mech)
     try:
-        return {"ok": True, "read": editor.claude_call(instr, text)}
+        read, removed = strip_origin_guesses(editor.claude_call(instr, text))
+        out = {"ok": True, "read": read, "does_not_prove": DOES_NOT_PROVE}
+        if removed:
+            out["note"] = origin_note(removed)
+        return out
     except (RuntimeError, Exception) as e:  # noqa: BLE001 - report cleanly to the host
         return {"ok": False, "error": str(e),
                 "note": "detection tools work offline; the editor layer needs the claude CLI, "
@@ -125,7 +130,8 @@ def do_fix(text, is_html=False, is_tex=False):
     after = do_check(rewrite)
     return {"ok": True, "rewrite": rewrite,
             "findings_after": after["findings"], "gate_after": after["gate"],
-            "note": "a suggestion; read it against the original before shipping"}
+            "note": "a suggestion; read it against the original before shipping",
+            "does_not_prove": DOES_NOT_PROVE}
 
 
 def _polish_scores(cur, is_tex):
@@ -163,7 +169,8 @@ def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False):
     except (RuntimeError, Exception) as e:  # noqa: BLE001
         return {"ok": False, "error": str(e), "scorecard": scorecard, "note": _BACKEND_NOTE}
     out = {"ok": True, "final_text": cur, "scorecard": scorecard,
-           "note": "accepted on the reader's qualities and the gate, never on an outside score"}
+           "note": "accepted on the reader's qualities and the gate, never on an outside score",
+           "does_not_prove": DOES_NOT_PROVE}
     if refused:
         out.update(refused=refused, note=("a rewrite pass altered masked math and was "
                                           "refused; final_text is the last accepted text"))

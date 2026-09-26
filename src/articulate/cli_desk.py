@@ -18,7 +18,8 @@ def register(sub):
     d = sub.add_parser("desk", help="questions for a reviewer, inside the document and "
                                     "across the field")
     d.add_argument("file")
-    d.add_argument("--venue", default=None, help="none, paper or course")
+    d.add_argument("--venue", default=None, choices=sorted(desk.desk_inside.VENUES),
+                   help="none, paper or course")
     d.add_argument("--disclosure", default=None, help="a statement of tool use, as a file")
     d.add_argument("--author", action="store_true",
                    help="the author side: presence checks before submission")
