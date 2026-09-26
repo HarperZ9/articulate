@@ -39,8 +39,10 @@ the house profiles a project opts into:
 
 A failure blocks a release. Every package release ships the ruleset, so while a
 gate fails no package release publishes unless a maintainer records an override
-for that exact ruleset with a reason (see the amendment below). A failure never
-blocks a user's run. House profiles are measured and published and never block a
+for that exact ruleset with a reason (see the amendment below). (Amended 26
+September 2026: the block covers only a release that changes the ruleset, and an
+override must show that no gate row regressed; see the last amendment below.) A
+failure never blocks a user's run. House profiles are measured and published and never block a
 release.
 
 | Gate | Rule |
@@ -55,6 +57,8 @@ release.
 | G8 | Report only. For the default and house profiles, each LOW-tier rule's skew state by the G2 rule, and whether a writer sees it by default. Added 26 September 2026. |
 
 ## Amendments
+
+### Amendment of 26 September 2026: the harness review
 
 Dated 26 September 2026, after a review of the harness and before any new
 corpus. Each one makes a gate stricter or adds a report; none loosens one.
@@ -75,6 +79,52 @@ corpus. Each one makes a gate stricter or adds a report; none loosens one.
 - The smallest detectable gap is found by searching the Newcombe interval with
   the reference arm held at its observed count. The earlier normal
   approximation overstated power near a zero rate.
+
+### Amendment of 26 September 2026: the release block and two tier changes
+
+Dated 26 September 2026, after the commits that carry out the decisions on
+pull request 9 and after the rerun on the Liang et al. corpus. Unlike the
+amendments above, the first item loosens something: it narrows the release
+block to ruleset changes. Every gate definition and threshold stays as the
+table and the machine-readable blocks state them.
+
+- The release block covers ruleset changes only. `fairness/published-ruleset.json`
+  names the fingerprint of the last published ruleset and its receipts; the
+  release commit updates it. A package release whose fingerprint equals it is
+  not gated, and the check prints "ruleset unchanged since X; gates not re-run".
+  Why: nothing the gates measure has changed, and blocking such a release would
+  hold back a security fix while the same rules stay live.
+- A changed ruleset must pass every gate on every required receipt: one from
+  each manifest in the release-requirements block. Today that is the Liang et
+  al. receipt, which is exploratory because the gates were tuned on it.
+- An override for one exact ruleset excuses failing gates only when no gate row
+  that passes under the published ruleset's receipt fails under the new one. A
+  gate row is one gate under one bound profile, and for G1, G2 and G5 one
+  comparison. The check prints the comparison next to the reason. It refuses an
+  override with no published receipt to compare with, and an override never
+  excuses a malformed receipt. This part is stricter than the override it
+  replaces, which excused any failure.
+- Two phrases leave the blocking tier in every profile, on reader-cost grounds.
+  "in order to" moves from `wordiness` (MEDIUM) to a LOW note, `padded-purpose`:
+  usually "to" does the same work, and usage guides keep it where it separates a
+  purpose from a complement. "state of the art" moves from `marketing` (MEDIUM)
+  to a LOW note, `unanchored-claim`, that fires only when its sentence carries no
+  number, year or citation marker: in research writing the phrase names the best
+  published result on a named benchmark, so "claims a comparison the text never
+  makes" does not hold there.
+- Two report-only notes move to the house pack, which a writer sees only on
+  request. Curly quotation marks are typographically correct and inserted by word
+  processors and phone keyboards, so the note carries no reader cost. Bare "there
+  is / are / was / were" is grammatical and often the clearest phrasing. "It is
+  important / worth / crucial / essential / necessary" at a sentence start stays
+  a default LOW note: it is metadiscourse that delays the subject. Neither half
+  ever blocks.
+- On the Liang et al. corpus these tier changes are exploratory. They were made
+  after reading it: under `essay`, 16 of the 19 blocked abstract windows were
+  blocked by the two phrases alone or together. A pass there does not confirm
+  them. Confirmation needs a corpus the rules were not tuned on.
+- A receipt keys the n-gram repetition and anaphora rules by category, because
+  their labels quote the text. This changes no gate.
 
 ## Statistics
 
