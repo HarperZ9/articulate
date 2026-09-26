@@ -23,6 +23,7 @@ class _Loop:
         self.path, self.out_path, self.bar = path, out_path, bar
         self.prof, self.required = prof, set(ecfg.get("require_fix", ()))
         self.best = open(path, encoding="utf-8", errors="replace").read()
+        self.accepted = 0
 
     def evaluate(self, text):
         r = ed.assess(text, self.prof)
@@ -97,6 +98,7 @@ def _run(loop, passes, judge, rewrite):
             return
         loop.best, r, open_req, q, sc = cand, cr, c_open, cq, _scores(cq)
         loop.write(loop.best)
+        loop.accepted += 1
 
 
 def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=None,
@@ -124,6 +126,9 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
         print(f"\n[polish] model layer unavailable: {e}")
         print("[polish] the local checks still work; rerun when the backend is restored.")
         return 1
+    if loop.accepted:
+        from .fix import _log_pass
+        _log_pass(path, "polish")
     print(f"\n[polish] final -> {out_path}")
     print("[polish] accepted on the reader's qualities and the gate, never on an outside score.")
     return 0

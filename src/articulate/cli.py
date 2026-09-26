@@ -5,6 +5,7 @@
   articulate check [FILE ...] [--profile P] [--json] [--gate] [--verbose]
   articulate score [FILE ...] [--profile P]
   articulate receipt | verify | audit | modes
+  articulate process ... | disclose     (a writer-held process record)
 
 With no FILE, reads stdin. The profile is chosen by --profile, else an in-file
 `writing-profile:` tag, else the file path, else the default. `--gate` exits 1
@@ -14,7 +15,7 @@ import argparse
 import json
 import sys
 
-from . import cli_receipts, modes, profiles, pysource
+from . import cli_process, cli_receipts, modes, profiles, pysource
 from .cli_output import print_check, print_score, print_spans, redact, to_sarif  # noqa: F401
 from .detector import analyze_blocks, binary_reason, check_text
 from .tool_text import DOES_NOT_PROVE, PRODUCT
@@ -181,6 +182,7 @@ def build_parser():
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
+    cli_process.register(sub)
     return ap
 
 
@@ -194,6 +196,8 @@ def main(argv=None):
         "receipt": lambda: cli_receipts.cmd_receipt(args, _inputs, _profile_name),
         "verify": lambda: cli_receipts.cmd_verify(args, _decode),
         "audit": lambda: cli_receipts.cmd_audit(args, _decode),
+        "process": lambda: cli_process.cmd_process(args),
+        "disclose": lambda: cli_process.cmd_disclose(args),
     }
     if args.cmd in handlers:
         return handlers[args.cmd]()

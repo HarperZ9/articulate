@@ -42,6 +42,16 @@ def _one_pass(attempt, text, path, out_path, prof, call):
     return ("done" if clean_after else "again"), result
 
 
+def _log_pass(path, name):
+    from .process_events import record_editor_pass
+    from .process_ledger import LogBroken
+    try:
+        if record_editor_pass(path, name):
+            print(f"[{name}] recorded an assistance entry in this document's process log")
+    except LogBroken as e:
+        print(f"[{name}] the process log is broken, so no entry was added: {e}")
+
+
 def fix(path, out_path, passes, mode=None, profile=None):
     ext = os.path.splitext(path)[1]
     out_path = out_path or os.path.splitext(path)[0] + ".fixed" + ext
@@ -57,8 +67,10 @@ def fix(path, out_path, passes, mode=None, profile=None):
             return 1
         if status == "done":
             break
+    if os.path.isfile(out_path):
+        _log_pass(path, "fix")
     _, mech_final = ed.mechanical(out_path, prof)
-    print(f"\n[fix] final: {os.path.basename(out_path)}")
+    print(f"\n[fix] final:{os.path.basename(out_path)}")
     print(f"[fix] {mech_final.splitlines()[0]}")
     print("[fix] the rewrite is a suggestion; read it against the original before you ship it.")
     return 0
