@@ -123,7 +123,6 @@ MODES: dict[str, dict] = {
         "journalism", "narrate",
         keep_add=("recalled", "watched"),
         weights=("rhythm", "concreteness"),
-        require_fix=("cadence-uniform",),
         standard_delta="Every sensory claim traces to something witnessed or sourced; the nut graf appears once, after the opening scene."),
     "legal/explain": _m(
         "legal", "explain", gate_promote=("unsupported-authority",),
@@ -143,12 +142,12 @@ MODES: dict[str, dict] = {
         weights=("commitment", "concreteness"),
         standard_delta="Every benefit claim carries a number, mechanism, or comparison in the same or next sentence, or the adjective is cut. (Proposed: unproven-claim + a proof-density quality.)"),
     "marketing/explain": _m(
-        "api-docs", "explain", gate_promote=("marketing", "register-word"),
+        "api-docs", "explain", gate_promote=("marketing",),
         weights=("concreteness", "restatable"),
         standard_delta="Every mechanism claim carries a worked example, a real number, or a named limitation; if the source has none, flag it, never invent one."),
     "marketing/narrate": _m(
-        "social", "narrate", gate_promote=("marketing", "register-word"),
-        require_fix=("cadence-uniform",), weights=("rhythm", "concreteness"),
+        "social", "narrate", gate_promote=("marketing",),
+        weights=("rhythm", "concreteness"),
         standard_delta="The customer, not the brand, is the subject; open on the before-state, close on a specific checkable after-state, not a tagline."),
     "tutorial/instruct": _m(
         "procedure", "instruct", weights=("economy", "commitment"),
@@ -220,6 +219,7 @@ def load(mode_id: str) -> dict:
         "keep": tuple(base.get("keep", ())) + tuple(m["keep_add"]),
         "gate_promote": promote,
         "register": base.get("register"),
+        "house": bool(base.get("house")),
         "mode_id": mode_id,
         "articulation": m["articulation"],
         "editor": dict(m["editor"]),

@@ -6,13 +6,13 @@ closed set of category names. Standard library only.
 from .lexicon import (ADVERB, EMOJI, EXPLETIVE, NEG, NOMINAL, PASSIVE, SOFT,
                       VAGUE_QUANT)
 from .advisories import FRAGMENT_OPENER, PRONOUN_SUBJ, STOP4
-from . import cadence, gate, scan
+from . import cadence, gate, markup, rule_reasons, scan
 from .gate import GATE_TIERS
 from .rules_high import HIGH
 from .rules_low import FICTION_SLOP, INJECTION, LOW, REGISTER_JARGON
 from .scan import MEDIUM
 
-RULESET_SEMVER = "0.5.1"
+RULESET_SEMVER = "0.7.0"
 
 
 def behavior_constants():
@@ -24,6 +24,10 @@ def behavior_constants():
         "SKIP_TABLE_SEP": scan.SKIP_TABLE_SEP,
         "MIN_WORDS_FOR_VERDICT": gate.MIN_WORDS_FOR_VERDICT,
         "CADENCE_MIN_SENTENCES": cadence.CADENCE_MIN_SENTENCES,
+        "CADENCE_MIN_WORDS": cadence.CADENCE_MIN_WORDS,
+        "C2PA_MIN_SELECTORS": markup.C2PA_MIN_SELECTORS,
+        "HOUSE_CATEGORIES": sorted(rule_reasons.HOUSE_CATEGORIES),
+        "REASONS": sorted(rule_reasons.REASONS),
         "CADENCE_CV_MAX": cadence.CADENCE_CV_MAX,
         "CADENCE_MEAN_MIN": cadence.CADENCE_MEAN_MIN,
         "OPENER_MIN_CONTENT": cadence.OPENER_MIN_CONTENT,
@@ -35,7 +39,7 @@ def behavior_constants():
 def ruleset_fingerprint():
     """A stable hash of the detection ruleset. A receipt pins this, so a verdict
     can only be re-derived under the exact rules that produced it; a rule change
-    moves the fingerprint and a replay reads Unverifiable rather than silently
+    moves the fingerprint and a replay reads Unverifiable and never silently
     disagreeing. This is what makes the verdict re-derivable and the issuer's
     identity non-load-bearing: anyone with the same text and fingerprint recomputes
     the same findings."""
@@ -60,7 +64,7 @@ def ruleset_fingerprint():
     # profile, genre, and mode definitions are all part of the ruleset. Fold them in
     # (sorted JSON) so that editing a profile's keep-list or slop, a genre field, or
     # a mode's gate_promote/slop moves the fingerprint and an old receipt reads
-    # Unverifiable, not a misleading Drift. A mode's gate_promote drives check_text's
+    # Unverifiable, never a misleading Drift. A mode's gate_promote drives check_text's
     # gate directly, and a receipt can name a mode, so it must be pinned. INJECTION
     # is deliberately excluded: it never enters a check_text verdict.
     import json as _json
@@ -71,7 +75,7 @@ def ruleset_fingerprint():
 
     def _stable(o):
         # Sets have no stable JSON order across processes; sort them. Fail loud on
-        # any other non-serializable type rather than str()-ing it unstably.
+        # any other non-serializable type and never str() it unstably.
         if isinstance(o, (set, frozenset)):
             return sorted(o)
         raise TypeError(f"non-serializable ruleset value: {type(o).__name__}")
@@ -86,8 +90,10 @@ def ruleset_fingerprint():
 def known_categories():
     """Every category name the detector can emit, so a mode's gate_promote can be
     validated (fail closed on a typo) the way the flywheel `hard` tuple was."""
-    cats = {"emoji", "em-dash", "vague-quantifier", "expletive-opener",
-            "nominalization", "contrast-pair"}
+    cats = {"emoji", "emoji-structure", "em-dash", "vague-quantifier",
+            "expletive-opener", "nominalization", "contrast-pair", "anaphora",
+            "fragment-opener", "header-reflex", "list-reflex", "bold-density",
+            "ngram-repetition", "paragraph-uniformity", "hedge-cluster"}
     for lst in (HIGH, MEDIUM, REGISTER_JARGON, LOW, FICTION_SLOP, INJECTION):
         for cat, _label, _rx in lst:
             cats.add(cat)

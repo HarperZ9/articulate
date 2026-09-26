@@ -37,7 +37,8 @@ SOFT = re.compile(r"(?i)\b(?:essential|significant(?:ly)?|enhance[sd]?|enhancing
 WORD = re.compile(r"\b\w+\b")
 # Orwell/Williams structural signals, measured as document rates (length-
 # independent, unlike raw type-token ratio, which is why TTR is not used here).
-ADVERB = re.compile(r"\b\w{3,}ly\b", re.I)
+# The intensifiers are their own rule, so the adverb rate does not count them.
+ADVERB = re.compile(r"\b(?!(?:really|actually|truly|genuinely)\b)\w{3,}ly\b", re.I)
 PASSIVE = re.compile(r"\b(?:is|are|was|were|be|been|being)\s+(?:\w+ly\s+)?\w+ed\b(?!\s+by\b)", re.I)
 # Keyword-free contrast pair / negative parallelism: two short adjacent sentences
 # with the same subject where one affirms and the next negates ("You can watch

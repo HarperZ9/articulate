@@ -44,8 +44,8 @@ def test_narrative_off_gates_nothing():
 
 
 def test_gate_promote_only_adds_never_removes_the_floor():
-    # A HIGH device still gates under any mode; gate_promote cannot un-gate it.
-    txt = "This is not a tool, but a force.\n"   # antithesis (HIGH)
+    # A HIGH finding still gates under any mode; gate_promote cannot un-gate it.
+    txt = "As an AI language model, I cannot share that.\n"   # chat residue (HIGH)
     for name in ("marketing/explain", "narrative/narrate"):
         prof = modes.load(name)
         r = articulate.check_text(txt, profile=prof)

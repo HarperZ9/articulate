@@ -14,7 +14,8 @@ import pytest
 from articulate import receipt
 from articulate.cli import main as cli_main
 
-TEXT = "In today's landscape, we leverage cutting-edge synergy to unlock value.\n"
+TEXT = ("<!-- writing-profile: house -->\n"
+        "In today's landscape, we leverage cutting-edge synergy to unlock value.\n")
 _TMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_tmp_hard")
 
 
@@ -34,7 +35,7 @@ def _put(dirp, name, obj):
 
 def test_content_free_findings_carry_no_offsets_or_label():
     for mode in ("drop", "hash"):
-        rec = receipt.make_receipt(TEXT, "flavored", redact=mode)
+        rec = receipt.make_receipt(TEXT, "house", redact=mode)
         for f in rec["findings"]:
             assert not ({"start", "end", "col", "match", "label"} & set(f))
             # end_line is a line number, as coarse as line; it carries no offset.
@@ -44,7 +45,7 @@ def test_content_free_findings_carry_no_offsets_or_label():
 
 def test_content_free_still_replays_match():
     for mode in ("drop", "hash"):
-        rec = receipt.make_receipt(TEXT, "flavored", redact=mode)
+        rec = receipt.make_receipt(TEXT, "house", redact=mode)
         assert receipt.verify_receipt(rec, TEXT)[0] == "Match"
 
 
@@ -68,19 +69,19 @@ def test_content_free_check_json_and_sarif_carry_no_offsets(work, capsys):
 # --- Fix B: verify rejects a mislabeled or smuggling receipt ---------------- #
 
 def test_full_receipt_relabeled_audit_is_unverifiable():
-    rec = receipt.make_receipt(TEXT, "flavored")     # full: verbatim match present
+    rec = receipt.make_receipt(TEXT, "house")     # full: verbatim match present
     rec["schema"] = receipt.AUDIT_SCHEMA             # lie about being content-free
     assert receipt.verify_receipt(rec, TEXT)[0] == "Unverifiable"
 
 
 def test_content_free_receipt_smuggling_a_match_is_unverifiable():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="drop")
+    rec = receipt.make_receipt(TEXT, "house", redact="drop")
     rec["findings"][0]["match"] = "leverage"         # smuggle verbatim text back in
     assert receipt.verify_receipt(rec, TEXT)[0] == "Unverifiable"
 
 
 def test_full_receipt_declaring_a_redaction_is_unverifiable():
-    rec = receipt.make_receipt(TEXT, "flavored")
+    rec = receipt.make_receipt(TEXT, "house")
     rec["redaction"] = "drop"
     assert receipt.verify_receipt(rec, TEXT)[0] == "Unverifiable"
 

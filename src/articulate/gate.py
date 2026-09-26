@@ -4,6 +4,7 @@
 instruction-injection scan. Standard library only.
 """
 from .markup import FENCE, _mk
+from .rule_reasons import HOUSE_CATEGORIES
 from .rules_low import INJECTION
 from .scan import scan_lines
 
@@ -18,15 +19,25 @@ GATE_TIERS = {
 # Below this many prose words there are too few tokens to assert a clean verdict;
 # the texture score already returns 0 under the same floor. The floor governs a
 # clean verdict only, never a reading of who or what wrote the text. A short
-# text with no findings at all reads "unverifiable" rather than a confident "clean".
+# text with no findings at all reads "unverifiable", with no confident "clean".
 # A banned device is unambiguous at any length, so a finding still reads "flagged".
 MIN_WORDS_FOR_VERDICT = 30
 
 
 def _finding(tier, f, gates=False):
-    """Attach the precision tier, and whether the finding blocks under the
-    profile in use, to a span-level finding record."""
-    return {**f, "tier": tier, "gates": gates}
+    """Attach the precision tier, whether the finding blocks under the profile in
+    use, and whether it belongs to the house pack, to a span-level record."""
+    return {**f, "tier": tier, "gates": gates, "house": f["category"] in HOUSE_CATEGORIES}
+
+
+def house_retier(high, medium, low, profile):
+    """Outside a house profile, a house-pack finding reports at LOW and never
+    blocks. Under a house profile it keeps its table tier."""
+    if (profile or {}).get("house"):
+        return high, medium, low
+    moved = [f for f in high + medium if f["category"] in HOUSE_CATEGORIES]
+    keep = lambda arr: [f for f in arr if f["category"] not in HOUSE_CATEGORIES]  # noqa: E731
+    return keep(high), keep(medium), low + moved
 
 
 def gates_finding(tier, category, profile):
@@ -58,6 +69,7 @@ def check_text(text, *, profile=None, allow=()):
     }
     lines = text.splitlines(keepends=True)
     high, medium, low, doc = scan_lines(lines, keep, genre=genre)
+    high, medium, low = house_retier(high, medium, low, profile)
     slop = (profile or {}).get("slop", "flavored")
     # gate_promote: a mode may block a specific category even when its tier is not
     # gated by the slop level (porting the flywheel per-category `hard` tuple). It
@@ -141,10 +153,9 @@ def segment_blocks(text):
 
 
 def analyze_blocks(text, *, profile=None, allow=()):
-    """Per-block (paragraph) verdicts. Each block is scanned on its own, so one
-    paragraph that carries findings is flagged in place with its line range instead
-    of smearing a whole-file texture score, and a clean document is not moved by an
-    aggregate. Findings are translated back to document coordinates. This is a
+    """Per-block (paragraph) findings. Each block is scanned on its own, so the
+    paragraph that carries findings shows them in place with its line range, and a
+    whole-file aggregate never hides where they are. Findings are translated back to document coordinates. This is a
     reporting view over the same ruleset; it changes no gate. A block verdict says
     where the findings are, never who or what wrote the block."""
     out = []
@@ -172,8 +183,8 @@ def analyze_blocks(text, *, profile=None, allow=()):
 
 
 def detect_injection(text):
-    """Flag lines that read as an instruction to an assistant rather than prose to
-    edit. The editor calls this to warn before a rewrite and to keep the model on
+    """Flag lines that read as an instruction to an assistant, where prose to edit
+    was expected. The editor calls this to warn before a rewrite and to keep the model on
     a content-as-data footing. Report-only and separate from check_text: it never
     gates a verdict and is not part of the pinned ruleset, because a document may
     quote these patterns legitimately (a paper about prompt injection, say).

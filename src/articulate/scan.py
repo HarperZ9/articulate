@@ -13,7 +13,7 @@ from .lexicon import (ADVERB, DIGIT, EMOJI, EXPLETIVE, NOMINAL, PASSIVE, SOFT,
                       VAGUE_QUANT, WORD)
 from .logical import sentences, units
 from .markup import (ALLOW_EXEMPT_CATEGORIES, _rid, allowed, classify_fountain,
-                     mask_quotes, read_allowlist, strip_markup)
+                     mask_c2pa, mask_quotes, read_allowlist, strip_markup)
 from .rules_high import HIGH
 from .rules_low import FICTION_SLOP, LOW, REGISTER_JARGON
 from .rules_medium_register import MEDIUM_REGISTER
@@ -190,6 +190,10 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
     does not depend on where the writer broke lines. Verse and screenplay keep
     their physical lines."""
     genre = genre or {}
+    joined = "".join(lines)
+    masked = mask_c2pa(joined)
+    if masked != joined:           # a C2PA text credential is never prose
+        lines = masked.splitlines(keepends=True)
     fountain = genre.get("structural_classify") == "fountain"
     suppress = set(genre.get("suppress_categories", ()))
     roles = classify_fountain(lines) if fountain else None
@@ -214,8 +218,8 @@ def _cadence(sc, genre):
     doc.update({"words": w, "soft": sc.soft,
                 "adverb_rate": round(sc.adv / w * 100, 1) if w else 0,
                 "passive_rate": round(sc.passive / w * 100, 1) if w else 0})
-    # Verse is measured by the line, not the sentence, so a punctuation-free
-    # stanza is not read as one long uniform "sentence". Drop the cadence signal.
+    # Verse is measured by the line. A punctuation-free stanza would otherwise
+    # read as one long uniform "sentence", so the cadence signal is dropped.
     if genre.get("unit", "sentence") == "line":
         doc["uniform"] = False
         doc["repetitive_openers"] = False

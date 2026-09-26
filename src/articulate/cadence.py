@@ -11,7 +11,8 @@ from . import markup
 
 # Every constant that decides a cadence flag or the texture score. The ruleset
 # fingerprint folds them in, so changing one moves the fingerprint.
-CADENCE_MIN_SENTENCES = 8      # fewer sentences than this: no cadence flag at all
+CADENCE_MIN_SENTENCES = 12     # fewer sentences than this: no cadence flag at all
+CADENCE_MIN_WORDS = 200        # ... and fewer words than this: no cadence flag at all
 CADENCE_CV_MAX = 0.45          # "uniform" needs a coefficient of variation below this
 CADENCE_MEAN_MIN = 12          # ... and a mean sentence length at or above this
 OPENER_MIN_CONTENT = 12        # content openers needed before opener variety is read
@@ -27,7 +28,7 @@ def texture_score(n_hard, n_soft, doc, words):
     Separate from the clean/flagged device gate: this never changes "clean",
     it is an extra detection signal for benchmarking and for a graded read.
     Regex cannot see token probability, so device-clean AI can still score low;
-    that is an honest ceiling, not a bug."""
+    that ceiling is honest and expected."""
     w = TEXTURE_WEIGHTS
     if words < w["min_words"]:
         return 0, False
@@ -50,7 +51,7 @@ def cadence_stats(text: str) -> dict:
     words = [re.findall(r"\b\w+\b", s) for s in sents]
     counts = [len(w) for w in words if w]
     firsts = [w[0].lower() for w in words if w]
-    if len(counts) < CADENCE_MIN_SENTENCES:
+    if len(counts) < CADENCE_MIN_SENTENCES or sum(counts) < CADENCE_MIN_WORDS:
         return {"sentences": len(counts), "uniform": False, "repetitive_openers": False}
     mu = mean(counts)
     sd = pstdev(counts)
@@ -66,8 +67,9 @@ def cadence_stats(text: str) -> dict:
         "stdev": round(sd, 1),
         "cv": round(cv, 3),
         "opener_ratio": round(opener_ratio, 2),
-        # A low coefficient of variation across many sentences reads as the
-        # even, medium-length cadence typical of unedited model prose.
+        # A low coefficient of variation across many sentences: an even,
+        # medium-length cadence. Reported only; it never blocks and never
+        # enters an editing target.
         "uniform": cv < CADENCE_CV_MAX and mu >= CADENCE_MEAN_MIN,
         "repetitive_openers": (len(content) >= OPENER_MIN_CONTENT
                                and opener_ratio < OPENER_RATIO_MAX),

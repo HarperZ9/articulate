@@ -1,4 +1,5 @@
-"""We eat our own dog food: our shipped prose must pass our own detector.
+"""We eat our own dog food: our shipped prose must pass our own checker under
+the house profile.
 
 detector.py is deliberately excluded. It is the device catalog: it names every
 device it detects ("not X but Y", "instead", em-dash) in its own comments, so it
@@ -17,11 +18,16 @@ DOCS = ["README.md", "editors/vscode/README.md",
         "docs/features.md", "docs/cli.md", "docs/boundaries.md"]
 MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "receipt.py", "lsp_server.py", "pysource.py", "modes.py",
-           "genres.py", "masking.py", "claude_cli.py", "__init__.py"]
+           "genres.py", "masking.py", "claude_cli.py", "__init__.py",
+           "fairness.py", "fairness_gates.py", "fairness_stats.py",
+           "fairness_corpora.py", "density.py", "logical.py", "rule_reasons.py",
+           "cadence.py", "gate.py", "scan.py", "fingerprint.py", "binary.py"]
 
 
 def _gate(path, text):
-    prof = profiles.resolve(path=str(path), text=text)
+    # The project holds its own prose to its house style, which a writer who
+    # never chose it is not held to.
+    prof = profiles.load("house")
     r = articulate.check_text(text, profile=prof)
     return r["gate"], [f"L{f['line']} {f['match']!r}" for f in r["high"] + r["medium"]]
 

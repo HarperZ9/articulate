@@ -29,7 +29,7 @@ def test_segment_blocks_tracks_line_ranges_and_offsets():
 
 
 def test_findings_localize_to_the_flagged_paragraph():
-    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))
+    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("house"))
     clean, flagged = blocks[0], blocks[1]
     assert clean["gate"] == "ok"                 # the clean paragraph is not flagged
     assert flagged["gate"] == "blocked"          # the flagged paragraph carries a HIGH device
@@ -40,15 +40,15 @@ def test_findings_localize_to_the_flagged_paragraph():
 
 
 def test_whole_file_score_does_not_smear_the_concentration():
-    whole = articulate.check_text(MIXED, profile=profiles.load("flavored"))
-    flagged = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))[1]
+    whole = articulate.check_text(MIXED, profile=profiles.load("house"))
+    flagged = detector.analyze_blocks(MIXED, profile=profiles.load("house"))[1]
     # the paragraph that carries the findings scores at least as high on its own as
     # the diluted whole-document aggregate, so the signal is localized, not averaged away
     assert flagged["texture_score"] >= whole["texture_score"]
 
 
 def test_span_finding_offsets_are_document_relative():
-    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("flavored"))
+    blocks = detector.analyze_blocks(MIXED, profile=profiles.load("house"))
     hits = blocks[1]["high"] + blocks[1]["medium"]
     assert hits, "the flagged paragraph must produce findings"
     for f in hits:
@@ -66,20 +66,20 @@ def test_fenced_code_block_stays_one_span():
 # --- the per-span receipt --------------------------------------------------- #
 
 def test_per_span_receipt_replays_to_match():
-    rec = receipt.make_receipt(MIXED, "flavored", per_span=True)
+    rec = receipt.make_receipt(MIXED, "house", per_span=True)
     assert "blocks" in rec and len(rec["blocks"]) == 2
     verdict, _ = receipt.verify_receipt(rec, MIXED)
     assert verdict == "Match"
 
 
 def test_tampered_block_verdict_is_drift():
-    rec = receipt.make_receipt(MIXED, "flavored", per_span=True)
+    rec = receipt.make_receipt(MIXED, "house", per_span=True)
     rec["blocks"][1]["texture_score"] = 0          # forge the flagged paragraph clean
     verdict, _ = receipt.verify_receipt(rec, MIXED)
     assert verdict == "Drift"
 
 
 def test_default_receipt_has_no_blocks():
-    rec = receipt.make_receipt(MIXED, "flavored")
+    rec = receipt.make_receipt(MIXED, "house")
     assert "blocks" not in rec                      # opt-in, backward compatible
     assert receipt.verify_receipt(rec, MIXED)[0] == "Match"

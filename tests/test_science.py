@@ -61,13 +61,15 @@ def test_there_exists_is_not_an_expletive_opener():
     assert "expletive-opener" not in {f["category"] for f in r["low"]}
 
 
-def test_two_sentence_contrast_passes_but_the_device_still_gates():
+def test_two_sentence_contrast_passes_and_the_device_reports():
     ok = articulate.check_text("This establishes existence. It does not establish uniqueness.\n",
                                profile=modes.load("academic/prove"))
-    banned = articulate.check_text("This is not a bound but an identity.\n",
+    device = articulate.check_text("This is not a bound but an identity.\n",
                                    profile=modes.load("academic/prove"))
     assert ok["gate"] == "ok"
-    assert banned["gate"] == "blocked"   # not-X-but-Y still gates, even in a proof
+    # not-X-but-Y is house style: reported in a proof, gated only by a house profile
+    assert device["gate"] == "ok"
+    assert "antithesis" in {f["category"] for f in device["low"]}
 
 
 # --- routing and the in-source tag ----------------------------------------- #

@@ -116,10 +116,10 @@ def test_screenplay_dialogue_is_exempt():
     assert r["gate"] == "ok"
 
 
-def test_screenplay_action_keeps_the_device_gate():
+def test_screenplay_action_reports_house_devices():
     r = articulate.check_text(SCREEN_ACTION, profile=profiles.load("screenplay"))
-    assert r["gate"] == "blocked"         # a banned device on an action line gates
-    assert any(f["category"] == "corrective-negation" for f in r["high"])
+    assert r["gate"] == "ok"              # a house-style device reports on an action line
+    assert any(f["category"] == "corrective-negation" for f in r["low"])
 
 
 def test_fountain_classifier_types_lines():
@@ -141,8 +141,8 @@ def test_genre_receipt_replays_to_match():
 # --- the floor still holds: a genre never re-enables a gated device on prose #
 
 def test_screenplay_action_floor_is_not_liftable():
-    # Screenplay sits at flavored, so HIGH devices on action lines gate; the
+    # Screenplay sits at flavored, so HIGH findings on action lines gate; the
     # genre layer only exempts dialogue and structure, it does not un-gate prose.
-    r = articulate.check_text("Sam leaves, not the way he came.\n",
+    r = articulate.check_text("Sam reads: As an AI language model, I cannot help.\n",
                               profile=profiles.load("screenplay"))
     assert r["gate"] == "blocked"

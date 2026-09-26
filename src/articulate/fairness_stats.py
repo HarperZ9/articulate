@@ -160,7 +160,7 @@ def poisson_exact(k):
 
 def min_detectable(n1, n2, p=0.1):
     """The smallest rate difference whose 95% interval would exclude zero when
-    both arms sit near the base rate p. A power statement, not a result."""
+    both arms sit near the base rate p. It states power and reports no result."""
     if not n1 or not n2:
         return float("nan")
     return Z * math.sqrt(p * (1 - p) * (1 / n1 + 1 / n2))

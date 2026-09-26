@@ -8,7 +8,7 @@ HUMAN = ("Four score and seven years ago our fathers brought forth on this "
 
 def test_spans_slice_the_matched_text():
     r = articulate.check_text(SLOP, profile=profiles.load("flavored"))
-    hits = r["high"] + r["medium"]
+    hits = r["high"] + r["medium"] + r["low"]
     assert hits, "slop must produce findings"
     for f in hits:
         assert SLOP[f["start"]:f["end"]] == f["match"]
@@ -18,10 +18,10 @@ def test_spans_slice_the_matched_text():
 def test_profile_gating_off_flavored_strict():
     off = articulate.check_text(SLOP, profile=profiles.load("narrative"))
     flavored = articulate.check_text(SLOP, profile=profiles.load("flavored"))
-    strict = articulate.check_text(SLOP, profile=profiles.load("essay"))
+    house = articulate.check_text(SLOP, profile=profiles.load("house"))
     assert off["gate"] == "ok"            # narrative gates nothing
-    assert flavored["gate"] == "blocked"  # HIGH devices present
-    assert strict["gate"] == "blocked"
+    assert flavored["gate"] == "ok"       # the devices here are house style: reported
+    assert house["gate"] == "blocked"     # the house profile gates them
 
 
 def test_human_prose_is_clean():
@@ -41,15 +41,16 @@ def test_could_not_help_but_is_not_antithesis():
     # "could not help but" is a stock catenative, not "not X but Y". It must not
     # trip the antithesis rule in any register, while a real antithesis still does.
     idiom = articulate.check_text("She could not help but smile at the news.\n",
-                                  profile=profiles.load("essay"))
+                                  profile=profiles.load("house-essay"))
     real = articulate.check_text("It is not a bug but a feature.\n",
-                                 profile=profiles.load("essay"))
+                                 profile=profiles.load("house-essay"))
     assert "antithesis" not in {f["category"] for f in idiom["high"]}
     assert "antithesis" in {f["category"] for f in real["high"]}
 
 
 def _register_hits(r):
-    return {f["match"].lower() for f in r["medium"] if f["category"] == "register-word"}
+    return {f["match"].lower() for t in ("high", "medium", "low") for f in r[t]
+            if f["category"] == "register-word"}
 
 
 def test_esl_formal_words_kept_in_research_register():
@@ -74,7 +75,7 @@ def test_esl_words_kept_under_academic_mode():
 def test_keep_does_not_suppress_a_real_device():
     # A kept register word inside a device's wide span must not un-flag the device.
     txt = "This method does not utilize legacy protocols, but replaces them.\n"
-    r = articulate.check_text(txt, profile=profiles.load("research"))
+    r = articulate.check_text(txt, profile=profiles.load("house"), allow=("utiliz",))
     assert "antithesis" in {f["category"] for f in r["high"]}
     assert r["gate"] == "blocked"                       # HIGH device gates
     assert "register-word" not in {f["category"] for f in r["medium"]}  # word still kept
@@ -82,9 +83,9 @@ def test_keep_does_not_suppress_a_real_device():
 
 def test_genuine_help_but_antithesis_is_flagged():
     caught = articulate.check_text("This tool does not exist to help but to hinder.\n",
-                                   profile=profiles.load("essay"))
+                                   profile=profiles.load("house-essay"))
     idiom = articulate.check_text("She could not help but smile at the news.\n",
-                                  profile=profiles.load("essay"))
+                                  profile=profiles.load("house-essay"))
     assert "antithesis" in {f["category"] for f in caught["high"]}
     assert "antithesis" not in {f["category"] for f in idiom["high"]}
 
@@ -110,7 +111,7 @@ def test_kept_word_does_not_inflate_texture_under_research():
 
 def _cadence(text):
     r = articulate.check_text(text if text.endswith("\n") else text + "\n",
-                              profile=profiles.load("flavored"))
+                              profile=profiles.load("house"))
     return {f["label"] for f in r["medium"] if f["category"] == "cadence"}
 
 
@@ -200,10 +201,10 @@ def test_cadence_dead_metaphor_near_miss_stays_clean():
 
 def test_cadence_tell_is_allowlist_exempt():
     # 'load-bearing' is a kept term of art (profiles._TERMS), but a summary-beat
-    # built on it is a structural tell and must still fire despite the allowlist.
+    # built on it is a structural pattern and must still fire despite the allowlist.
     r = articulate.check_text(
         "A stranger re-runs the checks. That is the load-bearing part of the claim.\n",
-        profile=profiles.load("flavored"))
+        profile=profiles.load("house"))
     assert "cadence" in {f["category"] for f in r["medium"]}
 
 
@@ -231,7 +232,7 @@ def test_cadence_canonical_example_is_not_clean():
              "stranger re-runs the checks and gets the same verdict without trusting "
              "the authors or the reviewer. That is the load-bearing part of the whole "
              "picture you drew.\n")
-    r = articulate.check_text(panos, profile=profiles.load("flavored"))
+    r = articulate.check_text(panos, profile=profiles.load("house"))
     assert r["clean"] is False
     assert any(f["category"] == "cadence" for f in r["medium"])
 
@@ -244,9 +245,9 @@ def test_cadence_canonical_example_is_not_clean():
 # corpus (varied registers) must stay clean of HIGH and MEDIUM.
 # --------------------------------------------------------------------------- #
 
-def _hm(text):
+def _hm(text, name="house"):
     r = articulate.check_text(text if text.endswith("\n") else text + "\n",
-                              profile=profiles.load("flavored"))
+                              profile=profiles.load(name))
     return {(f["tier"], f["category"]) for f in r["high"] + r["medium"]}
 
 
@@ -276,7 +277,10 @@ def test_high_invisible_unicode():
 
 
 def test_high_affirmation_opener_extended():
-    assert ("HIGH", "assistant-residue") in _hm("Good question! The build caches responses.")
+    # A spoken affirmation alone reports at LOW; a chat reply that hands over a
+    # deliverable after it stays HIGH.
+    assert ("HIGH", "assistant-residue") in _hm("Good question! Here is the answer you asked for.")
+    assert not _has_cat("Good question! The build caches responses.", "assistant-residue")
     assert not _has_cat("Good tooling makes the difference on a long project.",
                         "assistant-residue")
 
@@ -337,7 +341,7 @@ def test_new_tells_near_miss_stay_clean():
         "That's why I always test on a clean install.",      # no and/so prefix
     ]
     for s in negatives:
-        assert not _hm(s), (s, _hm(s))
+        assert not _hm(s, "flavored"), (s, _hm(s, "flavored"))
 
 
 # --- false-positive control corpus (>= 20 varied human snippets) ------------ #

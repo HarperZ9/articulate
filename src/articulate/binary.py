@@ -6,8 +6,8 @@ Standard library only.
 import os
 
 # Magic-byte signatures for common binary and Office formats. A file that starts
-# with one of these is not screenable prose, so a caller refuses it rather than
-# scanning the replacement characters a lossy UTF-8 decode would produce.
+# with one of these is not screenable prose, so a caller refuses it and never
+# scans the replacement characters a lossy UTF-8 decode would produce.
 _SIGNATURES = [
     (b"PK\x03\x04", "a Zip-based Office file (.docx/.xlsx/.pptx) or archive"),
     (b"PK\x05\x06", "an empty Zip archive"),
@@ -38,9 +38,9 @@ _BINARY_EXTENSIONS = frozenset({
 def binary_reason(data: bytes, name: str = None) -> str:
     """A human reason if these bytes are not screenable text (a known binary or
     document format, or content with null bytes), or None if the file is text.
-    Fail-closed: a caller refuses the input instead of scanning replacement
-    characters. English-only note: the detector's patterns are English literals,
-    so a decoded non-English document scans as inapplicable, not verified."""
+    Fail-closed: a caller refuses the input and never scans replacement
+    characters. English-only note: the patterns are English literals, so a
+    decoded non-English document scans as inapplicable and is never verified."""
     if name:
         ext = os.path.splitext(str(name))[1].lower()
         if ext in _BINARY_EXTENSIONS:

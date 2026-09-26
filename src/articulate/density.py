@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """articulate.density -- findings per 1,000 words, with an interval.
 
-Density counts the findings that block under the profile in use. Two findings
+Density counts the findings that block under the profile in use and carry a
+cited reader-cost reason (rule_reasons); house-pack findings never count. Two findings
 of the same category whose spans overlap count once, so one phrase that two
 patterns of a family both match is one finding, not two. The count carries an
 exact Poisson interval, and density is shown only at DENSITY_MIN_WORDS words or
@@ -23,7 +24,7 @@ def gating_findings(result):
     """The findings that block under the profile, de-duplicated by overlapping
     span within a category."""
     found = [f for t in ("high", "medium", "low") for f in result.get(t, ())
-             if f.get("gates")]
+             if f.get("gates") and not f.get("house")]
     found.sort(key=lambda f: (f["category"], f.get("start", 0), f.get("end", 0)))
     kept, last = [], {}
     for f in found:

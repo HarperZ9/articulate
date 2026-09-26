@@ -27,9 +27,15 @@ DEFAULT = "flavored"
 # slop level -> which detector tiers block. Mirrors detector.GATE_TIERS; the
 # detector is the authority, this is the human-readable statement of it.
 #   off       nothing gates (report only): narrative, literary essays
-#   flavored  the HIGH device tier gates: docs, research, chat, readme
+#   flavored  the HIGH tier gates: docs, research, chat, readme
 #   strict    HIGH + MEDIUM gate: procedures, commits, error messages, essays
-#             that must be device-free
+#
+# The house pack (rule_reasons.HOUSE_CATEGORIES) is one writer's standard: the
+# em dash, the contrast devices, the intensifiers, stock transitions and the
+# rest. Only a house profile gates it. Every other profile reports those
+# patterns at LOW. No path rule resolves to a house profile; a writer or project
+# chooses one with --profile or a `writing-profile:` tag.
+HOUSE_PROFILES = ("house", "house-essay")
 
 
 class ProfileError(ValueError):
@@ -45,12 +51,12 @@ _TERMS = (
 )
 
 
-def _p(slop, *, keep=(), no_em_dash=True, max_words=None,
+def _p(slop, *, keep=(), house=False, max_words=None,
        register=("general", "peer", "written")):
     return {
         "slop": slop,
         "keep": tuple(_TERMS) + tuple(keep),
-        "no_em_dash": no_em_dash,
+        "house": house,
         "max_sentence_words": max_words,
         "register": {"field": register[0], "tenor": register[1], "mode": register[2]},
     }
@@ -94,12 +100,15 @@ PROFILES: dict[str, dict] = {
     "social": _p("flavored"),
     "chat": _p("flavored",
                register=("engineering", "operator-dialogue", "conversational")),
-    # Essays in this program are device-free, so an
-    # essay uses the strict slop level; the register map's usual "off" applies
-    # only to literary narrative (fiction), where authorial voice governs.
+    # The essay register gates HIGH and MEDIUM findings that carry a cited
+    # reader cost. It holds no house-pack pattern against a writer who never
+    # chose that style.
     "essay": _p("strict", register=("argument", "reader", "written-argument")),
-    "narrative": _p("off", no_em_dash=False,
-                    register=("story", "reader", "literary")),
+    "narrative": _p("off", register=("story", "reader", "literary")),
+    # House profiles: the full house pack, by choice only.
+    "house": _p("flavored", house=True),
+    "house-essay": _p("strict", house=True,
+                      register=("argument", "reader", "written-argument")),
 }
 
 # First match wins. Patterns match the basename or a path fragment.
@@ -110,8 +119,8 @@ PATH_RULES: list[tuple[str, str]] = [
     (r"(?i)(^|/)MODEL_CARD(\.md)?$", "model-card"),
     (r"(?i)(^|/)README(\.md)?$", "readme"),
     # A .tex under a proofs/ or papers/ tree is math and belongs in a math register,
-    # so it routes there ahead of the .tex-is-essay default. An essay written in
-    # .tex (device-free essays) still lands on essay.
+    # so it routes there ahead of the .tex-is-essay default. Any other .tex lands
+    # on essay, which holds no house-pack pattern.
     (r"(?i)(^|/)(proofs?)/", "proof"),
     (r"(?i)(^|/)(papers?|research|whitepapers?)/", "research"),
     (r"(?i)\.tex$", "essay"),

@@ -133,16 +133,16 @@ def test_mcp_fix_masks_math_when_the_text_is_latex(monkeypatch):
 
 # --- item 2: --fix self-checks under the chosen mode ------------------------- #
 
-# "robust" is a register-word tell under the default profile and a kept term of
-# art under academic/explain. Everything else in this text is clean under both.
-MODE_CLEAN = ("The robust estimate holds across 42 plots in every season we measured "
-              "this year, from the dry spring to the wet autumn.\n")
+# "may potentially" is a stacked hedge (MEDIUM) under the default profile, and
+# "may" is a kept term of art under technical-docs/argue (normative-spec base).
+MODE_CLEAN = ("The estimate may potentially hold across 42 plots in every season we "
+              "measured this year.\n")
 
 
 def test_mode_clean_text_differs_by_profile():
     # Guards the premise of the next test: the text reads differently by profile.
     from articulate import modes
-    assert editor.mechanical_text(MODE_CLEAN, modes.load("academic/explain"))[0]
+    assert editor.mechanical_text(MODE_CLEAN, modes.load("technical-docs/argue"))[0]
     assert not editor.mechanical_text(MODE_CLEAN, None)[0]
 
 
@@ -150,7 +150,7 @@ def test_fix_self_check_uses_the_chosen_mode(work, monkeypatch, capsys):
     src = _write(work, "draft.md", "Some draft prose that needs a rewrite today.\n")
     out = os.path.join(work, "draft.fixed.md")
     monkeypatch.setattr(editor, "claude_call", FakeModel(lambda t: MODE_CLEAN))
-    assert editor.fix(src, out, passes=1, mode="academic/explain") == 0
+    assert editor.fix(src, out, passes=1, mode="technical-docs/argue") == 0
     printed = capsys.readouterr().out
     assert "pass 1: CLEAN" in printed
     assert "[fix] clean of mechanical tells" in printed

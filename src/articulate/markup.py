@@ -77,6 +77,33 @@ FOUNTAIN_CUE = re.compile(r"^\s*(?:@?[A-Z][A-Z0-9 .'\-]{0,34})(?:\s*\((?:V\.O\.|
                           r"CONT'?D|CONT|O\.C\.)\))?\s*$")
 
 
+# C2PA 2.4 Annex A.9 embeds a manifest reference in structured text between
+# these delimiters (in front matter or one comment line). Annex A.8 embeds in
+# unstructured text as a run of Unicode variation selectors. Either is a
+# credential, never prose, so both are blanked before any rule runs.
+C2PA_BEGIN = "-----BEGIN C2PA MANIFEST-----"
+C2PA_END = "-----END C2PA MANIFEST-----"
+C2PA_MIN_SELECTORS = 4
+_VS_RUN = re.compile("[\ufe00-\ufe0f\U000e0100-\U000e01ef]{%d,}" % C2PA_MIN_SELECTORS)
+
+
+def mask_c2pa(text):
+    """The text with every C2PA A.9 block and every A.8 selector run replaced by
+    spaces. Line breaks are kept, so every offset stays valid. Linear time."""
+    out, pos = [], 0
+    while True:
+        b = text.find(C2PA_BEGIN, pos)
+        if b < 0:
+            break
+        e = text.find(C2PA_END, b)
+        e = len(text) if e < 0 else e + len(C2PA_END)
+        out.append(text[pos:b])
+        out.append("".join(c if c == "\n" else " " for c in text[b:e]))
+        pos = e
+    out.append(text[pos:])
+    return _VS_RUN.sub(lambda m: " " * len(m.group(0)), "".join(out))
+
+
 def _blank(m):
     return " " * (m.end() - m.start())
 

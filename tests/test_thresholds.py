@@ -15,7 +15,7 @@ LONG_CLEAN = (
 )
 
 
-def _v(text, prof="flavored"):
+def _v(text, prof="house"):
     return articulate.check_text(text, profile=profiles.load(prof))
 
 
@@ -48,19 +48,19 @@ def test_long_clean_text_is_a_confident_clean():
 # --- the receipt abstains too ---------------------------------------------- #
 
 def test_short_clean_receipt_verifies_unverifiable():
-    rec = receipt.make_receipt(SHORT_CLEAN, "flavored")
+    rec = receipt.make_receipt(SHORT_CLEAN, "house")
     assert rec["verdict"] == "unverifiable"
     verdict, _ = receipt.verify_receipt(rec, SHORT_CLEAN)
     assert verdict == "Unverifiable"
 
 
 def test_short_device_receipt_still_matches():
-    rec = receipt.make_receipt(SHORT_DEVICE, "flavored")
+    rec = receipt.make_receipt(SHORT_DEVICE, "house")
     verdict, _ = receipt.verify_receipt(rec, SHORT_DEVICE)
     assert verdict == "Match"          # device evidence is re-derivable and valid
 
 
 def test_long_clean_receipt_matches():
-    rec = receipt.make_receipt(LONG_CLEAN, "flavored")
+    rec = receipt.make_receipt(LONG_CLEAN, "house")
     verdict, _ = receipt.verify_receipt(rec, LONG_CLEAN)
     assert verdict == "Match"

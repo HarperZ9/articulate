@@ -73,7 +73,18 @@ LOW = [
      re.compile(r"(?im)^\s*(?:despite|although|while|though|even though)\b[^.!?\n]{1,80},")),
     ("editorial-adverb", "sentence-initial editorial adverb",
      re.compile(r"(?im)^\s*(?:interestingly|remarkably|surprisingly|fundamentally|"
-                r"undoubtedly|arguably)\s*,")),
+                r"undoubtedly|arguably)\s*,")),    # A spoken affirmation at a sentence start ("Of course, ...", "Absolutely.").
+    # Ordinary speech and dictation produce it, so it only reports. The chat
+    # reply that follows it with a deliverable is a HIGH rule (rules_high).
+    ("affirmation-opener", "affirmation opener",
+     re.compile(r"(?i)^\s*(?:certainly|absolutely|great question|good question|"
+                r"excellent question|excellent point|fantastic question|sure thing|"
+                r"of course|happy to help|i'?d be happy to)[!,.]")),
+    # U+200B or U+2060 outside a Latin run: a word-boundary mark in Thai, Khmer,
+    # Lao and Myanmar text. Reported so a writer can check it, never blocking.
+    ("invisible-unicode", "zero-width character outside Latin text",
+     re.compile("(?<![A-Za-z0-9!-/:-@\\[-`{-~])[\u200b\u2060]"
+                "|[\u200b\u2060](?![A-Za-z0-9!-/:-@\\[-`{-~])")),
 ]
 
 # Generation artifacts documented in AI-written fiction. This is a report-only

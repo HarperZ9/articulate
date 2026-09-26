@@ -14,7 +14,7 @@ INTRO = ("The survey covered 42 plots across three counties in the spring of 202
 
 def _findings(text, profile="research"):
     r = detector.check_text(text, profile=profiles.load(profile))
-    return r, [f for f in r["high"] if f["category"] == "em-dash"]
+    return r, [f for t in ("high", "medium", "low") for f in r[t] if f["category"] == "em-dash"]
 
 
 @pytest.mark.parametrize("sep", [

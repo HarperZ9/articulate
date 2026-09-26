@@ -16,6 +16,7 @@ import test_golden_findings as golden
 
 CONSTANTS = [
     (cadence, "CADENCE_MIN_SENTENCES", 3),
+    (cadence, "CADENCE_MIN_WORDS", 7),
     (cadence, "CADENCE_CV_MAX", 0.9),
     (cadence, "CADENCE_MEAN_MIN", 2),
     (cadence, "OPENER_MIN_CONTENT", 2),
@@ -51,6 +52,7 @@ def test_a_constant_change_with_the_fingerprint_held_fails_the_golden_pin(monkey
     pinned = detector.ruleset_fingerprint()
     base = golden.findings_digest()
     monkeypatch.setattr(cadence, "CADENCE_MIN_SENTENCES", 2)
+    monkeypatch.setattr(cadence, "CADENCE_MIN_WORDS", 1)
     monkeypatch.setattr(cadence, "CADENCE_MEAN_MIN", 1)
     monkeypatch.setattr(detector, "ruleset_fingerprint", lambda: pinned)
     assert golden.findings_digest() != base

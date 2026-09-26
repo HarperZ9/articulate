@@ -68,7 +68,7 @@ MEDIUM_REGISTER = [
     # --- "plays a ... role", "a testament to", correlative range ---------- #
     ("cliche", "plays a (vital) role / a testament to",
      re.compile(r"\b(?:plays? an? [a-z]* ?role|a testament to|stands? as a testament)\b", re.I)),
-    ("cliche", "sweeping 'from X to Y' range",
+    ("sweeping-range", "sweeping 'from X to Y' range",
      re.compile(r"\bfrom [a-z][a-z ]{2,30} to [a-z][a-z ]{2,30}(?:,| and )", re.I)),
     # --- hedge stacking --------------------------------------------------- #
     ("hedge-stack", "stacked hedge",
@@ -122,5 +122,11 @@ MEDIUM_REGISTER = [
      re.compile(r"\bwhether you'?re (?:an?\s+)?\w+(?:\s+\w+){0,3}\s+or\s+(?:an?\s+)?\w+", re.I)),
     # --- promotional descriptive filler (research spec #14) --------------- #
     ("blog-tell", "promotional filler (boasts a / nestled in)",
-     re.compile(r"\bboasts (?:a |an )?\w+|\bnestled (?:in|amid|among|between)\b", re.I)),
+     re.compile(r"\bboasts (?:a |an )?\w+|\bnestled (?:in|amid|among|between)\b", re.I)),    # --- deletable padding circumlocutions ------------------------------- #
+    # MEDIUM: it blocks under a strict profile and reports under the default.
+    ("wordiness", "deletable padding circumlocution",
+     re.compile(r"\b(?:in order to|due to the fact that|for the purpose of|"
+                r"at this point in time|with regard to|with respect to|"
+                r"a wide range of|in the process of|in a timely manner|"
+                r"it should be noted that)\b", re.I)),
 ]
