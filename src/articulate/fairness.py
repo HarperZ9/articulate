@@ -80,6 +80,18 @@ def config_key(prof):
     return json.dumps({k: prof.get(k) for k in keys}, sort_keys=True, default=list)
 
 
+# Rules whose label quotes the document ("'x y z' repeats 3x", "open with
+# 'The'"). A receipt keys them by category, so no corpus words reach it.
+TEXT_LABELS = frozenset({"ngram-repetition", "anaphora"})
+
+
+def rule_key(f):
+    """A content-free key for a finding: tier and rule id, or tier and category
+    when the rule's label quotes the text."""
+    rid = f["category"] if f["category"] in TEXT_LABELS else f["rule_id"]
+    return f"{f['tier']}|{rid}"
+
+
 def measure(text, prof):
     """Per-document numbers under one profile. No text leaves this function."""
     r = check_text(text, profile=prof, house_notes=True, cadence_detail=True)
@@ -87,7 +99,7 @@ def measure(text, prof):
     gated, house = set(), set()
     for t in ("high", "medium", "low"):
         for f in r[t]:
-            key = f"{f['tier']}|{f['rule_id']}"
+            key = rule_key(f)
             rules[key] = rules.get(key, 0) + 1
             if f.get("gates"):
                 gated.add(key)

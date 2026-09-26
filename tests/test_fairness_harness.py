@@ -161,3 +161,14 @@ def test_prereg_thresholds_match_the_code():
             ).read_text(encoding="utf-8")
     block = re.search(r"```json\n(.*?)\n```", text, re.S).group(1)
     assert json.loads(block) == fairness_gates.THRESHOLDS
+
+
+def test_a_receipt_rule_key_carries_no_text_from_the_document():
+    # The n-gram and anaphora labels quote the document. A receipt keys those
+    # rules by category, so no corpus words reach a committed receipt.
+    from articulate import profiles
+    text = ("The zebra crossing was wide. The zebra crossing was long. "
+            "The zebra crossing was new. Zebra rules. Zebra rules. Zebra rules.\n")
+    keys = fairness.measure(text, profiles.load("flavored"))["rules"]
+    assert any(k.endswith("|ngram-repetition") for k in keys), keys
+    assert not [k for k in keys if "zebra" in k.lower()], keys
