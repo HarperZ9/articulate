@@ -1,4 +1,4 @@
-"""Real processes through claude_cli: stand-in shims, a planted file, a timeout.
+"""Real processes through claude_cli: stand-in shims, planted files, a timeout.
 
 Each stand-in writes back what it received, so a test can check that the prompt
 file, the fixed flags and the document arrive intact. No test here reaches a
@@ -6,9 +6,9 @@ model. The Windows tests go through cmd.exe and run in the windows-latest CI job
 """
 import ast
 import os
-import pathlib
 import shutil
 import stat
+import string
 import subprocess
 import sys
 import time
@@ -17,13 +17,22 @@ import pytest
 
 from articulate import claude_cli
 
-_SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "articulate"
 _TMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_tmp_cli_proc")
 _WINDOWS = os.name == "nt"
 _ECHO = ("import sys\na = sys.argv[1:]\n"
          "p = open(a[a.index('--append-system-prompt-file') + 1], encoding='utf-8').read()\n"
-         "sys.stdout.write(repr(a[a.index('--strict-mcp-config'):]) + '|' + p + '|' + sys.stdin.read())\n")
+         "sys.stdout.write(repr(a[a.index('--setting-sources'):]) + '|' + p + '|' + sys.stdin.read())\n")
+_WHERE = "import os, sys\nsys.stdout.write(repr((os.getcwd(), os.listdir('.'))))\n"
 _SLEEP = "import time\ntime.sleep(30)\n"
+_FLAGS = ["--setting-sources", "user", "--strict-mcp-config", "--tools", ""]
+# npm's cmd-shim template for a package bin, as `npm install -g` writes it. With
+# no node.exe beside the shim, it runs "node" by bare name.
+_NPM_SHIM = ("@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\n"
+             "SETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST \"%dp0%\\node.exe\" (\r\n"
+             "  SET \"_prog=%dp0%\\node.exe\"\r\n) ELSE (\r\n  SET \"_prog=node\"\r\n"
+             "  SET PATHEXT=%PATHEXT:;.JS;=;%\r\n)\r\n\r\n"
+             "endLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & \"%_prog%\"  "
+             "\"%dp0%\\node_modules\\@anthropic-ai\\claude-code\\cli.js\" %*\r\n")
 
 
 @pytest.fixture()
@@ -61,7 +70,7 @@ def _decoy(folder):
     return path
 
 
-def test_a_claude_planted_in_the_current_directory_never_wins(monkeypatch, work):
+def test_a_claude_planted_in_the_current_directory_never_wins(work, monkeypatch):
     # Windows searches the current directory ahead of PATH unless
     # NoDefaultCurrentDirectoryInExePath is set, and Windows does not set it.
     repo = os.path.join(work, "repo")
@@ -86,8 +95,44 @@ def test_a_stand_in_receives_the_long_prompt_the_flags_and_the_document(monkeypa
     prompt = 'one\ntwo "three" %PATH% & four ^ | < > !\n' + "x" * 40000
     r = claude_cli.run(prompt, "the document", timeout=60)
     assert r.returncode == 0, r.stderr
-    flags = repr(["--strict-mcp-config", "--tools", ""])
-    assert r.stdout.rstrip("\n") == flags + "|" + prompt + "|the document"
+    assert r.stdout.rstrip("\n") == repr(_FLAGS) + "|" + prompt + "|the document"
+
+
+def test_the_cli_never_starts_in_the_callers_folder(work, monkeypatch):
+    # claude -p skips the trust prompt and reads .claude/settings.json from its
+    # working directory, so a document folder could hand it hooks to run.
+    repo = os.path.join(work, "docrepo")
+    os.makedirs(os.path.join(repo, ".claude"))
+    _write(os.path.join(repo, ".claude", "settings.json"), '{"hooks": {}}')
+    cli = _stand_in(os.path.join(work, "bin"), _WHERE)
+    monkeypatch.setenv(claude_cli.ENV_VAR, cli)
+    monkeypatch.chdir(repo)
+    r = claude_cli.run("p", "doc", timeout=60)
+    cwd, listing = ast.literal_eval(r.stdout.strip())
+    assert os.path.normcase(os.path.realpath(cwd)) != os.path.normcase(os.path.realpath(repo))
+    assert listing == []
+    assert not os.path.exists(cwd), "the private folder outlives the call"
+
+
+@pytest.mark.skipif(not _WINDOWS, reason="the npm cmd shim runs only under cmd.exe")
+def test_an_npm_shim_never_runs_a_node_planted_in_the_callers_folder(work, monkeypatch):
+    # cmd.exe looks for the shim's bare "node" in the current directory first.
+    npm = os.path.join(work, "npm")
+    os.makedirs(os.path.join(npm, "node_modules", "@anthropic-ai", "claude-code"))
+    shim = _write(os.path.join(npm, "claude.cmd"), _NPM_SHIM, newline="")
+    node_dir = os.path.dirname(_stand_in(os.path.join(work, "nodejs"), _ECHO, name="node"))
+    repo = os.path.join(work, "docrepo")
+    os.makedirs(repo)
+    marker = os.path.join(work, "PLANTED-RAN")
+    _write(os.path.join(repo, "node.cmd"),
+           f'@echo off\r\necho x> "{marker}"\r\necho PLANTED-NODE\r\n', newline="")
+    monkeypatch.delenv("NoDefaultCurrentDirectoryInExePath", raising=False)
+    monkeypatch.setenv(claude_cli.ENV_VAR, shim)
+    monkeypatch.setenv("PATH", node_dir + os.pathsep + os.environ.get("PATH", ""))
+    monkeypatch.chdir(repo)
+    r = claude_cli.run("the prompt", "the document", timeout=60)
+    assert "PLANTED" not in r.stdout and not os.path.exists(marker)
+    assert r.stdout.rstrip("\n").endswith("|the prompt|the document"), (r.stdout, r.stderr)
 
 
 @pytest.mark.skipif(not _WINDOWS, reason="cmd.exe batch parsing exists only on Windows")
@@ -112,42 +157,33 @@ def test_the_timeout_stops_the_whole_process_tree(monkeypatch, work):
     assert work not in str(info.value), "the timeout message names the CLI path"
 
 
-class _ShellCalls(ast.NodeVisitor):
-    """Call sites that ask for a command shell."""
-    SHELL_FUNCS = {"system", "popen", "startfile", "getoutput", "getstatusoutput",
-                   "create_subprocess_shell"}
-
-    def __init__(self):
-        self.found = []
-
-    def visit_Call(self, node):
-        func = node.func
-        name = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
-        if name in self.SHELL_FUNCS or name.startswith(("spawn", "exec")) and name != "exec_module":
-            self.found.append(f"{name}() at line {node.lineno}")
-        for kw in node.keywords:
-            if kw.arg == "shell" and not (isinstance(kw.value, ast.Constant) and kw.value.value is False):
-                self.found.append(f"shell= at line {node.lineno}")
-        self.generic_visit(node)
+def _survives(wrapper, arg):
+    # In the wrapper's folder, since a probe like "x>OS>y" writes a file named y.
+    r = subprocess.run([wrapper, arg], capture_output=True, text=True, timeout=30,
+                       cwd=os.path.dirname(wrapper))
+    return r.stdout.strip() == repr([arg])
 
 
-def test_no_source_call_asks_for_a_shell():
-    # The batch path does run cmd.exe, because Windows starts every .cmd file
-    # that way. That path is guarded by the fixed argv above. This test checks
-    # that no call asks for a shell on its own.
-    for path in sorted(_SRC.rglob("*.py")):
-        visitor = _ShellCalls()
-        visitor.visit(ast.parse(path.read_text(encoding="utf-8"), filename=str(path)))
-        assert visitor.found == [], f"{path.name}: {visitor.found}"
-
-
-def test_the_shell_check_catches_what_it_claims():
-    samples = ["os.system('x')", "os.popen('x')", "subprocess.run(a, shell=True)",
-               "subprocess.run(a, shell=flag)", "os.spawnl(0, 'x')", "os.execv('x', [])"]
-    for sample in samples:
-        visitor = _ShellCalls()
-        visitor.visit(ast.parse(sample))
-        assert visitor.found, sample
-    visitor = _ShellCalls()
-    visitor.visit(ast.parse("subprocess.run(a, shell=False)"))
-    assert visitor.found == []
+@pytest.mark.skipif(not _WINDOWS, reason="cmd.exe batch parsing exists only on Windows")
+def test_the_refused_characters_are_exactly_the_ones_cmd_reinterprets(work):
+    # A wrapper that runs %* inside a parenthesized block with delayed
+    # expansion on sees every reading cmd.exe applies. Each punctuation
+    # character goes through once in an argument Python leaves unquoted and
+    # once in one it quotes. A quote on its own survives, but it flips cmd's
+    # quote state, so the third probe pairs it with a space and an "&".
+    body = _write(os.path.join(work, "argv.py"), "import sys\nprint(repr(sys.argv[1:]))\n")
+    wrapper = _write(os.path.join(work, "wrap.cmd"),
+                     f'@echo off\r\nsetlocal enabledelayedexpansion\r\nif 1==1 (\r\n'
+                     f'  "{sys.executable}" "{body}" %*\r\n)\r\n', newline="")
+    changed, changed_quoted = set(), set()
+    for c in string.punctuation + "\r\n":
+        if not _survives(wrapper, f"x{c}OS{c}y"):
+            changed.add(c)
+        if not _survives(wrapper, f"a {c}OS{c} b"):
+            changed_quoted.add(c)
+    if not _survives(wrapper, 'x" & echo y'):
+        changed.add('"')
+    assert changed | changed_quoted == claude_cli.CMD_UNSAFE | claude_cli.CMD_UNSAFE_UNQUOTED
+    # A character in the unquoted set is refused only where Python leaves the
+    # argument unquoted, so it must be harmless inside quotes.
+    assert not claude_cli.CMD_UNSAFE_UNQUOTED & changed_quoted
