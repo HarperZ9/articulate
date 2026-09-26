@@ -184,11 +184,6 @@ def splice_math(text, spans):
     return text
 
 
-def run(cmd, text=None, timeout=600):
-    return subprocess.run(cmd, input=text, capture_output=True, text=True,
-                          encoding="utf-8", timeout=timeout)
-
-
 def mechanical(path, profile=None):
     """Return (clean, summary_text) from the deterministic detector, for a file."""
     try:
@@ -434,8 +429,13 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
         if not cand or not cand.strip():
             print("[polish] empty rewrite; stopping")
             break
+        try:
+            cq = judge(cand)
+        except (RuntimeError, subprocess.TimeoutExpired) as e:
+            # The backend can drop halfway through, for example on a rate limit.
+            print(f"[polish] judge failed: {e}; kept the best version so far")
+            break
         cr, clow = evaluate(cand)
-        cq = judge(cand)
         csc = {k: int(cq.get(k, 0) or 0) for k in QUALITIES}
         regresses = any(csc[k] < sc[k] for k in QUALITIES)
         gate_worse = cr["gate"] == "blocked" and r["gate"] == "ok"

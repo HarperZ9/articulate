@@ -22,6 +22,22 @@ jobs:
       # and the ReDoS safety test.
       - run: python -m pytest -q
 
+  # The claude CLI tests start stand-in .cmd and .bat shims through cmd.exe and
+  # check the Windows resolution order. Those tests skip on Linux, so they need
+  # a Windows runner. 3.9 and 3.12 bracket the supported range.
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: python -m pytest -q
+
   articulate-self-check:
     runs-on: ubuntu-latest
     steps:

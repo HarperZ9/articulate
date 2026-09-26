@@ -3,6 +3,7 @@ rewrite and judge functions. Uses a project-local temp dir (the pytest tmp_path
 fixture's symlink management is denied on this Windows host)."""
 import os
 import shutil
+import subprocess
 
 import pytest
 
@@ -76,3 +77,25 @@ def test_narrative_mode_does_not_rewrite(work):
     editor.polish(src, out, passes=2, bar=5, mode="narrative/narrate",
                   rewrite_fn=boom, judge_fn=lambda t: _scored())
     assert _read(out) == "Some literary prose.\n"
+
+
+@pytest.mark.parametrize("error", [editor.ClaudeUnavailable("claude CLI: rate limited"),
+                                   subprocess.TimeoutExpired("claude", 600)])
+def test_a_judge_failure_inside_the_loop_keeps_the_best_and_exits_cleanly(work, capsys, error):
+    # The backend can drop halfway through the loop, for example on a rate
+    # limit. That must end the loop with a message, not a traceback.
+    src = _write(work, "z.md", "v0 text\n")
+    out = os.path.join(work, "z.polished.md")
+    calls = []
+
+    def judge(t):
+        calls.append(t)
+        if len(calls) > 1:
+            raise error
+        return _scored(concreteness=2, commitment=2, economy=2, rhythm=2, restatable=2)
+
+    rc = editor.polish(src, out, passes=3, bar=5,
+                       rewrite_fn=lambda t, mech, worst: "v1", judge_fn=judge)
+    assert rc == 0
+    assert _read(out).strip() == "v0 text"
+    assert "judge failed" in capsys.readouterr().out

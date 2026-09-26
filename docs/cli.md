@@ -98,11 +98,17 @@ python -m articulate.editor --review FILE
 
 These commands run the model through the `claude` CLI, which must be installed
 and logged in. The editor looks for it in two places. If `ARTICULATE_CLAUDE_CLI`
-is set, its value is the path of the CLI. Otherwise the editor searches the
-PATH, and on Windows that search also finds the `claude.cmd` shim from an npm
-install. Set the variable when the editor runs from a process whose PATH does
-not hold the CLI, such as an MCP host or a bundled app. When neither place
-gives a runnable file, the command stops with an error that names the variable.
+is set, its value must be the absolute path of the CLI, such as
+`C:\Users\you\.local\bin\claude.exe`. Otherwise the editor searches the
+absolute entries on the PATH. It prefers `claude.exe` in any entry, and on
+Windows it falls back to the `claude.cmd` shim from an npm install. It never
+looks in the current directory. Set the variable when the editor runs from a
+process whose PATH does not hold the CLI, such as an MCP host or a bundled app.
+When neither place gives a runnable file, the command stops with an error that
+names the variable.
+
+The model session gets the prompt in a temporary file, the document on stdin,
+and no tools: every call passes `--strict-mcp-config --tools ""`.
 
 ## Exit codes
 

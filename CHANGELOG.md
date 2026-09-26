@@ -7,7 +7,8 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 ## 0.4.2
 
 The editor commands `judge`, `fix` and `polish` now find the `claude` CLI in
-more setups. Detector findings and the ruleset fingerprint do not change.
+more setups, and the model call runs with no tools. Detector findings and the
+ruleset fingerprint do not change.
 
 The editor started the CLI by the bare name `claude`. That failed in two cases.
 A process that an MCP host or a bundled app starts can inherit a PATH that
@@ -16,33 +17,64 @@ holds only System32. And on Windows, subprocess without a shell looks only for
 on the PATH. In both cases the start raised an uncaught `FileNotFoundError`.
 
 - New module `articulate.claude_cli` resolves the CLI. The environment variable
-  `ARTICULATE_CLAUDE_CLI` names its path and wins when set. Otherwise
-  `shutil.which` searches the PATH, which on Windows also tries `.cmd`.
-- When neither gives a runnable file, the editor raises `ClaudeUnavailable`.
-  Its message names the variable and says the CLI must be installed and logged
-  in. A start that fails with an `OSError` raises the same error. No message
-  prints the value of the variable or the resolved path.
-- `ClaudeUnavailable` moved to `articulate.claude_cli`. `articulate.editor`
-  still exports it, so existing imports keep working.
-- A `.cmd` file runs under cmd.exe, which parses its arguments again. It cuts an
-  argument at the first newline and treats `%`, `^`, `&`, `|`, `<`, `>` and `!`
-  as commands. So resolving `claude.cmd` alone would have sent only the first
-  line of each prompt, and detector snippets from the document could have run
-  as commands. For a batch file the prompt now goes into a temporary file,
-  passed with `--append-system-prompt-file`, and removed after the call. The
-  argument list holds only a fixed line and that path. A path with one of those
-  characters is refused with the closed error. A native `claude.exe` still
-  gets the prompt as the `-p` argument, as before.
-- `tests/test_claude_cli.py` covers the variable winning over the PATH, the
-  PATH fallback, the closed errors, the absence of `shell=True` in every
-  module, and the batch path. On Windows one test runs a stand-in `claude.cmd`
-  through cmd.exe and checks that the full multi-line prompt and the document
-  arrive intact.
-- Not verified: a model reply through the batch path. A stand-in shim around
-  the real CLI accepted the arguments and reached the backend, which answered
-  with a credit error on the test machine.
+  `ARTICULATE_CLAUDE_CLI` names its path and wins when set. Its value must be an
+  absolute path; a bare name or a relative path is refused.
+- Otherwise the resolver walks the absolute PATH entries itself. It takes
+  `claude.exe` from any entry first, and a `claude.cmd` or `claude.bat` shim
+  only when no entry holds `claude.exe`. So a setup that ran `claude.exe`
+  before still runs it, whatever the PATH order. The current directory is never
+  searched, and neither is a `.` or empty PATH entry. On Windows,
+  `shutil.which` looks in the current directory first, so a document repo that
+  shipped a file named `claude.cmd` would have run in place of the real CLI.
+- When nothing runnable is found, the editor raises `ClaudeUnavailable`. Its
+  message names the variable and says the CLI must be installed and logged in.
+  A start that fails with an `OSError` raises the same error. No message prints
+  the value of the variable or the resolved path. A timeout message names only
+  `claude`.
+- The prompt now travels in a temporary file passed with
+  `--append-system-prompt-file`, on every path, and the file is removed after
+  the call. The argument list holds a fixed line, that path and fixed flags. A
+  prompt with many detector findings could pass the Windows command-line limit
+  of about 32K characters, which failed with a misleading "could not be
+  started" error. And a `.cmd` file runs under cmd.exe, which cuts an argument
+  at the first newline and treats `%`, `^`, `&`, `|`, `<`, `>` and `!` as
+  commands. For a batch file, a path with one of those characters is refused.
+- Every call passes `--strict-mcp-config --tools ""`, so the model session has
+  no built-in tool and loads no MCP server. The document is untrusted input,
+  and before this change the `claude -p` child inherited the user's allow
+  rules and MCP servers.
+- A timeout now stops the whole process tree: `taskkill /F /T` by its System32
+  path on Windows, a process-group kill elsewhere. Before, a timeout on a batch
+  shim killed only cmd.exe and then waited for the CLI to finish.
+- `polish` now catches a judge failure inside its rewrite loop, such as a rate
+  limit halfway through, keeps the best version so far and exits cleanly.
+  Before, that failure ended in a traceback.
 
-Tests: 192 pass on Windows. The cmd.exe test is skipped elsewhere.
+Changed for callers:
+
+- The model's instructions now arrive as an appended system prompt, and the
+  user turn holds a fixed line. The trust boundary text still ends the
+  instructions, and the document stays on stdin.
+- `editor.CLAUDE` is removed, and setting it has no effect. The variable
+  `ARTICULATE_CLAUDE_CLI` now names the CLI.
+- `editor.run` is removed. A test double that patched it would now reach the
+  real CLI. A double now patches `articulate.claude_cli.run`.
+- A missing CLI raises `ClaudeUnavailable`, a `RuntimeError`, where it used to
+  raise `FileNotFoundError`, an `OSError`. `ClaudeUnavailable` moved to
+  `articulate.claude_cli`; `articulate.editor` still exports it.
+- `claude_cli.resolve` reads PATH from the `environ` mapping it is given.
+
+Tests: `tests/test_claude_cli.py` and `tests/test_claude_cli_process.py` cover
+the resolution order, a `claude` planted in the current directory, the closed
+errors, the fixed argument list, every character cmd.exe reinterprets for both
+`.cmd` and `.bat`, a 40,000-character prompt, and a timeout that must return
+within 5 s while a grandchild sleeps. A parse of every source module checks
+that no call asks for a shell. CI now also runs the suite on `windows-latest`,
+where the stand-ins go through cmd.exe.
+
+Not verified: a model reply through the batch path. A stand-in `claude.cmd`
+around the real CLI 2.1.251 accepted the new arguments and reached the
+backend, which answered with a credit error on the test machine.
 
 ## 0.4.1
 
