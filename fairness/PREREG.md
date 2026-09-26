@@ -16,8 +16,9 @@ The harness is `python -m articulate.fairness`. Its code lives in
   the Liang et al. (2023) release. On that corpus these gates are therefore not
   pre-registered. They bind every licensed corpus added after this file lands.
 - The corpora run so far are proxies: learner exam scripts against US college
-  admission essays and student project abstracts. No arm covers adult academic
-  writers, dictated text or World Englishes yet.
+  admission essays and student project abstracts. No arm groups adult academic
+  writers by first language, and none covers dictated text, disabled writers or
+  World Englishes yet.
 
 ## What the harness measures
 
@@ -36,8 +37,11 @@ the house profiles a project opts into:
 
 ## Gates
 
-A failure blocks a ruleset release. It never blocks a user's run. House profiles
-are measured and published and never block a release.
+A failure blocks a release. Every package release ships the ruleset, so while a
+gate fails no package release publishes unless a maintainer records an override
+for that exact ruleset with a reason (see the amendment below). A failure never
+blocks a user's run. House profiles are measured and published and never block a
+release.
 
 | Gate | Rule |
 |:-|:-|
@@ -47,7 +51,30 @@ are measured and published and never block a release.
 | G4 | Blocking findings and density inputs are identical after a rewrap to one sentence per line. Verse (line unit) and screenplay profiles are exempt. |
 | G5 | While any cadence signal blocks or is a required fix: the protected group's uniform-cadence rate is at most twice the reference rate, or the difference's upper limit is at most 5.0 points. Report only when no cadence signal gates. |
 | G6 | Editor behavior by group (rewrite rate, edit distance, guard rejections, vocabulary lift, sentence-length variance). Reported when a model run exists. Not run so far. |
-| G7 | The absolute default-profile block rate on every human arm. Above 10% opens a review. |
+| G7 | The absolute default-profile block rate on every human arm. Above 10% opens a review. (Amended 26 September 2026: every bound profile, see below.) |
+| G8 | Report only. For the default and house profiles, each LOW-tier rule's skew state by the G2 rule, and whether a writer sees it by default. Added 26 September 2026. |
+
+## Amendments
+
+Dated 26 September 2026, after a review of the harness and before any new
+corpus. Each one makes a gate stricter or adds a report; none loosens one.
+
+- G1 and G2 fail when a comparison has an empty arm or a bound profile has no
+  evaluated comparison. They passed vacuously before.
+- G7 applies to every bound profile, not only the default. The code did this
+  from the start and the table above said otherwise; the stricter reading
+  stays.
+- G4 also hard-wraps each text at 60 columns, breaking at hyphens, as well as
+  rewrapping it to one sentence per line.
+- G8 is added, report only.
+- The release check recomputes the gates from the receipt's own rows, and it
+  accepts only a receipt from a listed manifest that holds every required
+  comparison (the block below). An override file for one exact ruleset, with a
+  reason and who decided, lets a release publish while a gate fails; the check
+  prints the reason. No override exists.
+- The smallest detectable gap is found by searching the Newcombe interval with
+  the reference arm held at its observed count. The earlier normal
+  approximation overstated power near a zero rate.
 
 ## Statistics
 
@@ -75,10 +102,24 @@ A test checks that this block equals `fairness_gates.THRESHOLDS`.
 }
 ```
 
+## Release requirements, machine-readable
+
+A test checks that this block equals `fairness_release.RELEASE_MANIFESTS` and
+`REQUIRED_COMPARISONS`. The manifest is the Liang et al. (2023) v1.0.0 build.
+
+```json
+{
+  "manifests": ["sha256:71ab34e241bd4315f81d4f0fefcd47eb4538c918b9584cebbca1ca848b73404a"],
+  "comparisons": ["toefl-vs-abstracts", "toefl-vs-college"]
+}
+```
+
 ## What a passing receipt does not show
 
 It shows how these rules behave on these corpora. It says nothing about who or
 what wrote any text, nothing about any group trait as a cause of a difference,
 and nothing about groups, genres or profiles it does not list. At the sizes run
-so far an interval spans 10 to 15 points either side of its estimate, so a small
-gap in either direction cannot be ruled out.
+so far a 95% interval spans from about 4 to about 14 points either side of its
+estimate, so a small gap in either direction cannot be ruled out. Against the
+70 college windows, the default profile could tell a gap from zero only at 6.6
+points or more, above the 5-point G1 line.

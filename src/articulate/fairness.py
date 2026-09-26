@@ -12,9 +12,14 @@ pre-registered gates G1 to G7 (fairness_gates, fairness/PREREG.md).
   python -m articulate.fairness MANIFEST [--out RECEIPT]
   python -m articulate.fairness --release-check DIR
 
-The release check reads DIR/<fingerprint>.json for the current ruleset and
-fails when it is missing, fails a gate, or omits a bound profile. A failure
-blocks a ruleset release. It never blocks a user's run.
+The release check reads DIR/<fingerprint>.json for the current ruleset. It
+fails when the receipt is missing, was run on a manifest not listed in
+RELEASE_MANIFESTS, leaves out a required comparison or a bound profile, or when
+the gates recomputed from its own rows fail or disagree with the stored
+summary. A failure blocks every package release, since each release ships the
+ruleset. It never blocks a user's run. A maintainer can record an override in
+DIR/<fingerprint>.override.json with a stated reason; the check then passes and
+prints that reason.
 
 Standard library only. No network. The harness never stores or prints text.
 """
@@ -25,6 +30,7 @@ import json
 import os
 import re
 import sys
+import textwrap
 
 from . import density as density_mod
 from . import fairness_corpora as corpora
@@ -40,6 +46,7 @@ DOES_NOT_PROVE = (
     "about who or what wrote any text, and nothing about any group trait as a cause "
     "of a difference. It covers only the groups, genres and profiles it lists.")
 _SENT = re.compile(r"(?<=[.!?])\s+")
+
 
 
 def house_profiles():
@@ -73,19 +80,21 @@ def config_key(prof):
 
 def measure(text, prof):
     """Per-document numbers under one profile. No text leaves this function."""
-    r = check_text(text, profile=prof)
+    r = check_text(text, profile=prof, house_notes=True, cadence_detail=True)
     rules = {}
-    gated = set()
+    gated, house = set(), set()
     for t in ("high", "medium", "low"):
         for f in r[t]:
             key = f"{f['tier']}|{f['rule_id']}"
             rules[key] = rules.get(key, 0) + 1
             if f.get("gates"):
                 gated.add(key)
+            if f.get("house"):
+                house.add(key)
     dens = density_mod.density(r)
     words = dens["words"]
     return {"blocked": r["gate"] == "blocked", "words": words, "rules": rules,
-            "gated": gated, "density_count": dens["count"],
+            "gated": gated, "house_rules": house, "density_count": dens["count"],
             "density": dens["count"] / words * 1000 if words else None,
             "uniform": bool(r["cadence"].get("uniform")),
             "hm": {k: v for k, v in rules.items() if not k.startswith("LOW|")}}
@@ -94,6 +103,21 @@ def measure(text, prof):
 def rewrap(text):
     """The same words, one sentence per line."""
     return "\n".join(s.strip() for s in _SENT.split(text.replace("\n", " ")) if s.strip()) + "\n"
+
+
+def hardwrap(text, width=60):
+    """The same words hard-wrapped at `width` columns, breaking at hyphens too."""
+    paras = [p.replace("\n", " ") for p in re.split(r"\n\s*\n", text) if p.strip()]
+    return "\n\n".join(textwrap.fill(p, width, break_long_words=False) for p in paras) + "\n"
+
+
+def _layout_changed(text, m, prof):
+    for variant in (rewrap(text), hardwrap(text)):
+        w = measure(variant, prof)
+        if (w["hm"], w["density_count"], w["words"]) != (m["hm"], m["density_count"],
+                                                        m["words"]):
+            return True
+    return False
 
 
 def _layout_applies(prof):
@@ -105,31 +129,31 @@ def _collect(man, base, configs):
     meas = {k: {} for k in configs}
     layout = {k: 0 for k in configs}
     for row, text in corpora.load_documents(man, base):
-        wrapped = rewrap(text)
         for key, prof in configs.items():
             m = measure(text, prof)
             m.update({"key": row.get("key"), "score": row.get("score"),
                       "prompt": row.get("prompt")})
             meas[key].setdefault(row["set"], []).append(m)
-            if _layout_applies(prof):
-                w = measure(wrapped, prof)
-                if (w["hm"], w["density_count"], w["words"]) != (
-                        m["hm"], m["density_count"], m["words"]):
-                    layout[key] += 1
+            if _layout_applies(prof) and _layout_changed(text, m, prof):
+                layout[key] += 1
     return meas, layout
 
 
-def _for_config(man, sets, names, cadence_gates):
-    out = {"profiles": names, "comparisons": {}, "g7": {}, "pairs": {}}
+def _for_config(man, sets, names, cadence_gates, notes=False):
+    out = {"profiles": names, "comparisons": {}, "skipped": [], "g7": {}, "pairs": {}}
     for c in man.get("comparisons", []):
         prot, ref = sets.get(c["protected"], []), sets.get(c["reference"], [])
         if not prot or not ref:
+            # A comparison with an empty arm is a failure, never a silent pass.
+            out["skipped"].append(c["name"])
             continue
         rules = set().union(*(d["gated"] for d in prot + ref))
-        out["comparisons"][c["name"]] = {
-            "dimension": c.get("dimension"), "design": c["design"],
-            "g1": G.g1(prot, ref), "g2": G.g2(prot, ref, rules, c["design"]),
-            "g5": G.g5(prot, ref, cadence_gates)}
+        row = {"dimension": c.get("dimension"), "design": c["design"],
+               "g1": G.g1(prot, ref), "g2": G.g2(prot, ref, rules, c["design"]),
+               "g5": G.g5(prot, ref, cadence_gates)}
+        if notes:
+            row["g8"] = G.g8(prot, ref)
+        out["comparisons"][c["name"]] = row
     human = {s for c in man.get("comparisons", []) for s in (c["protected"], c["reference"])}
     for s in sorted(human):
         if sets.get(s):
@@ -140,19 +164,27 @@ def _for_config(man, sets, names, cadence_gates):
     return out
 
 
+def _evaluated(v):
+    """A bound config must evaluate at least one comparison and skip none."""
+    return bool(v["comparisons"]) and not v.get("skipped")
+
+
 def _gate_summary(results, bound):
+    rows = [v for v in results.values() if set(v["profiles"]) & set(bound)]
+
     def over(fn):
-        return all(fn(v) for k, v in results.items() if set(v["profiles"]) & set(bound))
-    g1 = over(lambda v: all(c["g1"]["pass"] for c in v["comparisons"].values()))
-    g2 = over(lambda v: all(r["pass"] for c in v["comparisons"].values()
-                            for r in c["g2"].values()))
+        return bool(rows) and all(fn(v) for v in rows)
+    g1 = over(lambda v: _evaluated(v) and all(c["g1"]["pass"]
+                                              for c in v["comparisons"].values()))
+    g2 = over(lambda v: _evaluated(v) and all(r["pass"] for c in v["comparisons"].values()
+                                              for r in c["g2"].values()))
     g4 = over(lambda v: v["g4"]["changed"] == 0)
     g5 = over(lambda v: all(c["g5"]["pass"] is not False for c in v["comparisons"].values()))
     g7 = [s for v in results.values() if set(v["profiles"]) & set(bound)
           for s, x in v["g7"].items() if x["review"]]
     return {"G1": g1, "G2": g2, "G3": "report only", "G4": g4, "G5": g5,
             "G6": G.G6_NOT_RUN["state"], "G7_review": sorted(set(g7)),
-            "release_ok": g1 and g2 and g4 and g5}
+            "G8": "report only", "release_ok": g1 and g2 and g4 and g5}
 
 
 def run(manifest_path, names=None, cadence_gates=False):
@@ -169,7 +201,8 @@ def run(manifest_path, names=None, cadence_gates=False):
     meas, layout = _collect(man, base, configs)
     results = {}
     for i, (key, sets) in enumerate(sorted(meas.items(), key=lambda kv: members[kv[0]])):
-        res = _for_config(man, sets, members[key], cadence_gates)
+        notes = bool({profiles.DEFAULT, *house_profiles()} & set(members[key]))
+        res = _for_config(man, sets, members[key], cadence_gates, notes)
         res["g4"] = {"changed": layout[key], "applies": _layout_applies(configs[key])}
         results[f"config-{i}"] = res
     return {
@@ -184,22 +217,10 @@ def run(manifest_path, names=None, cadence_gates=False):
 
 
 def release_check(directory):
-    """(ok, reasons) for the committed receipt of the current ruleset."""
-    fp = ruleset_fingerprint()
-    path = os.path.join(directory, fp.replace(":", "-") + ".json")
-    if not os.path.isfile(path):
-        return False, [f"no fairness receipt for {fp} at {path}"]
-    with open(path, encoding="utf-8") as fh:
-        rec = json.load(fh)
-    reasons = []
-    if rec.get("schema") != SCHEMA or rec.get("ruleset_version") != fp:
-        reasons.append("receipt schema or ruleset does not match")
-    missing = set(bound_profiles()) - set(rec.get("measured_profiles", []))
-    if missing:
-        reasons.append(f"receipt omits bound profiles: {sorted(missing)}")
-    if not rec.get("gates", {}).get("release_ok"):
-        reasons.append(f"a release gate fails: {rec.get('gates')}")
-    return not reasons, reasons
+    """(ok, reasons) for the committed receipt of the current ruleset. See
+    fairness_release."""
+    from .fairness_release import release_check as check
+    return check(directory)
 
 
 def main(argv=None):
@@ -211,14 +232,15 @@ def main(argv=None):
     args = ap.parse_args(argv)
     if args.release_check:
         ok, reasons = release_check(args.release_check)
-        print("[fairness] release check " + ("passed" if ok else "failed: " + "; ".join(reasons)))
+        print("[fairness] release check " + ("passed" if ok else "failed")
+              + (": " + "; ".join(reasons) if reasons else ""))
         return 0 if ok else 1
     if not args.manifest:
         ap.print_help()
         return 2
     try:
         rec = run(args.manifest)
-    except corpora.CorpusError as e:
+    except (corpora.CorpusError, OSError, ValueError) as e:
         print(f"[fairness] {e}", file=sys.stderr)
         return 2
     blob = json.dumps(rec, indent=1, sort_keys=True, default=list)

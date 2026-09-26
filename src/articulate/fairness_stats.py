@@ -158,12 +158,19 @@ def poisson_exact(k):
     return lo, hi
 
 
-def min_detectable(n1, n2, p=0.1):
-    """The smallest rate difference whose 95% interval would exclude zero when
-    both arms sit near the base rate p. It states power and reports no result."""
+def min_detectable(n1, n2, k2):
+    """The smallest excess block rate in the first arm whose Newcombe 95% interval
+    would exclude zero, holding the second arm at its observed count k2. It
+    uses the same interval the gap is reported with, so it holds near a zero
+    rate, where a normal approximation does not. It states power and reports no
+    result; nan when no count up to n1 would do."""
     if not n1 or not n2:
         return float("nan")
-    return Z * math.sqrt(p * (1 - p) * (1 / n1 + 1 / n2))
+    for k1 in range(0, n1 + 1):
+        d, (lo, _hi) = newcombe(k1, n1, k2, n2)
+        if d > 0 and lo > 0:
+            return d
+    return float("nan")
 
 
 def median(xs):

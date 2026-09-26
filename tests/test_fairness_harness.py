@@ -90,7 +90,7 @@ def test_g6_is_reported_as_not_run(receipt):
 
 def test_layout_check_ran(receipt):
     (cfg,) = receipt["results"].values()
-    assert cfg["g4"]["applies"] is True and cfg["g4"]["changed"] >= 0
+    assert cfg["g4"]["applies"] is True and cfg["g4"]["changed"] == 0
 
 
 def test_a_moved_file_is_refused(tmp_path):

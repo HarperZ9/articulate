@@ -65,6 +65,7 @@
   "G7_review": [
    "abstracts"
   ],
+  "G8": "report only",
   "release_ok": false
  },
  "house_profiles": [
@@ -134,7 +135,7 @@
        ]
       ],
       "diff": -0.7,
-      "min_detectable": 1.7,
+      "min_detectable": 4.8,
       "pass": true,
       "protected": [
        0,
@@ -207,7 +208,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -298,7 +299,8 @@
    },
    "profiles": [
     "academic/argue"
-   ]
+   ],
+   "skipped": []
   },
   "config-1": {
    "comparisons": {
@@ -318,7 +320,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -371,7 +373,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -462,544 +464,10 @@
    },
    "profiles": [
     "academic/explain"
-   ]
+   ],
+   "skipped": []
   },
   "config-10": {
-   "comparisons": {
-    "toefl-vs-abstracts": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -3.8,
-       3.4
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": -0.7,
-      "min_detectable": 1.7,
-      "pass": true,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       1,
-       145
-      ],
-      "reverse_ci": [
-       -3.4,
-       3.8
-      ],
-      "reverse_diff": 0.7
-     },
-     "g2": {
-      "MEDIUM|unsupported-authority/authority-appeal-no-citation-nearby": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         1
-        ],
-        "per_1000": [
-         0.0,
-         0.059
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      }
-     },
-     "g5": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        145
-       ]
-      ]
-     }
-    },
-    "toefl-vs-college": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": 0.0,
-      "min_detectable": 2.4,
-      "pass": true,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       0,
-       70
-      ],
-      "reverse_ci": [
-       -4.1,
-       5.2
-      ],
-      "reverse_diff": -0.0
-     },
-     "g2": {},
-     "g5": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        70
-       ]
-      ]
-     }
-    }
-   },
-   "g4": {
-    "applies": true,
-    "changed": 0
-   },
-   "g7": {
-    "abstracts": {
-     "blocked": [
-      1,
-      145
-     ],
-     "ci": [
-      0.1,
-      3.8
-     ],
-     "rate": 0.7,
-     "review": false
-    },
-    "college": {
-     "blocked": [
-      0,
-      70
-     ],
-     "ci": [
-      0.0,
-      5.2
-     ],
-     "rate": 0.0,
-     "review": false
-    },
-    "toefl": {
-     "blocked": [
-      0,
-      91
-     ],
-     "ci": [
-      0.0,
-      4.1
-     ],
-     "rate": 0.0,
-     "review": false
-    }
-   },
-   "pairs": {
-    "toefl-original-vs-gpt4-rewrite": {
-     "gates": false,
-     "mcnemar_p": 1.0,
-     "original_only": 0,
-     "pairs": 91,
-     "rewrite_only": 1
-    }
-   },
-   "profiles": [
-    "legal/explain"
-   ]
-  },
-  "config-11": {
-   "comparisons": {
-    "toefl-vs-abstracts": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": 0.0,
-      "min_detectable": 1.7,
-      "pass": true,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       0,
-       145
-      ],
-      "reverse_ci": [
-       -4.1,
-       2.6
-      ],
-      "reverse_diff": -0.0
-     },
-     "g2": {},
-     "g5": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        145
-       ]
-      ]
-     }
-    },
-    "toefl-vs-college": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": 0.0,
-      "min_detectable": 2.4,
-      "pass": true,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       0,
-       70
-      ],
-      "reverse_ci": [
-       -4.1,
-       5.2
-      ],
-      "reverse_diff": -0.0
-     },
-     "g2": {},
-     "g5": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        70
-       ]
-      ]
-     }
-    }
-   },
-   "g4": {
-    "applies": true,
-    "changed": 0
-   },
-   "g7": {
-    "abstracts": {
-     "blocked": [
-      0,
-      145
-     ],
-     "ci": [
-      0.0,
-      2.6
-     ],
-     "rate": 0.0,
-     "review": false
-    },
-    "college": {
-     "blocked": [
-      0,
-      70
-     ],
-     "ci": [
-      0.0,
-      5.2
-     ],
-     "rate": 0.0,
-     "review": false
-    },
-    "toefl": {
-     "blocked": [
-      0,
-      91
-     ],
-     "ci": [
-      0.0,
-      4.1
-     ],
-     "rate": 0.0,
-     "review": false
-    }
-   },
-   "pairs": {
-    "toefl-original-vs-gpt4-rewrite": {
-     "gates": false,
-     "mcnemar_p": 1.0,
-     "original_only": 0,
-     "pairs": 91,
-     "rewrite_only": 0
-    }
-   },
-   "profiles": [
-    "legal/instruct",
-    "technical-docs/explain",
-    "tutorial/explain"
-   ]
-  },
-  "config-12": {
-   "comparisons": {
-    "toefl-vs-abstracts": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -10.5,
-       -0.7
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": -5.5,
-      "min_detectable": 4.7,
-      "pass": false,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       8,
-       145
-      ],
-      "reverse_ci": [
-       0.7,
-       10.5
-      ],
-      "reverse_diff": 5.5
-     },
-     "g2": {
-      "MEDIUM|marketing/marketing-superlative": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         8
-        ],
-        "per_1000": [
-         0.0,
-         0.591
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      }
-     },
-     "g5": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        145
-       ]
-      ]
-     }
-    },
-    "toefl-vs-college": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": 0.0,
-      "min_detectable": 2.4,
-      "pass": true,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       0,
-       70
-      ],
-      "reverse_ci": [
-       -4.1,
-       5.2
-      ],
-      "reverse_diff": -0.0
-     },
-     "g2": {},
-     "g5": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        70
-       ]
-      ]
-     }
-    }
-   },
-   "g4": {
-    "applies": true,
-    "changed": 0
-   },
-   "g7": {
-    "abstracts": {
-     "blocked": [
-      8,
-      145
-     ],
-     "ci": [
-      2.8,
-      10.5
-     ],
-     "rate": 5.5,
-     "review": false
-    },
-    "college": {
-     "blocked": [
-      0,
-      70
-     ],
-     "ci": [
-      0.0,
-      5.2
-     ],
-     "rate": 0.0,
-     "review": false
-    },
-    "toefl": {
-     "blocked": [
-      0,
-      91
-     ],
-     "ci": [
-      0.0,
-      4.1
-     ],
-     "rate": 0.0,
-     "review": false
-    }
-   },
-   "pairs": {
-    "toefl-original-vs-gpt4-rewrite": {
-     "gates": false,
-     "mcnemar_p": 1.0,
-     "original_only": 0,
-     "pairs": 91,
-     "rewrite_only": 1
-    }
-   },
-   "profiles": [
-    "marketing/explain",
-    "marketing/narrate"
-   ]
-  },
-  "config-13": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -1017,7 +485,7 @@
        ]
       ],
       "diff": -10.9,
-      "min_detectable": 7.5,
+      "min_detectable": 10.0,
       "pass": false,
       "protected": [
        2,
@@ -1166,7 +634,678 @@
        ]
       ],
       "diff": -0.7,
-      "min_detectable": 4.9,
+      "min_detectable": 9.2,
+      "pass": true,
+      "protected": [
+       2,
+       91
+      ],
+      "reference": [
+       2,
+       70
+      ],
+      "reverse_ci": [
+       -5.2,
+       7.8
+      ],
+      "reverse_diff": 0.7
+     },
+     "g2": {
+      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         "inf",
+         "inf"
+        ],
+        "docs": [
+         1,
+         0
+        ],
+        "per_1000": [
+         0.101,
+         0.0
+        ],
+        "ratio": "inf",
+        "state": "bounded"
+       }
+      },
+      "MEDIUM|wordiness/deletable-padding-circumlocution": {
+       "pass": false,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         "inf"
+        ],
+        "docs": [
+         1,
+         2
+        ],
+        "per_1000": [
+         0.101,
+         0.247
+        ],
+        "ratio": 0.41,
+        "state": "inconclusive"
+       }
+      }
+     },
+     "g5": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        70
+       ]
+      ]
+     }
+    }
+   },
+   "g4": {
+    "applies": true,
+    "changed": 0
+   },
+   "g7": {
+    "abstracts": {
+     "blocked": [
+      19,
+      145
+     ],
+     "ci": [
+      8.6,
+      19.6
+     ],
+     "rate": 13.1,
+     "review": true
+    },
+    "college": {
+     "blocked": [
+      2,
+      70
+     ],
+     "ci": [
+      0.8,
+      9.8
+     ],
+     "rate": 2.9,
+     "review": false
+    },
+    "toefl": {
+     "blocked": [
+      2,
+      91
+     ],
+     "ci": [
+      0.6,
+      7.7
+     ],
+     "rate": 2.2,
+     "review": false
+    }
+   },
+   "pairs": {
+    "toefl-original-vs-gpt4-rewrite": {
+     "gates": false,
+     "mcnemar_p": 0.0703,
+     "original_only": 1,
+     "pairs": 91,
+     "rewrite_only": 7
+    }
+   },
+   "profiles": [
+    "legal/argue"
+   ],
+   "skipped": []
+  },
+  "config-11": {
+   "comparisons": {
+    "toefl-vs-abstracts": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -3.8,
+       3.4
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": -0.7,
+      "min_detectable": 4.8,
+      "pass": true,
+      "protected": [
+       0,
+       91
+      ],
+      "reference": [
+       1,
+       145
+      ],
+      "reverse_ci": [
+       -3.4,
+       3.8
+      ],
+      "reverse_diff": 0.7
+     },
+     "g2": {
+      "MEDIUM|unsupported-authority/authority-appeal-no-citation-nearby": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         1
+        ],
+        "per_1000": [
+         0.0,
+         0.059
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      }
+     },
+     "g5": {
+      "ci": [
+       -2.6,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        145
+       ]
+      ]
+     }
+    },
+    "toefl-vs-college": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": 0.0,
+      "min_detectable": 6.6,
+      "pass": true,
+      "protected": [
+       0,
+       91
+      ],
+      "reference": [
+       0,
+       70
+      ],
+      "reverse_ci": [
+       -4.1,
+       5.2
+      ],
+      "reverse_diff": -0.0
+     },
+     "g2": {},
+     "g5": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        70
+       ]
+      ]
+     }
+    }
+   },
+   "g4": {
+    "applies": true,
+    "changed": 0
+   },
+   "g7": {
+    "abstracts": {
+     "blocked": [
+      1,
+      145
+     ],
+     "ci": [
+      0.1,
+      3.8
+     ],
+     "rate": 0.7,
+     "review": false
+    },
+    "college": {
+     "blocked": [
+      0,
+      70
+     ],
+     "ci": [
+      0.0,
+      5.2
+     ],
+     "rate": 0.0,
+     "review": false
+    },
+    "toefl": {
+     "blocked": [
+      0,
+      91
+     ],
+     "ci": [
+      0.0,
+      4.1
+     ],
+     "rate": 0.0,
+     "review": false
+    }
+   },
+   "pairs": {
+    "toefl-original-vs-gpt4-rewrite": {
+     "gates": false,
+     "mcnemar_p": 1.0,
+     "original_only": 0,
+     "pairs": 91,
+     "rewrite_only": 1
+    }
+   },
+   "profiles": [
+    "legal/explain"
+   ],
+   "skipped": []
+  },
+  "config-12": {
+   "comparisons": {
+    "toefl-vs-abstracts": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -10.5,
+       -0.7
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": -5.5,
+      "min_detectable": 7.7,
+      "pass": false,
+      "protected": [
+       0,
+       91
+      ],
+      "reference": [
+       8,
+       145
+      ],
+      "reverse_ci": [
+       0.7,
+       10.5
+      ],
+      "reverse_diff": 5.5
+     },
+     "g2": {
+      "MEDIUM|marketing/marketing-superlative": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         8
+        ],
+        "per_1000": [
+         0.0,
+         0.591
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      }
+     },
+     "g5": {
+      "ci": [
+       -2.6,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        145
+       ]
+      ]
+     }
+    },
+    "toefl-vs-college": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": 0.0,
+      "min_detectable": 6.6,
+      "pass": true,
+      "protected": [
+       0,
+       91
+      ],
+      "reference": [
+       0,
+       70
+      ],
+      "reverse_ci": [
+       -4.1,
+       5.2
+      ],
+      "reverse_diff": -0.0
+     },
+     "g2": {},
+     "g5": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        70
+       ]
+      ]
+     }
+    }
+   },
+   "g4": {
+    "applies": true,
+    "changed": 0
+   },
+   "g7": {
+    "abstracts": {
+     "blocked": [
+      8,
+      145
+     ],
+     "ci": [
+      2.8,
+      10.5
+     ],
+     "rate": 5.5,
+     "review": false
+    },
+    "college": {
+     "blocked": [
+      0,
+      70
+     ],
+     "ci": [
+      0.0,
+      5.2
+     ],
+     "rate": 0.0,
+     "review": false
+    },
+    "toefl": {
+     "blocked": [
+      0,
+      91
+     ],
+     "ci": [
+      0.0,
+      4.1
+     ],
+     "rate": 0.0,
+     "review": false
+    }
+   },
+   "pairs": {
+    "toefl-original-vs-gpt4-rewrite": {
+     "gates": false,
+     "mcnemar_p": 1.0,
+     "original_only": 0,
+     "pairs": 91,
+     "rewrite_only": 1
+    }
+   },
+   "profiles": [
+    "marketing/explain",
+    "marketing/narrate"
+   ],
+   "skipped": []
+  },
+  "config-13": {
+   "comparisons": {
+    "toefl-vs-abstracts": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -17.6,
+       -3.8
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": -10.9,
+      "min_detectable": 10.0,
+      "pass": false,
+      "protected": [
+       2,
+       91
+      ],
+      "reference": [
+       19,
+       145
+      ],
+      "reverse_ci": [
+       3.8,
+       17.6
+      ],
+      "reverse_diff": 10.9
+     },
+     "g2": {
+      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         "inf",
+         "inf"
+        ],
+        "docs": [
+         1,
+         0
+        ],
+        "per_1000": [
+         0.101,
+         0.0
+        ],
+        "ratio": "inf",
+        "state": "bounded"
+       }
+      },
+      "MEDIUM|marketing/marketing-superlative": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         8
+        ],
+        "per_1000": [
+         0.0,
+         0.591
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      },
+      "MEDIUM|throat-clearing/throat-clearing-opener": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         2
+        ],
+        "per_1000": [
+         0.0,
+         0.118
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      },
+      "MEDIUM|unsupported-authority/authority-appeal-no-citation-nearby": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         1
+        ],
+        "per_1000": [
+         0.0,
+         0.059
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      },
+      "MEDIUM|wordiness/deletable-padding-circumlocution": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.69
+        ],
+        "docs": [
+         1,
+         9
+        ],
+        "per_1000": [
+         0.101,
+         0.65
+        ],
+        "ratio": 0.15,
+        "state": "not skewed"
+       }
+      }
+     },
+     "g5": {
+      "ci": [
+       -2.6,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        145
+       ]
+      ]
+     }
+    },
+    "toefl-vs-college": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -7.8,
+       5.2
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": -0.7,
+      "min_detectable": 9.2,
       "pass": true,
       "protected": [
        2,
@@ -1296,7 +1435,8 @@
    },
    "profiles": [
     "marketing/persuade"
-   ]
+   ],
+   "skipped": []
   },
   "config-14": {
    "comparisons": {
@@ -1305,310 +1445,6 @@
      "dimension": "first_language",
      "g1": {
       "ci": [
-       -17.6,
-       -3.8
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": -10.9,
-      "min_detectable": 7.5,
-      "pass": false,
-      "protected": [
-       2,
-       91
-      ],
-      "reference": [
-       19,
-       145
-      ],
-      "reverse_ci": [
-       3.8,
-       17.6
-      ],
-      "reverse_diff": 10.9
-     },
-     "g2": {
-      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         "inf",
-         "inf"
-        ],
-        "docs": [
-         1,
-         0
-        ],
-        "per_1000": [
-         0.101,
-         0.0
-        ],
-        "ratio": "inf",
-        "state": "bounded"
-       }
-      },
-      "MEDIUM|marketing/marketing-superlative": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         8
-        ],
-        "per_1000": [
-         0.0,
-         0.591
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      },
-      "MEDIUM|throat-clearing/throat-clearing-opener": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         2
-        ],
-        "per_1000": [
-         0.0,
-         0.118
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      },
-      "MEDIUM|unsupported-authority/authority-appeal-no-citation-nearby": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         1
-        ],
-        "per_1000": [
-         0.0,
-         0.059
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      },
-      "MEDIUM|wordiness/deletable-padding-circumlocution": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.69
-        ],
-        "docs": [
-         1,
-         9
-        ],
-        "per_1000": [
-         0.101,
-         0.65
-        ],
-        "ratio": 0.15,
-        "state": "not skewed"
-       }
-      }
-     },
-     "g5": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        145
-       ]
-      ]
-     }
-    },
-    "toefl-vs-college": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -7.8,
-       5.2
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": -0.7,
-      "min_detectable": 4.9,
-      "pass": true,
-      "protected": [
-       2,
-       91
-      ],
-      "reference": [
-       2,
-       70
-      ],
-      "reverse_ci": [
-       -5.2,
-       7.8
-      ],
-      "reverse_diff": 0.7
-     },
-     "g2": {
-      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         "inf",
-         "inf"
-        ],
-        "docs": [
-         1,
-         0
-        ],
-        "per_1000": [
-         0.101,
-         0.0
-        ],
-        "ratio": "inf",
-        "state": "bounded"
-       }
-      },
-      "MEDIUM|wordiness/deletable-padding-circumlocution": {
-       "pass": false,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         "inf"
-        ],
-        "docs": [
-         1,
-         2
-        ],
-        "per_1000": [
-         0.101,
-         0.247
-        ],
-        "ratio": 0.41,
-        "state": "inconclusive"
-       }
-      }
-     },
-     "g5": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        70
-       ]
-      ]
-     }
-    }
-   },
-   "g4": {
-    "applies": true,
-    "changed": 0
-   },
-   "g7": {
-    "abstracts": {
-     "blocked": [
-      19,
-      145
-     ],
-     "ci": [
-      8.6,
-      19.6
-     ],
-     "rate": 13.1,
-     "review": true
-    },
-    "college": {
-     "blocked": [
-      2,
-      70
-     ],
-     "ci": [
-      0.8,
-      9.8
-     ],
-     "rate": 2.9,
-     "review": false
-    },
-    "toefl": {
-     "blocked": [
-      2,
-      91
-     ],
-     "ci": [
-      0.6,
-      7.7
-     ],
-     "rate": 2.2,
-     "review": false
-    }
-   },
-   "pairs": {
-    "toefl-original-vs-gpt4-rewrite": {
-     "gates": false,
-     "mcnemar_p": 0.0703,
-     "original_only": 1,
-     "pairs": 91,
-     "rewrite_only": 7
-    }
-   },
-   "profiles": [
-    "memo/argue",
-    "memo/explain",
-    "memo/instruct",
-    "persuasive-essay/persuade",
-    "technical-docs/instruct",
-    "tutorial/instruct"
-   ]
-  },
-  "config-15": {
-   "comparisons": {
-    "toefl-vs-abstracts": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
        -2.6,
        4.1
       ],
@@ -1620,7 +1456,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -1673,7 +1509,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -1764,9 +1600,10 @@
    },
    "profiles": [
     "memoir"
-   ]
+   ],
+   "skipped": []
   },
-  "config-16": {
+  "config-15": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -1784,7 +1621,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -1837,7 +1674,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -1928,9 +1765,10 @@
    },
    "profiles": [
     "narrative"
-   ]
+   ],
+   "skipped": []
   },
-  "config-17": {
+  "config-16": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -1948,7 +1786,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -2001,7 +1839,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -2092,9 +1930,10 @@
    },
    "profiles": [
     "normative-spec"
-   ]
+   ],
+   "skipped": []
   },
-  "config-18": {
+  "config-17": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -2112,7 +1951,7 @@
        ]
       ],
       "diff": -10.9,
-      "min_detectable": 7.5,
+      "min_detectable": 10.0,
       "pass": false,
       "protected": [
        2,
@@ -2261,7 +2100,7 @@
        ]
       ],
       "diff": -0.7,
-      "min_detectable": 4.9,
+      "min_detectable": 9.2,
       "pass": true,
       "protected": [
        2,
@@ -2391,9 +2230,10 @@
    },
    "profiles": [
     "persuasive-essay/argue"
-   ]
+   ],
+   "skipped": []
   },
-  "config-19": {
+  "config-18": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -2411,7 +2251,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -2464,7 +2304,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -2555,9 +2395,10 @@
    },
    "profiles": [
     "poetry"
-   ]
+   ],
+   "skipped": []
   },
-  "config-2": {
+  "config-19": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -2575,7 +2416,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -2628,171 +2469,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
-      "pass": true,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       0,
-       70
-      ],
-      "reverse_ci": [
-       -4.1,
-       5.2
-      ],
-      "reverse_diff": -0.0
-     },
-     "g2": {},
-     "g5": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        70
-       ]
-      ]
-     }
-    }
-   },
-   "g4": {
-    "applies": true,
-    "changed": 0
-   },
-   "g7": {
-    "abstracts": {
-     "blocked": [
-      0,
-      145
-     ],
-     "ci": [
-      0.0,
-      2.6
-     ],
-     "rate": 0.0,
-     "review": false
-    },
-    "college": {
-     "blocked": [
-      0,
-      70
-     ],
-     "ci": [
-      0.0,
-      5.2
-     ],
-     "rate": 0.0,
-     "review": false
-    },
-    "toefl": {
-     "blocked": [
-      0,
-      91
-     ],
-     "ci": [
-      0.0,
-      4.1
-     ],
-     "rate": 0.0,
-     "review": false
-    }
-   },
-   "pairs": {
-    "toefl-original-vs-gpt4-rewrite": {
-     "gates": false,
-     "mcnemar_p": 1.0,
-     "original_only": 0,
-     "pairs": 91,
-     "rewrite_only": 0
-    }
-   },
-   "profiles": [
-    "academic/prove"
-   ]
-  },
-  "config-20": {
-   "comparisons": {
-    "toefl-vs-abstracts": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": 0.0,
-      "min_detectable": 1.7,
-      "pass": true,
-      "protected": [
-       0,
-       91
-      ],
-      "reference": [
-       0,
-       145
-      ],
-      "reverse_ci": [
-       -4.1,
-       2.6
-      ],
-      "reverse_diff": -0.0
-     },
-     "g2": {},
-     "g5": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        145
-       ]
-      ]
-     }
-    },
-    "toefl-vs-college": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -2883,9 +2560,10 @@
    },
    "profiles": [
     "proof"
-   ]
+   ],
+   "skipped": []
   },
-  "config-21": {
+  "config-2": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -2903,7 +2581,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -2956,7 +2634,172 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
+      "pass": true,
+      "protected": [
+       0,
+       91
+      ],
+      "reference": [
+       0,
+       70
+      ],
+      "reverse_ci": [
+       -4.1,
+       5.2
+      ],
+      "reverse_diff": -0.0
+     },
+     "g2": {},
+     "g5": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        70
+       ]
+      ]
+     }
+    }
+   },
+   "g4": {
+    "applies": true,
+    "changed": 0
+   },
+   "g7": {
+    "abstracts": {
+     "blocked": [
+      0,
+      145
+     ],
+     "ci": [
+      0.0,
+      2.6
+     ],
+     "rate": 0.0,
+     "review": false
+    },
+    "college": {
+     "blocked": [
+      0,
+      70
+     ],
+     "ci": [
+      0.0,
+      5.2
+     ],
+     "rate": 0.0,
+     "review": false
+    },
+    "toefl": {
+     "blocked": [
+      0,
+      91
+     ],
+     "ci": [
+      0.0,
+      4.1
+     ],
+     "rate": 0.0,
+     "review": false
+    }
+   },
+   "pairs": {
+    "toefl-original-vs-gpt4-rewrite": {
+     "gates": false,
+     "mcnemar_p": 1.0,
+     "original_only": 0,
+     "pairs": 91,
+     "rewrite_only": 0
+    }
+   },
+   "profiles": [
+    "academic/prove"
+   ],
+   "skipped": []
+  },
+  "config-20": {
+   "comparisons": {
+    "toefl-vs-abstracts": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -2.6,
+       4.1
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": 0.0,
+      "min_detectable": 4.4,
+      "pass": true,
+      "protected": [
+       0,
+       91
+      ],
+      "reference": [
+       0,
+       145
+      ],
+      "reverse_ci": [
+       -4.1,
+       2.6
+      ],
+      "reverse_diff": -0.0
+     },
+     "g2": {},
+     "g5": {
+      "ci": [
+       -2.6,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        145
+       ]
+      ]
+     }
+    },
+    "toefl-vs-college": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": 0.0,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -3047,9 +2890,10 @@
    },
    "profiles": [
     "research"
-   ]
+   ],
+   "skipped": []
   },
-  "config-22": {
+  "config-21": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -3067,7 +2911,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -3120,7 +2964,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -3211,9 +3055,10 @@
    },
    "profiles": [
     "science-writing/explain"
-   ]
+   ],
+   "skipped": []
   },
-  "config-23": {
+  "config-22": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -3231,7 +3076,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -3284,7 +3129,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -3375,9 +3220,10 @@
    },
    "profiles": [
     "screenplay"
-   ]
+   ],
+   "skipped": []
   },
-  "config-24": {
+  "config-23": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -3395,7 +3241,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -3448,7 +3294,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -3539,9 +3385,10 @@
    },
    "profiles": [
     "screenplay/narrate"
-   ]
+   ],
+   "skipped": []
   },
-  "config-25": {
+  "config-24": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -3559,7 +3406,7 @@
        ]
       ],
       "diff": -0.7,
-      "min_detectable": 1.7,
+      "min_detectable": 4.8,
       "pass": true,
       "protected": [
        0,
@@ -3632,7 +3479,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -3723,7 +3570,8 @@
    },
    "profiles": [
     "technical-docs/argue"
-   ]
+   ],
+   "skipped": []
   },
   "config-3": {
    "comparisons": {
@@ -3743,7 +3591,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -3778,6 +3626,875 @@
         145
        ]
       ]
+     },
+     "g8": {
+      "LOW|antithesis/is-not-x-it-is-y": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        2
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.118
+       ],
+       "ratio": 0.85,
+       "state": "bounded"
+      },
+      "LOW|antithesis/not-only-but-also": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        5
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        0.295
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|antithesis/not-x-but-y": {
+       "ci": [
+        0.0,
+        1.26
+       ],
+       "docs": [
+        1,
+        7
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.414
+       ],
+       "ratio": 0.24,
+       "state": "not skewed"
+      },
+      "LOW|both-sides/reflexive-both-sides-balancing": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|closer-question/rhetorical-question": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.059
+       ],
+       "ratio": 1.7,
+       "state": "bounded"
+      },
+      "LOW|closer/and-that-s-why-closing-beat": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": true,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|concessive-opener/concession-then-resolution-opener-despite-x-y": {
+       "ci": [
+        0.0,
+        1.12
+       ],
+       "docs": [
+        2,
+        10
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.591
+       ],
+       "ratio": 0.34,
+       "state": "not skewed"
+      },
+      "LOW|corporate-verb/leverage-underscore-as-corporate-verb": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        5
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        0.295
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|corrective-negation/not-y": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|curly-quote/curly-quotation-mark-apostrophe": {
+       "ci": [
+        8.72,
+        "inf"
+       ],
+       "docs": [
+        14,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        3.521,
+        0.118
+       ],
+       "ratio": 29.79,
+       "state": "skewed"
+      },
+      "LOW|editorial-adverb/sentence-initial-editorial-adverb": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ellipsis-char/ellipsis-character-u-2026": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|em-dash/em-dash": {
+       "ci": [
+        0.29,
+        "inf"
+       ],
+       "docs": [
+        4,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.503,
+        0.177
+       ],
+       "ratio": 2.84,
+       "state": "inconclusive"
+      },
+      "LOW|enumeration/ly-ordinal-enumeration-firstly-secondly": {
+       "ci": [
+        1.76,
+        "inf"
+       ],
+       "docs": [
+        6,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.604,
+        0.059
+       ],
+       "ratio": 10.21,
+       "state": "skewed"
+      },
+      "LOW|expletive-opener/empty-opener-there-is-it-is-important": {
+       "ci": [
+        3.38,
+        "inf"
+       ],
+       "docs": [
+        9,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.905,
+        0.059
+       ],
+       "ratio": 15.32,
+       "state": "skewed"
+      },
+      "LOW|hedge-cluster/3-hedges-in-one-sentence": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|inflated-word/inflated-word": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        56
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        5.85
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|inflated-word/inflated-word-extended-list": {
+       "ci": [
+        0.0,
+        0.55
+       ],
+       "docs": [
+        1,
+        12
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.827
+       ],
+       "ratio": 0.12,
+       "state": "not skewed"
+      },
+      "LOW|intensifier/genuinely-really-truly-actually": {
+       "ci": [
+        6.64,
+        77.33
+       ],
+       "docs": [
+        26,
+        4
+       ],
+       "house": true,
+       "per_1000": [
+        3.722,
+        0.236
+       ],
+       "ratio": 15.75,
+       "state": "skewed"
+      },
+      "LOW|ngram-repetition/a-higher-education-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/and-without-fine-repeats-4x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/answer-length-penalty-repeats-3x-n-gram-repetiti": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/character-level-embedding-repeats-5x-n-gram-repe": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/domain-adversarial-training-repeats-3x-n-gram-re": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/em-and-f-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/f-em-for-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/health-and-nutrition-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/his-fellow-members-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/homework-with-others-repeats-4x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/i-prefer-computer-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/museums-and-theaters-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/my-study-room-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/on-dev-dataset-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        5
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.295
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-4x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-5x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/per-token-features-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/the-bidaf-model-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/work-at-office-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|nominalization/4-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        26
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        1.655
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/5-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        9
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.532
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/6-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        6
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.355
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/7-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.118
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|participial-closer/trailing-participial-clause": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        2
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.118
+       ],
+       "ratio": 0.85,
+       "state": "bounded"
+      },
+      "LOW|register-jargon/abstract-metaphor-jargon": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|rule-of-three/possible-triad-x-y-and-z": {
+       "ci": [
+        0.09,
+        1.7
+       ],
+       "docs": [
+        4,
+        10
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.768
+       ],
+       "ratio": 0.52,
+       "state": "not skewed"
+      },
+      "LOW|stock-transition/stock-connective": {
+       "ci": [
+        0.2,
+        2.65
+       ],
+       "docs": [
+        5,
+        9
+       ],
+       "house": true,
+       "per_1000": [
+        0.503,
+        0.591
+       ],
+       "ratio": 0.85,
+       "state": "inconclusive"
+      },
+      "LOW|substitution/instead-rather-than": {
+       "ci": [
+        0.87,
+        18.67
+       ],
+       "docs": [
+        7,
+        4
+       ],
+       "house": true,
+       "per_1000": [
+        0.805,
+        0.236
+       ],
+       "ratio": 3.4,
+       "state": "inconclusive"
+      },
+      "LOW|superlative/hedged-superlative-one-of-the-most-x": {
+       "ci": [
+        0.28,
+        10.12
+       ],
+       "docs": [
+        4,
+        4
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.236
+       ],
+       "ratio": 1.7,
+       "state": "inconclusive"
+      },
+      "LOW|sweeping-range/sweeping-from-x-to-y-range": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|vague-quantifier/vague-quantifier-no-number-given": {
+       "ci": [
+        0.16,
+        0.93
+       ],
+       "docs": [
+        7,
+        23
+       ],
+       "house": false,
+       "per_1000": [
+        0.704,
+        1.536
+       ],
+       "ratio": 0.46,
+       "state": "not skewed"
+      }
      }
     },
     "toefl-vs-college": {
@@ -3796,7 +4513,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -3831,6 +4548,586 @@
         70
        ]
       ]
+     },
+     "g8": {
+      "LOW|antithesis/is-not-x-it-is-y": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.123
+       ],
+       "ratio": 0.82,
+       "state": "bounded"
+      },
+      "LOW|antithesis/not-only-but-also": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|antithesis/not-x-but-y": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        2
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.247
+       ],
+       "ratio": 0.41,
+       "state": "inconclusive"
+      },
+      "LOW|both-sides/reflexive-both-sides-balancing": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|closer-question/rhetorical-question": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.37
+       ],
+       "ratio": 0.27,
+       "state": "inconclusive"
+      },
+      "LOW|closer/and-that-s-why-closing-beat": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": true,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|concessive-opener/concession-then-resolution-opener-despite-x-y": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        2,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.247
+       ],
+       "ratio": 0.82,
+       "state": "inconclusive"
+      },
+      "LOW|correlative/correlative-comparative-the-more-x-the-more-y": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|curly-quote/curly-quotation-mark-apostrophe": {
+       "ci": [
+        0.06,
+        0.24
+       ],
+       "docs": [
+        14,
+        52
+       ],
+       "house": false,
+       "per_1000": [
+        3.521,
+        25.641
+       ],
+       "ratio": 0.14,
+       "state": "not skewed"
+      },
+      "LOW|ellipsis-char/ellipsis-character-u-2026": {
+       "ci": [
+        0.0,
+        1.8
+       ],
+       "docs": [
+        2,
+        4
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.74
+       ],
+       "ratio": 0.27,
+       "state": "not skewed"
+      },
+      "LOW|em-dash/em-dash": {
+       "ci": [
+        0.04,
+        0.7
+       ],
+       "docs": [
+        4,
+        11
+       ],
+       "house": true,
+       "per_1000": [
+        0.503,
+        2.219
+       ],
+       "ratio": 0.23,
+       "state": "not skewed"
+      },
+      "LOW|enumeration/ly-ordinal-enumeration-firstly-secondly": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        6,
+        0
+       ],
+       "house": true,
+       "per_1000": [
+        0.604,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "skewed"
+      },
+      "LOW|expletive-opener/empty-opener-there-is-it-is-important": {
+       "ci": [
+        1.62,
+        "inf"
+       ],
+       "docs": [
+        9,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.905,
+        0.123
+       ],
+       "ratio": 7.34,
+       "state": "skewed"
+      },
+      "LOW|hedge-cluster/3-hedges-in-one-sentence": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        2,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.123
+       ],
+       "ratio": 1.63,
+       "state": "inconclusive"
+      },
+      "LOW|inflated-word/inflated-word": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        8
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        1.109
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|inflated-word/inflated-word-extended-list": {
+       "ci": [
+        0.0,
+        2.48
+       ],
+       "docs": [
+        1,
+        3
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.37
+       ],
+       "ratio": 0.27,
+       "state": "inconclusive"
+      },
+      "LOW|intensifier/genuinely-really-truly-actually": {
+       "ci": [
+        4.97,
+        "inf"
+       ],
+       "docs": [
+        26,
+        2
+       ],
+       "house": true,
+       "per_1000": [
+        3.722,
+        0.247
+       ],
+       "ratio": 15.1,
+       "state": "skewed"
+      },
+      "LOW|ngram-repetition/a-higher-education-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/health-and-nutrition-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/his-fellow-members-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/homework-with-others-repeats-4x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/i-prefer-computer-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/left-and-right-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/museums-and-theaters-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/my-study-room-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/work-at-office-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|participial-closer/trailing-participial-clause": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.123
+       ],
+       "ratio": 0.82,
+       "state": "bounded"
+      },
+      "LOW|register-jargon/abstract-metaphor-jargon": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|rule-of-three/possible-triad-x-y-and-z": {
+       "ci": [
+        0.04,
+        0.59
+       ],
+       "docs": [
+        4,
+        14
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        1.726
+       ],
+       "ratio": 0.23,
+       "state": "not skewed"
+      },
+      "LOW|stock-transition/stock-connective": {
+       "ci": [
+        0.4,
+        "inf"
+       ],
+       "docs": [
+        5,
+        2
+       ],
+       "house": true,
+       "per_1000": [
+        0.503,
+        0.247
+       ],
+       "ratio": 2.04,
+       "state": "inconclusive"
+      },
+      "LOW|substitution/instead-rather-than": {
+       "ci": [
+        0.36,
+        6.55
+       ],
+       "docs": [
+        7,
+        5
+       ],
+       "house": true,
+       "per_1000": [
+        0.805,
+        0.616
+       ],
+       "ratio": 1.31,
+       "state": "inconclusive"
+      },
+      "LOW|superlative/hedged-superlative-one-of-the-most-x": {
+       "ci": [
+        0.41,
+        "inf"
+       ],
+       "docs": [
+        4,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.123
+       ],
+       "ratio": 3.26,
+       "state": "inconclusive"
+      },
+      "LOW|sweeping-range/sweeping-from-x-to-y-range": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        1
+       ],
+       "house": true,
+       "per_1000": [
+        0.101,
+        0.123
+       ],
+       "ratio": 0.82,
+       "state": "bounded"
+      },
+      "LOW|vague-quantifier/vague-quantifier-no-number-given": {
+       "ci": [
+        0.67,
+        "inf"
+       ],
+       "docs": [
+        7,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.704,
+        0.247
+       ],
+       "ratio": 2.86,
+       "state": "inconclusive"
+      }
      }
     }
    },
@@ -3889,10 +5186,14 @@
     "changelog",
     "flavored",
     "legal",
+    "legal/instruct",
     "model-card",
     "readme",
-    "release-notes"
-   ]
+    "release-notes",
+    "technical-docs/explain",
+    "tutorial/explain"
+   ],
+   "skipped": []
   },
   "config-4": {
    "comparisons": {
@@ -3912,7 +5213,7 @@
        ]
       ],
       "diff": -10.9,
-      "min_detectable": 7.5,
+      "min_detectable": 10.0,
       "pass": false,
       "protected": [
        2,
@@ -4061,7 +5362,7 @@
        ]
       ],
       "diff": -0.7,
-      "min_detectable": 4.9,
+      "min_detectable": 9.2,
       "pass": true,
       "protected": [
        2,
@@ -4191,10 +5492,316 @@
    },
    "profiles": [
     "commit",
-    "essay"
-   ]
+    "memo/argue",
+    "memo/explain",
+    "memo/instruct",
+    "persuasive-essay/persuade",
+    "technical-docs/instruct",
+    "tutorial/instruct"
+   ],
+   "skipped": []
   },
   "config-5": {
+   "comparisons": {
+    "toefl-vs-abstracts": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -17.6,
+       -3.8
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": -10.9,
+      "min_detectable": 10.0,
+      "pass": false,
+      "protected": [
+       2,
+       91
+      ],
+      "reference": [
+       19,
+       145
+      ],
+      "reverse_ci": [
+       3.8,
+       17.6
+      ],
+      "reverse_diff": 10.9
+     },
+     "g2": {
+      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         "inf",
+         "inf"
+        ],
+        "docs": [
+         1,
+         0
+        ],
+        "per_1000": [
+         0.101,
+         0.0
+        ],
+        "ratio": "inf",
+        "state": "bounded"
+       }
+      },
+      "MEDIUM|marketing/marketing-superlative": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         8
+        ],
+        "per_1000": [
+         0.0,
+         0.591
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      },
+      "MEDIUM|throat-clearing/throat-clearing-opener": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         2
+        ],
+        "per_1000": [
+         0.0,
+         0.118
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      },
+      "MEDIUM|unsupported-authority/authority-appeal-no-citation-nearby": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.0
+        ],
+        "docs": [
+         0,
+         1
+        ],
+        "per_1000": [
+         0.0,
+         0.059
+        ],
+        "ratio": 0.0,
+        "state": "not skewed"
+       }
+      },
+      "MEDIUM|wordiness/deletable-padding-circumlocution": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         0.69
+        ],
+        "docs": [
+         1,
+         9
+        ],
+        "per_1000": [
+         0.101,
+         0.65
+        ],
+        "ratio": 0.15,
+        "state": "not skewed"
+       }
+      }
+     },
+     "g5": {
+      "ci": [
+       -2.6,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        145
+       ]
+      ]
+     }
+    },
+    "toefl-vs-college": {
+     "design": "proxy",
+     "dimension": "first_language",
+     "g1": {
+      "ci": [
+       -7.8,
+       5.2
+      ],
+      "density_median_diff": [
+       0.0,
+       [
+        0.0,
+        0.0
+       ]
+      ],
+      "diff": -0.7,
+      "min_detectable": 9.2,
+      "pass": true,
+      "protected": [
+       2,
+       91
+      ],
+      "reference": [
+       2,
+       70
+      ],
+      "reverse_ci": [
+       -5.2,
+       7.8
+      ],
+      "reverse_diff": 0.7
+     },
+     "g2": {
+      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
+       "pass": true,
+       "toward_protected": {
+        "ci": [
+         "inf",
+         "inf"
+        ],
+        "docs": [
+         1,
+         0
+        ],
+        "per_1000": [
+         0.101,
+         0.0
+        ],
+        "ratio": "inf",
+        "state": "bounded"
+       }
+      },
+      "MEDIUM|wordiness/deletable-padding-circumlocution": {
+       "pass": false,
+       "toward_protected": {
+        "ci": [
+         0.0,
+         "inf"
+        ],
+        "docs": [
+         1,
+         2
+        ],
+        "per_1000": [
+         0.101,
+         0.247
+        ],
+        "ratio": 0.41,
+        "state": "inconclusive"
+       }
+      }
+     },
+     "g5": {
+      "ci": [
+       -5.2,
+       4.1
+      ],
+      "diff": 0.0,
+      "gates": false,
+      "pass": null,
+      "uniform": [
+       [
+        0,
+        91
+       ],
+       [
+        0,
+        70
+       ]
+      ]
+     }
+    }
+   },
+   "g4": {
+    "applies": true,
+    "changed": 0
+   },
+   "g7": {
+    "abstracts": {
+     "blocked": [
+      19,
+      145
+     ],
+     "ci": [
+      8.6,
+      19.6
+     ],
+     "rate": 13.1,
+     "review": true
+    },
+    "college": {
+     "blocked": [
+      2,
+      70
+     ],
+     "ci": [
+      0.8,
+      9.8
+     ],
+     "rate": 2.9,
+     "review": false
+    },
+    "toefl": {
+     "blocked": [
+      2,
+      91
+     ],
+     "ci": [
+      0.6,
+      7.7
+     ],
+     "rate": 2.2,
+     "review": false
+    }
+   },
+   "pairs": {
+    "toefl-original-vs-gpt4-rewrite": {
+     "gates": false,
+     "mcnemar_p": 0.0703,
+     "original_only": 1,
+     "pairs": 91,
+     "rewrite_only": 7
+    }
+   },
+   "profiles": [
+    "essay"
+   ],
+   "skipped": []
+  },
+  "config-6": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -4212,7 +5819,7 @@
        ]
       ],
       "diff": 24.8,
-      "min_detectable": 11.4,
+      "min_detectable": 10.5,
       "pass": false,
       "protected": [
        37,
@@ -4400,6 +6007,586 @@
         145
        ]
       ]
+     },
+     "g8": {
+      "LOW|closer-question/rhetorical-question": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.059
+       ],
+       "ratio": 1.7,
+       "state": "bounded"
+      },
+      "LOW|concessive-opener/concession-then-resolution-opener-despite-x-y": {
+       "ci": [
+        0.0,
+        1.12
+       ],
+       "docs": [
+        2,
+        10
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.591
+       ],
+       "ratio": 0.34,
+       "state": "not skewed"
+      },
+      "LOW|curly-quote/curly-quotation-mark-apostrophe": {
+       "ci": [
+        8.72,
+        "inf"
+       ],
+       "docs": [
+        14,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        3.521,
+        0.118
+       ],
+       "ratio": 29.79,
+       "state": "skewed"
+      },
+      "LOW|editorial-adverb/sentence-initial-editorial-adverb": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ellipsis-char/ellipsis-character-u-2026": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|expletive-opener/empty-opener-there-is-it-is-important": {
+       "ci": [
+        3.38,
+        "inf"
+       ],
+       "docs": [
+        9,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.905,
+        0.059
+       ],
+       "ratio": 15.32,
+       "state": "skewed"
+      },
+      "LOW|hedge-cluster/3-hedges-in-one-sentence": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|ngram-repetition/a-higher-education-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/and-without-fine-repeats-4x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/answer-length-penalty-repeats-3x-n-gram-repetiti": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/character-level-embedding-repeats-5x-n-gram-repe": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/domain-adversarial-training-repeats-3x-n-gram-re": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/em-and-f-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/f-em-for-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/health-and-nutrition-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/his-fellow-members-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/homework-with-others-repeats-4x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/i-prefer-computer-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/museums-and-theaters-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/my-study-room-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/on-dev-dataset-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        5
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.295
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-4x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-5x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/per-token-features-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/the-bidaf-model-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/work-at-office-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|nominalization/4-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        26
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        1.655
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/5-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        9
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.532
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/6-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        6
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.355
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/7-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.118
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|rule-of-three/possible-triad-x-y-and-z": {
+       "ci": [
+        0.09,
+        1.7
+       ],
+       "docs": [
+        4,
+        10
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.768
+       ],
+       "ratio": 0.52,
+       "state": "not skewed"
+      },
+      "LOW|superlative/hedged-superlative-one-of-the-most-x": {
+       "ci": [
+        0.28,
+        10.12
+       ],
+       "docs": [
+        4,
+        4
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.236
+       ],
+       "ratio": 1.7,
+       "state": "inconclusive"
+      },
+      "LOW|vague-quantifier/vague-quantifier-no-number-given": {
+       "ci": [
+        0.16,
+        0.93
+       ],
+       "docs": [
+        7,
+        23
+       ],
+       "house": false,
+       "per_1000": [
+        0.704,
+        1.536
+       ],
+       "ratio": 0.46,
+       "state": "not skewed"
+      }
      }
     },
     "toefl-vs-college": {
@@ -4418,7 +6605,7 @@
        ]
       ],
       "diff": 12.1,
-      "min_detectable": 14.9,
+      "min_detectable": 15.4,
       "pass": false,
       "protected": [
        37,
@@ -4568,6 +6755,331 @@
         70
        ]
       ]
+     },
+     "g8": {
+      "LOW|closer-question/rhetorical-question": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.37
+       ],
+       "ratio": 0.27,
+       "state": "inconclusive"
+      },
+      "LOW|concessive-opener/concession-then-resolution-opener-despite-x-y": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        2,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.247
+       ],
+       "ratio": 0.82,
+       "state": "inconclusive"
+      },
+      "LOW|correlative/correlative-comparative-the-more-x-the-more-y": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|curly-quote/curly-quotation-mark-apostrophe": {
+       "ci": [
+        0.06,
+        0.24
+       ],
+       "docs": [
+        14,
+        52
+       ],
+       "house": false,
+       "per_1000": [
+        3.521,
+        25.641
+       ],
+       "ratio": 0.14,
+       "state": "not skewed"
+      },
+      "LOW|ellipsis-char/ellipsis-character-u-2026": {
+       "ci": [
+        0.0,
+        1.8
+       ],
+       "docs": [
+        2,
+        4
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.74
+       ],
+       "ratio": 0.27,
+       "state": "not skewed"
+      },
+      "LOW|expletive-opener/empty-opener-there-is-it-is-important": {
+       "ci": [
+        1.62,
+        "inf"
+       ],
+       "docs": [
+        9,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.905,
+        0.123
+       ],
+       "ratio": 7.34,
+       "state": "skewed"
+      },
+      "LOW|hedge-cluster/3-hedges-in-one-sentence": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        2,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.123
+       ],
+       "ratio": 1.63,
+       "state": "inconclusive"
+      },
+      "LOW|ngram-repetition/a-higher-education-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/health-and-nutrition-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/his-fellow-members-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/homework-with-others-repeats-4x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/i-prefer-computer-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/left-and-right-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/museums-and-theaters-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/my-study-room-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/work-at-office-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|rule-of-three/possible-triad-x-y-and-z": {
+       "ci": [
+        0.04,
+        0.59
+       ],
+       "docs": [
+        4,
+        14
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        1.726
+       ],
+       "ratio": 0.23,
+       "state": "not skewed"
+      },
+      "LOW|superlative/hedged-superlative-one-of-the-most-x": {
+       "ci": [
+        0.41,
+        "inf"
+       ],
+       "docs": [
+        4,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.123
+       ],
+       "ratio": 3.26,
+       "state": "inconclusive"
+      },
+      "LOW|vague-quantifier/vague-quantifier-no-number-given": {
+       "ci": [
+        0.67,
+        "inf"
+       ],
+       "docs": [
+        7,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.704,
+        0.247
+       ],
+       "ratio": 2.86,
+       "state": "inconclusive"
+      }
      }
     }
    },
@@ -4624,9 +7136,10 @@
    },
    "profiles": [
     "house"
-   ]
+   ],
+   "skipped": []
   },
-  "config-6": {
+  "config-7": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -4644,7 +7157,7 @@
        ]
       ],
       "diff": -8.4,
-      "min_detectable": 13.0,
+      "min_detectable": 12.5,
       "pass": false,
       "protected": [
        47,
@@ -5098,6 +7611,586 @@
         145
        ]
       ]
+     },
+     "g8": {
+      "LOW|closer-question/rhetorical-question": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.059
+       ],
+       "ratio": 1.7,
+       "state": "bounded"
+      },
+      "LOW|concessive-opener/concession-then-resolution-opener-despite-x-y": {
+       "ci": [
+        0.0,
+        1.12
+       ],
+       "docs": [
+        2,
+        10
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.591
+       ],
+       "ratio": 0.34,
+       "state": "not skewed"
+      },
+      "LOW|curly-quote/curly-quotation-mark-apostrophe": {
+       "ci": [
+        8.72,
+        "inf"
+       ],
+       "docs": [
+        14,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        3.521,
+        0.118
+       ],
+       "ratio": 29.79,
+       "state": "skewed"
+      },
+      "LOW|editorial-adverb/sentence-initial-editorial-adverb": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ellipsis-char/ellipsis-character-u-2026": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|expletive-opener/empty-opener-there-is-it-is-important": {
+       "ci": [
+        3.38,
+        "inf"
+       ],
+       "docs": [
+        9,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.905,
+        0.059
+       ],
+       "ratio": 15.32,
+       "state": "skewed"
+      },
+      "LOW|hedge-cluster/3-hedges-in-one-sentence": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        2,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "inconclusive"
+      },
+      "LOW|ngram-repetition/a-higher-education-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/and-without-fine-repeats-4x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/answer-length-penalty-repeats-3x-n-gram-repetiti": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/character-level-embedding-repeats-5x-n-gram-repe": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/domain-adversarial-training-repeats-3x-n-gram-re": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/em-and-f-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/f-em-for-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/health-and-nutrition-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/his-fellow-members-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/homework-with-others-repeats-4x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/i-prefer-computer-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/museums-and-theaters-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/my-study-room-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/on-dev-dataset-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        5
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.295
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-4x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/out-of-domain-repeats-5x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/per-token-features-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/the-bidaf-model-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.059
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/work-at-office-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|nominalization/4-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        26
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        1.655
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/5-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        9
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.532
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/6-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        6
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.355
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|nominalization/7-nominalizations-in-one-sentence": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.118
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|rule-of-three/possible-triad-x-y-and-z": {
+       "ci": [
+        0.09,
+        1.7
+       ],
+       "docs": [
+        4,
+        10
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.768
+       ],
+       "ratio": 0.52,
+       "state": "not skewed"
+      },
+      "LOW|superlative/hedged-superlative-one-of-the-most-x": {
+       "ci": [
+        0.28,
+        10.12
+       ],
+       "docs": [
+        4,
+        4
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.236
+       ],
+       "ratio": 1.7,
+       "state": "inconclusive"
+      },
+      "LOW|vague-quantifier/vague-quantifier-no-number-given": {
+       "ci": [
+        0.16,
+        0.93
+       ],
+       "docs": [
+        7,
+        23
+       ],
+       "house": false,
+       "per_1000": [
+        0.704,
+        1.536
+       ],
+       "ratio": 0.46,
+       "state": "not skewed"
+      }
      }
     },
     "toefl-vs-college": {
@@ -5116,7 +8209,7 @@
        ]
       ],
       "diff": 8.8,
-      "min_detectable": 15.6,
+      "min_detectable": 16.5,
       "pass": false,
       "protected": [
        47,
@@ -5475,6 +8568,331 @@
         70
        ]
       ]
+     },
+     "g8": {
+      "LOW|closer-question/rhetorical-question": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        1,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.37
+       ],
+       "ratio": 0.27,
+       "state": "inconclusive"
+      },
+      "LOW|concessive-opener/concession-then-resolution-opener-despite-x-y": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        2,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.247
+       ],
+       "ratio": 0.82,
+       "state": "inconclusive"
+      },
+      "LOW|correlative/correlative-comparative-the-more-x-the-more-y": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|curly-quote/curly-quotation-mark-apostrophe": {
+       "ci": [
+        0.06,
+        0.24
+       ],
+       "docs": [
+        14,
+        52
+       ],
+       "house": false,
+       "per_1000": [
+        3.521,
+        25.641
+       ],
+       "ratio": 0.14,
+       "state": "not skewed"
+      },
+      "LOW|ellipsis-char/ellipsis-character-u-2026": {
+       "ci": [
+        0.0,
+        1.8
+       ],
+       "docs": [
+        2,
+        4
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.74
+       ],
+       "ratio": 0.27,
+       "state": "not skewed"
+      },
+      "LOW|expletive-opener/empty-opener-there-is-it-is-important": {
+       "ci": [
+        1.62,
+        "inf"
+       ],
+       "docs": [
+        9,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.905,
+        0.123
+       ],
+       "ratio": 7.34,
+       "state": "skewed"
+      },
+      "LOW|hedge-cluster/3-hedges-in-one-sentence": {
+       "ci": [
+        0.0,
+        "inf"
+       ],
+       "docs": [
+        2,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.201,
+        0.123
+       ],
+       "ratio": 1.63,
+       "state": "inconclusive"
+      },
+      "LOW|ngram-repetition/a-higher-education-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/health-and-nutrition-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/his-fellow-members-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/homework-with-others-repeats-4x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/i-prefer-computer-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/left-and-right-repeats-3x-n-gram-repetition": {
+       "ci": [
+        0.0,
+        0.0
+       ],
+       "docs": [
+        0,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.0,
+        0.123
+       ],
+       "ratio": 0.0,
+       "state": "not skewed"
+      },
+      "LOW|ngram-repetition/museums-and-theaters-repeats-3x-n-gram-repetitio": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/my-study-room-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|ngram-repetition/work-at-office-repeats-3x-n-gram-repetition": {
+       "ci": [
+        "inf",
+        "inf"
+       ],
+       "docs": [
+        1,
+        0
+       ],
+       "house": false,
+       "per_1000": [
+        0.101,
+        0.0
+       ],
+       "ratio": "inf",
+       "state": "bounded"
+      },
+      "LOW|rule-of-three/possible-triad-x-y-and-z": {
+       "ci": [
+        0.04,
+        0.59
+       ],
+       "docs": [
+        4,
+        14
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        1.726
+       ],
+       "ratio": 0.23,
+       "state": "not skewed"
+      },
+      "LOW|superlative/hedged-superlative-one-of-the-most-x": {
+       "ci": [
+        0.41,
+        "inf"
+       ],
+       "docs": [
+        4,
+        1
+       ],
+       "house": false,
+       "per_1000": [
+        0.402,
+        0.123
+       ],
+       "ratio": 3.26,
+       "state": "inconclusive"
+      },
+      "LOW|vague-quantifier/vague-quantifier-no-number-given": {
+       "ci": [
+        0.67,
+        "inf"
+       ],
+       "docs": [
+        7,
+        2
+       ],
+       "house": false,
+       "per_1000": [
+        0.704,
+        0.247
+       ],
+       "ratio": 2.86,
+       "state": "inconclusive"
+      }
      }
     }
    },
@@ -5531,9 +8949,10 @@
    },
    "profiles": [
     "house-essay"
-   ]
+   ],
+   "skipped": []
   },
-  "config-7": {
+  "config-8": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -5551,7 +8970,7 @@
        ]
       ],
       "diff": -10.9,
-      "min_detectable": 7.5,
+      "min_detectable": 10.0,
       "pass": false,
       "protected": [
        2,
@@ -5700,7 +9119,7 @@
        ]
       ],
       "diff": -0.7,
-      "min_detectable": 4.9,
+      "min_detectable": 9.2,
       "pass": true,
       "protected": [
        2,
@@ -5830,9 +9249,10 @@
    },
    "profiles": [
     "journalism/explain"
-   ]
+   ],
+   "skipped": []
   },
-  "config-8": {
+  "config-9": {
    "comparisons": {
     "toefl-vs-abstracts": {
      "design": "proxy",
@@ -5850,7 +9270,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 1.7,
+      "min_detectable": 4.4,
       "pass": true,
       "protected": [
        0,
@@ -5903,7 +9323,7 @@
        ]
       ],
       "diff": 0.0,
-      "min_detectable": 2.4,
+      "min_detectable": 6.6,
       "pass": true,
       "protected": [
        0,
@@ -5994,310 +9414,12 @@
    },
    "profiles": [
     "journalism/narrate"
-   ]
-  },
-  "config-9": {
-   "comparisons": {
-    "toefl-vs-abstracts": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -17.6,
-       -3.8
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": -10.9,
-      "min_detectable": 7.5,
-      "pass": false,
-      "protected": [
-       2,
-       91
-      ],
-      "reference": [
-       19,
-       145
-      ],
-      "reverse_ci": [
-       3.8,
-       17.6
-      ],
-      "reverse_diff": 10.9
-     },
-     "g2": {
-      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         "inf",
-         "inf"
-        ],
-        "docs": [
-         1,
-         0
-        ],
-        "per_1000": [
-         0.101,
-         0.0
-        ],
-        "ratio": "inf",
-        "state": "bounded"
-       }
-      },
-      "MEDIUM|marketing/marketing-superlative": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         8
-        ],
-        "per_1000": [
-         0.0,
-         0.591
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      },
-      "MEDIUM|throat-clearing/throat-clearing-opener": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         2
-        ],
-        "per_1000": [
-         0.0,
-         0.118
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      },
-      "MEDIUM|unsupported-authority/authority-appeal-no-citation-nearby": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.0
-        ],
-        "docs": [
-         0,
-         1
-        ],
-        "per_1000": [
-         0.0,
-         0.059
-        ],
-        "ratio": 0.0,
-        "state": "not skewed"
-       }
-      },
-      "MEDIUM|wordiness/deletable-padding-circumlocution": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         0.69
-        ],
-        "docs": [
-         1,
-         9
-        ],
-        "per_1000": [
-         0.101,
-         0.65
-        ],
-        "ratio": 0.15,
-        "state": "not skewed"
-       }
-      }
-     },
-     "g5": {
-      "ci": [
-       -2.6,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        145
-       ]
-      ]
-     }
-    },
-    "toefl-vs-college": {
-     "design": "proxy",
-     "dimension": "first_language",
-     "g1": {
-      "ci": [
-       -7.8,
-       5.2
-      ],
-      "density_median_diff": [
-       0.0,
-       [
-        0.0,
-        0.0
-       ]
-      ],
-      "diff": -0.7,
-      "min_detectable": 4.9,
-      "pass": true,
-      "protected": [
-       2,
-       91
-      ],
-      "reference": [
-       2,
-       70
-      ],
-      "reverse_ci": [
-       -5.2,
-       7.8
-      ],
-      "reverse_diff": 0.7
-     },
-     "g2": {
-      "MEDIUM|cliche/plays-a-vital-role-a-testament-to": {
-       "pass": true,
-       "toward_protected": {
-        "ci": [
-         "inf",
-         "inf"
-        ],
-        "docs": [
-         1,
-         0
-        ],
-        "per_1000": [
-         0.101,
-         0.0
-        ],
-        "ratio": "inf",
-        "state": "bounded"
-       }
-      },
-      "MEDIUM|wordiness/deletable-padding-circumlocution": {
-       "pass": false,
-       "toward_protected": {
-        "ci": [
-         0.0,
-         "inf"
-        ],
-        "docs": [
-         1,
-         2
-        ],
-        "per_1000": [
-         0.101,
-         0.247
-        ],
-        "ratio": 0.41,
-        "state": "inconclusive"
-       }
-      }
-     },
-     "g5": {
-      "ci": [
-       -5.2,
-       4.1
-      ],
-      "diff": 0.0,
-      "gates": false,
-      "pass": null,
-      "uniform": [
-       [
-        0,
-        91
-       ],
-       [
-        0,
-        70
-       ]
-      ]
-     }
-    }
-   },
-   "g4": {
-    "applies": true,
-    "changed": 0
-   },
-   "g7": {
-    "abstracts": {
-     "blocked": [
-      19,
-      145
-     ],
-     "ci": [
-      8.6,
-      19.6
-     ],
-     "rate": 13.1,
-     "review": true
-    },
-    "college": {
-     "blocked": [
-      2,
-      70
-     ],
-     "ci": [
-      0.8,
-      9.8
-     ],
-     "rate": 2.9,
-     "review": false
-    },
-    "toefl": {
-     "blocked": [
-      2,
-      91
-     ],
-     "ci": [
-      0.6,
-      7.7
-     ],
-     "rate": 2.2,
-     "review": false
-    }
-   },
-   "pairs": {
-    "toefl-original-vs-gpt4-rewrite": {
-     "gates": false,
-     "mcnemar_p": 0.0703,
-     "original_only": 1,
-     "pairs": 91,
-     "rewrite_only": 7
-    }
-   },
-   "profiles": [
-    "legal/argue"
-   ]
+   ],
+   "skipped": []
   }
  },
- "ruleset_version": "sha256:0840131b065593fb",
- "scan_algo": 3,
+ "ruleset_version": "sha256:22a7b980e3dba991",
+ "scan_algo": 4,
  "schema": "articulate/fairness/v1",
  "thresholds": {
   "g1_ci": 0.1,

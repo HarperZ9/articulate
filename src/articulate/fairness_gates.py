@@ -13,6 +13,8 @@ and in fairness/PREREG.md, and a test pins that the two agree.
   G5  cadence (report only while no cadence signal gates)
   G6  editor behavior by group (needs a model run; reported as not run)
   G7  absolute block rate on human text
+  G8  report-only notes by group: the LOW tier's per-rule skew states, and
+      whether each rule is shown by default (house notes are not)
 
 Standard library only.
 """
@@ -49,7 +51,7 @@ def g1(prot, ref):
     out = {"protected": [kp, np_], "reference": [kr, nr],
            "diff": _pct(d), "ci": [_pct(lo), _pct(hi)],
            "reverse_diff": _pct(-d), "reverse_ci": [_pct(-hi), _pct(-lo)],
-           "min_detectable": _pct(S.min_detectable(np_, nr, max(kp + kr, 1) / (np_ + nr))),
+           "min_detectable": _pct(S.min_detectable(np_, nr, kr)),
            "pass": ok}
     bands = sorted({x.get("score") for x in prot + ref if x.get("score") is not None})
     if bands:
@@ -157,6 +159,16 @@ def g5(prot, ref, cadence_gates):
     ok = rate_ok or hi <= t["g5_diff_hi"]
     return {"uniform": [[kp, np_], [kr, nr]], "diff": _pct(d), "ci": [_pct(lo), _pct(hi)],
             "gates": bool(cadence_gates), "pass": ok if cadence_gates else None}
+
+
+def g8(prot, ref):
+    """Report-only notes: every LOW-tier rule that fired, its skew state toward
+    the protected group, and whether it is a house note, which a writer sees
+    only on request."""
+    rules = sorted({r for d in prot + ref for r in d["rules"] if r.startswith("LOW|")})
+    return {r: dict(g2_state(prot, ref, r),
+                    house=any(r in d.get("house_rules", ()) for d in prot + ref))
+            for r in rules}
 
 
 def g7(docs):

@@ -113,7 +113,10 @@ def load_documents(man, base):
             raise CorpusError(f"cannot read {d['path']}: {e}") from e
         if sha256_bytes(data) != d["sha256"]:
             raise CorpusError(f"{d['path']} does not match its manifest hash")
-        text = data.decode("utf-8").replace("\r\n", "\n")
+        try:
+            text = data.decode("utf-8").replace("\r\n", "\n")
+        except UnicodeDecodeError as e:
+            raise CorpusError(f"{d['path']} is not UTF-8 text: {e}") from e
         rows.append((d, text))
     seen = {}
     for d, text in rows:

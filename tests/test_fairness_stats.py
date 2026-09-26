@@ -72,4 +72,4 @@ def test_stratified_difference_can_differ_from_raw():
 
 
 def test_min_detectable_shrinks_with_size():
-    assert S.min_detectable(91, 70) > S.min_detectable(900, 700)
+    assert S.min_detectable(91, 70, 0) > S.min_detectable(900, 700, 0)
