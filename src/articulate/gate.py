@@ -77,6 +77,17 @@ def rule_counts(findings):
     return dict(sorted(out.items()))
 
 
+def _cadence(doc, detail):
+    """The cadence record; the variation figures only when asked for."""
+    out = {"words": doc.get("words", 0), "mean_sentence_len": doc.get("mean_len"),
+           "repetitive_openers": doc.get("repetitive_openers", False),
+           "passive_rate": doc.get("passive_rate", 0),
+           "adverb_rate": doc.get("adverb_rate", 0)}
+    if detail:
+        out.update(cv=doc.get("cv"), uniform=doc.get("uniform", False))
+    return out
+
+
 def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail=False):
     """The library API. Scan text under an optional profile (a dict from
     articulate.profiles.load or modes.load). Returns the findings, per-rule
@@ -86,6 +97,8 @@ def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail
     The library reports them, each marked `house: true`; the command line, the
     editor diagnostics, the MCP tools and receipts leave them out unless the
     writer asks, because they skewed toward learner writing on the corpus run.
+    `blocking` counts the findings that block. `clean` (no HIGH or MEDIUM
+    finding) is deprecated: it echoes the retired verdict and is removed in 0.7.0.
     cadence_detail: add the sentence-length variation figures (`cv`, `uniform`).
     They are left out by default: that statistic is the burstiness signal
     perplexity detectors use, and the fairness harness is its only reader."""
@@ -108,26 +121,16 @@ def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail
         "blocking": blocking,
         "blocking_count": blocking,
         "findings": "has_findings" if tiers["HIGH"] or tiers["MEDIUM"] else "no_findings",
-        # Deprecated: `clean` echoes the retired verdict (no HIGH or MEDIUM
-        # finding). Read `blocking` or `gate`. It is removed in 0.7.0.
-        "clean": not (tiers["HIGH"] or tiers["MEDIUM"]),
+        "clean": not (tiers["HIGH"] or tiers["MEDIUM"]),   # deprecated, see docstring
         "words": doc.get("words", 0),
         "counts": {"high": len(high), "medium": len(medium), "low": len(low)},
         "rule_counts": rule_counts(everything),
         "high": tiers["HIGH"],
         "medium": tiers["MEDIUM"],
         "low": tiers["LOW"],
-        "cadence": {
-            "words": doc.get("words", 0),
-            "mean_sentence_len": doc.get("mean_len"),
-            "repetitive_openers": doc.get("repetitive_openers", False),
-            "passive_rate": doc.get("passive_rate", 0),
-            "adverb_rate": doc.get("adverb_rate", 0),
-        },
+        "cadence": _cadence(doc, cadence_detail),
         "does_not_prove": DOES_NOT_PROVE,
     }
-    if cadence_detail:
-        result["cadence"].update(cv=doc.get("cv"), uniform=doc.get("uniform", False))
     result["density"] = density(result)
     return result
 

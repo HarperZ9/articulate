@@ -37,6 +37,19 @@ def behavior_constants():
     }
 
 
+def _lexicon_parts():
+    """The auxiliary regexes the scanner and advisories match with, then the
+    sentence-start openers with their category and label, so a split or a
+    relabel moves the fingerprint as a table change does."""
+    parts = [f"X|{nm}|{rx.pattern}" for nm, rx in (
+        ("EMOJI", EMOJI), ("VAGUE_QUANT", VAGUE_QUANT),
+        ("EXPLETIVE", EXPLETIVE), ("EXISTENTIAL", EXISTENTIAL),
+        ("NOMINAL", NOMINAL), ("NEG", NEG), ("PASSIVE", PASSIVE), ("ADVERB", ADVERB),
+        ("FRAGMENT_OPENER", FRAGMENT_OPENER), ("PADDED_PURPOSE", PADDED_PURPOSE),
+        ("UNANCHORED_CLAIM", UNANCHORED_CLAIM), ("CLAIM_ANCHOR", CLAIM_ANCHOR))]
+    return parts + [f"S|{cat}|{label}|{rx.pattern}" for cat, label, rx in scan._OPENERS]
+
+
 def ruleset_fingerprint():
     """A stable hash of the detection ruleset. A receipt pins this, so a verdict
     can only be re-derived under the exact rules that produced it; a rule change
@@ -54,19 +67,7 @@ def ruleset_fingerprint():
                       ("FICTION_SLOP", FICTION_SLOP)):
         for cat, label, rx in lst:
             parts.append(f"{name}|{cat}|{label}|{rx.pattern}")
-    for nm, rx in (("EMOJI", EMOJI), ("VAGUE_QUANT", VAGUE_QUANT),
-                   ("EXPLETIVE", EXPLETIVE), ("EXISTENTIAL", EXISTENTIAL),
-                   ("NOMINAL", NOMINAL), ("NEG", NEG),
-                   ("PASSIVE", PASSIVE), ("ADVERB", ADVERB),
-                   ("FRAGMENT_OPENER", FRAGMENT_OPENER),
-                   ("PADDED_PURPOSE", PADDED_PURPOSE),
-                   ("UNANCHORED_CLAIM", UNANCHORED_CLAIM),
-                   ("CLAIM_ANCHOR", CLAIM_ANCHOR)):
-        parts.append(f"X|{nm}|{rx.pattern}")
-    # The sentence-start openers carry their category and label here, so a split
-    # or a relabel moves the fingerprint as a table change does.
-    for cat, label, rx in scan._OPENERS:
-        parts.append(f"S|{cat}|{label}|{rx.pattern}")
+    parts += _lexicon_parts()
     parts.append(f"PRONOUN_SUBJ={sorted(PRONOUN_SUBJ)}|STOP4={sorted(STOP4)}")
     parts.append(f"BEHAVIOR={sorted(behavior_constants().items())}")
     # A receipt records a profile or mode name and re-derives by loading it, so the
