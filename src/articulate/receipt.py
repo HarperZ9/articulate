@@ -167,6 +167,28 @@ def make_receipt(text: str, profile_name: str = None, *, mode: str = None,
     return rec
 
 
+def _replay_profile(receipt):
+    """(profile_dict, None), or (None, reason) when the receipt's screening cannot
+    be loaded. A mode receipt re-derives under the mode, and its recorded profile
+    must be the mode's base, so the two fields cannot disagree about what ran."""
+    pname = receipt.get("profile", profiles.DEFAULT)
+    mode = receipt.get("mode")
+    if mode is None:
+        try:
+            return profiles.load(pname), None
+        except profiles.ProfileError:
+            return None, f"receipt names an unknown profile {pname!r}"
+    if not isinstance(mode, str) or not mode:
+        return None, "receipt mode is not a non-empty string"
+    try:
+        base, prof = _load_screening(mode=mode)
+    except modes.ModeError:
+        return None, f"receipt names an unknown mode {mode!r}"
+    if pname != base:
+        return None, f"receipt profile {pname!r} is not the base of mode {mode!r}"
+    return prof, None
+
+
 def verify_receipt(receipt: dict, text: str):
     """Replay a receipt against text. Returns (verdict, detail)."""
     if not isinstance(receipt, dict) or receipt.get("schema") not in KNOWN:
@@ -189,25 +211,9 @@ def verify_receipt(receipt: dict, text: str):
                 f"cannot re-derive under a different ruleset")
     if receipt.get("text_sha256") != _sha256(text):
         return "Unverifiable", "text does not match the receipt's text hash"
-    pname = receipt.get("profile", profiles.DEFAULT)
-    mode = receipt.get("mode")
-    if mode is not None:
-        # A mode receipt re-derives under the mode. Its recorded profile must be the
-        # mode's base, so the two fields cannot disagree about what ran.
-        if not isinstance(mode, str) or not mode:
-            return "Unverifiable", "receipt mode is not a non-empty string"
-        try:
-            base, prof = _load_screening(mode=mode)
-        except modes.ModeError:
-            return "Unverifiable", f"receipt names an unknown mode {mode!r}"
-        if pname != base:
-            return ("Unverifiable",
-                    f"receipt profile {pname!r} is not the base of mode {mode!r}")
-    else:
-        try:
-            prof = profiles.load(pname)
-        except profiles.ProfileError:
-            return "Unverifiable", f"receipt names an unknown profile {pname!r}"
+    prof, problem = _replay_profile(receipt)
+    if problem:
+        return "Unverifiable", problem
     r = detector.check_text(text, profile=prof)
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.
