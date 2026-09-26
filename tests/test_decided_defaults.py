@@ -37,3 +37,23 @@ def test_house_notes_show_when_the_writer_asks(tmp_path, capsys):
     result = _check_json(tmp_path, capsys, "notes.md", HOUSE_TEXT, "--house-notes")
     (f,) = [f for f in result["low"] if f["category"] == "intensifier"]
     assert f["house"] is True and f["gates"] is False
+
+
+# --- decision 5: `.tex` resolves to `research` ------------------------------ #
+
+TEX = "We sampled twice due to the fact that the first run failed.\n"
+
+
+def test_a_tex_file_resolves_to_research(tmp_path, capsys):
+    from articulate import profiles
+    assert profiles.profile_for("thesis/chapter1.tex") == "research"
+    result = _check_json(tmp_path, capsys, "chapter1.tex", TEX)
+    assert result["profile"] == "research"
+    assert result["gate"] == "ok"      # research blocks only the HIGH tier
+
+
+def test_a_tex_file_can_name_the_strict_essay_profile(tmp_path, capsys):
+    result = _check_json(tmp_path, capsys, "chapter1.tex",
+                         "% writing-profile: essay\n" + TEX)
+    assert result["profile"] == "essay"
+    assert result["gate"] == "blocked"
