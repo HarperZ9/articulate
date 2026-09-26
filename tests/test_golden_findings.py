@@ -21,9 +21,13 @@ PROFILES = ("flavored", "essay", "research", "narrative", "poetry", "screenplay"
 
 
 def _corpus():
-    for p in sorted((ROOT / "corpus").rglob("*")):
-        if p.suffix in (".txt", ".md") and p.is_file():
-            yield p
+    # Sort by the POSIX relative path string. Path objects compare
+    # case-insensitively on Windows and case-sensitively elsewhere, so sorting
+    # them directly put corpus/README.md in a different place on each OS and
+    # moved the digest.
+    files = [p for p in (ROOT / "corpus").rglob("*")
+             if p.suffix in (".txt", ".md") and p.is_file()]
+    yield from sorted(files, key=lambda p: p.relative_to(ROOT).as_posix())
 
 
 def findings_digest():
