@@ -44,7 +44,9 @@ def test_init_hides_the_log_from_git_unless_tracked(doc, tmp_path):
     other.parent.mkdir()
     other.write_text("x\n", encoding="utf-8")
     pl.init(str(other), track=True)
-    assert not (pathlib.Path(pl.folder(str(other))) / ".gitignore").exists()
+    # A tracked log still keeps its private files away from git.
+    ignore = (pathlib.Path(pl.folder(str(other))) / ".gitignore").read_text()
+    assert ignore == pl.PRIVATE_IGNORE
 
 
 def test_nothing_records_before_init(doc):
@@ -104,8 +106,9 @@ def test_dictation_is_an_input_method_never_an_assist_verb(doc):
     summ = px.summary(doc)
     assert all(e["kind"] != "input_method" for e in summ["entries"])
     assert "dictation" not in summ["disclosure"]
+    assert "input_methods" not in summ
     shown = px.summary(doc, include=("input_method",))
-    assert any(e["kind"] == "input_method" for e in shown["entries"])
+    assert shown["input_methods"] == [{"method": "dictation", "sections": ["whole document"]}]
     assert "dictation" in shown["disclosure"]
 
 
@@ -155,6 +158,7 @@ def test_a_tampered_log_is_broken_and_never_extended(doc):
         ev.record_draft(doc, TEXT2)
     c = pl.restart(doc, "sync conflict")
     assert c["kind"] == "continuation" and c["continues"].startswith("sha256:")
+    assert c["carried_assist"] == []
     assert ev.record_draft(doc, TEXT2)["seq"] == 2
     assert px.verify_log(doc)["state"] == "intact"
 

@@ -121,6 +121,24 @@ def _record(args):
     return None
 
 
+def _as_summary(path):
+    """The parsed file when it is a process summary (by its schema field, never
+    its name), else None."""
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as fh:
+            obj = json.load(fh)
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return obj if px.is_summary(obj) else None
+
+
+def _verify(path):
+    summ = _as_summary(path)
+    return px.verify_summary(summ) if summ is not None else px.verify_log(path)
+
+
 def cmd_process(args):
     try:
         if args.pcmd == "export":
@@ -132,12 +150,11 @@ def cmd_process(args):
             print(f"[process] wrote {out} (chain {summ['chain']['state']})")
             return 0
         if args.pcmd == "verify":
-            res = (px.verify_summary(json.load(open(args.doc, encoding="utf-8")))
-                   if args.doc.endswith(".process-summary.json") else px.verify_log(args.doc))
+            res = _verify(args.doc)
             print(json.dumps(res, indent=1))
             return 0 if res["state"] == "intact" else 1
         res = _record(args)
-    except (ValueError, OSError, dis.DisclosureRefused) as e:
+    except (ValueError, OSError, KeyError, TypeError, dis.DisclosureRefused) as e:
         print(f"[process] {e}", file=sys.stderr)
         return 2
     if res is None:
@@ -149,11 +166,25 @@ def cmd_process(args):
 
 
 def cmd_disclose(args):
-    entries, _ = pl.load(args.doc)
+    """A statement needs an intact log: with no log, or a broken one, it could
+    leave out assistance the writer recorded."""
+    state = px.verify_log(args.doc)
+    if state["state"] != "intact":
+        why = ("no process log exists for this document, so a statement would have "
+               "nothing to report" if state["state"] == "missing" else
+               "the process log is broken (" + "; ".join(state["problems"][:2]) +
+               "), so a statement could leave out recorded assistance. Run "
+               "`articulate process continue` first")
+        print(f"[disclose] refused: {why}", file=sys.stderr)
+        return 2
+    include = _csv(args.include)
     try:
-        print(dis.build(entries, _contrib(args.contributions), args.template,
-                        _csv(args.include), claim=args.claim), end="")
+        print(dis.build(px.statement_entries(args.doc, include), _contrib(args.contributions),
+                        args.template, include, claim=args.claim), end="")
     except dis.DisclosureRefused as e:
         print(f"[disclose] refused: {e}", file=sys.stderr)
+        return 2
+    except (KeyError, TypeError, ValueError, OSError) as e:
+        print(f"[disclose] cannot build the statement: {e!r}", file=sys.stderr)
         return 2
     return 0

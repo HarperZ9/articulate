@@ -105,7 +105,7 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
            profile=None):
     ext = os.path.splitext(path)[1]
     out_path = out_path or os.path.splitext(path)[0] + ".polished" + ext
-    prof, ecfg = ed._resolve(mode, profile)
+    prof, ecfg = ed._resolve(mode, profile, path)
     loop = _Loop(path, out_path, bar, prof, ecfg)
     warn = ed.injection_warning(loop.best)
     if warn:
@@ -125,6 +125,9 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
     except ed._UNAVAILABLE as e:
         print(f"\n[polish] model layer unavailable: {e}")
         print("[polish] the local checks still work; rerun when the backend is restored.")
+        if loop.accepted:
+            from .fix import _log_pass
+            _log_pass(path, "polish")
         return 1
     if loop.accepted:
         from .fix import _log_pass

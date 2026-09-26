@@ -152,7 +152,7 @@ def test_fix_self_check_uses_the_chosen_mode(work, monkeypatch, capsys):
     monkeypatch.setattr(editor, "claude_call", FakeModel(lambda t: MODE_CLEAN))
     assert editor.fix(src, out, passes=1, mode="technical-docs/argue") == 0
     printed = capsys.readouterr().out
-    assert "pass 1: CLEAN" in printed
+    assert "pass 1: no findings" in printed
     assert "[fix] no HIGH or MEDIUM findings" in printed
 
 

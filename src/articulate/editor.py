@@ -141,21 +141,30 @@ def strip_preamble(out):
     return "\n".join(lines)
 
 
-def _resolve(mode=None, profile=None):
-    """(profile_dict_or_None, editor_cfg) for a mode id or a profile name."""
+def _resolve(mode=None, profile=None, path=None):
+    """(profile_dict_or_None, editor_cfg) for a mode id or a profile name. With
+    neither, a file path resolves the way `check` resolves it: an in-file
+    `writing-profile:` tag, then the path rules, then the default."""
+    from . import profiles
     if mode:
         from . import modes
         prof = modes.load(mode)
         return prof, prof.get("editor", {})
     if profile:
-        from . import profiles
         return profiles.load(profile), {}
+    if path:
+        try:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                head = "".join(fh.readline() for _ in range(10))
+        except OSError:
+            head = None
+        return profiles.resolve(path=path, text=head), {}
     return None, {}
 
 
 def judge(path, mode=None, profile=None):
     text = open(path, encoding="utf-8", errors="replace").read()
-    prof, ecfg = _resolve(mode, profile)
+    prof, ecfg = _resolve(mode, profile, path)
     _, mech = mechanical(path, prof)
     instr = judge_instructions(mech, ecfg.get("standard_delta", ""))
     print(f"[judge] {os.path.basename(path)} (via claude CLI)\n")

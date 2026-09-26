@@ -17,6 +17,8 @@ Standard library only.
 """
 from __future__ import annotations
 
+import re
+
 IPTC_BASE = "http://cv.iptc.org/newscodes/digitalsourcetype/"
 IPTC = {
     "digitalCreation": "Digital creation",
@@ -51,14 +53,30 @@ CREDIT_ROLES = (
     "Writing - review and editing",
 )
 
-# Names a contributor file may not list as an author: model products and tools.
-NOT_A_PERSON = ("claude", "gpt", "chatgpt", "gemini", "copilot", "llama", "mistral",
-                "grok", "articulate", "openai", "anthropic", "language model", " ai")
+# A contributor-file name that is, as a whole, the name of a software product or
+# a generic tool, optionally with a version or tier suffix ("GPT-4o", "Claude 3.5
+# Sonnet"). The match is on the whole name, so a person who shares a word with a
+# product ("Claude Shannon", "Ai Weiwei", "Gabriela Mistral") is never refused.
+# An entry with "type": "person" skips this check.
+PRODUCT_NAME = re.compile(
+    r"(?i)^\s*(?:chat\s*gpt|gpt|claude|gemini|bard|(?:github\s+|microsoft\s+)?copilot"
+    r"|llama|mistral|mixtral|grok|deepseek|qwen|perplexity|articulate|openai|anthropic"
+    r"|(?:an?\s+)?(?:ai|a\.i\.|large\s+language\s+model|language\s+model|llm|chat\s*bot)"
+    r"(?:\s+(?:assistant|tool|model|system|agent))?)"
+    r"(?:[\s-]*(?:v?\d[\w.]*|o\d\w*|pro|flash|ultra|opus|sonnet|haiku|turbo|mini|nano"
+    r"|large|small|medium|instruct|chat))*\s*$")
 
 # Statement wording that asserts no tool was used. Refused whenever an
-# assistance entry exists.
-NO_TOOL_CLAIMS = ("no ai", "without ai", "no generative", "no artificial intelligence",
-                  "no tools were used", "entirely human", "no assistance")
+# assistance entry exists. A listed-pattern check: a paraphrase outside these
+# patterns passes, so the statement's own Assistance section is the record.
+NO_TOOL_CLAIMS = re.compile(
+    r"(?i)\b(?:no|without(?:\s+(?:any|the\s+use\s+of|using))?"
+    r"|not\s+(?:use|using|used)(?:\s+any)?|never\s+used(?:\s+any)?|free\s+of(?:\s+any)?)"
+    r"\s+(?:ai\b|a\.i\.|artificial\s+intelligence|generative\b|gen\s*ai\b|llms?\b"
+    r"|(?:large\s+)?language\s+models?\b|chat\s*bots?\b|tools?\b|assistance\b"
+    r"|machine\s+assistance\b)"
+    r"|\bentirely\s+(?:human|by\s+hand)\b|\b(?:100\s*%|fully|wholly|purely)\s+human\b"
+    r"|\bhuman[- ]only\b")
 
 
 # Headings of the disclosure statement. The credit section names the people a
@@ -66,7 +84,8 @@ NO_TOOL_CLAIMS = ("no ai", "without ai", "no generative", "no artificial intelli
 STATEMENT_TITLE = "Statement of tool use and authorship"
 CREDIT_HEADING = "Authorship credit (CRediT)"
 DISCLOSE_HELP = "a statement of tool use and authorship credit"
-NOT_A_PERSON_REASON = "cannot hold an authorship role; only people can"
+NOT_A_PERSON_REASON = ("matches the name of a software product, and only people hold CRediT "
+                       "roles. If this is a person, add \"type\": \"person\" to the entry")
 
 
 def iptc_uri(code):

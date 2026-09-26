@@ -20,10 +20,11 @@ def _call(is_html, prof, delta):
 
 
 def _one_pass(attempt, text, path, out_path, prof, call):
-    """Returns (status, text): status is 'done', 'again' or 'failed'."""
+    """Returns (status, text). 'done' and 'again' wrote a rewrite; 'stop' wrote
+    nothing because the last rewrite had no findings; 'failed' wrote nothing."""
     clean_before, mech = ed.mechanical(path if attempt == 1 else out_path, prof)
     if attempt > 1 and clean_before:
-        return "done", text
+        return "stop", text
     try:
         # On a math file the model sees placeholders, never a formula.
         result = (ed.masked_rewrite(text, call, prof) if ed.is_math_file(path)
@@ -38,7 +39,7 @@ def _one_pass(attempt, text, path, out_path, prof, call):
         fh.write(result + ("" if result.endswith("\n") else "\n"))
     # The self-check reads the rewrite under the same profile as the first pass.
     clean_after, _ = ed.mechanical(out_path, prof)
-    print(f"[fix] pass {attempt}: {'CLEAN' if clean_after else 'findings remain'} -> {out_path}")
+    print(f"[fix] pass {attempt}: {'no findings' if clean_after else 'findings remain'} -> {out_path}")
     return ("done" if clean_after else "again"), result
 
 
@@ -59,15 +60,21 @@ def fix(path, out_path, passes, mode=None, profile=None):
     warn = ed.injection_warning(text)
     if warn:
         print(warn + "\n")
-    prof, ecfg = ed._resolve(mode, profile)
+    prof, ecfg = ed._resolve(mode, profile, path)
     call = _call(ext.lower() in (".html", ".htm"), prof, ecfg.get("standard_delta", ""))
+    wrote = False
     for attempt in range(1, passes + 1):
         status, text = _one_pass(attempt, text, path, out_path, prof, call)
+        wrote = wrote or status in ("done", "again")
         if status == "failed":
+            if wrote:
+                # An earlier pass already wrote a rewrite; the log records it
+                # even though this pass failed.
+                _log_pass(path, "fix")
             return 1
-        if status == "done":
+        if status in ("done", "stop"):
             break
-    if os.path.isfile(out_path):
+    if wrote:
         _log_pass(path, "fix")
     _, mech_final = ed.mechanical(out_path, prof)
     print(f"\n[fix] final:{os.path.basename(out_path)}")
@@ -77,7 +84,7 @@ def fix(path, out_path, passes, mode=None, profile=None):
 
 
 def review(path, mode=None, profile=None):
-    prof, _ = ed._resolve(mode, profile)
+    prof, _ = ed._resolve(mode, profile, path)
     _clean, mech = ed.mechanical(path, prof)
     print(f"[review] {os.path.basename(path)}")
     print(f"  checks: {mech}\n")

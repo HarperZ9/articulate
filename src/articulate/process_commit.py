@@ -5,8 +5,10 @@
 A draft, note or source entry stores sha256(salt || text) with a fresh random
 32-byte salt, never a plain hash. With a plain hash, anyone holding a candidate
 text could test it against a draft the writer chose to keep back. The salts stay
-in a local file that no export includes; revealing draft N releases its text and
-salt together, and a reader checks the pair against the logged commitment.
+in a local file, keyed by commitment, that no default export includes; revealing
+draft N releases its text and salt together, and a reader checks the pair
+against the logged commitment. Keying by commitment keeps salts apart when a
+continued log starts its sequence numbers again at 1.
 
 Standard library only.
 """
@@ -40,11 +42,11 @@ def load_salts(path):
         return json.load(fh)
 
 
-def save_salt(path, seq, salt_hex, text, kind="draft"):
+def save_salt(path, commitment, salt_hex, text, kind="draft"):
     """Keep the salt, and a private plain hash used only to skip an unchanged
-    draft. This file never leaves the writer's machine through Articulate."""
+    draft. Only a reveal the writer asks for exports a salt, one per draft."""
     salts = load_salts(path)
-    salts[str(seq)] = {"salt": salt_hex, "kind": kind,
+    salts[commitment] = {"salt": salt_hex, "kind": kind,
                        "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()}
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(salts, fh, indent=1, sort_keys=True)

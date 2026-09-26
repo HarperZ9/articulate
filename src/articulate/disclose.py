@@ -8,8 +8,10 @@ where. Contributor credit lists CRediT roles, and only people hold them. The
 lines it holds to:
 
   - it never lists a model or a tool as an author;
-  - it refuses any claim or template that says no tool was used while the log
-    holds an assistance entry;
+  - it refuses a claim that matches its list of no-tool phrases while the log
+    holds an assistance entry (a listed-pattern check; a paraphrase can pass);
+  - it refuses to name a product as an author: a name that is, as a whole, a
+    product name, or an entry whose "type" is not "person";
   - it takes its verb from the recorded task, so generation never reads as
     help with editing;
   - it refuses to leave out an assistance entry the log holds;
@@ -22,8 +24,8 @@ Standard library only.
 """
 from __future__ import annotations
 
-from .provenance import (CREDIT_HEADING, CREDIT_ROLES, NO_TOOL_CLAIMS, NOT_A_PERSON,
-                         NOT_A_PERSON_REASON, STATEMENT_TITLE)
+from .provenance import (CREDIT_HEADING, CREDIT_ROLES, NO_TOOL_CLAIMS, NOT_A_PERSON_REASON,
+                         PRODUCT_NAME, STATEMENT_TITLE)
 
 TEMPLATES = ("general", "pip")
 
@@ -37,14 +39,21 @@ def _norm_role(role):
 
 
 def validate_contributions(contrib):
-    """Raise DisclosureRefused unless every author is a person with known CRediT
-    roles and every declared tool task names a person who checked it."""
+    """Raise DisclosureRefused unless every author entry is a person with known
+    CRediT roles and every declared tool task names a person who checked it. A
+    name is refused only when the whole name is a product name; an entry marked
+    "type": "person" is taken as the writer declares it."""
     authors = (contrib or {}).get("authors", [])
     names = set()
     for a in authors:
         name = str(a.get("name", "")).strip()
-        low = f" {name.lower()} "
-        if not name or any(w in low for w in NOT_A_PERSON):
+        kind = a.get("type")
+        if not name:
+            raise DisclosureRefused("an author entry has no name")
+        if kind is not None and kind != "person":
+            raise DisclosureRefused(f"{name!r} has type {kind!r}; only people hold CRediT "
+                                    "roles, and tools belong in the assistance entries")
+        if kind is None and PRODUCT_NAME.match(name):
             raise DisclosureRefused(f"{name!r} {NOT_A_PERSON_REASON}")
         bad = {r for r in a.get("roles", []) if _norm_role(r) not in CREDIT_ROLES}
         if bad:
@@ -76,7 +85,7 @@ def _check_request(assists, omit, claim, template):
     if left_out:
         raise DisclosureRefused("the log records assistance the statement would leave "
                                 f"out (entries {[e['seq'] for e in left_out]})")
-    if assists and claim and any(p in claim.lower() for p in NO_TOOL_CLAIMS):
+    if assists and claim and NO_TOOL_CLAIMS.search(claim):
         raise DisclosureRefused("the log records tool assistance, so the statement cannot "
                                 "say that no tool was used")
 

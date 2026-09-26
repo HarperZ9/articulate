@@ -65,3 +65,40 @@ def test_a_tool_task_must_name_an_author_who_checked_it():
     contrib = dict(PEOPLE, tool_tasks=[{"task": "drafted the abstract", "checked_by": "Nobody"}])
     with pytest.raises(disclose.DisclosureRefused):
         disclose.build([ASSIST], contrib)
+
+
+# People whose names share a word with a product. A substring filter refused
+# every one of them with a message that said they were not a person.
+PEOPLE_NAMES = ("Aisha Khan", "Aidan Murphy", "Ai Weiwei", "Aiko Tanaka", "Claude Shannon",
+                "Claudette Colvin", "Jean-Claude Martin", "Gabriela Mistral", "Grokhovsky",
+                "Priya Gemini")
+
+
+@pytest.mark.parametrize("name", PEOPLE_NAMES)
+def test_a_person_who_shares_a_word_with_a_product_is_never_refused(name):
+    s = disclose.build([ASSIST], {"authors": [{"name": name, "roles": ["Software"]}]})
+    assert f"- {name}: Software." in s
+
+
+def test_a_product_name_with_a_version_is_refused_and_type_person_is_honoured():
+    for name in ("Claude 3.5 Sonnet", "GPT-4o", "an AI assistant", "ChatGPT"):
+        with pytest.raises(disclose.DisclosureRefused):
+            disclose.build([], {"authors": [{"name": name, "roles": ["Software"]}]})
+    s = disclose.build([], {"authors": [{"name": "Claude", "type": "person",
+                                         "roles": ["Software"]}]})
+    assert "- Claude: Software." in s
+    with pytest.raises(disclose.DisclosureRefused):
+        disclose.build([], {"authors": [{"name": "Helper", "type": "tool", "roles": ["Software"]}]})
+
+
+@pytest.mark.parametrize("claim", ["Written without any AI tools.", "I did not use any AI.",
+                                   "No tools were used.", "Entirely human."])
+def test_listed_no_tool_phrases_are_refused(claim):
+    with pytest.raises(disclose.DisclosureRefused):
+        disclose.build([ASSIST], PEOPLE, claim=claim)
+
+
+@pytest.mark.parametrize("claim", ["The survey needed no aid from the lab.",
+                                   "The chamber held no air after the pump ran."])
+def test_ordinary_sentences_are_not_no_tool_claims(claim):
+    assert claim in disclose.build([ASSIST], PEOPLE, claim=claim)
