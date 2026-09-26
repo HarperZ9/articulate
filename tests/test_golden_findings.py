@@ -27,7 +27,8 @@ def _corpus():
 
 
 def findings_digest():
-    """sha256 over the (rule, tier, line, offsets) of every finding and the gate,
+    """sha256 over the (rule, tier, line, offsets) of every finding, the gate and
+    the cadence record,
     for each corpus file under each pinned profile."""
     import articulate
     from articulate import profiles
@@ -39,7 +40,8 @@ def findings_digest():
             r = articulate.check_text(text, profile=profiles.load(name))
             found = sorted((f["rule_id"], f["tier"], f["line"], f["start"], f["end"])
                            for t in ("high", "medium", "low") for f in r[t])
-            rows.append([p.relative_to(ROOT).as_posix(), name, r["gate"], found])
+            cad = sorted((k, v) for k, v in r["cadence"].items())
+            rows.append([p.relative_to(ROOT).as_posix(), name, r["gate"], found, cad])
     blob = json.dumps(rows, sort_keys=True, separators=(",", ":"))
     return "sha256:" + hashlib.sha256(blob.encode("utf-8")).hexdigest()
 

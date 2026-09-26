@@ -19,6 +19,13 @@ from .rules_medium_structure import MEDIUM_STRUCTURE
 
 MEDIUM = MEDIUM_REGISTER + MEDIUM_STRUCTURE
 
+# Bump SCAN_ALGO on any change to the scanner's control flow (what a line is,
+# which pass runs on it, how many hits a rule may return). The fingerprint folds
+# it in, so a receipt issued under the old flow reads Unverifiable, not Match.
+SCAN_ALGO = 1
+# A Markdown table delimiter row is structure, never an em-dash.
+SKIP_TABLE_SEP = True
+
 
 def scan(path: str):
     """Read a file and scan it. Findings: (line, cat, label, snippet)."""
@@ -127,7 +134,7 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
             if m and not allowed(m.group(0), allow):
                 low.append(_mk(i, off, cat, label, m.start(), m.end(), raw, snippet))
 
-        if is_md_hr(raw) or is_md_table_sep(raw):
+        if is_md_hr(raw) or (SKIP_TABLE_SEP and is_md_table_sep(raw)):
             continue
 
         text = mask_quotes(slop_text) if mask_q else slop_text
