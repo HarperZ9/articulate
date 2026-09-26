@@ -122,7 +122,9 @@ name the CLI by its absolute path:
 
 On macOS or Linux the value looks like `/home/you/.local/bin/claude`. Without
 the variable, the editor searches the absolute PATH entries and never the
-current directory. The detection tools (`check`, `score`) need no CLI.
+current directory. The CLI runs in a private empty folder with your user
+settings only, so a document folder's `.claude/settings.json` never loads. The
+detection tools (`check`, `score`) need no CLI.
 
 ## Where to next
 

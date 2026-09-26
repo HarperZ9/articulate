@@ -20,16 +20,23 @@ The prompt always travels in a temporary file passed with
 flags. A long prompt would pass the Windows command-line limit or the Linux
 per-argument limit. And a .cmd or .bat file runs under cmd.exe, which parses
 its arguments a second time: it cuts one at the first newline and reads
-% ^ & | < > ! as commands. For a batch file every argument is checked before
-the start, and a path that holds one of those characters is refused.
+% ^ & | < > ! as commands, and ")" too when the argument is not quoted. For a
+batch file every argument is checked before the start, and a path that holds
+one of those characters is refused.
 
-The document is untrusted input, so every call turns off the built-in tools and
-all MCP servers. A timeout stops the whole process tree, since a batch shim runs
-the CLI as a grandchild that would otherwise keep the pipes open.
+The document is untrusted input. Every call turns off the built-in tools, all
+MCP servers and the project and local settings. The CLI reads those settings,
+hooks included, from its working directory, and -p skips the trust prompt. So
+the child runs in a private empty folder, never in the caller's. On Windows the
+child also gets NoDefaultCurrentDirectoryInExePath=1: an npm claude.cmd shim
+runs "node" by bare name, and cmd.exe would look for it in the working folder
+first. A timeout stops the whole process tree, since a batch shim runs the CLI
+as a grandchild that would otherwise keep the pipes open.
 """
 import ntpath
 import os
 import posixpath
+import shutil
 import signal
 import subprocess
 import sys
@@ -41,10 +48,18 @@ BATCH_SUFFIXES = (".cmd", ".bat")
 # Suffixes CreateProcess can start. PATHEXT may also list .js or .py, which it cannot.
 _STARTABLE = (".com", ".exe") + BATCH_SUFFIXES
 CMD_UNSAFE = frozenset('"%^&|<>!\r\n')
+# cmd.exe ends a parenthesized block at ")" outside quotes. Python quotes an
+# argument only when it holds a space or a tab, so these count only without one.
+CMD_UNSAFE_UNQUOTED = frozenset(")")
 FIXED_PROMPT = ("Apply the instructions in your system prompt to the document "
                 "on standard input.")
-# No built-in tool and no MCP server. "--tools" takes a list, so it goes last.
-LOCKDOWN = ("--strict-mcp-config", "--tools", "")
+# User settings only, no MCP server and no built-in tool. "--tools" takes a
+# list, so it goes last.
+LOCKDOWN = ("--setting-sources", "user", "--strict-mcp-config", "--tools", "")
+# The CLI version these flags were checked against. The first version that
+# accepts all of them is unknown.
+TESTED_CLI_VERSION = "2.1.251"
+NO_CWD_SEARCH = "NoDefaultCurrentDirectoryInExePath"
 DRAIN_SECONDS = 5
 
 _MISSING = (f"claude CLI not found. The claude CLI must be installed and logged in "
@@ -54,8 +69,9 @@ _BAD_VAR = (f"{ENV_VAR} is set, but it does not name a runnable file by an absol
             f"path. Set it to the full path of the claude executable, which must be "
             f"installed and logged in.")
 _UNSAFE_BATCH = (f"the claude CLI resolves to a Windows batch file, and its path or "
-                 f"arguments hold characters that cmd.exe would reinterpret. Set "
-                 f"{ENV_VAR} to the full path of a native claude executable.")
+                 f"the temporary folder's path holds characters that cmd.exe would "
+                 f"reinterpret. Set {ENV_VAR} to the full path of a native claude "
+                 f"executable, or point TEMP at a plain folder.")
 
 
 class ClaudeUnavailable(RuntimeError):
@@ -126,21 +142,47 @@ def is_batch(path, windows=None):
     return windows and os.path.splitext(path)[1].lower() in BATCH_SUFFIXES
 
 
-def _write_prompt_file(prompt, tmpdir):
-    fd, path = tempfile.mkstemp(prefix="articulate-prompt-", suffix=".txt", dir=tmpdir)
-    with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
-        fh.write(prompt)
-    return path
+def cmd_unsafe(arg):
+    """True when cmd.exe would read part of this argument as a command."""
+    if CMD_UNSAFE.intersection(arg):
+        return True
+    quoted = not arg or " " in arg or "\t" in arg
+    return not quoted and bool(CMD_UNSAFE_UNQUOTED.intersection(arg))
+
+
+def _make_session(prompt, tmpdir):
+    """A private folder holding the prompt file and an empty working folder."""
+    session = tempfile.mkdtemp(prefix="articulate-", dir=tmpdir)
+    try:
+        cwd = os.path.join(session, "cwd")
+        os.mkdir(cwd)
+        prompt_file = os.path.join(session, "prompt.txt")
+        with open(prompt_file, "x", encoding="utf-8", newline="") as fh:
+            fh.write(prompt)
+    except BaseException:
+        _remove_quietly(session)
+        raise
+    return session, cwd, prompt_file
 
 
 def _remove_quietly(path):
     try:
-        os.remove(path)
+        shutil.rmtree(path)
     except OSError as exc:
-        # A leftover temp file is not worth failing a finished model call. Say so,
-        # since the file holds the prompt.
-        print(f"[editor] could not remove a temporary prompt file ({exc.strerror})",
+        # A leftover temp folder is not worth failing a finished model call. Say
+        # so, since it holds the prompt.
+        print(f"[editor] could not remove a temporary prompt folder ({exc.strerror})",
               file=sys.stderr)
+
+
+def _child_env(windows):
+    """The child's environment: inherited, plus no current-directory search on Windows."""
+    if not windows:
+        return None
+    # Windows names are case-insensitive, so drop any other spelling first.
+    env = {k: v for k, v in os.environ.items() if k.lower() != NO_CWD_SEARCH.lower()}
+    env[NO_CWD_SEARCH] = "1"
+    return env
 
 
 def _taskkill():
@@ -174,11 +216,11 @@ def _stop_tree(proc):
         proc.kill()
 
 
-def _bounded_run(argv, input=None, timeout=None):
+def _bounded_run(argv, input=None, timeout=None, cwd=None, env=None):
     """subprocess.run, except that a timeout stops the whole process tree."""
-    extra = {} if os.name == "nt" else {"start_new_session": True}
     proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, text=True, encoding="utf-8", **extra)
+                            stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                            cwd=cwd, env=env, start_new_session=os.name != "nt")
     try:
         out, err = proc.communicate(input, timeout=timeout)
     except subprocess.TimeoutExpired:
@@ -201,25 +243,56 @@ def run(prompt, text, timeout=600, environ=None, exists=None,
         runner=None, windows=None, tmpdir=None):
     """Run `claude -p` with the prompt in a file and the document on stdin.
 
-    Returns the CompletedProcess. Raises ClaudeUnavailable when the CLI cannot
-    be found or started, and lets subprocess.TimeoutExpired through.
+    The child starts in a private empty folder. Returns the CompletedProcess.
+    Raises ClaudeUnavailable when the CLI cannot be found or started, or the
+    prompt file cannot be written, and lets subprocess.TimeoutExpired through.
     """
     windows = os.name == "nt" if windows is None else windows
     cli = resolve(environ, exists, windows)
     runner = _bounded_run if runner is None else runner
-    prompt_file = _write_prompt_file(prompt, tmpdir)
+    try:
+        session, cwd, prompt_file = _make_session(prompt, tmpdir)
+    except OSError as exc:
+        # strerror carries the reason; the filename, which is the path, stays out.
+        raise ClaudeUnavailable(f"the prompt file could not be written to the temporary "
+                                f"folder ({_reason(exc)})") from exc
     try:
         argv = [cli, "-p", FIXED_PROMPT, "--append-system-prompt-file", prompt_file,
                 *LOCKDOWN]
-        if is_batch(cli, windows) and any(CMD_UNSAFE.intersection(a) for a in argv):
+        if is_batch(cli, windows) and any(cmd_unsafe(a) for a in argv):
             raise ClaudeUnavailable(_UNSAFE_BATCH)
         try:
-            return runner(argv, input=text, timeout=timeout)
+            return runner(argv, input=text, timeout=timeout, cwd=cwd, env=_child_env(windows))
         except OSError as exc:
-            # strerror carries the reason; the filename, which is the path, stays out.
-            reason = exc.strerror or type(exc).__name__
             raise ClaudeUnavailable(
-                f"the claude CLI could not be started ({reason}). It must be "
+                f"the claude CLI could not be started ({_reason(exc)}). It must be "
                 f"installed and logged in; {ENV_VAR} can name its full path.") from exc
     finally:
-        _remove_quietly(prompt_file)
+        _remove_quietly(session)
+
+
+def _reason(exc):
+    return exc.strerror or type(exc).__name__
+
+
+_BACKEND_ERRORS = (
+    ("credit balance is too low", "credit balance too low; add credits or set ANTHROPIC_API_KEY"),
+    ("rate limit", "rate limited; wait for the weekly reset"),
+    ("not authenticated", "claude CLI not authenticated; run `claude login`"),
+    ("invalid api key", "claude CLI auth invalid"),
+)
+
+
+def raise_for_failed_call(out, err):
+    """Raise for a call that exited nonzero: ClaudeUnavailable for a known cause."""
+    # Only a failed call is searched for these phrases. A finished rewrite of a
+    # document about rate limits holds the words too, and it must come back.
+    blob = (out + " " + err).lower()
+    for sentinel, msg in _BACKEND_ERRORS:
+        if sentinel in blob:
+            raise ClaudeUnavailable(f"claude CLI: {msg}")
+    if "unknown option" in err.lower():
+        raise ClaudeUnavailable(
+            f"claude CLI: this version rejects a flag articulate passes. Upgrade the "
+            f"claude CLI; articulate is tested with version {TESTED_CLI_VERSION}.")
+    raise RuntimeError(f"claude CLI failed: {(err or out)[:300] or 'unknown error'}")

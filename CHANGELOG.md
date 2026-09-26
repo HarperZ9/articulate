@@ -4,6 +4,70 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.5.0
+
+A document folder can no longer run commands through `judge`, `fix` or
+`polish`. Detector findings and the ruleset fingerprint do not change.
+
+In 0.4.2 the `claude -p` child started in the caller's working directory. The
+CLI reads `.claude/settings.json` from there, and `-p` skips the workspace trust
+prompt. So a document folder that shipped a settings file ran its command hooks
+on every editor call, on every platform, and its `env` block reached the
+session. On Windows an npm `claude.cmd` shim added a second path: it runs
+`node` by bare name, and cmd.exe looked for `node` in the working directory
+before the PATH.
+
+- The CLI now starts in a new private folder that `tempfile.mkdtemp` creates.
+  That folder holds the prompt file and an empty working folder for the child,
+  and the editor removes it after the call.
+- Every call now passes `--setting-sources user`, so project and local
+  settings never load. The full list is
+  `--setting-sources user --strict-mcp-config --tools ""`.
+- On Windows the child's environment sets `NoDefaultCurrentDirectoryInExePath=1`,
+  so cmd.exe finds the shim's `node` on the PATH only.
+- For a batch shim, `)` in an unquoted argument is now refused too. cmd.exe
+  reads it as the end of a parenthesized block. A path with a space, such as
+  one under `Program Files (x86)`, is quoted and still runs. The check covers
+  the prompt file's path as well as the CLI path, so a `TEMP` folder with `&`
+  in its name is refused.
+- A temporary folder that cannot be written now raises `ClaudeUnavailable`,
+  and the message leaves out the path. In 0.4.2 the `OSError` escaped as a
+  traceback.
+- The editor searches the CLI's output for backend errors, such as a rate
+  limit, only when the call fails. A `fix` of a document that mentions rate
+  limits used to fail as `ClaudeUnavailable`. A call that exits nonzero now
+  always fails, even when it printed output.
+- An older CLI that rejects one of the flags now raises `ClaudeUnavailable`
+  with a message that says to upgrade. The flags are tested with CLI 2.1.251.
+  The first version that accepts all of them is unknown.
+
+Breaking for callers:
+
+- This release carries the minor version that 0.4.2 should have had. The
+  0.4.2 changes for callers below were breaking, and a `~=0.4.1` pin picked
+  them up as a patch.
+- The runner that `claude_cli.run` calls now receives `cwd` and `env` keyword
+  arguments. A test double must accept them.
+
+Tests: the new `tests/test_claude_cli_batch.py`, `tests/test_claude_call.py`
+and `tests/test_no_shell_calls.py` and the updated CLI tests cover each change.
+A unit test checks that the child's working folder is new, empty and apart
+from the prompt file. A process test starts a stand-in from a folder that holds
+`.claude/settings.json` and checks where it ran. A Windows test runs npm's own
+`claude.cmd` template with a `node.cmd` planted in the caller's folder. A
+Windows test runs every punctuation character through cmd.exe and checks that
+the refused set matches what cmd.exe changes. The shell-call scan now also
+catches `**` keywords on process calls, a command whose first word names a
+shell, `COMSPEC` and `os.posix_spawn`. Each of those has a sample it must catch.
+
+Checked by hand, not in CI: the real CLI 2.1.251, started through
+`claude_cli.run` from a folder with project `SessionStart` and
+`UserPromptSubmit` hooks and with the API address on a closed local port, ran
+both hooks under 0.4.2 and neither under this release. Not tested: whether a
+folder's `env` block could have sent requests to another host, or whether a
+`CLAUDE.md` there steered the judge. Both need files in the caller's folder,
+which the CLI no longer reads.
+
 ## 0.4.2
 
 The editor commands `judge`, `fix` and `polish` now find the `claude` CLI in
@@ -50,7 +114,8 @@ on the PATH. In both cases the start raised an uncaught `FileNotFoundError`.
   limit halfway through, keeps the best version so far and exits cleanly.
   Before, that failure ended in a traceback.
 
-Changed for callers:
+Changed for callers. These changes are breaking, and the release should have
+raised the minor version; 0.5.0 carries that bump:
 
 - The model's instructions now arrive as an appended system prompt, and the
   user turn holds a fixed line. The trust boundary text still ends the

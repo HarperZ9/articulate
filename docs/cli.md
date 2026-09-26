@@ -101,14 +101,25 @@ and logged in. The editor looks for it in two places. If `ARTICULATE_CLAUDE_CLI`
 is set, its value must be the absolute path of the CLI, such as
 `C:\Users\you\.local\bin\claude.exe`. Otherwise the editor searches the
 absolute entries on the PATH. It prefers `claude.exe` in any entry, and on
-Windows it falls back to the `claude.cmd` shim from an npm install. It never
-looks in the current directory. Set the variable when the editor runs from a
-process whose PATH does not hold the CLI, such as an MCP host or a bundled app.
-When neither place gives a runnable file, the command stops with an error that
-names the variable.
+Windows it falls back to the `claude.cmd` shim from an npm install. The search
+for the CLI skips the current directory. Set the variable when the editor runs
+from a process whose PATH does not hold the CLI, such as an MCP host or a
+bundled app. When neither place gives a runnable file, the command stops with
+an error that names the variable.
 
 The model session gets the prompt in a temporary file, the document on stdin,
-and no tools: every call passes `--strict-mcp-config --tools ""`.
+no tools and no project settings. Every call passes
+`--setting-sources user --strict-mcp-config --tools ""`. The CLI starts in a
+new empty folder under the temporary directory, which the editor removes after
+the call. It never starts in your current directory. `claude -p` skips the
+workspace trust prompt and reads `.claude/settings.json` from its working
+directory, so a document folder that holds one could otherwise run its hooks.
+On Windows the child also gets `NoDefaultCurrentDirectoryInExePath=1`, so the
+npm shim's `node` comes from the PATH.
+
+The editor is tested with CLI version 2.1.251. The first version that accepts
+all four flags is unknown. An older CLI that rejects one of them stops the
+command with an error that says to upgrade.
 
 ## Exit codes
 
