@@ -101,8 +101,9 @@ def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail
     The library reports them, each marked `house: true`; the command line, the
     editor diagnostics, the MCP tools and receipts leave them out unless the
     writer asks, because they skewed toward learner writing on the corpus run.
-    `blocking` counts the findings that block. `clean` (no HIGH or MEDIUM
-    finding) is deprecated: it echoes the retired verdict and is removed in 0.7.0.
+    `blocking` counts the findings that block. Two keys are deprecated and leave
+    in package 0.7.0: `clean` (no HIGH or MEDIUM finding; read `findings`) and
+    `blocking_count` (the same number as `blocking`).
     cadence_detail: add the sentence-length variation figures (`cv`, `uniform`).
     They are left out by default: that statistic is the burstiness signal
     perplexity detectors use, and the fairness harness is its only reader."""
@@ -123,7 +124,7 @@ def check_text(text, *, profile=None, allow=(), house_notes=True, cadence_detail
         "gate_level": gate_level(profile),
         "house": bool(p.get("house")),
         "blocking": blocking,
-        "blocking_count": blocking,
+        "blocking_count": blocking,                        # deprecated, see docstring
         "findings": "has_findings" if tiers["HIGH"] or tiers["MEDIUM"] else "no_findings",
         "clean": not (tiers["HIGH"] or tiers["MEDIUM"]),   # deprecated, see docstring
         "words": doc.get("words", 0),

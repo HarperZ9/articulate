@@ -21,11 +21,14 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
 - `--gate`: exit 1 when any file is blocked or cannot be screened, otherwise 0.
 - `--json`: a machine-readable payload with the findings, whether each one
   blocks and its `reason` and `reason_source`, `blocking` (the count of blocking
-  findings), per-rule counts, the gate, density (with `measures`, what it
-  counts), passive-voice and adverb rates and the `does_not_prove` line. The
-  `clean` key (no HIGH or MEDIUM finding) is deprecated: it echoes the retired
-  verdict, keeps its value in 0.6.0 and is removed in 0.7.0. Read `blocking` or
-  `gate`.
+  findings), per-rule counts, the gate, `findings` (`has_findings` when any HIGH
+  or MEDIUM finding exists), density (with `measures`, what it counts),
+  passive-voice and adverb rates and the `does_not_prove` line. Two keys are
+  deprecated and leave in package 0.7.0: `clean`, true when no HIGH or MEDIUM
+  finding exists, whose equal is `findings == "no_findings"`; and
+  `blocking_count`, the same number as `blocking`. `clean` does not say whether
+  the gate passed: a text with one MEDIUM finding under the default profile
+  reads `clean: false` and `gate: ok`. Read `gate` or `blocking` for the gate.
 - `--sarif`: SARIF 2.1.0 for GitHub code scanning, Azure DevOps, and reviewdog.
   Each rule's help text carries its reader-cost reason and the does-not-prove
   line, and each result records the profile.

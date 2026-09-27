@@ -75,3 +75,25 @@ def test_blocking_is_zero_when_nothing_blocks(tmp_path, capsys):
     result = _check_json(tmp_path, capsys, "b.md", "The trial ended early.\n")
     assert result["blocking"] == 0 and result["gate"] == "ok"
     assert result["clean"] is True
+
+
+def test_the_mcp_check_tool_keeps_clean_through_the_deprecation_window():
+    # Decision 8 keeps `clean` for one minor version on every surface that had
+    # it in 0.5.0; the MCP check tool returned it then.
+    from articulate import check_text, mcp_server
+    for text in ("The trial ended early.\n",
+                 "Studies show that this approach is a game-changer.\n"):
+        out = mcp_server.do_check(text)
+        r = check_text(text, house_notes=False)
+        assert out["clean"] is r["clean"]
+        assert out["blocking"] == r["blocking"]
+
+
+def test_clean_is_not_the_gate():
+    # docs/cli.md: `clean` reads false for a MEDIUM-only text that the default
+    # profile lets through, so its equal is `findings`, not the gate.
+    from articulate import check_text
+    r = check_text("Studies show that this approach is a game-changer.\n", house_notes=False)
+    assert r["medium"] and not r["high"]
+    assert (r["clean"], r["gate"], r["findings"]) == (False, "ok", "has_findings")
+    assert r["blocking_count"] == r["blocking"] == 0

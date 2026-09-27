@@ -76,6 +76,9 @@ def do_check(text):
     return {
         "gate": r["gate"],
         "findings": r["findings"],
+        "blocking": r["blocking"],
+        # Deprecated: no HIGH or MEDIUM finding. Kept until package 0.7.0.
+        "clean": r["clean"],
         "hits": hits,
         "advisory_count": len(r["low"]),
         "rule_counts": r["rule_counts"],

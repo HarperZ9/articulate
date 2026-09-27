@@ -24,8 +24,9 @@ TOOLS = {
     "check": ("Check a passage for named prose patterns. Runs fully local with no "
               "network call. Returns each finding with its rule, tier, line and span, "
               "whether it blocks under the profile, per-rule counts, the gate "
-              "(ok or blocked), density with an interval above 250 words, and passive-voice "
-              "and adverb rates. " + DOES_NOT_PROVE),
+              "(ok or blocked) with the count of blocking findings, density with an "
+              "interval at 250 words or more, and passive-voice and adverb rates. The "
+              "`clean` field is deprecated and leaves in package 0.7.0. " + DOES_NOT_PROVE),
     "score": ("Per-rule counts, density per 1,000 words with an exact interval (shown "
               "at 250 words or more), and passive-voice and adverb rates for a passage. "
               "Local, no network. " + DOES_NOT_PROVE),
