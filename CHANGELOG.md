@@ -16,7 +16,9 @@ essay windows and 31 of 145 student abstract windows, and one rule fired about
 11 times as often per word on the learner texts. This release answers that. The
 measured before and after are in `docs/fairness-audit.md`. Every release gate
 passes on that corpus for the new ruleset; the rules were tuned on it, so the
-pass is exploratory until a held-out corpus confirms it.
+pass is exploratory. On the pre-registered held-out corpus, PERSUADE 2.0, the
+release gate fails (G1, G2 and G4), so the release check blocks this ruleset.
+The receipt and its reading are in `docs/fairness-confirmatory.md`.
 
 Rules and scanning:
 

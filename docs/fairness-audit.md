@@ -30,7 +30,8 @@ earlier draft of ruleset 0.7.0 failed two gates on this corpus; its receipt,
   windows and 4 of 145 abstract windows. Every gap lies inside 5 points.
 - Every release gate passes on this corpus. The rules were changed after
   reading it, so the pass is exploratory; it needs a corpus the rules were not
-  tuned on to confirm it.
+  tuned on to confirm it. On that corpus, PERSUADE 2.0, the release gate
+  fails; see [the confirmatory run](fairness-confirmatory.md).
 - The house style's notes (the intensifiers among them) show only under a house
   profile or when the writer asks. No note that shows by default is skewed
   toward the learner texts by the G2 rule.

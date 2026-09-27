@@ -21,11 +21,16 @@ before you rely on any output.
 - **Measure fairness in the open.** One writer's house style (the em dash,
   contrast devices, intensifiers, stock transitions and similar patterns) blocks
   only under the `house` or `house-essay` profile, which you choose, and no other
-  profile shows it unless you ask with `--house-notes`. On the corpus run so far
-  the default profile blocks none of 306 human texts, the strict `essay`
-  profile blocks 5 of them, and every release gate passes. The rules were tuned
-  on that corpus, so the pass is exploratory until a held-out corpus confirms
-  it. The [fairness audit](docs/fairness-audit.md) has the before and after with
+  profile shows it unless you ask with `--house-notes`. On the Liang et al.
+  corpus the default profile blocks none of 306 human texts, the strict `essay`
+  profile blocks 5 of them, and every release gate passes; the rules were tuned
+  on that corpus, so that pass is exploratory. On the held-out corpus, 14,797
+  school essays from PERSUADE 2.0, the default profile again blocks none, and
+  the pre-registered release gate fails: the strict profiles block 14.0% of the
+  essays by writers not recorded as English learners and 6.0% of the learner
+  essays, and some essays change findings when rewrapped. The
+  [fairness audit](docs/fairness-audit.md) and the
+  [confirmatory run](docs/fairness-confirmatory.md) have the numbers with
   intervals.
 - **Adapt by register, mode and genre.** Profiles (procedure, commit, research,
   readme, essay, narrative and more) set which findings block. Writing modes
@@ -164,6 +169,8 @@ Pre-1.0. Version 0.5.0 is on PyPI as `articulate-writing`; the changes on this
 page are unreleased and listed in the [changelog](CHANGELOG.md). The fairness
 harness has run on proxy corpora only. No arm yet groups adult academic writers
 by first language, and none covers dictated text, disabled writers or World
-Englishes. The release gate for the new ruleset passes on the corpus run so far,
-which is the corpus the rules were tuned on, so that pass is exploratory. The
-gate runs only when a release changes the ruleset.
+Englishes. The release gate for the new ruleset passes on the Liang et al.
+corpus, which the rules were tuned on, and fails on the held-out PERSUADE 2.0
+corpus, so a release that ships this ruleset is blocked
+([confirmatory run](docs/fairness-confirmatory.md)). The gate runs only when a
+release changes the ruleset.

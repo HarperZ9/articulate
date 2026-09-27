@@ -235,7 +235,9 @@ from the committed receipts' own rows and fails when a receipt is missing, came
 from an unlisted manifest, leaves out a required comparison or a bound profile,
 or a gate fails. A maintainer's override with a reason is accepted only when no
 gate row that passed under the published ruleset fails under the new one. The
-results so far are in the [fairness audit](fairness-audit.md).
+results so far are in the [fairness audit](fairness-audit.md) and the
+[confirmatory run](fairness-confirmatory.md). `--jobs N` scans documents in N
+processes and writes the same receipt.
 
 ## Binary inputs fail closed
 
