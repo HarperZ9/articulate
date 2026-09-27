@@ -168,7 +168,7 @@ def do_fix(text, is_html=False, is_tex=False, allow_change=""):
     return {"ok": True, "rewrite": rewrite,
             "findings_after": after["findings"], "gate_after": after["gate"],
             "meaning": g.log[-1]["report"]["verdict"],
-            "changes": changes.build(text, rewrite)["changes"],
+            "changes": changes.build(text, rewrite, guard=g, tex=is_tex)["changes"],
             "note": "a suggestion; read it against the original before shipping",
             "does_not_prove": DOES_NOT_PROVE}
 
