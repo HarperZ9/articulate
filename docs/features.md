@@ -229,12 +229,16 @@ content-free receipt with block rates by group, both gap directions, per-rule
 skew states, the report-only notes a writer sees, and a layout check that
 rewraps each text to one sentence per line and hard-wraps it at 60 columns.
 `--release-check` gates only a release that changes the ruleset: when the
-fingerprint equals the one in `fairness/published-ruleset.json`, it passes and
-says the gates were not re-run. For a changed ruleset it recomputes the gates
-from the committed receipts' own rows and fails when a receipt is missing, came
-from an unlisted manifest, leaves out a required comparison or a bound profile,
-or a gate fails. A maintainer's override with a reason is accepted only when no
-gate row that passed under the published ruleset fails under the new one. The
+fingerprint equals the one in `fairness/published-ruleset.json` and that record
+names an earlier release, it passes and says the gates were not re-run. For a
+changed ruleset it recomputes the gate summary from the committed receipts'
+rows, checks each stored flag against its stored numbers and each receipt
+against its pin, and fails when a receipt is missing or duplicated, came from an
+unlisted manifest, leaves out a required comparison or a bound profile, has no
+confirmatory reading for this ruleset, or a gate fails. It trusts the stored G2
+states and layout counts, which it cannot recompute without the documents. A
+maintainer's override with a reason is accepted only when no gate row fails that
+did not fail under the published ruleset's own receipt. The
 results so far are in the [fairness audit](fairness-audit.md) and the
 [confirmatory run](fairness-confirmatory.md). `--jobs N` scans documents in N
 processes and writes the same receipt.

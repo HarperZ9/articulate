@@ -141,6 +141,13 @@ def test_prereg_release_requirements_name_each_manifest_and_its_comparisons():
     assert set(req["comparisons"]) == set(req["manifests"])
 
 
+def test_prereg_confirmatory_block_binds_each_manifest_to_one_ruleset():
+    text = (ROOT / "fairness" / "PREREG.md").read_text(encoding="utf-8")
+    block = json.loads(re.findall(r"```json\n(.*?)\n```", text, re.S)[2])
+    assert block == fairness_release.CONFIRMATORY
+    assert set(block) <= set(fairness_release.RELEASE_MANIFESTS)
+
+
 def test_the_committed_manifest_is_pinned_and_content_free():
     man, digest = fairness_corpora.load_manifest(str(MANIFEST))
     assert digest in fairness_release.REQUIREMENTS

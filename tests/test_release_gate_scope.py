@@ -1,6 +1,7 @@
 """The release gate scoped to ruleset changes (PR 9, decision 1).
 
-- A ruleset equal to the last published one is not gated; the check says so.
+- A ruleset equal to the one an earlier release published is not gated; the
+  check says so. A record that names the version being built never skips.
 - A changed ruleset must pass every gate on every required receipt.
 - An override for one exact ruleset is accepted only when no gate row that
   passes in the published ruleset's receipt fails in the new one, and the
@@ -8,12 +9,12 @@
 
 Synthetic edits of the committed receipt only; nothing here measures any group.
 """
-import copy
 import json
 import pathlib
 import re
 
 import pytest
+from receipt_fakes import all_pass, as_ruleset
 
 from articulate import fairness, fairness_release
 
@@ -33,21 +34,13 @@ def _after():
 
 
 def _as(rec, fp):
-    rec = copy.deepcopy(rec)
-    rec["ruleset_version"] = fp
-    rec["gates"] = fairness._gate_summary(rec["results"], fairness.bound_profiles())
-    return rec
+    return as_ruleset(rec, fp)
 
 
 def _all_pass(rec):
-    rec = copy.deepcopy(rec)
-    for v in rec["results"].values():
-        v["g4"]["changed"] = 0
-        for c in v["comparisons"].values():
-            c["g1"]["pass"] = True
-            for row in c["g2"].values():
-                row["pass"] = True
-    return rec
+    # Numbers and flags both pass: the check compares a stored flag with its
+    # stored numbers, so flipping a flag alone makes a malformed receipt.
+    return all_pass(rec)
 
 
 def _stem(fp):
@@ -65,6 +58,9 @@ def layout(tmp_path, monkeypatch):
     req = {man: fairness_release.REQUIREMENTS[man]}
     monkeypatch.setattr(fairness_release, "REQUIREMENTS", req)
     monkeypatch.setattr(fairness_release, "RELEASE_MANIFESTS", tuple(req))
+    # This one manifest stands in for a corpus pre-registered to confirm NEW_FP;
+    # the confirmatory requirement has its own test.
+    monkeypatch.setattr(fairness_release, "CONFIRMATORY", {man: NEW_FP})
     receipts = tmp_path / "receipts"
     receipts.mkdir()
 
@@ -84,13 +80,14 @@ def layout(tmp_path, monkeypatch):
 
 
 def test_an_unchanged_ruleset_passes_with_a_note_and_no_receipt(tmp_path, monkeypatch):
+    # The record names an earlier release than the one being built.
     monkeypatch.setattr(fairness_release, "ruleset_fingerprint", lambda: OLD_FP)
     (tmp_path / "receipts").mkdir()
     (tmp_path / "published-ruleset.json").write_text(json.dumps(
-        {"package_version": "9.9.9", "ruleset_version": OLD_FP, "receipts": []}))
+        {"package_version": "0.0.9", "ruleset_version": OLD_FP, "receipts": []}))
     ok, lines = fairness_release.release_check(str(tmp_path / "receipts"))
     assert ok
-    assert lines == [f"ruleset unchanged since 9.9.9 ({OLD_FP}); gates not re-run"]
+    assert lines == [f"ruleset unchanged since 0.0.9 ({OLD_FP}); gates not re-run"]
 
 
 def test_a_changed_ruleset_that_passes_every_gate_passes(layout):
@@ -160,9 +157,11 @@ def test_the_published_record_names_a_committed_release_receipt():
 
 
 def test_the_command_prints_the_unchanged_note(monkeypatch, capsys):
+    # A later package that keeps the published ruleset, such as a security fix.
     pub = json.loads(PUBLISHED.read_text(encoding="utf-8"))
     monkeypatch.setattr(fairness_release, "ruleset_fingerprint",
                         lambda: pub["ruleset_version"])
+    monkeypatch.setattr(fairness_release, "_building_version", lambda: "0.5.1")
     code = fairness.main(["--release-check", str(ROOT / "fairness" / "receipts")])
     out = capsys.readouterr().out
     assert code == 0

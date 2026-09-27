@@ -12,16 +12,14 @@ pre-registered gates G1 to G7 (fairness_gates, fairness/PREREG.md).
   python -m articulate.fairness MANIFEST [--root DIR] [--out RECEIPT] [--jobs N]
   python -m articulate.fairness --release-check DIR [--published FILE]
 
-The release check is scoped to ruleset changes. When the current fingerprint
-equals the one in the published-ruleset record (fairness/published-ruleset.json,
-beside DIR by default), it passes and says the gates were not re-run. A changed
-ruleset needs a receipt DIR/<fingerprint>*.json from every listed manifest, and
-it fails when a receipt is missing, leaves out a required comparison or a bound
-profile, or when the gates recomputed from its own rows fail or disagree with
-the stored summary. A failure blocks the package release. It never blocks a
-user's run. An override in DIR/<fingerprint>.override.json, with a stated
-reason, excuses failing gates only when no gate row that passes in the published
-ruleset's receipt fails in the new one; the check prints that comparison.
+The release check (fairness_release) is scoped to ruleset changes. When the
+fingerprint equals the one in the published-ruleset record, and that record
+names an earlier package, it passes and says the gates were not re-run. A
+changed ruleset needs one pinned receipt DIR/<fingerprint>*.json per listed
+manifest whose flags agree with its numbers and whose recomputed gates pass,
+and a confirmatory receipt pre-registered for it. A failure blocks the package
+release, never a user's run. An override excuses failing gates only when no row
+fails that did not fail in the published ruleset's own receipt.
 
 Standard library only. No network. The harness never stores or prints text.
 """

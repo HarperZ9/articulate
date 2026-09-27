@@ -234,6 +234,103 @@ name a prompt, and a second required receipt. No threshold changes.
   proficiency, so the raw gap can mix the two; the banded and matched readings
   address that and cannot remove it.
 
+### Amendment of 27 September 2026: after the confirmatory run
+
+Dated 27 September 2026, after the PERSUADE 2.0 receipt for ruleset
+`sha256:46e1485cd2c98caa` was committed and read. The release gate fails on that
+corpus, and nothing here changes that result. No gate definition, threshold,
+corpus, sampling rule or seed changes. The items correct the record, tighten the
+release check, and set how a later ruleset gets a confirmatory reading. The text
+above stays as it was timestamped; where this amendment corrects it, this
+amendment holds.
+
+Corrections to the record. The status section says the second token came
+"before any run on PERSUADE 2.0", and the confirmatory amendment says the file's
+header and value counts were read "and nothing else". No gate result, block
+count or finding count on PERSUADE 2.0 existed before the receipt run, and the
+ruleset changes made after the first token used no PERSUADE output. Five
+contacts with the corpus were left out of that account (times UTC):
+
+- 26 September, 22:25: the value counts included a count of essays by prompt
+  and English-learner status.
+- 26 September, 22:25, before the commit that holds the confirmatory amendment:
+  a timing probe measured 20 essays under every configuration and printed only
+  their mean word count (415.25) and the seconds per essay (0.42).
+- 26 September, 22:34, after the first token: a harness run under the earlier
+  ruleset `sha256:1c8f54b02d8aa211` started and was stopped before it wrote a
+  receipt. The harness prints and writes only at the end, so none of its
+  results was seen.
+- 27 September, 03:28 to about 07:21, after the second token: a first attempt
+  at the receipt run timed 20 essays (mean words and seconds only) and stopped
+  before it wrote a receipt. The receipt run started at 08:14.
+- 27 September, 04:14 to 04:18: the report-only ELLIPSE receipt was read before
+  the receipt run. 449 of the 1,330 PERSUADE learner essays share an id with the
+  ELLIPSE file, 439 of them with the same text once whitespace and case are
+  normalized, and none of the 13,467 other essays does. ELLIPSE is therefore not
+  independent of the confirmatory learner arm.
+
+Two harness commits landed after the second token: 628eca8 (a table set may
+select rows by a list of values) and 7198706 (`--jobs`). Neither touches a rule,
+a threshold, the corpus, the sampling or a seed. On every 20th PERSUADE essay the
+harness as it stood at the second token and the harness of the receipt run wrote
+the same bytes.
+
+What the anchors cover. Each token signs the bytes of this file. Through its
+text the second token fixes the manifest hash, the corpus hash, the thresholds,
+the seed and the 64-bit ruleset fingerprint the run measured. Neither token
+signs the harness code; git history and the byte-identity proof above pin it.
+The pull request was opened on 26 September at 18:38 UTC, before the
+confirmatory amendment, so its creation time anchors the original gate table
+only and says nothing about the order of the confirmatory run. From the next
+amendment on, the anchored text names the harness commit's tree hash.
+
+The release check. These items tighten the check and change no gate:
+
+- The published-ruleset record changes in a commit after a release publishes,
+  never in the release commit. The check skips the gates only when the record
+  names an earlier package version than the one being built. A record that
+  names the version being built, or no readable version, never skips them. This
+  replaces "the release commit updates it" in the amendment of 26 September:
+  under that wording the release commit's own record passed the ruleset it
+  introduced without reading a receipt.
+- A second receipt for one ruleset from one manifest fails the check, whatever
+  the file names.
+- Each stored G1 and G2 flag is checked against the receipt's stored numbers,
+  and the raw G1 gap and interval are recomputed from the stored counts. The
+  check trusts each stored G2 state, within-group gap and count of changed
+  documents, since it cannot recompute them without the documents.
+- `fairness/receipts/SHA256SUMS` pins every committed receipt by its bytes, and
+  the check refuses a receipt that differs from its pin. The confirmatory
+  receipt's SHA-256 is
+  `22992435165b85aa04f2096627060d0a5e0ccdb5b8cc9a72af2befd229f1e7a7`.
+- An override counts as a regression every gate row that fails in the new
+  receipt and did not fail in the published ruleset's receipt, a row that
+  receipt lacked included. It compares only with a receipt of the published
+  ruleset itself whose flags agree with its numbers, and it is refused when the
+  record names the ruleset being released.
+- No receipt of another ruleset on PERSUADE 2.0 made after 27 September 2026
+  serves as an override's comparison base for `sha256:46e1485cd2c98caa`: such a
+  base would be chosen with this result known. A later pre-registration names
+  any override base before its first reading.
+
+After the reading. PERSUADE 2.0 confirms `sha256:46e1485cd2c98caa` only. For any
+other ruleset its receipt is exploratory: the outcome on these essays is known,
+and a change made in response to it is tuned on it. A changed ruleset still needs
+a passing receipt from both manifests in the release-requirements block, which
+does not change, and it also needs a confirmatory receipt from a corpus
+pre-registered for it. The check reads that binding from the confirmatory block
+below and fails a changed ruleset with none. The amendment that names the next
+confirmatory corpus lands and is timestamped before that corpus is read, and it:
+
+- records an overlap check, by id and by normalized-text hash, against every
+  corpus already read (Liang et al., PERSUADE 2.0 and ELLIPSE);
+- names the ruleset fingerprint, the harness commit's tree hash and any
+  override comparison base;
+- settles what this run showed the rules leave open: a G2 reading for an arm
+  with no hits (the percentile bootstrap gives `[inf, inf]`), a multiplicity
+  statement for per-rule readings, whether the G4 rewrap keeps paragraph
+  breaks, and a receipt key for the notes whose rule ids carry a count.
+
 ## Statistics
 
 Wilson intervals for a proportion; Newcombe hybrid-score intervals for a
@@ -279,6 +376,19 @@ confirmatory corpus above).
     "sha256:8de8a1e6414e18f03730156ef6c4e8c87dc2f68fe73f0549d42cf4ea0788b4c3":
       ["persuade-ell-vs-non-ell"]
   }
+}
+```
+
+## Confirmatory manifests, machine-readable
+
+A test checks that this block equals `fairness_release.CONFIRMATORY`: each
+confirmatory manifest and the one ruleset fingerprint it confirms (amended 27
+September 2026, see above).
+
+```json
+{
+  "sha256:8de8a1e6414e18f03730156ef6c4e8c87dc2f68fe73f0549d42cf4ea0788b4c3":
+    "sha256:46e1485cd2c98caa"
 }
 ```
 

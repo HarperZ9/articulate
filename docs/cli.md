@@ -172,15 +172,30 @@ statistic in one, so the receipt is byte-identical to a single-process run; a
 test pins this.
 
 The release check reads the published-ruleset record, `published-ruleset.json`
-beside `DIR` unless `--published` names another. When the current ruleset
-fingerprint equals the published one, it passes and prints
-`ruleset unchanged since X (FINGERPRINT); gates not re-run`. Otherwise it
-recomputes the gates from `DIR/<fingerprint>*.json`, one receipt per listed
-manifest. A maintainer can let a changed ruleset publish while a gate fails by
-committing `DIR/<fingerprint>.override.json` with `ruleset_version`, `reason`
-and `decided_by`. The check accepts it only when no gate row that passes in the
-published ruleset's receipt fails in the new one; it prints that comparison, the
-reason and every failure. An override never excuses a malformed receipt.
+beside `DIR` unless `--published` names another. A commit after each release
+updates that record; the release commit never edits it. When the current ruleset
+fingerprint equals the published one and the record names an earlier package
+version than the one being built, the check passes and prints
+`ruleset unchanged since X (FINGERPRINT); gates not re-run`. A record that names
+the version being built never skips the gates.
+
+Otherwise it reads `DIR/<fingerprint>*.json`, exactly one receipt per listed
+manifest; a second receipt from the same manifest fails the check. Each
+receipt's stored G1 and G2 flags must agree with its stored numbers (the raw G1
+gap is recomputed from its counts; stored G2 states, within-group gaps and
+layout counts are trusted), every gate recomputed from its rows must pass, and
+when `DIR/SHA256SUMS` exists each receipt must match its pin there
+(`sha256sum -c SHA256SUMS` checks the same thing). A changed ruleset also needs
+a receipt from a corpus pre-registered to confirm it: PERSUADE 2.0 confirms only
+`sha256:46e1485cd2c98caa`.
+
+A maintainer can let a changed ruleset publish while a gate fails by committing
+`DIR/<fingerprint>.override.json` with `ruleset_version`, `reason` and
+`decided_by`. The check accepts it only when no gate row fails in the new receipt
+that did not fail in the published ruleset's own receipt, a row that receipt
+lacked included; it prints that comparison, the reason and every failure. It
+refuses an override whose comparison base is not a sound receipt of the
+published ruleset itself, and an override never excuses a malformed receipt.
 
 ## Editor commands
 

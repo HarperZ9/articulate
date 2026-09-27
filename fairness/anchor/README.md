@@ -34,9 +34,13 @@ openssl ts -verify -in fairness/anchor/PREREG-2.tsr -data fairness/PREREG.md \
 
 Each prints `Verification: OK`. The second command checks the file itself, so
 it holds only for the version of `fairness/PREREG.md` whose SHA-256 the token
-names. For an earlier token, check out that version (for example
-`git show 5a30364:fairness/PREREG.md > PREREG-first.md`) and pass it to
-`-data`. To read the time in a token:
+names. The amendment of 27 September 2026 was added after both tokens, so
+neither token matches the file as it stands now. Check each against its own
+version: write token 1's file with `git show 5a30364:fairness/PREREG.md > PREREG-first.md`
+and token 2's with `git show e247280:fairness/PREREG.md > PREREG-second.md`, then
+pass it to `-data`. No token covers the amendment of 27 September yet; a
+third token over the file with it is still to be taken. To read the time in a
+token:
 
 ```
 openssl ts -reply -in fairness/anchor/PREREG-2.tsr -text
@@ -45,5 +49,8 @@ openssl ts -reply -in fairness/anchor/PREREG-2.tsr -text
 ## What it shows
 
 A token shows that a file with its SHA-256 existed by the time it names. It
-does not show when any run took place. The pull request's creation time on
-GitHub is a further, weaker anchor.
+does not show when any run took place, and it signs only the file's bytes: the
+harness code is pinned by git history and by the byte-identity proof the
+confirmatory page describes. The pull request was opened on 26 September 2026 at
+18:38 UTC, before the confirmatory amendment, so its creation time anchors only
+the original gate table.

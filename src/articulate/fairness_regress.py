@@ -37,15 +37,19 @@ def gate_rows(rec):
 
 def compare(old, new, show=12):
     """(summary line, regressed rows). A row regresses when it passes in `old`
-    and fails, or is missing, in `new`."""
-    regressed = sorted(k for k, ok in old.items() if ok and not new.get(k, False))
+    and fails, or is missing, in `new`, and when it fails in `new` and `old`
+    lacks it: a newly bound profile that fails sends writers to a failing gate
+    the published ruleset did not have."""
+    dropped = sorted(k for k, ok in old.items() if ok and not new.get(k, False))
+    added = [k for k in new if k not in old]
+    added_failing = sorted(k for k in added if not new[k])
+    regressed = dropped + added_failing
     fixed = sum(1 for k, ok in old.items() if not ok and new.get(k, False))
     both = sum(1 for k, ok in old.items() if ok and new.get(k, False))
     still = sum(1 for k, ok in old.items() if not ok and k in new and not new[k])
-    added = [k for k in new if k not in old]
     line = (f"{both} rows pass in both, {fixed} fail before and pass now, "
-            f"{still} fail in both, {len(regressed)} pass before and fail now, "
-            f"{len(added)} new rows ({sum(1 for k in added if not new[k])} failing)")
+            f"{still} fail in both, {len(dropped)} pass before and fail now, "
+            f"{len(added)} new rows ({len(added_failing)} failing)")
     if regressed:
         more = f" and {len(regressed) - show} more" if len(regressed) > show else ""
         line += ": " + ", ".join(regressed[:show]) + more
