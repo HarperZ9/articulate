@@ -16,7 +16,8 @@ output is a suggestion that no receipt reproduces.
   it.
 - [CLI reference](cli.md): each command and every flag, with the exit codes.
 - [Fairness audit](fairness-audit.md): how the rules treat learner, college and
-  academic writing, before and after ruleset 0.7.0, with each gate's result.
+  academic writing, under the 0.5.0 rules and the new ones, with each gate's
+  result.
 - [Confirmatory run](fairness-confirmatory.md): the pre-registered run on
   held-out school essays, gate by gate.
 - [Boundaries](boundaries.md): what each output means and never means. Read this

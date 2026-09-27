@@ -15,9 +15,13 @@ before you rely on any output.
 
 - **Check.** Each finding names a rule, its span and its tier. A rule that can
   block a writer carries a one-sentence reader-cost reason with a published
-  source. The gate says `ok` or `blocked` under the profile in use, and that is
-  the only pass-or-block signal. `score` reports per-rule counts and density per
-  1,000 words with an exact interval, shown at 250 words or more.
+  source; no reader other than the maintainer has yet checked those reasons.
+  The gate says `ok` or `blocked` under the profile in use, and that is the only
+  pass-or-block signal. `score` reports per-rule counts and density per 1,000
+  words with an exact interval, shown at 250 words or more. A file under an
+  `essays/`, `blog/` or `writing/` folder checks under the strict `essay`
+  profile, and a `.tex` file under `research`; everything else under the
+  default.
 - **Measure fairness in the open.** One writer's house style (the em dash,
   contrast devices, intensifiers, stock transitions and similar patterns) blocks
   only under the `house` or `house-essay` profile, which you choose, and no other
@@ -28,7 +32,10 @@ before you rely on any output.
   school essays from PERSUADE 2.0, the default profile again blocks none, and
   the pre-registered release gate fails: the strict profiles block 14.0% of the
   essays by writers not recorded as English learners and 6.0% of the learner
-  essays, and some essays change findings when rewrapped. The
+  essays, and some essays change findings when rewrapped. Only the profiles a
+  default, a path or a mode can assign were measured; one you choose only by
+  flag (`procedure`, `api-docs`, `error-message`, `social`, `chat`,
+  `journalism`, and the three fiction genres) was not. The
   [fairness audit](docs/fairness-audit.md) and the
   [confirmatory run](docs/fairness-confirmatory.md) have the numbers with
   intervals.
@@ -38,8 +45,9 @@ before you rely on any output.
   read each kind of writing by its own convention.
 - **Edit for the reader.** `judge` reads judgment-level failures. `fix` writes
   each rewrite and re-checks it. `polish` keeps a pass only when no quality score
-  falls and the gate does not go from ok to blocked. No instruction names an
-  outside score, a sentence-length target or a vocabulary level.
+  falls, the gate does not go from ok to blocked and no note the mode requires
+  opens. No instruction names an outside score, a sentence-length target or a
+  vocabulary level.
 - **Keep your own process record.** `articulate process` keeps a local,
   opt-in log of your drafts as salted commitments, with order and day only by
   default, and exports a process summary you control. `articulate disclose`
@@ -90,7 +98,9 @@ articulate-mcp
 
 [Getting started](docs/getting-started.md), a [walkthrough](docs/walkthrough.md),
 the [feature reference](docs/features.md), the [CLI reference](docs/cli.md), the
-[fairness audit](docs/fairness-audit.md) and the [boundaries](docs/boundaries.md).
+[fairness audit](docs/fairness-audit.md), the
+[confirmatory run](docs/fairness-confirmatory.md) and the
+[boundaries](docs/boundaries.md).
 
 ## Scientific and mathematical writing
 
@@ -132,10 +142,14 @@ test statistic. A count such as "in 1200 patients" is not a citation.
 A line such as `writing-allow: substrate, load-bearing` (inside an HTML comment,
 a `%` comment or YAML front matter works) in the first 15 lines keeps those
 terms. A finding whose matched text contains an allowed term, as a substring and
-in any case, is dropped for the whole file. The contrast and cadence devices
-ignore the list, since each is a sentence structure. The match is by
-substring, so allowing `revolutionary` also clears "a revolutionary product" in
-the same file; choose the narrowest term that works.
+in any case, is dropped for the whole file. The list reaches every rule except
+the contrast and cadence devices, the em dash and emoji, the HIGH tier included:
+`writing-allow: language model` clears "As an AI language model, I cannot
+browse the web", and `writing-allow: cite` clears an interface token such as
+`[oaicite:0]`. The match is by substring, so allowing `revolutionary` also
+clears "a revolutionary product" in the same file; choose the narrowest term
+that works. The line sits in a comment that a rendered page does not show, so a
+CI owner should review `writing-allow:` lines in a diff.
 
 ## Privacy
 

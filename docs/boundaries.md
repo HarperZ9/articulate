@@ -46,12 +46,15 @@ other house-pack patterns are one writer's style. Only the `house` and
 pass `--house-notes`, and then they are low-tier notes that never block. No path
 rule selects a house profile for you.
 
-On the corpus run so far, the `house` profile blocked learner exam texts more
+On the Liang et al. corpus, the `house` profile blocked learner exam texts more
 often than student abstracts (a gap of 24.8 points, 95% interval 13.1 to 36.2).
-Against US college essay windows the gap was 12.1 points, and that interval
-(-2.8 to 25.9) includes zero. A house profile is for your own text or your own
-project's. Applying it to other people's writing, such as a course's
-submissions, carries that gap to them. See [fairness-audit.md](fairness-audit.md).
+Against US college essay windows the gap was 13.5 points, and that interval
+(-1.3 to 27.2) includes zero. On PERSUADE 2.0 it blocked most school essays in
+both groups: 57% of learner essays and 64% of the others. A house profile is
+for your own text or your own project's. Applying it to other people's writing,
+such as a course's submissions, carries those rates to them. See the
+[fairness audit](fairness-audit.md) and the
+[confirmatory run](fairness-confirmatory.md).
 
 ## Exposition quality is no proof of correctness
 

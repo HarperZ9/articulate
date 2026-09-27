@@ -59,3 +59,22 @@ def test_check_help_states_scope_and_leak(capsys):
     out = " ".join(capsys.readouterr().out.split())
     for fact in ("first 15 lines", "substring", "whole file"):
         assert fact in out, fact
+
+
+def test_the_list_reaches_the_high_tier_as_documented():
+    # The documented reach: an allowed term clears a HIGH finding too, so a CI
+    # owner must review the list. The em dash ignores it (control).
+    default = profiles.load("flavored")
+    line = "As an AI language model, I cannot browse the web.\n"
+    assert check_text(line, profile=default, house_notes=False)["gate"] == "blocked"
+    allowed = "<!-- writing-allow: language model -->\n" + line
+    assert check_text(allowed, profile=default, house_notes=False)["gate"] == "ok"
+    dash = "<!-- writing-allow: text -->\n\nSome text—more text.\n"
+    assert "em-dash" in [f["category"] for f in check_text(dash, profile=profiles.load(
+        "house"))["high"]]
+
+
+@pytest.mark.parametrize("doc", ["README.md", "docs/features.md"])
+def test_the_docs_state_that_the_list_reaches_the_high_tier(doc):
+    text = " ".join((ROOT / doc).read_text(encoding="utf-8").split())
+    assert "the HIGH tier included" in text and "review `writing-allow:` lines" in text

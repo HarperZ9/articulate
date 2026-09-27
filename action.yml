@@ -36,7 +36,7 @@ runs:
         if [ -n "${{ inputs.profile }}" ]; then PROFILE="--profile ${{ inputs.profile }}"; fi
         case "${{ inputs.profile }}" in
           house|house-essay)
-            echo "::notice::This workflow applies the house profile to every contributor's text. It is one writer's style, and on the corpus run so far it blocked learner writing more often than other writing (docs/fairness-audit.md)." ;;
+            echo "::notice::This workflow applies the house profile to every contributor's text. It is one writer's style. On the Liang et al. corpus it blocked learner texts more often than other texts; on PERSUADE 2.0 it blocked most school essays in both groups (57% of learner essays, 64% of others). See docs/fairness-audit.md and docs/fairness-confirmatory.md." ;;
         esac
         python -m articulate.cli check ${{ inputs.files }} $PROFILE --sarif > articulate.sarif
       shell: bash

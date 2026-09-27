@@ -253,7 +253,10 @@ command with an error that says to upgrade.
 - `audit --reverify --gate`: 1 on a real integrity break, else 0.
 - `desk`: 0 whenever the run completes, 2 on unreadable or binary input.
 - `disclose`: 2 when the statement is refused.
-- `process verify`: 0 when intact, 1 when broken or missing.
+- `process verify`: 0 when intact, 1 when broken, 3 when missing.
+- `desk`: 2 on an unknown `--venue`.
+- `python -m articulate.editor`: 3 when the local-only switch refuses a hosted
+  command, 2 when the file is missing or cannot be read.
 - `python -m articulate.fairness --release-check`: 0 when the ruleset is
   unchanged since the published one or every gate passes; 1 when a gate fails
   and no accepted override names the current ruleset, or a receipt is missing

@@ -22,10 +22,10 @@ tiers:
   footnotes, Pandoc keys, LaTeX `\cite`, alpha keys, author and year, legal
   citations, links, and "according to" a named source. "Our data show" beside a
   figure, table or test statistic is the writer's own evidence.
-- LOW: notes that never block and expand only with `--verbose`. A reply opener
-  that hands over a deliverable ("Certainly! Here is ...") is a LOW note, since
-  an email reply does that on purpose; the `essay` and house profiles promote it
-  to a blocking finding. "In order to" (`padded-purpose`) and "state of the
+- LOW: notes that block only where a profile or mode promotes them, and that
+  expand only with `--verbose`. A reply opener that hands over a deliverable
+  ("Certainly! Here is ...") is a LOW note, since an email reply does that on
+  purpose; the `essay` and house profiles promote it to a blocking finding. "In order to" (`padded-purpose`) and "state of the
   art" in a sentence with no number, year or citation (`unanchored-claim`) are
   LOW notes that never block, because usage guides accept both in some uses.
   "It is important to", "It is worth noting that" and "It is important to note
@@ -55,14 +55,20 @@ block everywhere, quotes included.
 A `writing-allow:` line in the first 15 lines (an HTML comment, a `%` comment or
 YAML front matter works) keeps terms of art for the whole file: a finding whose
 matched text contains an allowed term as a substring, in any case, is dropped.
-The contrast and cadence devices ignore it. The match is a substring: an allowed
-`revolutionary`, meant for a war's name, also clears "a revolutionary product"
-in the same file. Every finding carries a line, an end line, a column and a
+It reaches every rule except the contrast and cadence devices, the em dash and
+emoji, the HIGH tier included: `writing-allow: language model` clears a line
+where the speaker calls itself a language model. A CI owner should review
+`writing-allow:` lines in a diff, since a rendered page hides the comment. The
+match is a substring: an allowed `revolutionary`, meant for a war's name, also
+clears "a revolutionary product" in the same file. Every finding carries a line, an end line, a column and a
 character span, and says whether it blocks under the profile in use.
 
-The checks read a paragraph as one logical line, so the same text gives the same
-findings whether you soft-wrap it or put one sentence per line, and every match
-on a line counts. Headings, table rows, list items, block quotes, verse and
+The checks read a paragraph as one logical line, and every match on a line
+counts. On the Liang et al. corpus no text changed its findings when rewrapped
+to one sentence per line or hard-wrapped. On PERSUADE 2.0, 31 of 14,797 essays
+under `essay` (504 under `memoir`) changed their HIGH or MEDIUM findings or
+their word counts under the one-sentence rewrap, and none under the hard wrap;
+the cause is not established. Headings, table rows, list items, block quotes, verse and
 screenplay lines keep their own lines. A C2PA text manifest (Annex A.8 or A.9)
 is blanked before any rule runs, so a credential raises nothing.
 
@@ -82,8 +88,8 @@ enumeration, stock transitions, closers, cadence beats, curly quotation marks, a
 bare "There is" opener, and the stock phrases of email, blog and marketing
 hooks. Only the `house` and `house-essay` profiles block
 on it. No other profile shows those findings in the console, the editor, SARIF,
-the MCP tools or receipts unless you pass `--house-notes`; then they are LOW
-notes marked `house: true`. The library call `check_text` reports them, marked,
+the MCP tools or receipts; `check` and `score` show them as LOW notes marked
+`house: true` when you pass `--house-notes`. The library call `check_text` reports them, marked,
 for callers who filter their own output. No path rule resolves to a house
 profile. A project opts in with `--profile house` or a `writing-profile: house`
 tag, and the GitHub Action prints a notice when a workflow does. This repository

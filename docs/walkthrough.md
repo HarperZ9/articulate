@@ -86,7 +86,8 @@ python -m articulate.editor --polish post.md --mode marketing/persuade
 `judge` quotes each weak passage and says what a skilled writer would do. `fix`
 writes a rewrite so the intended reader can follow the text on one read and
 re-checks it under the same profile. `polish` keeps a pass only when no quality
-score falls and the gate does not go from ok to blocked. The house writing
+score falls, the gate does not go from ok to blocked and no note the mode
+requires opens. The house writing
 standard reaches the model only under a house profile, and no instruction names
 an outside score. The rewrite is
 a suggestion; read it against the original.

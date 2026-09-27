@@ -22,6 +22,7 @@ nothing about who wrote any text here.
 The control set is small and narrow: historic public-domain prose and one
 passage of present-day United States federal government prose. It includes no learner English, no spoken-register text and no
 World Englishes. The fairness harness measures those groups on corpora that stay
-outside this repository. The one run so far, the Liang et al. (2023) release,
-has no licence file (its README shows an MIT badge), so its texts are used
-locally and never committed.
+outside this repository. The Liang et al. (2023) release has no licence file
+(its README shows an MIT badge), and PERSUADE 2.0 and ELLIPSE are released
+under CC BY-NC-SA 4.0, so their texts are used locally and never committed;
+only manifests with hashes and content-free receipts are.

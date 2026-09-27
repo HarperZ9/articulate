@@ -15,7 +15,8 @@ ALLOW_HELP = ("writing-allow: a line such as `writing-allow: substrate, load-bea
               "the first 15 lines (an HTML comment, a %-comment or YAML front matter "
               "works) keeps those terms for the whole file: a finding whose matched "
               "text contains an allowed term as a substring, in any case, is dropped. "
-              "The contrast and cadence devices ignore it. A substring match is broad: "
+              "It reaches every rule, the HIGH tier included, except the contrast "
+              "and cadence devices, the em dash and emoji. A substring match is broad: "
               "allowing 'revolutionary' also clears 'a revolutionary product'.")
 ALLOW_TAG = re.compile(r"writing-allow:\s*([^\n>%]+)", re.I)
 
