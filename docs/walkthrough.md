@@ -52,18 +52,32 @@ findings says `house style`. Every result ends with the does-not-prove line.
 No path selects a house profile for you; this repository opts in for its own
 docs.
 
-Some writing has rules of its own. A file of UI strings checks under
-`ux-microcopy`:
+Some writing has rules of its own. A file of UI strings, one per line, checks
+under `ux-microcopy`:
+
+```
+button: Save And Continue To The Next Step
+label: Name
+error: Something went wrong.
+button: Cancel
+link: For details, click here.
+```
 
 ```bash
 articulate check strings.txt --profile ux-microcopy --verbose
 ```
 
 ```
-[articulate] strings.txt [ux-microcopy]: 0 high, 4 medium (blocked)  texture 0/100
+[articulate] strings.txt [ux-microcopy]: 0 high, 2 medium, 2 low, gate blocked
   L1 [MEDIUM ux-length] button label has 7 words and 34 characters; the limit is 3 words and 26 characters: button: Save And Continue To The Next Step
+      why: A long button, label or error sentence takes longer to scan, can be cut off on a small screen, and hides the action the reader came to take.
   L5 [MEDIUM ux-link-text] link text that names no destination; name where the link goes: link: For details, click here.
+      why: Link text such as 'click here' tells a reader who scans the links, or hears them read aloud, nothing about where the link goes.
+  L1 [LOW ux-case] title case in a UI string; this project uses sentence case: button: Save And Continue To The Next Step
+      why: Mixed capitalization across one interface makes the reader wonder whether the capitals mark a name or a term.
   L3 [LOW ux-vague-error] error text without a cause and a next step: say what happened and what to do: error: Something went wrong.
+      why: An error message that names no cause and no next step leaves the reader unable to recover.
+[articulate] These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.
 ```
 
 `code-review`, `plain-language`, and `controlled-english` work the same way, and
@@ -155,16 +169,16 @@ python -m articulate.editor --fix post.md --explain
 ```
 
 ```
-[changes] post.md -> post.fixed.md: 1 change(s); detector findings 2 -> 0; meaning preserved
-  #1 L2 replace
-    - We leverage cutting-edge tools.
-    + We use current tools.
-      flagged before: HIGH corporate-verb/leverage-underscore-reflect-as-corporate-verb: leverage / underscore / reflect (as corporate verb): 'leverage'
+[changes] post.md -> post.fixed.md: 1 change(s); detector findings 1 -> 0; meaning preserved
+  #1 L3 replace
+    - We rely on cutting-edge tools.
+    + We rely on current tools.
       flagged before: MEDIUM marketing/marketing-superlative: marketing superlative: 'cutting-edge'
+[changes] does not prove: The invariants are surface proxies. A rewrite can keep every one of them and still change the meaning, for example by moving a negation into another clause, swapping the order of two numbers, or changing a word no invariant covers. A capitalized word that opens a sentence may be an ordinary word, so it counts as a name only when the text also uses it as one mid-sentence: a name used once, at a sentence start, can be swapped for another unreported. A reported change can also be harmless. 'preserved' is a screen, never a proof that the two texts say the same thing.
 ```
 
-Had the model written "We build with two tools", the guard would have refused
-it: "two" is a number the original never stated.
+Had the model written "We rely on two tools", the guard would have refused it:
+"two" is a number the original never stated.
 
 `--explain json` writes the same report as JSON for a review tool.
 

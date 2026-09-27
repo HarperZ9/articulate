@@ -34,8 +34,11 @@ before you rely on any output.
   essays by writers not recorded as English learners and 6.0% of the learner
   essays, and some essays change findings when rewrapped. Only the profiles a
   default, a path or a mode can assign were measured; one you choose only by
-  flag (`procedure`, `api-docs`, `error-message`, `social`, `chat`,
-  `journalism`, and the three fiction genres) was not. The
+  flag or project config (`procedure`, `api-docs`, `error-message`, `social`,
+  `chat`, `journalism`, the four domain profiles and the three fiction genres)
+  was not. These numbers belong to ruleset `sha256:46e1485cd2c98caa`. The
+  unreleased ruleset adds BCP 14 checks to `normative-spec` and has not been
+  measured yet. The
   [fairness audit](docs/fairness-audit.md) and the
   [confirmatory run](docs/fairness-confirmatory.md) have the numbers with
   intervals.
@@ -221,9 +224,10 @@ text, and nothing else.
   record writes only under `.articulate/process/`. The other commands write
   nothing.
 - **Runtime.** Python 3.9 or later, with no third-party dependency in the core
-  (the optional fastmcp server needs the `mcp` extra). The package is about 330
-  KB of Python source. On one development machine, checking a 3,900-word page
-  took about 60 ms after a 60 ms import; your numbers will differ.
+  (the optional fastmcp server needs the `mcp` extra). The package is about 570
+  KB of Python source in 86 modules. On one development machine on 27 September
+  2026, checking the 5,540-word features page took about 90 ms, after an import
+  of about 60 ms; your numbers will differ.
 
 ## Scope: English only
 

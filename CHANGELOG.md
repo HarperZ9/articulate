@@ -238,6 +238,13 @@ Fairness harness and release check:
 
 ### Rewrite integrity, project config and domain profiles
 
+These changes come from pull request 3, rebased onto the changes above. They
+change the ruleset: `RULESET_SEMVER` moves from 0.7.0 to 0.8.0, and the
+fingerprint from `sha256:46e1485cd2c98caa` to `sha256:fc461d859480a7d8`. No
+fairness receipt names the new fingerprint yet, so the release check blocks on
+that until the ruleset is measured. The PERSUADE 2.0 result above belongs to
+`sha256:46e1485cd2c98caa` alone.
+
 - Meaning guard. `articulate compare ORIGINAL REWRITE` reports each surface
   invariant as kept, dropped, added, or changed, with line and column: numbers
   with units (as symbols or words) and magnitude words ("one million", "$5M"),
@@ -250,9 +257,13 @@ Fairness harness and release check:
   `--gate` exits 1 on a change, and `--allow-change KINDS` exempts named kinds.
 - `fix` and `polish` run every model rewrite through the guard. A rewrite that
   changes an invariant is refused, the previous text is kept, and the output
-  names the invariant. `--allow-change` and `--freeze` configure it.
+  names the invariant. `--allow-change` and `--freeze` configure it. A rewrite
+  that loses, repeats or moves a protected placeholder fails the pass: `fix`
+  exits 1 and writes nothing, as it did before for a lost math span.
 - Both MCP servers gain a local `compare` tool, and `fix` and `polish` take an
-  `allow_change` argument and report a refusal with its blocking invariants.
+  `allow_change` argument. A refused rewrite returns `ok: false` from `fix`, with
+  the reason and a `refused` record of the stage and the blocking invariants;
+  `polish` keeps the last accepted text and returns the same record.
 - Limit: the invariants are surface proxies. A rewrite can keep all of them and
   still change the meaning, and a name used once at the start of a sentence can
   be swapped for another unreported. The report says so in a `does_not_prove`
@@ -260,8 +271,9 @@ Fairness harness and release check:
 - Protected spans. The math masking that `.tex` files had is now a general layer
   used before every model rewrite: fenced and inline code, math, URLs and emails,
   citations, block quotes, quoted material, and freeze terms become placeholders
-  the model never sees. Every placeholder must come back exactly once and in
-  order, and is spliced back byte for byte; a missing, duplicated, invented,
+  the model never sees. The findings summary in the prompt is built from the
+  masked text on every file. Every placeholder must come back exactly once and
+  in order, and is spliced back byte for byte; a missing, duplicated, invented,
   reordered, or mangled placeholder refuses the rewrite, and so does one moved
   into another paragraph when the paragraph count holds. `--unprotect
   quotes,blockquotes` releases the two configurable kinds, and the meaning
@@ -270,20 +282,24 @@ Fairness harness and release check:
   `--polish` lists each changed sentence before and after, the detector findings
   it carried (rule id and message), the findings left in the new sentence, the
   meaning-guard rows for the pair, and every refused candidate with its reason.
-  The MCP `fix` tool returns the same per-sentence records.
+  It reads the text under the profile the editor ran under and leaves house
+  notes out unless that is a house profile. The MCP `fix` tool returns the same
+  per-sentence records.
 - Project config. A `.articulate.json` found by walking up from each file (JSON,
   because the package supports Python 3.9) sets profiles by path glob, banned
   and preferred terms with reasons and suggestions, allowed terms of art, freeze
   terms, the protect switches, and rule-pack options. Terminology findings carry
   their own rule ids (`terminology/banned/<term>`, `terminology/preferred/<form>`)
-  and show in `check`, SARIF, the LSP server, per-span verdicts, and receipts.
+  and show in `check`, SARIF, the LSP server, `--spans` counts, and receipts.
   `--config PATH` or `--config none` overrides discovery on every command, and
   `articulate config PATH` shows what applies. A malformed file stops the command
   with the reason.
 - Receipts made under a config embed the project rules and their hash, so a
-  replay re-derives with no access to the project.
-- Ruleset semver moves 0.5.0 to 0.6.0. Older receipts read `Unverifiable` under
-  this build, as a ruleset change should.
+  replay re-derives with no access to the project. A config glob may name a
+  writing mode, and `receipt` then records that mode.
+- Content-free outputs (`check --content-free`, `receipt --redact`) key a
+  terminology rule id, and every rule-pack rule id, by category, since those ids
+  can quote the text or its counts.
 - Domain profiles, each backed by a rule pack with its own rule ids:
   `ux-microcopy` (length limits for buttons, labels, and errors; case; vague
   error text; link text such as "click here"), `code-review` (condescension
@@ -295,7 +311,15 @@ Fairness harness and release check:
   mixed-case keywords (gating), keywords without the boilerplate, "MAY NOT",
   lowercase keywords in a declared document, SHALL mixed with MUST, and the
   pre-8174 boilerplate. Every numeric default is a config option and names its
-  source in the docs; heuristic rules sit in LOW and never block.
+  source in the docs; heuristic rules sit in LOW and never block. Each pack
+  category carries a reader-cost reason and a published source, which no second
+  reader has checked yet. The packs and project terms read a paragraph as one
+  line, as the checks do, so a line break inside a phrase changes no finding.
+- Fairness scope. `normative-spec` is a profile a path can assign (`specs/`,
+  `rfc/`), so the harness measures it and the modes built on it, and its
+  `bcp14-mixed-case` rule blocks there. The four new profiles are chosen by flag
+  or project config only, and the harness does not measure them. The harness
+  now measures a profile with rule packs apart from one without.
 - `corpus/domains/` holds synthetic samples with an `expect.json`; the benchmark
   now counts a domain mismatch as a regression.
 - Docs state the scope and the privacy posture concretely: the rules read English

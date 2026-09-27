@@ -173,6 +173,6 @@ word. Use `--redact drop` when the word itself must stay secret.
 ## English patterns
 
 The patterns are English literals, and so are the domain rule packs, the
-meaning guard's word lists and the readability formula. On a non-English document they simply do not
-fire, so an empty result on non-English text means the English rules found
-nothing. It is never a verification of the text.
+meaning guard's word lists and the readability formula. On a non-English
+document they simply do not fire, so an empty result on non-English text means
+the English rules found nothing. It is never a verification of the text.

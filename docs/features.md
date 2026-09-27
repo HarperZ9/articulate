@@ -143,10 +143,29 @@ or a resource key does (`"save_button": "Save"`). Strict gate.
   strictly at level AAA (failure F84 under success criterion 2.4.9); at level A,
   link text may lean on its context.
 
+For this `strings.txt`:
+
 ```
-[articulate] strings.txt [ux-microcopy]: 0 high, 4 medium (blocked)  texture 0/100
+button: Save And Continue To The Next Step
+label: Name
+error: Something went wrong.
+button: Cancel
+link: For details, click here.
+```
+
+`articulate check strings.txt --profile ux-microcopy --verbose` prints:
+
+```
+[articulate] strings.txt [ux-microcopy]: 0 high, 2 medium, 2 low, gate blocked
   L1 [MEDIUM ux-length] button label has 7 words and 34 characters; the limit is 3 words and 26 characters: button: Save And Continue To The Next Step
+      why: A long button, label or error sentence takes longer to scan, can be cut off on a small screen, and hides the action the reader came to take.
   L5 [MEDIUM ux-link-text] link text that names no destination; name where the link goes: link: For details, click here.
+      why: Link text such as 'click here' tells a reader who scans the links, or hears them read aloud, nothing about where the link goes.
+  L1 [LOW ux-case] title case in a UI string; this project uses sentence case: button: Save And Continue To The Next Step
+      why: Mixed capitalization across one interface makes the reader wonder whether the capitals mark a name or a term.
+  L3 [LOW ux-vague-error] error text without a cause and a next step: say what happened and what to do: error: Something went wrong.
+      why: An error message that names no cause and no next step leaves the reader unable to recover.
+[articulate] These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.
 ```
 
 ### `code-review`: review comments
@@ -283,7 +302,7 @@ standard library only in 3.11.
   `terminology/preferred/<preferred form>` (MEDIUM by default). Each entry may set
   its own `severity` and `match_case`, and the finding carries the reason and the
   suggestion. Code spans, URLs, and fenced blocks are skipped. The findings show
-  in `check`, SARIF, the LSP server, per-span verdicts, and receipts.
+  in `check`, SARIF, the LSP server, `--spans` counts, and receipts.
 - `allowed` terms join the profile's terms-of-art keep list. They clear the
   vocabulary and register rules; a structural device such as antithesis still
   fires on them.
@@ -527,7 +546,8 @@ touched it, sentence by sentence. Each changed pair shows:
 
 - the sentence before and the sentence after, with its line;
 - the detector findings in the original sentence, by rule id and message, which
-  are the tells the rewrite was asked to fix;
+  are the findings the rewrite was asked to clear (house-style notes only under
+  a house profile);
 - any finding still present in the new sentence;
 - the meaning-guard rows that fall inside the pair, such as a changed number.
 
