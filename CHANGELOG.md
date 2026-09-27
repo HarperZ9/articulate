@@ -240,10 +240,16 @@ Fairness harness and release check:
 
 These changes come from pull request 3, rebased onto the changes above. They
 change the ruleset: `RULESET_SEMVER` moves from 0.7.0 to 0.8.0, and the
-fingerprint from `sha256:46e1485cd2c98caa` to `sha256:fc461d859480a7d8`. No
-fairness receipt names the new fingerprint yet, so the release check blocks on
-that until the ruleset is measured. The PERSUADE 2.0 result above belongs to
-`sha256:46e1485cd2c98caa` alone.
+fingerprint from `sha256:46e1485cd2c98caa` to `sha256:fc461d859480a7d8`. The
+fairness harness ran the new ruleset on Liang et al. and on PERSUADE 2.0. Both
+corpora had been read, so both receipts are exploratory. They are committed and
+pinned in `fairness/receipts/SHA256SUMS`, and the audit page cites the Liang et
+al. one. Every gate row keeps its result on both corpora. On PERSUADE 2.0,
+`normative-spec` and `technical-docs/argue` block 4 more of the 13,467 essays by
+writers not recorded as English learners and none more of the 1,330 learner
+essays. The release check blocks on G1, G2 and G4 as before. It also finds no
+confirmatory receipt for the new ruleset, since PERSUADE 2.0 confirms only
+`sha256:46e1485cd2c98caa`.
 
 - Meaning guard. `articulate compare ORIGINAL REWRITE` reports each surface
   invariant as kept, dropped, added, or changed, with line and column: numbers

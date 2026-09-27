@@ -37,8 +37,11 @@ before you rely on any output.
   flag or project config (`procedure`, `api-docs`, `error-message`, `social`,
   `chat`, `journalism`, the four domain profiles and the three fiction genres)
   was not. These numbers belong to ruleset `sha256:46e1485cd2c98caa`. The
-  unreleased ruleset adds BCP 14 checks to `normative-spec` and has not been
-  measured yet. The
+  unreleased ruleset `sha256:fc461d859480a7d8` adds BCP 14 checks to
+  `normative-spec`. Run again on both corpora after they were read, so as an
+  exploratory check, it gives every gate the same result. Under that profile
+  and `technical-docs/argue` it blocks 4 more PERSUADE 2.0 essays, none by a
+  writer recorded as an English learner. The
   [fairness audit](docs/fairness-audit.md) and the
   [confirmatory run](docs/fairness-confirmatory.md) have the numbers with
   intervals.

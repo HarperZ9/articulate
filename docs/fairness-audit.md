@@ -2,7 +2,7 @@
 
 This page reports how Articulate's rules treat writing from different groups on
 the Liang et al. (2023) corpus: under the rules of the published 0.5.0 package,
-and under ruleset `sha256:46e1485cd2c98caa`, the rules this release candidate
+and under ruleset `sha256:fc461d859480a7d8`, the rules this release candidate
 carries. The numbers come from two content-free receipts in
 `fairness/receipts/`. A test compares every row of every table on this page with
 the receipt it cites, checks that the after receipt is the current ruleset's,
@@ -10,7 +10,7 @@ and checks the release sentence against the stored result. Numbers in running
 text that no table carries are marked as counted by hand or simulated.
 
 Receipts: before = `fairness/receipts/baseline-sha256-96ebbd442c9dc938.json`,
-after = `fairness/receipts/sha256-46e1485cd2c98caa.json`.
+after = `fairness/receipts/sha256-fc461d859480a7d8.json`.
 
 The before receipt measures the rules of the published 0.5.0 package. Two
 earlier drafts of the new rules also have receipts in the repository. The first,
@@ -19,6 +19,11 @@ after the first run" below says what moved. Its report-only rows for the
 repeated-phrase and repeated-opener notes were removed, because their keys
 quoted three to five words of the corpus, and the receipt says so. The second,
 `sha256-1c8f54b02d8aa211.json`, gave the same gate rows as the current ruleset.
+The receipt of the ruleset before the current one,
+`sha256-46e1485cd2c98caa.json`, measures the rules the confirmatory run
+measured. It holds the same number as the after receipt in every row, so the
+BCP 14 checks the current ruleset adds to `normative-spec` change no count on
+this corpus.
 
 ## The short version
 
@@ -36,8 +41,10 @@ quoted three to five words of the corpus, and the receipt says so. The second,
   windows and 4 of 145 abstract windows. Every gap lies inside 5 points.
 - Every release gate passes on this corpus. The rules were changed after
   reading it, so the pass is exploratory. On PERSUADE 2.0, the corpus the rules
-  were not tuned on, the release gate fails; see
-  [the confirmatory run](fairness-confirmatory.md).
+  were not tuned on, the release gate fails for the previous ruleset; see
+  [the confirmatory run](fairness-confirmatory.md). A later run of the current
+  ruleset on that corpus is exploratory, since the corpus had been read, and
+  fails the same gate rows.
 - The house style's notes (the intensifiers among them) show only under a house
   profile or when the writer asks. One note that shows by default is skewed
   toward the learner texts by the G2 rule: the repeated-phrase note, on 8 of 91
@@ -182,7 +189,7 @@ confirmatory run, tighten the release check.
 | G7 block rate on human text above 10% opens a review | all three arms | none | The highest bound-profile rate is 2.8%, 4 of 145 abstract windows under `essay` |
 | G8 notes a writer sees, by group | not measured | report only | See "What writers still see" |
 
-So the release gate passes on this corpus for ruleset `sha256:46e1485cd2c98caa`:
+So the release gate passes on this corpus for ruleset `sha256:fc461d859480a7d8`:
 all 266 gate rows (one gate, one bound profile and, for G1, G2 and G5, one
 comparison) pass (counted from the receipt). Against the before receipt, 173
 rows move from fail to pass and none from pass to fail (counted from both

@@ -18,6 +18,16 @@ Ruleset `sha256:46e1485cd2c98caa`. Manifest
 `sha256:8de8a1e6414e18f03730156ef6c4e8c87dc2f68fe73f0549d42cf4ea0788b4c3`.
 The confirmatory receipt's SHA-256 is pinned in `fairness/receipts/SHA256SUMS`.
 
+This result belongs to ruleset `sha256:46e1485cd2c98caa` alone. The ruleset
+after it, `sha256:fc461d859480a7d8`, adds BCP 14 checks to `normative-spec`. It
+ran on this corpus after this result was read, so that run is exploratory and
+confirms nothing. Its receipt, `sha256-fc461d859480a7d8-persuade-2.0.json`,
+gives every gate row the same result as the confirmatory receipt. Under
+`normative-spec` and `technical-docs/argue` it blocks 4 more essays by writers
+not recorded as English learners and no more learner essays. A ruleset
+confirms only on a corpus named for it in `fairness/PREREG.md` before anyone
+reads that corpus.
+
 ## The result
 
 Verdict: the release gate fails on the confirmatory corpus.
