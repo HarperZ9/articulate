@@ -11,7 +11,7 @@ import pytest
 
 from articulate import claude_cli
 from cli_fakes import (_CMD_UNSAFE_EXPECTED, _CMD_UNSAFE_UNQUOTED_EXPECTED, _Disk,  # noqa: F401
-                       _Runner, work)
+                       _Runner, _work_fixture)
 
 
 def test_the_unsafe_sets_match_the_hand_written_ones():
