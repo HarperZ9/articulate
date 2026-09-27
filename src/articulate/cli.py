@@ -159,10 +159,13 @@ def _add_check_args(p, cmd):
                        help="also report the house style's patterns as low notes "
                             "(a house profile gates them; no other profile shows them)")
     if cmd == "check":
-        p.add_argument("--json", action="store_true")
+        p.add_argument("--json", action="store_true",
+                       help="the findings, gate, counts and does-not-prove line as JSON")
         p.add_argument("--sarif", action="store_true", help="emit SARIF 2.1.0")
-        p.add_argument("--gate", action="store_true", help="exit 1 if blocked")
-        p.add_argument("--verbose", action="store_true")
+        p.add_argument("--gate", action="store_true",
+                       help="exit 1 when any file is blocked or cannot be screened")
+        p.add_argument("--verbose", action="store_true",
+                       help="expand the low notes and print each finding's reason")
         p.add_argument("--spans", action="store_true",
                        help="per-paragraph counts by rule, in document order; "
                             "a view of where the findings sit")
@@ -177,12 +180,19 @@ def _add_check_args(p, cmd):
                        help="record who screened it (else the CI actor, else unset)")
 
 
+_CHECK_HELP = {
+    "check": "report the findings and the gate (local)",
+    "score": "per-rule counts and density per 1,000 words (local)",
+    "receipt": "a re-derivable screening as JSON; --redact for a content-free one (local)",
+}
+
+
 def build_parser():
     ap = argparse.ArgumentParser(prog="articulate", description=PRODUCT, epilog=command_map(),
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd")
-    for cmd in ("check", "score", "receipt"):
-        _add_check_args(sub.add_parser(cmd, epilog=ALLOW_HELP), cmd)
+    for cmd, text in _CHECK_HELP.items():
+        _add_check_args(sub.add_parser(cmd, help=text, epilog=ALLOW_HELP), cmd)
     pv = sub.add_parser("verify", help="replay a receipt against text")
     pv.add_argument("receipt", help="a receipt JSON file")
     pv.add_argument("file", help="the text file to re-derive against")

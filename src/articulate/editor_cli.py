@@ -18,6 +18,13 @@ from . import editor as ed
 from .local_only import LOCAL_ONLY_EXIT, LOCAL_ONLY_VAR, command_map, local_only
 
 _COMMANDS = ("judge", "fix", "polish", "review", "advise")
+_COMMAND_HELP = (
+    ("--judge", "an editor's read of judgment-level failures; no rewrite"),
+    ("--fix", "rewrite for the intended reader and re-check the rewrite"),
+    ("--polish", "the quality loop: keep a pass only when no quality score falls, the "
+                 "gate does not go from ok to blocked and no required note opens"),
+    ("--review", "the checks plus an editor's read, no rewrite"),
+)
 
 
 def _parser():
@@ -27,8 +34,8 @@ def _parser():
                     "hosted model through the claude CLI.",
         epilog=command_map(), formatter_class=argparse.RawDescriptionHelpFormatter)
     g = ap.add_mutually_exclusive_group(required=True)
-    for flag in ("--judge", "--fix", "--polish", "--review"):
-        g.add_argument(flag, metavar="FILE")
+    for flag, text in _COMMAND_HELP:
+        g.add_argument(flag, metavar="FILE", help=text)
     g.add_argument("--advise", metavar="FILE",
                    help="the same as --review: the checks plus an editor's read, no rewrite")
     ap.add_argument("--out", metavar="FILE", default=None)

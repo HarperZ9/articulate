@@ -144,16 +144,21 @@ command either stays on your machine or sends the full text to a hosted model:
 
 | Command | Where the text goes |
 |:-|:-|
-| `check`, `score`, `receipt`, `verify`, `audit`, `modes` | Nowhere: local |
-| `process`, `disclose`, `desk`, the LSP server | Nowhere: local |
-| `judge`, `review` (alias `advise`): advice | A hosted Anthropic model, through the `claude` CLI |
-| `fix`, `polish`: rewrites | A hosted Anthropic model, through the `claude` CLI |
-| The `judge`, `fix` and `polish` tools of both MCP servers | A hosted Anthropic model, through the `claude` CLI |
+| `articulate check`, `score`, `receipt`, `verify`, `audit`, `modes` | Nowhere: local |
+| `articulate process`, `disclose`, `desk`, the LSP server | Nowhere: local |
+| `python -m articulate.fairness`, `python -m articulate.bench` | Nowhere: local |
+| The `check` and `score` tools of both MCP servers | Nowhere: local |
+| `python -m articulate.editor --judge`, `--review` (alias `--advise`): advice | A hosted model, through the `claude` CLI and the service it is set up to use |
+| `python -m articulate.editor --fix`, `--polish`: rewrites | A hosted model, through the `claude` CLI and the service it is set up to use |
+| The `judge`, `fix` and `polish` tools of both MCP servers | A hosted model, through the `claude` CLI and the service it is set up to use |
 
 Set `ARTICULATE_LOCAL_ONLY=1`, or pass `--local-only` to `python -m
 articulate.editor`, and every hosted command exits with code 3 before any
-network call; the MCP tools return an error. Each hosted run first prints that
-the full text leaves the machine. Under a brief that allows only spelling and
+network call; the MCP tools return an error that names the switch. Any value
+other than an empty one, `0`, `false`, `no` or `off` turns the switch on. The
+editor command line prints that the full text leaves the machine before each
+hosted run; the MCP tool descriptions say so, and their results do not repeat
+it. Under a brief that allows only spelling and
 grammar help, use the local commands: `judge` and `review` give structural
 advice, which such a brief may exclude. Do not run the hosted commands on a
 manuscript or grant application under review, on health records, or on unfiled

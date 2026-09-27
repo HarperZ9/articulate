@@ -256,7 +256,8 @@ def main(argv=None):
     ap.add_argument("--out", default=None, help="write the receipt here")
     ap.add_argument("--root", default=None,
                     help="the folder the corpus files sit in (default: the manifest's root)")
-    ap.add_argument("--release-check", metavar="DIR", default=None)
+    ap.add_argument("--release-check", metavar="DIR", default=None,
+                    help="check the current ruleset against the committed receipts in DIR")
     ap.add_argument("--published", metavar="FILE", default=None,
                     help="the published-ruleset record (default: beside DIR)")
     ap.add_argument("--jobs", type=int, default=1,

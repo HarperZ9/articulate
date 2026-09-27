@@ -23,7 +23,10 @@ _OFF = ("", "0", "false", "no", "off")
 # What each command does with the text. The README and `articulate --help`
 # print this map; a test checks both.
 LOCAL_COMMANDS = ("check", "score", "receipt", "verify", "audit", "modes", "process",
-                  "disclose", "desk", "the LSP server")
+                  "disclose", "desk", "the LSP server",
+                  "the fairness harness (python -m articulate.fairness)",
+                  "the benchmark (python -m articulate.bench)",
+                  "the check and score tools of both MCP servers")
 HOSTED_COMMANDS = ("judge", "review", "fix", "polish")
 
 

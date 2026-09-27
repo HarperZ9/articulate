@@ -73,7 +73,10 @@ def register(sub):
     a["export"].add_argument("--out")
     d = sub.add_parser("disclose", help=DISCLOSE_HELP)
     d.add_argument("doc")
-    d.add_argument("--template", default="general", choices=dis.TEMPLATES)
+    d.add_argument("--template", default="general", choices=dis.TEMPLATES,
+                   help="general: a statement with assistance and credit; pip: commit "
+                        "trailers in the Assisted-by form of the pip project's "
+                        "contribution policy, never a co-author trailer for a model")
     d.add_argument("--contributions")
     d.add_argument("--include", default="")
     d.add_argument("--claim", default=None, help="a sentence of your own to append")
