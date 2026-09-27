@@ -12,6 +12,7 @@ from articulate import fairness
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PAGE = (ROOT / "docs" / "fairness-audit.md").read_text(encoding="utf-8")
+FLAT = " ".join(PAGE.split())          # running text, with line breaks as spaces
 SETS = {"Learner scripts": "toefl", "College windows": "college", "Abstract windows": "abstracts"}
 COMPARE = {"learner vs college": "toefl-vs-college", "learner vs abstracts": "toefl-vs-abstracts"}
 PAIR = "toefl-original-vs-gpt4-rewrite"
@@ -46,6 +47,17 @@ def _rows(first_header):
 
 def _num(cell):
     return float(cell)
+
+
+def _ratio(cell):
+    """A ratio cell as the receipt stores it: "inf" stays a string."""
+    return "inf" if cell == "inf" else float(cell)
+
+
+def _p(cell):
+    """A p-value cell. The receipt rounds p to four places, so a p that rounds
+    to zero is stored as 0.0 and printed as "below 0.0001"."""
+    return 0.0 if cell == "below 0.0001" else float(cell)
 
 
 def test_block_rates_match_the_receipts():
@@ -93,7 +105,7 @@ def test_note_rows_match_the_receipts():
         rule = note.strip("`").replace("\\|", "|")
         g8 = _config(receipt, profile)["comparisons"][COMPARE[comparison]]["g8"][rule]
         assert g8["docs"] == [int(prot), int(ref)], rule
-        assert g8["ratio"] == _num(ratio), rule
+        assert g8["ratio"] == _ratio(ratio), rule
         assert g8["house"] is (shown == "no"), rule
 
 
@@ -103,7 +115,8 @@ def test_paired_rows_match_the_receipts():
     for receipt, profile, orig, rewr, p in rows:
         pair = _config(receipt, profile)["pairs"][PAIR]
         assert [pair["original_only"], pair["rewrite_only"]] == [int(orig), int(rewr)]
-        assert pair["mcnemar_p"] == _num(p)
+        assert pair["mcnemar_p"] == _p(p)
+        assert (p == "below 0.0001") is (pair["mcnemar_p"] == 0.0)
 
 
 def test_the_g1_row_names_every_failing_bound_profile():
@@ -121,7 +134,7 @@ def test_the_page_states_the_release_gate_result():
     assert after["gates"]["release_ok"] is True
     assert after["gates"]["G7_review"] == []
     assert "the release gate passes on this corpus" in PAGE
-    assert "The pass is\nexploratory" in PAGE
+    assert "The pass is exploratory" in FLAT
 
 
 def test_the_gate_row_counts_match_the_receipts():
@@ -132,4 +145,29 @@ def test_the_gate_row_counts_match_the_receipts():
     line, regressed = compare(gate_rows(RECS["before"]), rows)
     fixed = int(re.search(r"(\d+) fail before and pass now", line).group(1))
     assert not regressed
-    assert f"{fixed} rows move from fail\nto pass and none from pass to fail" in PAGE
+    assert f"{fixed} rows move from fail to pass and none from pass to fail" in FLAT
+
+
+def test_the_after_receipt_is_the_current_rulesets():
+    # A page that cites a superseded receipt passes every row check above while
+    # reporting rules that no longer ship.
+    assert RECS["after"]["ruleset_version"] == fairness.ruleset_fingerprint()
+
+
+def test_the_note_tables_list_every_skewed_note_and_every_shown_inconclusive_one():
+    # The prose says which notes a writer sees and whether they skew; this
+    # recomputes both from the receipt, so the sentences cannot drift from it.
+    wanted, shown_skewed = set(), []
+    for comparison, name in COMPARE.items():
+        g8 = _config("after", "flavored")["comparisons"][name]["g8"]
+        for rule, g in g8.items():
+            if g["state"] == "skewed" or (g["state"] == "inconclusive" and not g["house"]):
+                wanted.add((comparison, rule))
+            if g["state"] == "skewed" and not g["house"]:
+                shown_skewed.append((comparison, rule))
+    rows = _rows("| Receipt | Profile | Comparison | Note |")
+    listed = {(c, n.strip("`").replace("\\|", "|")) for _r, p, c, n, *_ in rows
+              if p == "flavored"}
+    assert listed == wanted
+    assert ("No note shown by default is skewed" in FLAT) is (not shown_skewed)
+    assert ("One note that shows by default is skewed" in FLAT) is (len(shown_skewed) == 1)
