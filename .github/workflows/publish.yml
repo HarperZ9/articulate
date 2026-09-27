@@ -42,6 +42,24 @@ jobs:
           fi
           echo "version gate: tag $TAG_VER == pyproject $PKG_VER"
 
+      # A release whose ruleset fingerprint equals fairness/published-ruleset.json,
+      # where that record names an earlier package, passes with a note: nothing
+      # the gates measure has changed. A changed ruleset ships only with one
+      # pinned fairness receipt for its exact fingerprint from every listed
+      # manifest, covering every bound profile and required comparison, whose
+      # flags agree with its numbers and whose recomputed gates pass, plus a
+      # confirmatory receipt pre-registered for it (fairness/PREREG.md).
+      # fairness/receipts/<fingerprint>.override.json, with a reason and who
+      # decided, is accepted only when no gate row fails that did not fail in
+      # the published ruleset's own receipt. The release commit never edits
+      # published-ruleset.json; a commit after the release does, because a
+      # record that names the version being built never skips the gates. The
+      # check never blocks anyone's run of the tool.
+      - name: the ruleset has a passing fairness receipt
+        run: |
+          python -m pip install -e .
+          python -m articulate.fairness --release-check fairness/receipts
+
       - name: artifact digests, recorded in the run log
         run: |
           python - <<'EOF'

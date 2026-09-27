@@ -16,7 +16,7 @@ import posixpath
 import pytest
 
 from articulate import claude_cli
-from cli_fakes import _LOCKDOWN_EXPECTED, _SECRET, _Disk, _Runner, work  # noqa: F401
+from cli_fakes import _LOCKDOWN_EXPECTED, _SECRET, _Disk, _Runner, _work_fixture  # noqa: F401
 
 
 def _posix(*paths):

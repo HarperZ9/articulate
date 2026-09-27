@@ -284,11 +284,11 @@
 </g>
 <rect width="1280" height="640" filter="url(#grain)" opacity="0.05"/>
 <text x="96" y="452" fill="#f3eef8" font-size="82" font-weight="700" letter-spacing="-1.5">Articulate</text>
-<text x="99" y="490" fill="#c9c0d6" font-size="20" font-weight="400" letter-spacing="0.3">A local writing-quality and AI-tell detection and editing tool.</text>
+<text x="99" y="490" fill="#c9c0d6" font-size="20" font-weight="400" letter-spacing="0.3">Local prose checks, named and located.</text>
 <g font-family="ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace" font-size="14.5" letter-spacing="1.5">
 <circle cx="101" cy="536" r="4" fill="#a8e832"/><text x="113" y="541" fill="#c9c0d6">MATCH</text>
 <circle cx="199" cy="536" r="4" fill="#e8843a"/><text x="211" y="541" fill="#c9c0d6">DRIFT</text>
 <circle cx="291" cy="536" r="4" fill="#8c8296"/><text x="303" y="541" fill="#c9c0d6">UNVERIFIABLE</text>
-<text x="96" y="576" fill="#8c8296" font-size="12.5" letter-spacing="1">re-derivable verdict   ·   standard-library core   ·   seed 0x0A5C</text>
+<text x="96" y="576" fill="#8c8296" font-size="12.5" letter-spacing="1">re-derivable receipt   ·   standard-library core</text>
 </g>
 </svg>

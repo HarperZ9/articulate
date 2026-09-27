@@ -1,0 +1,157 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""articulate.rule_reasons -- why a pattern may block a writer who never chose a
+house style.
+
+A rule may gate outside the house pack only with a reader-cost reason: one
+sentence on what the pattern costs a reader, and a published style guide or
+readability source behind it. How often a model produces a pattern is never a
+reason, and no text here states one. A rule whose only support is the
+maintainer's taste belongs to the house pack. The house profiles (`house`,
+`house-essay`) gate it; every other profile reports it at LOW and never blocks.
+
+The sources are cited by work and principle, without page numbers. A second
+reader, neither the maintainer nor a model, checks each reason before a release
+that relies on it. That review has not happened yet for this table.
+
+Standard library only.
+"""
+from __future__ import annotations
+
+from .aliases import CATEGORY_ALIASES, resolve_all, resolve_category  # noqa: F401
+from .note_reasons import NOTE_REASONS
+
+# Categories in the house pack: one writer's standard, applied only by choice.
+HOUSE_CATEGORIES = frozenset({
+    # punctuation and contrast devices
+    "em-dash", "antithesis", "corrective-negation", "substitution",
+    "negative-parallel", "contrast-pair",
+    # single words and word lists
+    "intensifier", "corporate-verb", "inflated-word", "register-jargon",
+    # typography and phrasing with no reliable reader cost
+    "curly-quote", "existential-opener",
+    # structure that learners are taught, or that fires on ordinary speech
+    "enumeration", "stock-transition", "closer", "both-sides", "cadence",
+    "participial-closer", "sweeping-range", "setup", "reveal", "scaffold",
+    "rhetorical-we", "delivery", "over-apology", "disclaimer", "evasive",
+    # stock phrases of a genre
+    "email-stock-phrase", "blog-stock-phrase", "cta", "continuation-cliche", "significance",
+})
+
+_PLAIN = "Federal Plain Language Guidelines (plainlanguage.gov, 2011)"
+_WILLIAMS = "Williams and Bizup, Style: Lessons in Clarity and Grace"
+_ORWELL = "Orwell, Politics and the English Language (1946)"
+_STRUNK = "Strunk and White, The Elements of Style"
+
+REASONS = {
+    "chat-interface-text": (
+        "A first-person line in which the speaker calls itself software, or an "
+        "interface markup token, is addressed to a chat session and gives this "
+        "document's reader nothing to act on.",
+        _PLAIN + ", write for your audience"),
+    "reply-opener": (
+        "An opener that hands the text over ('Certainly! Here is ...') addresses "
+        "whoever asked for it; in a finished document the reader must skip it to "
+        "reach the content.",
+        _PLAIN + ", write for your audience; " + _WILLIAMS + ", metadiscourse"),
+    "invisible-unicode": (
+        "A hidden character inside a run of Latin text breaks search, copy and paste "
+        "and spell check, and can hide text the reader never sees.",
+        "The Unicode Standard, chapter 23, layout controls (U+200B, U+2060)"),
+    "wordiness": (
+        "A padded phrase such as 'due to the fact that' or 'at this point in time' "
+        "makes the reader process words that add no meaning.",
+        _STRUNK + ", omit needless words; " + _PLAIN + ", omit unnecessary words"),
+    # LOW notes: they never block, and they carry a reason so the note can say
+    # what the reader loses.
+    "padded-purpose": (
+        "In 'in order to', usually 'to' does the same work; keep it where it "
+        "separates a purpose from a complement.",
+        "Garner's Modern English Usage, in order to; Merriam-Webster, usage note "
+        "on in order to"),
+    "unanchored-claim": (
+        "Name the comparison: 'state of the art' with no benchmark, number, year "
+        "or citation in the sentence gives the reader nothing to check.",
+        _ORWELL + ", pretentious diction; " + _PLAIN + ", be specific"),
+    "idiom-cliche": (
+        "A worn figure of speech asks the reader to translate it back into a plain "
+        "claim, and many readers of English as a second language cannot.",
+        _ORWELL + ", rule 1; " + _PLAIN + ", avoid jargon"),
+    "marketing": (
+        "An unsupported superlative claims a comparison the text never makes, so "
+        "the reader cannot check it.",
+        _ORWELL + ", pretentious diction"),
+    "throat-clearing": (
+        "An opener that announces a point delays it; the reader holds the sentence "
+        "open until the claim arrives.",
+        _WILLIAMS + ", metadiscourse and concision"),
+    "opener": (
+        "A preface such as 'what is important is' announces a point the reader "
+        "could have been given directly.",
+        _WILLIAMS + ", metadiscourse and concision"),
+    "meta": (
+        "Text about the text, or about what the reader might be thinking, delays "
+        "the content the reader came for.",
+        _WILLIAMS + ", metadiscourse"),
+    "cliche": (
+        "A stock phrase such as 'plays a vital role' names a relation without saying "
+        "what it is, so the reader learns nothing they could restate.",
+        _ORWELL + ", rule 1"),
+    "hedge-stack": (
+        "Two hedges on one claim state the same doubt twice, and the reader cannot "
+        "tell how sure the writer is.",
+        _WILLIAMS + ", hedges and intensifiers"),
+    "unsupported-authority": (
+        "An appeal to unnamed studies or experts gives the reader no source to check; "
+        "cite the source, or state the claim as your own view with an example.",
+        "Publication Manual of the American Psychological Association (7th ed.), "
+        "citing sources in the text; AMA Manual of Style, references; The Chicago "
+        "Manual of Style, notes and bibliography"),
+    "announcement": (
+        "Say what the text shows instead of announcing it: 'we will explore' makes "
+        "the reader wait for content a scope statement could give now.",
+        _WILLIAMS + ", metadiscourse"),
+    "padded-preposition": (
+        "In 'with respect to', often 'on', 'about' or 'for' does the same work; keep "
+        "it where it names a variable, a measure or a statutory relation.",
+        _STRUNK + ", omit needless words; " + _PLAIN + ", omit unnecessary words"),
+    "sycophancy": (
+        "Praise of a question addresses a chat partner; in a document it tells the "
+        "reader nothing about the subject.",
+        _PLAIN + ", write for your audience"),
+    "closing-boilerplate": (
+        "A closing line such as 'I hope this helps' addresses a chat partner and "
+        "adds nothing the reader can use.",
+        _PLAIN + ", write for your audience"),
+    "emoji-structure": (
+        "An emoji used as a heading or bullet marker has no fixed meaning, and a "
+        "screen reader reads its name aloud.",
+        "W3C Web Content Accessibility Guidelines 2.1, success criterion 1.1.1"),
+}
+
+# Every report-only note carries a reason too (articulate.note_reasons), so every
+# output can say what a finding costs a reader.
+REASONS.update(NOTE_REASONS)
+
+# What an output says about a house-pack finding in place of a reader-cost reason.
+HOUSE_REASON = ("House style: one writer's standard, gated only by a house profile; it "
+                "makes no reader-cost claim.")
+
+# Words that state a model-frequency reason. No reason may use them.
+ORIGIN_WORDS = ("model", "ai ", "llm", "frontier", "machine", "generated", "chatgpt",
+                "gpt", "detector")
+
+
+# Retired category ids live in articulate.aliases; these names are re-exported
+# for callers that import them from here.
+ALIASES = CATEGORY_ALIASES
+
+
+def is_house(category):
+    return category in HOUSE_CATEGORIES
+
+
+def reason_for(category):
+    """(reason, source) for a category outside the house pack, or None for a
+    house category."""
+    return REASONS.get(category)

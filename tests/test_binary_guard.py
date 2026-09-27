@@ -65,7 +65,7 @@ def test_cli_still_screens_a_normal_text_file(work, capsys):
     p = os.path.join(work, "doc.md")
     with open(p, "w", encoding="utf-8") as fh:
         fh.write("We leverage synergy to unlock value across the board.\n")
-    rc = cli_main(["check", "--gate", p])
+    rc = cli_main(["check", "--gate", "--profile", "house", p])
     out = capsys.readouterr().out
     assert rc == 1                                   # a real HIGH device still gates
     assert "high" in out

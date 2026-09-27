@@ -1,14 +1,14 @@
 {
   "name": "articulate",
   "displayName": "Articulate",
-  "description": "Local writing-quality and AI-tell detection. Inline diagnostics from the Articulate language server, run locally with no network.",
+  "description": "Local prose checks: named writing patterns, where they occur, and what each costs a reader. Inline diagnostics from the Articulate language server, run locally with no network.",
   "version": "0.1.0",
   "publisher": "harperz9",
   "license": "SEE LICENSE IN ../../LICENSE",
   "repository": { "type": "git", "url": "https://github.com/HarperZ9/articulate" },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Linters"],
-  "keywords": ["writing", "prose", "linter", "ai-detection", "markdown"],
+  "keywords": ["writing", "prose", "linter", "plain-language", "markdown"],
   "activationEvents": [
     "onLanguage:markdown",
     "onLanguage:plaintext",

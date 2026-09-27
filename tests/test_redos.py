@@ -70,6 +70,36 @@ def test_genre_patterns_are_bounded():
             assert elapsed < 3.0, f"{name} input {i} took {elapsed:.2f}s (possible ReDoS)"
 
 
+# Every profile now masks quotations and reads citation markers (SCAN_ALGO 6),
+# so the quote inputs and the new masks' worst cases run under the default too.
+MASK_ADVERSARIAL = [
+    "\\verb|" * 8000,                          # unclosed \verb spans
+    "\\verb|a \\verb+b " * 4000,
+    "``a " * 20000,                            # unclosed LaTeX quotes
+    "\\texttt{" * 8000,
+    "(" + "Smith 19 " * 8000,                  # an unclosed citation parenthesis
+    "(Smith " * 8000 + ")",
+    "Studies show " * 5000 + "(",
+    "with respect to " * 5000,
+    "In this essay, we will " * 3000 + "explore",
+    "Smith et al " * 8000,
+    "1 A. " * 8000 + "1",                      # a legal-citation near miss
+    "Before, " * 8000 + "it is important",
+    "> quote\n" * 5000,
+    "ChatGPT: x\n" * 5000,
+    "\\begin{quote}\n" + "x\n" * 5000,
+]
+
+
+def test_the_quote_and_citation_passes_are_bounded():
+    prof = profiles.load("flavored")
+    for i, text in enumerate(MASK_ADVERSARIAL + GENRE_ADVERSARIAL):
+        start = time.perf_counter()
+        articulate.check_text(text, profile=prof)
+        elapsed = time.perf_counter() - start
+        assert elapsed < 3.0, f"mask input {i} took {elapsed:.2f}s (possible ReDoS)"
+
+
 # detect_injection runs over the full untrusted document on every editor call, so
 # its patterns get the same wall-clock budget as the check_text passes.
 INJECTION_ADVERSARIAL = [

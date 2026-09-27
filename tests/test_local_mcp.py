@@ -61,20 +61,15 @@ def test_initialize_reports_identity_and_protocol():
 def test_tools_list_matches_the_fastmcp_surface():
     """A drift guard that does not need fastmcp installed.
 
-    The fastmcp server declares its tools as functions decorated with
-    ``@mcp.tool`` inside ``build_server``. Parsing that file for those names is
+    The fastmcp server defines its tools as functions inside ``build_server``
+    and registers each with ``mcp.tool``. Parsing that file for those names is
     cheaper than importing it, and it works in CI where the extra is absent.
     """
     tree = ast.parse((_SRC / "mcp_server.py").read_text(encoding="utf-8"))
-    decorated = set()
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.FunctionDef):
-            continue
-        for decorator in node.decorator_list:
-            target = decorator.func if isinstance(decorator, ast.Call) else decorator
-            if isinstance(target, ast.Attribute) and target.attr == "tool":
-                decorated.add(node.name)
-    assert decorated, "found no @mcp.tool functions; the parse assumption broke"
+    build = next(n for n in ast.walk(tree)
+                 if isinstance(n, ast.FunctionDef) and n.name == "build_server")
+    decorated = {n.name for n in build.body if isinstance(n, ast.FunctionDef)}
+    assert decorated, "found no tool functions in build_server; the parse assumption broke"
     served = {tool["name"] for tool in local_mcp.TOOLS}
     assert decorated <= served, (
         "the fastmcp server exposes tools the stdio server does not: "
@@ -171,7 +166,7 @@ def test_serve_round_trips_over_stdio_and_survives_a_bad_line():
     ]
     out = io.StringIO()
     assert local_mcp.serve(io.StringIO("\n".join(lines) + "\n"), out) == 0
-    responses = [json.loads(l) for l in out.getvalue().splitlines() if l.strip()]
+    responses = [json.loads(ln) for ln in out.getvalue().splitlines() if ln.strip()]
     # initialize, the parse error, and tools/list. The blank line and the
     # notification produce nothing, and one bad line does not kill the loop.
     assert [r.get("id") for r in responses] == [1, None, 2]

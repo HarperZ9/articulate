@@ -23,7 +23,7 @@ and Articulate registers as a user-defined language server.
      (append `--profile essay` or a mode later if you want to force one)
    - **Mappings:** add file-name patterns `*.md`, `*.markdown`, `*.txt`, `*.tex`
 
-4. Apply. Open a Markdown or text file; tells appear as inline highlights with the
+4. Apply. Open a Markdown or text file; findings appear as inline highlights with the
    rule id, the same warning / information / hint levels as the VS Code client.
 
 ## Why no plugin

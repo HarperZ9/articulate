@@ -26,57 +26,38 @@ import sys
 
 from . import __version__
 from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score
+from .tool_text import TOOLS as TOOL_TEXT
 
 PROTOCOL = "2025-06-18"
 
 _TEXT = {"text": {"type": "string", "description": "the passage to read"}}
 _IS_HTML = {"is_html": {"type": "boolean", "default": False,
                         "description": "treat the input as HTML and preserve its markup"}}
+_IS_TEX = {"is_tex": {"type": "boolean", "default": False,
+                      "description": ("treat the input as LaTeX: mask every math span "
+                                      "before each model call and restore it byte "
+                                      "for byte")}}
 
-TOOLS = [
-    {"name": "check",
-     "description": ("Detect AI and prose tells in text. Runs fully local with no network "
-                     "call. Returns each finding with its line, tier (HIGH/MEDIUM), category "
-                     "and snippet, a clean/flagged device gate, a 0-100 machine-texture "
-                     "score, and cadence stats."),
-     "inputSchema": {"type": "object", "required": ["text"], "properties": dict(_TEXT)}},
-    {"name": "score",
-     "description": ("Return the graded 0-100 machine-texture score plus passive-voice and "
-                     "adverb rates and cadence flags for a passage. Local, no network."),
-     "inputSchema": {"type": "object", "required": ["text"], "properties": dict(_TEXT)}},
-    {"name": "judge",
-     "description": ("A skilled-editor read of the judgment-level failures a regex cannot "
-                     "see: confident emptiness, vague abstraction, uncommitted hedging, weak "
-                     "verbs, a buried point. Flags, does not rewrite. Needs an LLM backend."),
-     "inputSchema": {"type": "object", "required": ["text"], "properties": dict(_TEXT)}},
-    {"name": "fix",
-     "description": ("Rewrite the text to the plain-writing standard and self-check the "
-                     "rewrite against the detector so it introduces no new tell. Offers a "
-                     "suggestion; the human decides. Needs an LLM backend."),
-     "inputSchema": {"type": "object", "required": ["text"],
-                     "properties": dict(_TEXT, **_IS_HTML)}},
-    {"name": "polish",
-     "description": ("The quality loop: rewrite, then score five qualities (concreteness, "
-                     "commitment, economy, rhythm, restatable-fact-per-paragraph) and iterate "
-                     "until every one clears `bar` (1-5) and the detector is clean. Gated on "
-                     "writing quality, never on a detector score. Needs an LLM backend."),
-     "inputSchema": {"type": "object", "required": ["text"],
-                     "properties": dict(
-                         _TEXT,
-                         bar={"type": "integer", "default": 4, "minimum": 1, "maximum": 5,
-                              "description": "the quality bar every dimension must clear"},
-                         passes={"type": "integer", "default": 3, "minimum": 1,
-                                 "description": "how many rewrite attempts before giving up"},
-                         **_IS_HTML)}},
-    {"name": "articulate.status",
-     "description": ("Liveness and identity of the articulate MCP server (name, version, "
-                     "protocol). Network-free health probe."),
-     "inputSchema": {"type": "object", "properties": {}}},
-    {"name": "articulate.doctor",
-     "description": ("Readiness diagnostic: identity, the tools exposed, and which of them "
-                     "need an LLM backend rather than running local."),
-     "inputSchema": {"type": "object", "properties": {}}},
-]
+_SCHEMAS = {
+    "check": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
+    "score": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
+    "judge": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
+    "fix": {"type": "object", "required": ["text"],
+            "properties": dict(_TEXT, **_IS_HTML, **_IS_TEX)},
+    "polish": {"type": "object", "required": ["text"],
+               "properties": dict(
+                   _TEXT,
+                   bar={"type": "integer", "default": 4, "minimum": 1, "maximum": 5,
+                        "description": "the quality bar every dimension must clear"},
+                   passes={"type": "integer", "default": 3, "minimum": 1,
+                           "description": "how many rewrite attempts before giving up"},
+                   **_IS_HTML, **_IS_TEX)},
+    "articulate.status": {"type": "object", "properties": {}},
+    "articulate.doctor": {"type": "object", "properties": {}},
+}
+# One description table serves both MCP servers (tool_text.TOOLS).
+TOOLS = [{"name": name, "description": TOOL_TEXT[name], "inputSchema": schema}
+         for name, schema in _SCHEMAS.items()]
 
 # check and score read the text and nothing else. The rest call out to an editor
 # backend, so a host with no backend still gets a working detector.
@@ -130,11 +111,13 @@ def _call(params: dict) -> dict:
         elif name == "judge":
             result = do_judge(_text_arg(args))
         elif name == "fix":
-            result = do_fix(_text_arg(args), bool(args.get("is_html", False)))
+            result = do_fix(_text_arg(args), bool(args.get("is_html", False)),
+                            bool(args.get("is_tex", False)))
         elif name == "polish":
             result = do_polish(_text_arg(args), int(args.get("bar", 4)),
                                int(args.get("passes", 3)),
-                               bool(args.get("is_html", False)))
+                               bool(args.get("is_html", False)),
+                               bool(args.get("is_tex", False)))
         else:
             return {"content": [{"type": "text", "text": "unknown tool %r" % (name,)}],
                     "isError": True}

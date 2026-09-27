@@ -13,7 +13,7 @@ scanner.
 A genre record carries the register base it builds on plus a few genre fields the
 detector consumes:
 
-  slop                 which precision tiers gate. Fiction and verse sit at
+  gate_level           which tiers gate. Fiction and verse sit at
                        "off": authorial voice governs and nothing blocks. A
                        screenplay sits at "flavored" so the banned devices still
                        gate on action lines, where economy is the craft rule.
@@ -28,8 +28,8 @@ detector consumes:
   quote_exempt_all     the stricter memoir rule: quoted testimony is excluded
                        from every category, because those quotes are often
                        recalled and rescoring or rewriting them is a factual error.
-  fiction_slop         run the report-only fiction lexicon (generation artifacts
-                       such as the somatic cliche). It is an advisory, never a gate.
+  fiction_slop         run the report-only fiction lexicon (stock phrases such as
+                       the somatic cliche). It is an advisory, never a gate.
   suppress_categories  craft-device categories a genre removes from the report
                        outright, because they name legitimate technique in that
                        genre. Verse removes antithesis, the triad, the contrast
@@ -57,12 +57,12 @@ class GenreError(ValueError):
     """An unknown or malformed genre."""
 
 
-def _g(base, *, slop="off", unit="sentence", structural_classify=None,
+def _g(base, *, level="off", unit="sentence", structural_classify=None,
        dialogue_exempt=True, quote_exempt_all=False, fiction_slop=True,
        suppress_categories=(), keep=()):
     return {
         "base": base,
-        "slop": slop,
+        "gate_level": level,
         "unit": unit,
         "structural_classify": structural_classify,
         "dialogue_exempt": dialogue_exempt,
@@ -94,18 +94,18 @@ GENRES: dict[str, dict] = {
     # Screenplay: Fountain roles are classified first. Action lines keep the
     # banned-device gate (present-tense, filmable economy); dialogue is exempt
     # and carries only the fiction lexicon as an advisory.
-    "screenplay": _g("narrative", slop="flavored", structural_classify="fountain",
+    "screenplay": _g("narrative", level="flavored", structural_classify="fountain",
                      dialogue_exempt=False),
     # Poetry: the line is the unit, the craft-device categories are removed from
     # the report, and the fiction lexicon runs only as a low-confidence advisory.
-    # The tool makes no claim to detect AI in verse: readers cannot either.
+    # Verse is read for form only; the tool makes no claim about who wrote it.
     "poetry": _g("narrative", unit="line",
                  suppress_categories=_VERSE_DEVICE_SUPPRESS),
 }
 
 
 def load(genre_id: str) -> dict:
-    """Resolve a genre to a profile-like dict the detector consumes: slop, keep,
+    """Resolve a genre to a profile-like dict the checker consumes: gate level, keep,
     register, plus the genre fields. Fails closed on an unknown genre."""
     g = GENRES.get(genre_id)
     if g is None:
@@ -113,7 +113,7 @@ def load(genre_id: str) -> dict:
             f"unknown genre {genre_id!r}; known: {', '.join(sorted(GENRES))}")
     base = profiles.load(g["base"])
     return {
-        "slop": g["slop"],
+        "gate_level": g["gate_level"],
         "keep": tuple(base.get("keep", ())) + g["keep"],
         "register": base.get("register"),
         "genre": genre_id,

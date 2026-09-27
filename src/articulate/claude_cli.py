@@ -12,8 +12,8 @@ PATH entries itself. It looks for claude.exe in every entry first and falls back
 to a batch shim only when no claude.exe exists. It never searches the current
 directory: shutil.which does on Windows, so a document repo that ships a file
 named claude.cmd would run in place of the real CLI. When nothing runnable is
-found, the caller gets ClaudeUnavailable, whose message names the variable. No
-message here prints the value of the variable or the resolved path.
+found, the caller gets ClaudeUnavailable, which names the variable and never
+prints its value or the resolved path.
 
 The prompt always travels in a temporary file passed with
 --append-system-prompt-file, and argv holds a fixed line, that path and fixed
@@ -30,8 +30,8 @@ hooks included, from its working directory, and -p skips the trust prompt. So
 the child runs in a private empty folder, never in the caller's. On Windows the
 child also gets NoDefaultCurrentDirectoryInExePath=1: an npm claude.cmd shim
 runs "node" by bare name, and cmd.exe would look for it in the working folder
-first. A timeout stops the whole process tree, since a batch shim runs the CLI
-as a grandchild that would otherwise keep the pipes open.
+first. A timeout stops the whole process tree (a batch shim runs the CLI as a
+grandchild). With ARTICULATE_LOCAL_ONLY set, run() refuses before any of this.
 """
 import ntpath
 import os
@@ -41,6 +41,8 @@ import signal
 import subprocess
 import sys
 import tempfile
+
+from .local_only import LocalOnly, local_only, refuse_if_local_only  # noqa: F401
 
 ENV_VAR = "ARTICULATE_CLAUDE_CLI"
 DEFAULT_NAME = "claude"
@@ -241,12 +243,12 @@ def _bounded_run(argv, input=None, timeout=None, cwd=None, env=None):
 
 def run(prompt, text, timeout=600, environ=None, exists=None,
         runner=None, windows=None, tmpdir=None):
-    """Run `claude -p` with the prompt in a file and the document on stdin.
-
-    The child starts in a private empty folder. Returns the CompletedProcess.
-    Raises ClaudeUnavailable when the CLI cannot be found or started, or the
-    prompt file cannot be written, and lets subprocess.TimeoutExpired through.
-    """
+    """Run `claude -p` with the prompt in a file and the document on stdin. The
+    child starts in a private empty folder. Returns the CompletedProcess.
+    Raises LocalOnly under the local-only switch, ClaudeUnavailable when the CLI
+    cannot be found or started or the prompt file cannot be written, and lets
+    subprocess.TimeoutExpired through."""
+    refuse_if_local_only(environ)
     windows = os.name == "nt" if windows is None else windows
     cli = resolve(environ, exists, windows)
     runner = _bounded_run if runner is None else runner

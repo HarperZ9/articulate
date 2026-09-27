@@ -67,3 +67,19 @@ def test_the_readme_names_the_published_version():
     assert stated, "README no longer states which version is on PyPI"
     assert set(stated) == {version}, (
         f"README says {stated} is on PyPI while the package declares {version}")
+
+
+def _triple(version):
+    return tuple(int(x) for x in re.findall(r"\d+", version)[:3])
+
+
+def test_the_published_ruleset_record_never_names_a_later_package():
+    # fairness/published-ruleset.json names the last package that published.
+    # A commit after each release updates it, so between releases it names the
+    # declared version and during a release an earlier one. A record naming a
+    # later package than the one declared was written ahead of a release, and
+    # the release check would read it as vouching for rules it never published.
+    import json
+    record = json.loads((_ROOT / "fairness" / "published-ruleset.json").read_text(
+        encoding="utf-8"))
+    assert _triple(record["package_version"]) <= _triple(_declared_version())

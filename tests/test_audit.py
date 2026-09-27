@@ -14,7 +14,8 @@ import pytest
 from articulate import receipt
 from articulate.cli import main as cli_main
 
-TEXT = "In today's landscape, we leverage cutting-edge synergy to unlock value.\n"
+TEXT = ("<!-- writing-profile: house -->\n"
+        "In today's landscape, we leverage cutting-edge synergy to unlock value.\n")
 CANARY = "cutting-edge"          # a document word that appears in no rule label or id
 
 _TMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_tmp_audit")
@@ -30,15 +31,15 @@ def work():
 # --- the receipt is content-free ------------------------------------------- #
 
 def test_full_receipt_still_carries_verbatim_text():
-    rec = receipt.make_receipt(TEXT, "flavored")
-    assert rec["schema"] == "articulate/receipt/v1"
+    rec = receipt.make_receipt(TEXT, "house")
+    assert rec["schema"] == "articulate/receipt/v2"
     assert CANARY in json.dumps(rec)                 # the default is content-bearing
     assert all("match" in f for f in rec["findings"])
 
 
 def test_dropped_receipt_has_no_verbatim_text():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="drop")
-    assert rec["schema"] == "articulate/receipt/audit/v1"
+    rec = receipt.make_receipt(TEXT, "house", redact="drop")
+    assert rec["schema"] == "articulate/receipt/audit/v2"
     assert rec["redaction"] == "drop"
     assert CANARY not in json.dumps(rec)             # no substring survives
     assert all("match" not in f and "match_sha256" not in f for f in rec["findings"])
@@ -46,7 +47,7 @@ def test_dropped_receipt_has_no_verbatim_text():
 
 
 def test_hashed_receipt_keeps_a_hash_not_the_text():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="hash")
+    rec = receipt.make_receipt(TEXT, "house", redact="hash")
     assert CANARY not in json.dumps(rec)
     assert all("match_sha256" in f and "match" not in f for f in rec["findings"])
 
@@ -54,28 +55,28 @@ def test_hashed_receipt_keeps_a_hash_not_the_text():
 # --- and it still replays -------------------------------------------------- #
 
 def test_dropped_receipt_replays_match():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="drop")
+    rec = receipt.make_receipt(TEXT, "house", redact="drop")
     assert receipt.verify_receipt(rec, TEXT)[0] == "Match"
 
 
 def test_hashed_receipt_replays_match():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="hash")
+    rec = receipt.make_receipt(TEXT, "house", redact="hash")
     assert receipt.verify_receipt(rec, TEXT)[0] == "Match"
 
 
 def test_content_free_tampered_is_drift():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="drop")
+    rec = receipt.make_receipt(TEXT, "house", redact="drop")
     rec["findings"][0]["category"] = "tampered"
     assert receipt.verify_receipt(rec, TEXT)[0] == "Drift"
 
 
 def test_content_free_wrong_text_is_unverifiable():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="drop")
+    rec = receipt.make_receipt(TEXT, "house", redact="drop")
     assert receipt.verify_receipt(rec, "different clean prose here.\n")[0] == "Unverifiable"
 
 
 def test_content_free_stale_ruleset_is_unverifiable():
-    rec = receipt.make_receipt(TEXT, "flavored", redact="hash")
+    rec = receipt.make_receipt(TEXT, "house", redact="hash")
     rec["ruleset_version"] = "sha256:0000000000000000"
     assert receipt.verify_receipt(rec, TEXT)[0] == "Unverifiable"
 
@@ -88,7 +89,7 @@ def test_cli_receipt_redact_drop_is_content_free(work, capsys):
         fh.write(TEXT)
     cli_main(["receipt", "--redact", "drop", p])
     out = capsys.readouterr().out
-    assert "articulate/receipt/audit/v1" in out and CANARY not in out
+    assert "articulate/receipt/audit/v2" in out and CANARY not in out
 
 
 def test_cli_check_content_free_console_and_sarif_do_not_leak(work, capsys):

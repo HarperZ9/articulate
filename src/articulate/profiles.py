@@ -5,7 +5,7 @@ articulate.profiles -- the register-adaptive profile system.
 
 Ported from the flywheel writing_lint profile library and adapted to drive the
 Articulate detector's precision tiers. A profile is a register configuration
-(Halliday field/tenor/mode) expressed as data: it sets a `slop` level that
+(Halliday field/tenor/mode) expressed as data: it sets a `gate_level` that
 decides which detector tiers hard-gate, a `keep` list of terms of art the
 detector must never flag, and provenance fields. Adding a prose type is adding a
 record here, not editing the engine.
@@ -24,12 +24,18 @@ import re
 
 DEFAULT = "flavored"
 
-# slop level -> which detector tiers block. Mirrors detector.GATE_TIERS; the
+# gate level -> which tiers block. Mirrors detector.GATE_TIERS; the
 # detector is the authority, this is the human-readable statement of it.
 #   off       nothing gates (report only): narrative, literary essays
-#   flavored  the HIGH device tier gates: docs, research, chat, readme
+#   flavored  the HIGH tier gates: docs, research, chat, readme
 #   strict    HIGH + MEDIUM gate: procedures, commits, error messages, essays
-#             that must be device-free
+#
+# The house pack (rule_reasons.HOUSE_CATEGORIES) is one writer's standard: the
+# em dash, the contrast devices, the intensifiers, stock transitions and the
+# rest. Only a house profile gates it. Every other profile reports those
+# patterns at LOW. No path rule resolves to a house profile; a writer or project
+# chooses one with --profile or a `writing-profile:` tag.
+HOUSE_PROFILES = ("house", "house-essay")
 
 
 class ProfileError(ValueError):
@@ -45,12 +51,13 @@ _TERMS = (
 )
 
 
-def _p(slop, *, keep=(), no_em_dash=True, max_words=None,
+def _p(level, *, keep=(), house=False, max_words=None, promote=(),
        register=("general", "peer", "written")):
     return {
-        "slop": slop,
+        "gate_level": level,
+        "gate_promote": tuple(promote),
         "keep": tuple(_TERMS) + tuple(keep),
-        "no_em_dash": no_em_dash,
+        "house": house,
         "max_sentence_words": max_words,
         "register": {"field": register[0], "tenor": register[1], "mode": register[2]},
     }
@@ -77,7 +84,7 @@ PROFILES: dict[str, dict] = {
                    register=("findings", "peer-review", "written-argument"),
                    keep=("utiliz", "utilis", "facilitat", "comprehensive")),
     # A pure-proof register. The keep-list clears ordinary rigor vocabulary that
-    # the register tells would otherwise flag: analytic and geometric idioms plus
+    # the register rules would otherwise flag: analytic and geometric idioms plus
     # the research Latinate stems. The banned HIGH devices still gate; a proof
     # rephrases them. This screens prose only and says nothing about a theorem's truth.
     "proof": _p("flavored",
@@ -94,12 +101,16 @@ PROFILES: dict[str, dict] = {
     "social": _p("flavored"),
     "chat": _p("flavored",
                register=("engineering", "operator-dialogue", "conversational")),
-    # Essays in this program are device-free, so an
-    # essay uses the strict slop level; the register map's usual "off" applies
-    # only to literary narrative (fiction), where authorial voice governs.
-    "essay": _p("strict", register=("argument", "reader", "written-argument")),
-    "narrative": _p("off", no_em_dash=False,
-                    register=("story", "reader", "literary")),
+    # The essay register gates HIGH and MEDIUM findings that carry a cited
+    # reader cost. It holds no house-pack pattern against a writer who never
+    # chose that style.
+    "essay": _p("strict", register=("argument", "reader", "written-argument"),
+                promote=("reply-opener",)),
+    "narrative": _p("off", register=("story", "reader", "literary")),
+    # House profiles: the full house pack, by choice only.
+    "house": _p("flavored", house=True, promote=("reply-opener",)),
+    "house-essay": _p("strict", house=True, promote=("reply-opener",),
+                      register=("argument", "reader", "written-argument")),
 }
 
 # First match wins. Patterns match the basename or a path fragment.
@@ -109,12 +120,13 @@ PATH_RULES: list[tuple[str, str]] = [
     (r"(?i)(^|/)RELEASE[_-]?NOTES(\.md)?$", "release-notes"),
     (r"(?i)(^|/)MODEL_CARD(\.md)?$", "model-card"),
     (r"(?i)(^|/)README(\.md)?$", "readme"),
-    # A .tex under a proofs/ or papers/ tree is math and belongs in a math register,
-    # so it routes there ahead of the .tex-is-essay default. An essay written in
-    # .tex (device-free essays) still lands on essay.
+    # A .tex under a proofs/ tree is math and belongs in a math register. Any
+    # other .tex is academic writing and lands on research, which blocks only the
+    # HIGH tier. A writer who wants the strict essay gate on a .tex file asks for
+    # it with `% writing-profile: essay`.
     (r"(?i)(^|/)(proofs?)/", "proof"),
     (r"(?i)(^|/)(papers?|research|whitepapers?)/", "research"),
-    (r"(?i)\.tex$", "essay"),
+    (r"(?i)\.tex$", "research"),
     (r"(?i)\.fountain$", "screenplay"),
     (r"(?i)(^|/)(specs?|rfc)/", "normative-spec"),
     (r"(?i)(^|/)(poems?|poetry|verse)/", "poetry"),
@@ -130,7 +142,7 @@ PATH_RULES: list[tuple[str, str]] = [
 def load(name: str) -> dict:
     rec = PROFILES.get(name)
     if rec is None:
-        # A genre id is a profile too: it carries slop, keep, and register plus
+        # A genre id is a profile too: it carries a gate level, keep, and register plus
         # the genre fields. Deferred import breaks the profiles<->genres cycle.
         from . import genres
         if name in genres.GENRES:

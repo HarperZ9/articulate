@@ -77,7 +77,7 @@ def uri_to_path(uri):
 
 def build_diagnostics(text, uri, override=None):
     prof = profiles.resolve(path=uri_to_path(uri), text=text, override=override)
-    r = check_text(text, profile=prof)
+    r = check_text(text, profile=prof, house_notes=False)
     diags = []
     for f in r["high"] + r["medium"] + r["low"]:
         line0 = f["line"] - 1
@@ -89,7 +89,8 @@ def build_diagnostics(text, uri, override=None):
             "severity": SEVERITY.get(f["tier"], 3),
             "code": f["rule_id"],
             "source": "articulate",
-            "message": f"{f['label']}: {f['match']!r}",
+            "message": f"{f['label']}: {f['match']!r}" + (" (house style)" if f.get("house")
+                                                          else ""),
         })
     return diags
 
