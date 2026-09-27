@@ -313,7 +313,11 @@ command with an error that says to upgrade.
 - `process verify`: 0 when intact, 1 when broken, 3 when missing.
 - `desk`: 2 on an unknown `--venue`.
 - `python -m articulate.editor`: 3 when the local-only switch refuses a hosted
-  command, 2 when the file is missing or cannot be read.
+  command, 2 when the file is missing or cannot be read, or when
+  `--allow-change`, `--unprotect` or the project config is malformed. `--fix`
+  exits 1 when a model call fails or a rewrite loses, repeats or moves a
+  protected placeholder, and 0 when the meaning guard refuses a rewrite and the
+  previous text is kept.
 - `python -m articulate.fairness --release-check`: 0 when the ruleset is
   unchanged since the published one or every gate passes; 1 when a gate fails
   and no accepted override names the current ruleset, or a receipt is missing
