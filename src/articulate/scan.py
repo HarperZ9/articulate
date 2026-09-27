@@ -41,7 +41,13 @@ MEDIUM = MEDIUM_REGISTER + MEDIUM_STRUCTURE
 #      rule also skips tables, transcripts, verbatim and code spans; the
 #      rendered-document rules still read every character; unsupported-authority
 #      is a sentence rule that reads citation markers on the raw sentence
-SCAN_ALGO = 6
+#   7  an inch mark, an apostrophe or an autocorrected year opens no quotation
+#      and a backtick between letters opens no code span (articulate.quotemarks);
+#      quotations in other languages' marks, LaTeX ``...'' with an apostrophe,
+#      csquotes commands and displayquote are blanked; a LaTeX quote
+#      environment counts only where LaTeX reads it, nests, and blanks nothing
+#      when it never closes
+SCAN_ALGO = 7
 # A Markdown table delimiter row is structure, never an em-dash.
 SKIP_TABLE_SEP = True
 

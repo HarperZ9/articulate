@@ -88,6 +88,16 @@ MASK_ADVERSARIAL = [
     "> quote\n" * 5000,
     "ChatGPT: x\n" * 5000,
     "\\begin{quote}\n" + "x\n" * 5000,
+    # SCAN_ALGO 7: csquotes commands, nested and unclosed environments, and the
+    # quotation-mark families read in one pass.
+    "\\enquote{" * 8000,
+    "\\foreignquote{x}{" * 6000,
+    "\\textquote[a][b]" * 6000,
+    "\\begin{quote}\\begin{quotation}" * 4000,
+    "<!-- \\begin{quote}\n" * 5000,
+    "`a`b " * 20000,
+    "\u00bba \u00aba " * 10000,
+    "\u201ea \u201ca \u201da " * 8000,
 ]
 
 

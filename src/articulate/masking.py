@@ -1,4 +1,5 @@
-"""Linear-time masking of URLs, e-mail addresses, HTML tags, and quoted speech.
+"""Linear-time masking of URLs, e-mail addresses, HTML tags, inline code and
+quoted speech.
 
 The detector blanks these spans with equal-length spaces before the prose passes
 run. It used to call re.sub with the reference patterns below. Those patterns
@@ -7,29 +8,33 @@ backtrack quadratically on a long line where a match never completes: a run of
 unclosed curly quotes. One such line cost seconds per pass, and strip_markup runs
 as many as six times on every line.
 
-Each function here returns exactly the string that re.sub(pattern, blank, line)
-returns for its reference pattern, on every input, and runs in linear time. The
-findings therefore do not change. tests/test_masking.py checks the equivalence
-against the reference patterns on generated input. Standard library only.
+The URL and tag masks return exactly the string that re.sub(pattern, blank,
+line) returns for their reference pattern, on every input, in linear time. The
+quotation and inline-code masks follow the rules in their docstrings (SCAN_ALGO
+7), which a regex cannot state; tests/test_masking.py checks each mask against a
+direct reference implementation on generated input. Standard library only.
 """
 import re
 
-# The reference patterns: the definition of record for what each mask blanks.
-# The detector compiles them as detector.URL, detector.TAG, and detector.QUOTED,
-# and it never calls .sub with them on document text.
+from . import quotemarks
+
+# The reference patterns: the definition of record for what the URL and tag
+# masks blank. The detector compiles them as detector.URL and detector.TAG, and
+# it never calls .sub with them on document text. QUOTED_PATTERN names every
+# quotation mark the quotation mask reads; which of them pair is set by
+# articulate.quotemarks, and the fingerprint hashes both.
 URL_PATTERN = r"https?://\S+|\b[\w.-]+@[\w.-]+\.\w+\b"
 TAG_PATTERN = r"<[^>]+>"
-QUOTED_PATTERN = "\"[^\"\\n]*\"|\u201c[^\u201d\\n]*\u201d|\u2018[^\u2019\\n]*\u2019"
+QUOTED_PATTERN = "[" + "".join(sorted(quotemarks.MARKS)) + "]"
 
 _TAG = re.compile(TAG_PATTERN)
+_BACKTICK = re.compile("[`\n]")
 _WEB = re.compile(r"https?://\S+")
 _WEB_START = re.compile(r"https?://\S")
 _NON_SPACE = re.compile(r"\S*")
 _RUN = re.compile(r"[\w.-]+")
 _BOUNDARY = re.compile(r"\b")
 _DOMAIN = re.compile(r"[\w.-]+\.\w+\b")
-_QUOTE_OPEN = re.compile("[\"\u201c\u2018]")
-_QUOTE_CLOSE = {"\"": "\"", "\u201c": "\u201d", "\u2018": "\u2019"}
 
 
 def _blank(m):
@@ -129,36 +134,38 @@ def mask_tags(line):
 
 
 def quote_spans(line):
-    """The spans re.sub(QUOTED_PATTERN, ...) replaces, in order, in linear time.
-
-    Each alternative starts with its own opening mark and runs to the first
-    closing mark, with no newline between. When an opening mark finds no closing
-    mark before the next newline, no later opening mark of the same kind before
-    that newline can close either, so the scan skips them. The reference pattern
-    retried each one and rescanned to the newline every time."""
-    n = len(line)
-    spans, pos, stop = [], 0, -1
-    dead = {}   # opening mark -> index of the newline before which it cannot close
-    while True:
-        m = _QUOTE_OPEN.search(line, pos)
-        if m is None:
-            return spans
-        start, mark = m.start(), m.group()
-        if dead.get(mark, -1) > start:
-            pos = start + 1
-            continue
-        if stop <= start:   # find the first newline after start, once per line
-            stop = line.find("\n", start + 1)
-            stop = n if stop < 0 else stop
-        close = line.find(_QUOTE_CLOSE[mark], start + 1, stop)
-        if close < 0:
-            dead[mark] = stop
-            pos = start + 1
-            continue
-        spans.append((start, close + 1))
-        pos = close + 1
+    """The quotations in `line`, sorted, overlaps merged, in linear time. Which
+    marks pair is set by articulate.quotemarks (SCAN_ALGO 7): an inch mark, an
+    apostrophe or an autocorrected year opens nothing, and a mark with no closer
+    before the line ends blanks nothing."""
+    return quotemarks.quote_spans(line)
 
 
 def mask_quoted(line):
-    """Blank quoted spans, exactly as re.sub(QUOTED_PATTERN) does."""
+    """Blank quoted spans (quote_spans)."""
     return blank_spans(line, quote_spans(line))
+
+
+def code_spans(line):
+    """(start, end) of each inline code span: a backtick pairs with the next
+    backtick on the line, as INLINE_CODE matches, except that a backtick between
+    two letters is an apostrophe typed on a keyboard that puts it there
+    ("didn`t") and neither opens nor closes a span (SCAN_ALGO 7). Linear time."""
+    spans, start = [], None
+    for m in _BACKTICK.finditer(line):
+        i = m.start()
+        if line[i] == "\n":
+            start = None
+        elif 0 < i < len(line) - 1 and line[i - 1].isalpha() and line[i + 1].isalpha():
+            continue
+        elif start is None:
+            start = i
+        else:
+            spans.append((start, i + 1))
+            start = None
+    return spans
+
+
+def mask_code(line):
+    """Blank inline code spans (code_spans)."""
+    return blank_spans(line, code_spans(line))

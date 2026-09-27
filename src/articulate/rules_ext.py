@@ -20,8 +20,8 @@ from __future__ import annotations
 
 import re
 
-from . import invariants, terms
-from .markup import FENCE, INLINE_CODE, TEX, _blank, _mk
+from . import invariants, masking, terms
+from .markup import FENCE, TEX, _blank, _mk
 
 # 1.1.0: the packs and project terms read a paragraph as one line (pack_util
 # .paragraph_hits), as the core checks read logical lines.
@@ -39,7 +39,8 @@ def mask_line(line):
     """Mask code, URLs and emails, tags, and TeX with equal-length spaces. The
     URL and tag patterns are bounded, so a long line of dotted tokens or of
     unclosed angle brackets stays linear."""
-    for rx in (INLINE_CODE, invariants.URL, _TAG, TEX):
+    line = masking.mask_code(line)
+    for rx in (invariants.URL, _TAG, TEX):
         line = rx.sub(_blank, line)
     return line
 

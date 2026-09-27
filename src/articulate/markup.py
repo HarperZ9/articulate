@@ -55,10 +55,12 @@ ALLOW_EXEMPT_CATEGORIES = frozenset({
     "cadence",
 })
 
-# The reference patterns for the markup masks. strip_markup and mask_quotes
-# apply them through articulate.masking, which returns what re.sub with these
-# patterns returns, in linear time. Calling .sub with them on a long line that
-# never completes a match is quadratic, so the detector does not do that.
+# The reference patterns for the markup masks. strip_markup applies the URL and
+# tag patterns through articulate.masking, which returns what re.sub with them
+# returns, in linear time. Calling .sub with them on a long line that never
+# completes a match is quadratic, so the detector does not do that. Inline code
+# is INLINE_CODE's backtick pairs, except that a backtick between two letters is
+# an apostrophe (masking.code_spans, SCAN_ALGO 7).
 TAG = re.compile(masking.TAG_PATTERN)
 TEX = re.compile(r"\\[a-zA-Z]+\*?\{?|[{}]")
 INLINE_CODE = re.compile(r"`[^`]*`")
@@ -119,7 +121,7 @@ def strip_markup(line: str) -> str:
     """Mask code, URLs, HTML tags, and LaTeX with equal-length spaces. Length is
     preserved so a match offset in the masked line is a valid offset in the raw
     line, which is what span-level records need."""
-    line = INLINE_CODE.sub(_blank, line)
+    line = masking.mask_code(line)    # INLINE_CODE pairs, apostrophes kept
     line = masking.mask_urls(line)    # URL.sub, in linear time
     line = masking.mask_tags(line)    # TAG.sub, in linear time
     line = TEX.sub(_blank, line)
@@ -129,7 +131,7 @@ def strip_markup(line: str) -> str:
 def mask_quotes(line: str) -> str:
     """Mask quoted speech with equal-length spaces so a device inside a quote is
     not scored against the author. Offsets are preserved for span records."""
-    return masking.mask_quoted(line)   # QUOTED.sub, in linear time
+    return masking.mask_quoted(line)   # articulate.quotemarks, linear time
 
 
 def classify_fountain(lines):
