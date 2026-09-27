@@ -184,8 +184,8 @@ text, and nothing else.
 
 ## Status
 
-Pre-1.0. Version 0.5.0 is on PyPI as `articulate-writing`; the changes on this
-page are unreleased and listed in the [changelog](CHANGELOG.md). The fairness
+Pre-1.0. Version 0.6.0 is on PyPI as `articulate-writing`; the
+[changelog](CHANGELOG.md) records what each release added. The fairness
 harness has run on proxy corpora only. No arm yet groups adult academic writers
 by first language, and none covers dictated text, disabled writers or World
 Englishes. The release gate for the new ruleset passes on the Liang et al.
