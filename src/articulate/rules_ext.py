@@ -106,7 +106,10 @@ _register()
 
 def fingerprint_parts():
     """The strings that pin these rules in the ruleset fingerprint."""
-    parts = [f"RULES_EXT={SEMVER}", f"TERMS={terms._KEYS!r}|{sorted(terms.SEVERITIES)}"]
+    # Sort every set: a set's repr follows the per-process hash seed, and the
+    # fingerprint must be the same in every process that recomputes it.
+    keys = sorted((kind, sorted(names)) for kind, names in terms._KEYS.items())
+    parts = [f"RULES_EXT={SEMVER}", f"TERMS={keys!r}|{sorted(terms.SEVERITIES)}"]
     for name in sorted(PACKS):
         parts.append(f"PACK|{name}|{sorted(PACKS[name].OPTIONS.items())}")
         parts.extend(f"PACK|{name}|{p}" for p in PACKS[name].fingerprint())
