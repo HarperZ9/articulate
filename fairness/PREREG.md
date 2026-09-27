@@ -12,9 +12,12 @@ The harness is `python -m articulate.fairness`. Its code lives in
   The file as it stood with the confirmatory amendment below (commit 5a30364)
   carries an RFC 3161 timestamp from a public time-stamping authority (FreeTSA)
   over its SHA-256. A later extension of the tier-change amendment says so where
-  it starts, and that token does not cover it. `fairness/anchor/README.md` holds the token and the command that
-  verifies it. The pull request's creation time on GitHub is a second, weaker
-  anchor.
+  it starts, and that token does not cover it. A second FreeTSA token, taken
+  after that extension and before any run on PERSUADE 2.0, covers the file as it
+  stands at the commit that adds `fairness/anchor/PREREG-2.tsr`, including the
+  ruleset fingerprint the confirmatory run measures. `fairness/anchor/README.md`
+  holds both tokens and the commands that verify them. The pull request's
+  creation time on GitHub is a further, weaker anchor.
 - The thresholds below were chosen after an exploratory audit had already read
   the Liang et al. (2023) release. On that corpus these gates are therefore not
   pre-registered. They bind every licensed corpus added after this file lands.
@@ -171,8 +174,10 @@ exploratory, like the two tier changes above.
   the amendment below names. A changed ruleset ships only after it passes on
   every listed corpus. The PERSUADE 2.0 receipt names the fingerprint it ran
   under; at this writing that is `sha256:46e1485cd2c98caa`.
-- This extension is not covered by the RFC 3161 token, which signs the file as
-  it stood at commit 5a30364 (`fairness/anchor/README.md`).
+- The first RFC 3161 token signs the file as it stood at commit 5a30364 and
+  does not cover this extension. The second token (`PREREG-2.tsr`) signs the
+  file with this extension, before the confirmatory run
+  (`fairness/anchor/README.md`).
 
 ### Amendment of 26 September 2026: the confirmatory corpus
 
