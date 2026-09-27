@@ -115,11 +115,11 @@ MEDIUM_STRUCTURE = [
      re.compile(r"(?i)\b(?:that|this)(?:'s| is)\s+(?:a|an)\s+(?:great|excellent|"
                 r"fantastic|really\s+good|very\s+good|insightful|thoughtful|"
                 r"brilliant|smart|wonderful)\s+(?:question|catch)\b")),
+    # An offer of more help addresses a chat partner, not this document's
+    # reader. "I hope this helps" is a LOW note (rules_low.PHRASING_NOTES): a
+    # letter to its reader may close with it (ruleset 0.9.0).
     ("closing-boilerplate", "boilerplate helpful closer",
-     re.compile(r"(?i)\bi\s+hope\s+(?:this|that|these|the\s+above)\s+(?:helps?|"
-                r"is\s+helpful|clarifies|answers?\s+your\s+question|makes\s+sense)\b"
-                r"|\bhope\s+(?:this|that)\s+helps\b"
-                r"|\bis\s+there\s+anything\s+else\s+(?:i\s+can\s+(?:help|assist|do)|"
+     re.compile(r"(?i)\bis\s+there\s+anything\s+else\s+(?:i\s+can\s+(?:help|assist|do)|"
                 r"you'?d\s+like)\b")),
     ("delivery", "reassurance cadence",
      re.compile(r"(?i)\b(?:don'?t\s+worry|not\s+to\s+worry|worry\s+not|rest\s+assured|"
@@ -139,21 +139,8 @@ MEDIUM_STRUCTURE = [
                 r"magic\s+bullet|universal\s+(?:answer|solution))\b")),
 
     # --- meta / scaffolding / reveal ------------------------------------- #
-    ("meta", "section-framing imperative (let's break it down)",
-     re.compile(r"(?i)\blet(?:'?s| us)\s+(?:break\s+(?:it|this)\s+down|take\s+a\s+"
-                r"(?:closer\s+)?look|get\s+started|jump\s+(?:in|right\s+in)|"
-                r"walk\s+through|dig\s+(?:in|into))\b"
-                r"|\bwithout\s+further\s+ado\b|\bbuckle\s+up\b")),
-    ("meta", "back-reference (as we've seen / as mentioned earlier)",
-     re.compile(r"(?i)\bas\s+(?:we'?ve|we\s+have)\s+(?:seen|discussed|explored|"
-                r"noted|established)\b"
-                r"|\bas\s+(?:mentioned|discussed|noted|stated|shown)\s+"
-                r"(?:earlier|above|previously|before)\b")),
-    ("meta", "reader mind-reading (you might be wondering)",
-     re.compile(r"(?i)\byou\s+(?:might|may|probably|likely)\s+(?:be\s+)?"
-                r"(?:wondering|asking|thinking|expecting)\b"
-                r"|\bif\s+you'?re\s+like\s+(?:most|many)\s+(?:people|of\s+us|"
-                r"developers|readers)\b")),
+    # The meta rules (section framing, back-reference, mind-reading) are LOW
+    # notes: rules_low.PHRASING_NOTES (ruleset 0.9.0).
     ("scaffold", "roadmap-preview sentence (by the end of this guide)",
      re.compile(r"(?i)\bby\s+the\s+end\s+of\s+this\s+(?:article|post|guide|piece|"
                 r"section|tutorial|chapter)\b")),

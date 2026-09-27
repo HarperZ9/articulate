@@ -92,7 +92,8 @@ REASONS = {
         _WILLIAMS + ", metadiscourse and concision"),
     "meta": (
         "Text about the text, or about what the reader might be thinking, delays "
-        "the content the reader came for.",
+        "the content in a short text; in a long one it can guide the reader, so "
+        "keep it where it points somewhere the reader needs to go.",
         _WILLIAMS + ", metadiscourse"),
     "cliche": (
         "A stock phrase such as 'plays a vital role' names a relation without saying "
@@ -122,8 +123,9 @@ REASONS = {
         "reader nothing about the subject.",
         _PLAIN + ", write for your audience"),
     "closing-boilerplate": (
-        "A closing line such as 'I hope this helps' addresses a chat partner and "
-        "adds nothing the reader can use.",
+        "An offer of more help ('Is there anything else I can help with?') addresses "
+        "a chat partner and gives this document's reader nothing to use; 'I hope this "
+        "helps' is a note, since a letter may close with it.",
         _PLAIN + ", write for your audience"),
     "emoji-structure": (
         "An emoji used as a heading or bullet marker has no fixed meaning, and a "

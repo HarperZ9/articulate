@@ -13,7 +13,7 @@ from . import (aliases, cadence, citations, density, markup, quoting, rule_reaso
                sentence_notes)
 from .gate import GATE_TIERS
 from .rules_high import HIGH
-from .rules_low import FICTION_SLOP, INJECTION, LOW, REGISTER_JARGON
+from .rules_low import FICTION_SLOP, INJECTION, LOW, PHRASING_NOTES, REGISTER_JARGON
 from .scan import MEDIUM
 
 RULESET_SEMVER = "0.8.0"
@@ -108,7 +108,7 @@ def ruleset_fingerprint():
     parts = [f"semver={RULESET_SEMVER}", f"gate={gate}"]
     for name, lst in (("HIGH", HIGH), ("MEDIUM", MEDIUM),
                       ("REGISTER_JARGON", REGISTER_JARGON), ("LOW", LOW),
-                      ("FICTION_SLOP", FICTION_SLOP)):
+                      ("PHRASING_NOTES", PHRASING_NOTES), ("FICTION_SLOP", FICTION_SLOP)):
         for cat, label, rx in lst:
             parts.append(f"{name}|{cat}|{label}|{rx.pattern}")
     parts += _lexicon_parts()
@@ -152,7 +152,8 @@ def known_categories():
             "announcement", "padded-preposition", "unsupported-authority",
             "fragment-opener", "header-reflex", "list-reflex", "bold-density",
             "ngram-repetition", "paragraph-uniformity", "hedge-cluster"}
-    for lst in (HIGH, MEDIUM, REGISTER_JARGON, LOW, FICTION_SLOP, INJECTION):
+    for lst in (HIGH, MEDIUM, REGISTER_JARGON, LOW, PHRASING_NOTES, FICTION_SLOP,
+                INJECTION):
         for cat, _label, _rx in lst:
             cats.add(cat)
     from . import rules_ext

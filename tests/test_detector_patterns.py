@@ -65,12 +65,11 @@ def test_high_affirmation_opener_extended():
 
 MEDIUM_POSITIVES = {
     "sycophancy": "That is a great question, and it gets at the core tradeoff.",
-    "closing-boilerplate": "The config lives in one file. I hope this helps you get unstuck.",
+    "closing-boilerplate": "The config lives in one file. Is there anything else I can help with?",
     "delivery": "Setup takes two commands. Don't worry, it is simpler than it sounds.",
     "over-apology": "I apologize for the confusion in my earlier note about the flags.",
     "disclaimer": "The deduction may apply. This is not financial advice, of course.",
     "evasive": "People ask which to pick. There is no one-size-fits-all answer.",
-    "meta": "The pipeline has three stages. Let's break it down stage by stage.",
     "scaffold": "By the end of this guide, you will have a running verifier.",
     "reveal": "The kicker: the whole run reproduces offline with no network.",
     "throat-clearing": "Needless to say, the benchmark shows no accuracy gain.",
@@ -97,9 +96,36 @@ def test_medium_reveal_and_meta_variants():
     # contracted and expanded copulas both fire (recall, no precision cost)
     assert _has_cat("Here is the kicker: it needs no trust at all.", "reveal")
     assert _has_cat("And here is where it gets interesting: the check runs twice.", "reveal")
-    assert _has_cat("As we have seen, provenance travels with the work.", "meta")
-    assert _has_cat("You might be wondering why the verifier ignores the model.", "meta")
+    assert ("LOW", "meta") in _notes("As we have seen, provenance travels with the work.")
+    assert ("LOW", "meta") in _notes("You might be wondering why the verifier ignores the model.")
     assert _has_cat("And that is why the receipt matters more than the verdict.", "closer")
+
+
+# Metadiscourse and the courtesy closer report as LOW notes from ruleset 0.9.0:
+# their cost depends on the document (rules_low.PHRASING_NOTES). They still
+# fire on the same phrases, in every profile, house profiles included.
+NOTE_POSITIVES = {
+    "meta": "The pipeline has three stages. Let's break it down stage by stage.",
+    "closing-boilerplate": "The config lives in one file. I hope this helps you get unstuck.",
+}
+
+
+def _notes(text, name="house"):
+    r = articulate.check_text(text if text.endswith("\n") else text + "\n",
+                              profile=profiles.load(name))
+    return {(f["tier"], f["category"]) for f in r["low"]}
+
+
+def test_phrasing_notes_fire_at_low_and_never_at_medium():
+    for category, text in NOTE_POSITIVES.items():
+        for name in ("house", "essay", "flavored"):
+            assert ("LOW", category) in _notes(text, name), (category, name)
+            assert not _has_cat(text, category), (category, text)
+
+
+def test_a_phrasing_note_skips_a_quotation():
+    text = 'She wrote, "As we have seen, it works." The run ended.'
+    assert ("LOW", "meta") not in _notes(text)
 
 
 # --- near-miss negatives for the tighter new tells -------------------------- #

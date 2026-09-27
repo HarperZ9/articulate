@@ -21,6 +21,35 @@ REGISTER_JARGON = [
                 r"boils? down to|comes? down to|single source of truth)\b", re.I)),
 ]
 
+# Phrasing notes (ruleset 0.9.0). They read the text with quotations blanked,
+# as the MEDIUM phrasing rules do, and never block unless a mode promotes them.
+# Metadiscourse (text about the text, or about what the reader may think) costs
+# the reader time in a short text and guides the reader in a long one, the
+# account in Williams and Bizup's Style, so its cost depends on the document:
+# the same test that moved the announcement note to LOW. "I hope this helps"
+# closes a reply to a question, and a letter to its reader may close with it too.
+PHRASING_NOTES = [
+    ("meta", "section-framing imperative (let's break it down)",
+     re.compile(r"(?i)\blet(?:'?s| us)\s+(?:break\s+(?:it|this)\s+down|take\s+a\s+"
+                r"(?:closer\s+)?look|get\s+started|jump\s+(?:in|right\s+in)|"
+                r"walk\s+through|dig\s+(?:in|into))\b"
+                r"|\bwithout\s+further\s+ado\b")),
+    ("meta", "back-reference (as we've seen / as mentioned earlier)",
+     re.compile(r"(?i)\bas\s+(?:we'?ve|we\s+have)\s+(?:seen|discussed|explored|"
+                r"noted|established)\b"
+                r"|\bas\s+(?:mentioned|discussed|noted|stated|shown)\s+"
+                r"(?:earlier|above|previously|before)\b")),
+    ("meta", "reader mind-reading (you might be wondering)",
+     re.compile(r"(?i)\byou\s+(?:might|may|probably|likely)\s+(?:be\s+)?"
+                r"(?:wondering|asking|thinking|expecting)\b"
+                r"|\bif\s+you'?re\s+like\s+(?:most|many)\s+(?:people|of\s+us|"
+                r"developers|readers)\b")),
+    ("closing-boilerplate", "courtesy closer (I hope this helps)",
+     re.compile(r"(?i)\bi\s+hope\s+(?:this|that|these|the\s+above)\s+(?:helps?|"
+                r"is\s+helpful|clarifies|answers?\s+your\s+question|makes\s+sense)\b"
+                r"|\bhope\s+(?:this|that)\s+helps\b")),
+]
+
 # Formatting heuristics that fire on innocent prose too. Reported as advisories.
 LOW = [
     ("rule-of-three", "possible triad (X, Y, and Z)",

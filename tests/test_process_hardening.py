@@ -264,8 +264,10 @@ def test_fix_logs_the_rewrite_when_pass_two_fails(doc, monkeypatch, capsys):
         calls.append(1)
         if len(calls) > 1:
             raise editor.ClaudeUnavailable("backend down")
-        # Keeps "three days", so the meaning guard passes the first rewrite.
-        return "As mentioned above, the rain fell for three days in order to flood the field.\n"
+        # Keeps "three days", so the meaning guard passes the first rewrite, and
+        # keeps a blocking finding (wordiness), so a second pass runs.
+        return ("Due to the fact that the rain fell for three days, it flooded "
+                "the field.\n")
 
     monkeypatch.setattr(editor, "claude_call", fake)
     assert editor.fix(doc, doc + ".fixed.md", passes=2, profile="essay") == 1

@@ -18,7 +18,7 @@ from .rule_reasons import resolve_all
 from .rules_high import HIGH, RENDERED, SELF_DESCRIPTION
 from .sentence_notes import OPENERS as _OPENERS  # noqa: F401  (the fingerprint reads it)
 from .sentence_notes import sentence_passes
-from .rules_low import FICTION_SLOP, LOW, REGISTER_JARGON
+from .rules_low import FICTION_SLOP, LOW, PHRASING_NOTES, REGISTER_JARGON
 from .rules_medium_register import MEDIUM_REGISTER
 from .rules_medium_structure import MEDIUM_STRUCTURE
 
@@ -95,6 +95,7 @@ HIGH_INLINE, HIGH_START = _split([r for r in HIGH if (r[0], r[1]) not in RENDERE
                                   and r[1] != SELF_DESCRIPTION])
 MEDIUM_INLINE, MEDIUM_START = _split(MEDIUM)
 LOW_INLINE, LOW_START = _split(LOW)
+NOTE_INLINE, NOTE_START = _split(PHRASING_NOTES)
 
 
 class _Scan:
@@ -162,6 +163,7 @@ def _device_passes(sc, unit, count_text, quoted, chat):
     sc.table(sc.high, unit, chat, *HIGH_SELF)
     sc.table(sc.high, unit, quoted, HIGH_INLINE, HIGH_START)
     sc.table(sc.medium, unit, quoted, MEDIUM_INLINE, MEDIUM_START)
+    sc.table(sc.low, unit, quoted, NOTE_INLINE, NOTE_START)
     for cat, label, rx in REGISTER_JARGON:   # a hit to fix; allowlist to keep
         for m in rx.finditer(quoted):
             sc.add(sc.medium, unit, cat, label, m.start(), m.end(), text=quoted)
