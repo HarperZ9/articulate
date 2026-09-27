@@ -25,10 +25,6 @@ NOTE_REASONS = {
         "An opening 'Certainly!' or 'Of course,' answers a request the reader never "
         "made, so the reader skips it to reach the content.",
         _PLAIN + ", write for your audience"),
-    "anaphora": (
-        "The same opening words on several sentences in a row can bury what each "
-        "sentence adds; keep the repetition where it is the point.",
-        _WILLIAMS + ", cohesion and emphasis"),
     "arrow-glyph": (
         "An arrow glyph in prose has no fixed spoken form, so a screen reader reads "
         "its name and the reader must guess the relation it stands for.",
@@ -102,10 +98,6 @@ NOTE_REASONS = {
         "When most lines are list items, the links between points drop out and the "
         "reader must supply the 'because' and 'so' that prose would carry.",
         _WILLIAMS + ", cohesion and coherence"),
-    "ngram-repetition": (
-        "A phrase repeated many times makes the reader meet the same words again; if "
-        "it is your key term, keeping one term is plain-language practice.",
-        _PLAIN + ", use the same terms consistently"),
     "nominalization": (
         "Four or more nouns made from verbs in one sentence hide who does what, and "
         "the reader must rebuild the actions.",

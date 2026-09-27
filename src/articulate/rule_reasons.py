@@ -37,6 +37,12 @@ HOUSE_CATEGORIES = frozenset({
     "rhetorical-we", "delivery", "over-apology", "disclaimer", "evasive",
     # stock phrases of a genre
     "email-stock-phrase", "blog-stock-phrase", "cta", "continuation-cliche", "significance",
+    # Report-only notes that measured skewed toward learner writing and whose own
+    # reason concedes the cost depends on intent (decision 3 on pull request 9,
+    # ruleset 0.9.0): repeated sentence openers (skewed on PERSUADE 2.0) and a
+    # repeated phrase (skewed on the Liang et al. corpus). Both readings are
+    # exploratory; a writer sees these with --house-notes.
+    "anaphora", "ngram-repetition",
 })
 
 _PLAIN = "Federal Plain Language Guidelines (plainlanguage.gov, 2011)"

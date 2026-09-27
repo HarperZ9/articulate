@@ -38,12 +38,16 @@ def test_every_finding_in_json_carries_its_reason():
             assert (f["reason"], f["reason_source"]) == rule_reasons.reason_for(f["category"])
 
 
-def test_the_ngram_note_carries_a_reason():
+def test_the_ngram_note_is_a_house_note_with_the_house_reason():
+    # Ruleset 0.9.0: a repeated phrase measured skewed toward learner writing and
+    # its cost depends on intent, so it is a house note (decision 3, PR 9).
     text = ("In my humble opinion we won. In my humble opinion it rained. "
             "In my humble opinion nobody cared.\n")
-    r = check_text(text, profile=profiles.load("flavored"), house_notes=False)
-    (f,) = [f for f in r["low"] if f["category"] == "ngram-repetition"]
-    assert "key term" in f["reason"]
+    hidden = check_text(text, profile=profiles.load("flavored"), house_notes=False)
+    assert not [f for f in hidden["low"] if f["category"] == "ngram-repetition"]
+    shown = check_text(text, profile=profiles.load("flavored"), house_notes=True)
+    (f,) = [f for f in shown["low"] if f["category"] == "ngram-repetition"]
+    assert f["house"] and f["reason"] == rule_reasons.HOUSE_REASON
 
 
 def _cli(capsys, *argv):
