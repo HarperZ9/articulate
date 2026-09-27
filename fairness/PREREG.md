@@ -275,6 +275,11 @@ a threshold, the corpus, the sampling or a seed. On every 20th PERSUADE essay th
 harness as it stood at the second token and the harness of the receipt run wrote
 the same bytes.
 
+One sentence of the extension overstates a rule. It says a four-digit count no
+longer silences `unsupported-authority`. That holds for a count in running text,
+such as "in 1200 patients"; a count in parentheses, such as "(1600 patients)",
+still reads as a citation year. That is a known defect, recorded as a test.
+
 What the anchors cover. Each token signs the bytes of this file. Through its
 text the second token fixes the manifest hash, the corpus hash, the thresholds,
 the seed and the 64-bit ruleset fingerprint the run measured. Neither token
@@ -329,7 +334,9 @@ confirmatory corpus lands and is timestamped before that corpus is read, and it:
 - settles what this run showed the rules leave open: a G2 reading for an arm
   with no hits (the percentile bootstrap gives `[inf, inf]`), a multiplicity
   statement for per-rule readings, whether the G4 rewrap keeps paragraph
-  breaks, and a receipt key for the notes whose rule ids carry a count.
+  breaks, G4's wording (the code compares HIGH and MEDIUM findings, the density
+  count and words), and a receipt key for the notes whose rule ids carry a
+  count.
 
 ## Statistics
 
