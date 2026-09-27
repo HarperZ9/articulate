@@ -127,8 +127,10 @@ articulate process verify (DOC | SUMMARY.json)
 `export --include` names the fields a default export leaves out: `words`, `diff`,
 `time`, `labels`, `citations`, `review_names` and `input_method`. `continue` works
 only on a broken log. `verify` reads a file as a summary when its `schema` field
-says so, whatever its name; on a document it reports `intact`, `broken` or
-`missing`, and exits 0 only for `intact`.
+says so, whatever its name; on a document it reports `intact` (exit 0),
+`broken` (exit 1) or `missing` (exit 3). A missing log is no record: "an absent or
+short record shows nothing about a writer". `verify`, `export` and `disclose`
+each print that limits line.
 
 ## disclose
 

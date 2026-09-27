@@ -31,6 +31,29 @@ PADDED_PURPOSE = re.compile(r"\bin order to\b", re.I)
 # number, year or citation marker (the idea of the unsupported-authority
 # lookahead, read over the whole sentence).
 UNANCHORED_CLAIM = re.compile(r"\bstate[- ]of[- ]the[- ]art\b", re.I)
+# Self-reference that announces what the text will do ("In this article, we
+# will explore", "This post delves into") in place of doing it. A LOW note: a
+# statement of content ("In this essay, I argue", "This article examines") raises
+# nothing, since style guides model it as a thesis or scope statement.
+_SELF_NOUN = (r"(?:essay|paper|thesis|dissertation|study|report|article|post|section|"
+              r"chapter|piece|guide|work)")
+_ANNOUNCE = r"(?:explore|discuss|look\s+at|delve(?:\s+into)?|dive\s+into|talk\s+about)"
+ANNOUNCEMENT = re.compile(
+    r"(?i)\bin\s+this\s+" + _SELF_NOUN + r",?\s+(?:we|i|you)"
+    r"(?:['’]ll\s+|\s+(?:(?:will|shall|are\s+going\s+to|am\s+going\s+to|want\s+to|"
+    r"would\s+like\s+to|aim\s+to|intend\s+to)\s+)?)" + _ANNOUNCE + r"\b"
+    r"|\bthis\s+" + _SELF_NOUN + r"\s+(?:explores|delves\s+into|dives\s+into|will\s+"
+    + _ANNOUNCE + r")\b")
+# "with respect to": "on", "about" or "for" often does the same work, so it is a
+# LOW note. It stays silent in the operator sense: after a derivative, gradient
+# or similar term, or before a Greek letter, a subscripted symbol, a math span
+# or a single letter other than "a" (a variable).
+PADDED_PREPOSITION = re.compile(r"(?i)\bwith\s+respect\s+to\b")
+OPERATOR_BEFORE = re.compile(r"(?i)\b(?:derivatives?|gradients?|partials?|integrals?|"
+                             r"jacobians?|convex|continuous(?:ly)?|measurable|"
+                             r"differentiable|invariant|integrable)\s+$")
+OPERATOR_AFTER = re.compile(r"\s*(?:\$|\\[(\[]|[Ͱ-Ͽἀ-῿]|"
+                            r"[A-Za-z]_|[b-zB-HJ-Z]\b(?!['’]))")
 CLAIM_ANCHOR = re.compile(r"\d|https?://|\bet al\.|\\cite|\[@", re.I)
 
 WORD = re.compile(r"\b\w+\b")
@@ -49,10 +72,15 @@ NEG = re.compile(r"\b(?:cannot|can ?not|can't|is ?n't|is not|are ?n't|are not|"
 FIRSTWORD = re.compile(r"^\W*(\w+)")
 
 # Williams, "Style: Lessons in Clarity and Grace" (the basis Ptacek names).
-# Expletive opener: "it is important / worth / crucial / essential / necessary"
-# at a sentence start is metadiscourse that delays the subject. A default LOW
-# note that never blocks, matched on the stripped-markup sentence start.
-EXPLETIVE = re.compile(r"(?i)^it (?:is|was) (?:important|worth|crucial|essential|necessary)\b")
+# Expletive opener: "it is important / worth / crucial / essential / necessary /
+# vital" at a sentence start, or after one leading clause and a comma, is
+# metadiscourse that delays the subject. A default LOW note that never blocks,
+# matched on the stripped-markup sentence start; group 1 is the reported span.
+# It is the only rule on this opener: the MEDIUM throat-clearing and
+# worth-noting rules no longer match it, so one span gets one finding.
+EXPLETIVE = re.compile(r"(?i)^(?:[^,.;:!?\n]{1,80},\s+)?"
+                       r"(it(?:['’]s|\s+is|\s+was)\s+"
+                       r"(?:important|worth|crucial|essential|necessary|vital)\b)")
 # Existential "there is / are / was / were" is grammatical and often the
 # clearest phrasing, so it is a house note, shown only on request.
 EXISTENTIAL = re.compile(r"(?i)^there (?:is|are|was|were)\b")

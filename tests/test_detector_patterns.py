@@ -73,7 +73,7 @@ MEDIUM_POSITIVES = {
     "meta": "The pipeline has three stages. Let's break it down stage by stage.",
     "scaffold": "By the end of this guide, you will have a running verifier.",
     "reveal": "The kicker: the whole run reproduces offline with no network.",
-    "throat-clearing": "It is worth noting that the benchmark shows no accuracy gain.",
+    "throat-clearing": "Needless to say, the benchmark shows no accuracy gain.",
     "antithesis": "This isn't about speed, it is about whether you can check it.",
     "setup": "The receipt is more than just a log line for the pipeline output.",
     "both-sides": "On the one hand it is fast; on the other hand it drops cases.",

@@ -46,7 +46,12 @@ def test_dialogue_tag_not_counted_as_narration():
     lit = articulate.check_text(DIALOGUE, profile=profiles.load("literary-fiction"))
     flav = articulate.check_text(DIALOGUE, profile=profiles.load("flavored"))
     assert "antithesis" not in _cats(lit), "quoted antithesis must be exempt in fiction"
-    assert "antithesis" in _cats(flav), "the same device flags outside a genre"
+    # Every profile now reads quotations as the speaker's words (SCAN_ALGO 6);
+    # the same device in the narration still flags.
+    assert "antithesis" not in _cats(flav)
+    told = articulate.check_text("She said it was not a drill, but a warning.\n",
+                                 profile=profiles.load("flavored"))
+    assert "antithesis" in _cats(told)
 
 
 TESTIMONY = ('He told me once, "I am not angry, but disappointed."\n'
@@ -57,7 +62,7 @@ def test_quoted_testimony_excluded_in_memoir():
     memoir = articulate.check_text(TESTIMONY, profile=profiles.load("memoir"))
     flav = articulate.check_text(TESTIMONY, profile=profiles.load("flavored"))
     assert "antithesis" not in _cats(memoir)
-    assert "antithesis" in _cats(flav)
+    assert "antithesis" not in _cats(flav)     # quotations are masked everywhere
 
 
 # --- the report-only fiction lexicon --------------------------------------- #

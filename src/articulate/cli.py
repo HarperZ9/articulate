@@ -19,6 +19,8 @@ import sys
 from . import cli_desk, cli_process, cli_receipts, modes, profiles, pysource
 from .cli_output import print_check, print_score, print_spans, redact, to_sarif  # noqa: F401
 from .detector import analyze_blocks, binary_reason, check_text
+from .local_only import command_map
+from .markup import ALLOW_HELP
 from .tool_text import DOES_NOT_PROVE, PRODUCT
 
 try:
@@ -127,6 +129,8 @@ def _cmd_check(args):
         print(json.dumps(to_sarif(payload), ensure_ascii=False, indent=2))
     elif args.json:
         print(json.dumps({"results": payload}, ensure_ascii=False, indent=2))
+    elif payload and not getattr(args, "spans", False):
+        print(f"[articulate] {DOES_NOT_PROVE}")   # every run, a passing gate included
     # Fail closed: an unscreenable input fails the gate and never passes silently.
     return 1 if (args.gate and (blocked or refused)) else 0
 
@@ -139,6 +143,8 @@ def _cmd_score(args):
     except ValueError as e:
         print(f"[articulate] {e}", file=sys.stderr)
         return 2
+    print("[articulate] density counts the findings that block under the profile, per "
+          "1,000 words; the per-rule counts are the primary output.")
     print(f"[articulate] {DOES_NOT_PROVE}")
     return 0
 
@@ -172,10 +178,11 @@ def _add_check_args(p, cmd):
 
 
 def build_parser():
-    ap = argparse.ArgumentParser(prog="articulate", description=PRODUCT)
+    ap = argparse.ArgumentParser(prog="articulate", description=PRODUCT, epilog=command_map(),
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd")
     for cmd in ("check", "score", "receipt"):
-        _add_check_args(sub.add_parser(cmd), cmd)
+        _add_check_args(sub.add_parser(cmd, epilog=ALLOW_HELP), cmd)
     pv = sub.add_parser("verify", help="replay a receipt against text")
     pv.add_argument("receipt", help="a receipt JSON file")
     pv.add_argument("file", help="the text file to re-derive against")

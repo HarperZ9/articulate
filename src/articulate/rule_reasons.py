@@ -19,6 +19,7 @@ Standard library only.
 from __future__ import annotations
 
 from .aliases import CATEGORY_ALIASES, resolve_all, resolve_category  # noqa: F401
+from .note_reasons import NOTE_REASONS
 
 # Categories in the house pack: one writer's standard, applied only by choice.
 HOUSE_CATEGORIES = frozenset({
@@ -101,9 +102,19 @@ REASONS = {
         "tell how sure the writer is.",
         _WILLIAMS + ", hedges and intensifiers"),
     "unsupported-authority": (
-        "An appeal to unnamed studies or experts gives the reader no source to check.",
+        "An appeal to unnamed studies or experts gives the reader no source to check; "
+        "cite the source, or state the claim as your own view with an example.",
         "Publication Manual of the American Psychological Association (7th ed.), "
-        "citing sources in the text"),
+        "citing sources in the text; AMA Manual of Style, references; The Chicago "
+        "Manual of Style, notes and bibliography"),
+    "announcement": (
+        "Say what the text shows instead of announcing it: 'we will explore' makes "
+        "the reader wait for content a scope statement could give now.",
+        _WILLIAMS + ", metadiscourse"),
+    "padded-preposition": (
+        "In 'with respect to', often 'on', 'about' or 'for' does the same work; keep "
+        "it where it names a variable, a measure or a statutory relation.",
+        _STRUNK + ", omit needless words; " + _PLAIN + ", omit unnecessary words"),
     "sycophancy": (
         "Praise of a question addresses a chat partner; in a document it tells the "
         "reader nothing about the subject.",
@@ -117,6 +128,14 @@ REASONS = {
         "screen reader reads its name aloud.",
         "W3C Web Content Accessibility Guidelines 2.1, success criterion 1.1.1"),
 }
+
+# Every report-only note carries a reason too (articulate.note_reasons), so every
+# output can say what a finding costs a reader.
+REASONS.update(NOTE_REASONS)
+
+# What an output says about a house-pack finding in place of a reader-cost reason.
+HOUSE_REASON = ("House style: one writer's standard, gated only by a house profile; it "
+                "makes no reader-cost claim.")
 
 # Words that state a model-frequency reason. No reason may use them.
 ORIGIN_WORDS = ("model", "ai ", "llm", "frontier", "machine", "generated", "chatgpt",
@@ -133,6 +152,6 @@ def is_house(category):
 
 
 def reason_for(category):
-    """(reason, source) for a category that may gate outside the house pack, or
-    None for a house or report-only category."""
+    """(reason, source) for a category outside the house pack, or None for a
+    house category."""
     return REASONS.get(category)

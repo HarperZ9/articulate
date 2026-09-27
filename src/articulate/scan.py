@@ -9,13 +9,15 @@ from .binary import binary_reason
 from .cadence import cadence_stats
 import re
 
-from .lexicon import (ADVERB, CLAIM_ANCHOR, DIGIT, EMOJI, EXISTENTIAL, EXPLETIVE,
-                      NOMINAL, PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT, WORD)
-from .logical import sentences, units
+from .lexicon import ADVERB, EMOJI, PASSIVE, WORD
+from .logical import line_kinds, sentences, units
 from .markup import (ALLOW_EXEMPT_CATEGORIES, _rid, allowed, classify_fountain,
                      mask_c2pa, mask_quotes, read_allowlist, strip_markup)
+from .quoting import mask_code, mask_direct, mask_lines, quoted_lines
 from .rule_reasons import resolve_all
-from .rules_high import HIGH
+from .rules_high import HIGH, RENDERED, SELF_DESCRIPTION
+from .sentence_notes import OPENERS as _OPENERS  # noqa: F401  (the fingerprint reads it)
+from .sentence_notes import sentence_passes
 from .rules_low import FICTION_SLOP, LOW, REGISTER_JARGON
 from .rules_medium_register import MEDIUM_REGISTER
 from .rules_medium_structure import MEDIUM_STRUCTURE
@@ -34,7 +36,12 @@ MEDIUM = MEDIUM_REGISTER + MEDIUM_STRUCTURE
 #      space, so a hard wrap inside "state-of-the-art" reads as one word
 #   5  a sentence pass adds LOW notes for "in order to" and for "state of the
 #      art" in a sentence with no number, year or citation marker
-SCAN_ALGO = 5
+#   6  every phrasing rule reads the text with quotations blanked (direct
+#      quotes, block quotes, LaTeX quote environments); the self-description
+#      rule also skips tables, transcripts, verbatim and code spans; the
+#      rendered-document rules still read every character; unsupported-authority
+#      is a sentence rule that reads citation markers on the raw sentence
+SCAN_ALGO = 6
 # A Markdown table delimiter row is structure, never an em-dash.
 SKIP_TABLE_SEP = True
 
@@ -62,7 +69,10 @@ def _split(table):
     return inline, start
 
 
-HIGH_INLINE, HIGH_START = _split(HIGH)
+HIGH_RENDERED = _split([r for r in HIGH if (r[0], r[1]) in RENDERED])
+HIGH_SELF = _split([r for r in HIGH if r[1] == SELF_DESCRIPTION])
+HIGH_INLINE, HIGH_START = _split([r for r in HIGH if (r[0], r[1]) not in RENDERED
+                                  and r[1] != SELF_DESCRIPTION])
 MEDIUM_INLINE, MEDIUM_START = _split(MEDIUM)
 LOW_INLINE, LOW_START = _split(LOW)
 
@@ -70,8 +80,9 @@ LOW_INLINE, LOW_START = _split(LOW)
 class _Scan:
     """Mutable state for one scan: the findings, the allowlist and the counts."""
 
-    def __init__(self, lines, extra_allow, genre):
+    def __init__(self, lines, extra_allow, genre, roles=None):
         self.genre = genre
+        self.block, self.shown = quoted_lines(lines, line_kinds(lines, roles))
         self.allow = read_allowlist(lines) | {a.lower() for a in extra_allow}
         self.high, self.medium, self.low = [], [], []
         self.prose, self.words, self.adv, self.passive = [], 0, 0, 0
@@ -118,63 +129,26 @@ def _raw_passes(sc, unit):
     sc.table(sc.low, unit, raw, LOW_INLINE, LOW_START)
 
 
-# Sentence-start openers. The first is a default LOW note; the second is a house
-# note (rule_reasons.HOUSE_CATEGORIES). Neither blocks.
-_OPENERS = (
-    ("expletive-opener", "empty opener (it is important / worth)", EXPLETIVE),
-    ("existential-opener", "existential opener (there is / there are)", EXISTENTIAL),
-)
-
-
-def _sentence_passes(sc, unit, text):
-    """Advisories read per sentence, so a wrap cannot split or merge them."""
-    for s, e in sentences(text):
-        sent = text[s:e]
-        if not DIGIT.search(sent):
-            for mq in VAGUE_QUANT.finditer(sent):
-                sc.add(sc.low, unit, "vague-quantifier", "vague quantifier, no number given",
-                       s + mq.start(), s + mq.end(), text=text)
-        lead = len(sent) - len(sent.lstrip())
-        for cat, label, rx in _OPENERS:
-            mex = rx.match(sent.lstrip())
-            if mex:
-                sc.add(sc.low, unit, cat, label,
-                       s + lead + mex.start(), s + lead + mex.end(), True)
-        _phrase_notes(sc, unit, text, s, sent)
-        noms = list(NOMINAL.finditer(sent))
-        if len(noms) >= 4:
-            sc.add(sc.low, unit, "nominalization", f"{len(noms)} nominalizations in one sentence",
-                   s + noms[0].start(), s + noms[0].end(), True)
-
-
-def _phrase_notes(sc, unit, text, s, sent):
-    """LOW notes on two phrases that usage guides accept in some uses: "in order
-    to", and "state of the art" in a sentence with no number, year or citation."""
-    for m in PADDED_PURPOSE.finditer(sent):
-        sc.add(sc.low, unit, "padded-purpose", "padded purpose (in order to)",
-               s + m.start(), s + m.end(), text=text)
-    if not CLAIM_ANCHOR.search(sent):
-        for m in UNANCHORED_CLAIM.finditer(sent):
-            sc.add(sc.low, unit, "unanchored-claim",
-                   "unanchored claim (state of the art, no comparison named)",
-                   s + m.start(), s + m.end(), text=text)
-
-
-def _device_passes(sc, unit, text):
-    for m in re.finditer("---", text):   # three hyphens mid-line read as an em-dash
+def _device_passes(sc, unit, count_text, quoted, chat):
+    """`quoted` has every quotation blanked; `chat` also blanks what a document
+    shows as data. The rendered-document rules read `word`, unmasked."""
+    word = strip_markup(unit.text)
+    for m in re.finditer("---", quoted):   # three hyphens mid-line read as an em-dash
         sc.add(sc.high, unit, "em-dash", "em-dash (---)", m.start(), m.end(), True)
-    sc.table(sc.high, unit, text, HIGH_INLINE, HIGH_START)
-    sc.table(sc.medium, unit, text, MEDIUM_INLINE, MEDIUM_START)
+    sc.table(sc.high, unit, word, *HIGH_RENDERED)
+    sc.table(sc.high, unit, chat, *HIGH_SELF)
+    sc.table(sc.high, unit, quoted, HIGH_INLINE, HIGH_START)
+    sc.table(sc.medium, unit, quoted, MEDIUM_INLINE, MEDIUM_START)
     for cat, label, rx in REGISTER_JARGON:   # a hit to fix; allowlist to keep
-        for m in rx.finditer(text):
-            sc.add(sc.medium, unit, cat, label, m.start(), m.end(), text=text)
-    _sentence_passes(sc, unit, text)
+        for m in rx.finditer(quoted):
+            sc.add(sc.medium, unit, cat, label, m.start(), m.end(), text=quoted)
+    sentence_passes(sc, unit, quoted, unit.text)
     # Counts for the cadence and rate statistics. A kept term of art does not count.
-    sc.words += len(WORD.findall(text))
-    sc.adv += len(ADVERB.findall(text))
-    sc.passive += len(PASSIVE.findall(text))
+    sc.words += len(WORD.findall(count_text))
+    sc.adv += len(ADVERB.findall(count_text))
+    sc.passive += len(PASSIVE.findall(count_text))
     if unit.kind in ("prose", "quote"):
-        sc.prose.append(text)
+        sc.prose.append(count_text)
 
 
 def _scan_unit(sc, unit):
@@ -190,12 +164,20 @@ def _scan_unit(sc, unit):
     if unit.kind == "hr" or (unit.kind == "tablesep" and SKIP_TABLE_SEP):
         return
     masked = g.get("dialogue_exempt") or g.get("quote_exempt_all")
-    _device_passes(sc, unit, mask_quotes(word_text) if masked else word_text)
+    count_text = mask_quotes(word_text) if masked else word_text
+    quoted = mask_lines(unit, mask_direct(word_text, unit.text), sc.block)
+    chat = mask_lines(unit, strip_markup(mask_code(unit.text)), sc.shown)
+    chat = mask_direct(mask_lines(unit, chat, sc.block), unit.text)
+    _device_passes(sc, unit, count_text, quoted, chat)
 
 
-def _document_passes(sc, lines, suppress, mask_q):
+_BLANK = re.compile(r"[^\r\n]")
+
+
+def _document_passes(sc, lines, suppress):
     if "contrast-pair" not in suppress:
-        cp_lines = [mask_quotes(ln) for ln in lines] if mask_q else lines
+        cp_lines = [_BLANK.sub(" ", ln) if i in sc.block else mask_direct(ln)
+                    for i, ln in enumerate(lines, 1)]
         sc.medium.extend(find_contrast_pairs(cp_lines))
     # Report-only advisories with a minimum-size guard each (LOW).
     if "anaphora" not in suppress:
@@ -227,11 +209,10 @@ def scan_lines(lines, extra_allow=(), *, genre=None):
     suppress = set(resolve_all(genre.get("suppress_categories", ())))
     roles = classify_fountain(lines) if fountain else None
     join = genre.get("unit", "sentence") != "line" and not fountain
-    sc = _Scan(lines, extra_allow, genre)
+    sc = _Scan(lines, extra_allow, genre, roles)
     for unit in units(lines, join=join, roles=roles):
         _scan_unit(sc, unit)
-    _document_passes(sc, lines, suppress,
-                     genre.get("dialogue_exempt") or genre.get("quote_exempt_all"))
+    _document_passes(sc, lines, suppress)
     doc = _cadence(sc, genre)
     high, medium, low = sc.high, sc.medium, sc.low
     if suppress:

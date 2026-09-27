@@ -134,4 +134,6 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
         _log_pass(path, "polish")
     print(f"\n[polish] final -> {out_path}")
     print("[polish] accepted on the reader's qualities and the gate, never on an outside score.")
+    print("[polish] the five scores are a hosted editor's read of qualities for the reader; "
+          "they do not show who or what wrote the text.")
     return 0

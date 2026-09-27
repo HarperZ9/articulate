@@ -32,7 +32,7 @@ def test_a_short_finding_is_a_finding():
 
 def test_findings_and_gate_can_differ():
     # A MEDIUM finding that the profile does not gate: findings exist, gate ok.
-    r = _v("It is important to note that the survey ran twice.\n", "flavored")
+    r = _v("Due to the fact that the survey ran twice, we kept both.\n", "flavored")
     assert r["findings"] == "has_findings" and r["gate"] == "ok"
     # The house-style enumeration reports at LOW outside the house pack.
     r2 = _v(ENUMERATION, "flavored")

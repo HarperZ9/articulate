@@ -139,6 +139,17 @@ def _verify(path):
     return px.verify_summary(summ) if summ is not None else px.verify_log(path)
 
 
+def _print_verify(res):
+    """Intact exits 0, a missing log is no record (exit 3), anything else 1."""
+    res = {**res, "limits": px.RECORD_LIMITS}
+    print(json.dumps(res, indent=1))
+    if res["state"] == "missing":
+        print(f"[process] {px.NO_RECORD}.", file=sys.stderr)
+        return px.NO_RECORD_EXIT
+    print(f"[process] {px.RECORD_LIMITS}", file=sys.stderr)
+    return 0 if res["state"] == "intact" else 1
+
+
 def cmd_process(args):
     try:
         if args.pcmd == "export":
@@ -148,11 +159,10 @@ def cmd_process(args):
             with open(out, "w", encoding="utf-8", newline="\n") as fh:
                 json.dump(summ, fh, indent=1, ensure_ascii=False)
             print(f"[process] wrote {out} (chain {summ['chain']['state']})")
+            print(f"[process] {px.RECORD_LIMITS}")
             return 0
         if args.pcmd == "verify":
-            res = _verify(args.doc)
-            print(json.dumps(res, indent=1))
-            return 0 if res["state"] == "intact" else 1
+            return _print_verify(_verify(args.doc))
         res = _record(args)
     except (ValueError, OSError, KeyError, TypeError, dis.DisclosureRefused) as e:
         print(f"[process] {e}", file=sys.stderr)
@@ -181,6 +191,7 @@ def cmd_disclose(args):
     try:
         print(dis.build(px.statement_entries(args.doc, include), _contrib(args.contributions),
                         args.template, include, claim=args.claim), end="")
+        print(f"[disclose] {px.RECORD_LIMITS}", file=sys.stderr)
     except dis.DisclosureRefused as e:
         print(f"[disclose] refused: {e}", file=sys.stderr)
         return 2

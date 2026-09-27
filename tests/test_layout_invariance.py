@@ -47,9 +47,9 @@ def test_every_match_on_a_line_is_counted():
 
 
 def test_a_match_across_a_soft_wrap_maps_back_to_the_file():
-    text = "The plan was sound. It is important\nto note that it failed.\n"
+    text = "The plan was sound. Due to the fact\nthat it failed, we stopped.\n"
     r = articulate.check_text(text, profile=profiles.load("essay"))
-    hits = [f for f in r["medium"] if f["category"] == "throat-clearing"]
+    hits = [f for f in r["medium"] if f["category"] == "wordiness"]
     assert hits
     f = hits[0]
     assert text[f["start"]:f["end"]] == f["match"]

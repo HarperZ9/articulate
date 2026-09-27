@@ -130,8 +130,11 @@ def units(lines, *, join=True, roles=None):
 
 
 # A period after one of these never ends a sentence: "Smith et al. (2019)".
+# Citation abbreviations too (SCAN_ALGO 6): "(ref. 7)", "(p. 4)", "Smith v.
+# Jones", "7th Cir.", "410 U.S. 113", so a citation stays in its sentence.
 ABBREVIATIONS = re.compile(r"(?i)(?:\bet al|\be\.g|\bi\.e|\bcf|\bvs|\bfig|\beq|\bno|"
-                           r"\bdr|\bmr|\bmrs|\bms|\bprof|\bst)$")
+                           r"\bdr|\bmr|\bmrs|\bms|\bprof|\bst|\brefs?|\bpp?|\bv|\bcir|"
+                           r"\bu\.s|\bvol|\bch|\bsec|\beds?)$")
 
 
 def sentences(text):

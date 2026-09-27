@@ -142,6 +142,55 @@ re-measuring, and on the Liang et al. corpus each is exploratory.
 - The PREREG gains a dated amendment that records these changes. Gate
   definitions and thresholds are unchanged.
 
+Changes from the domain review, made before the confirmatory run. A review of
+six writing domains (students and second-language writers, STEM, humanities and
+law, publishers and editors, graders, professional writers) found conventions
+that the rules blocked or that the tools handled badly. Each ruleset change was
+judged on reader cost, against the blocking-tier principle of PR 9's decisions,
+before re-measuring; they were made after reading the Liang et al. corpus, so on
+it they are exploratory (`fairness/PREREG.md`).
+
+- Quotations are the source's words. Every phrasing rule reads a text with its
+  direct quotations (double and curly quotes, LaTeX ``...''), Markdown block
+  quotes and LaTeX `quote` and `quotation` environments blanked. The
+  self-description rule also skips tables, transcript turns, `verbatim` and
+  `\texttt{}` or `\verb` spans, so a reflection that pastes a tool's reply as
+  evidence no longer blocks. An interface markup token and a hidden character
+  still block everywhere, quotes included (`SCAN_ALGO` 6).
+- `unsupported-authority` reads every common citation style, the writer's own
+  data beside a figure, table or statistic, and a citation abbreviation such as
+  "ref.", "p.", "v." or "U.S." no longer ends a sentence. A four-digit count no
+  longer silences it. Its reason names both repairs: cite the source, or state
+  the claim as your own view with an example.
+- "It is important to", "It is worth noting that" and "It is important to note
+  that" are one LOW `expletive-opener` note, with no MEDIUM finding beside it,
+  under every profile. "It should be noted that" stays MEDIUM.
+- The self-reference rule becomes a LOW `announcement` note on announcement
+  verbs ("we will explore", "delves into"); "In this essay, I argue" and "This
+  article examines" raise nothing.
+- "With respect to" becomes a LOW `padded-preposition` note, silent in its
+  operator sense. The README's account of the math exemption now matches the
+  code.
+- Every finding in JSON carries `reason` and `reason_source`; `check --verbose`
+  prints the reason under each finding; every report-only note has a reason; the
+  boundary sentence prints on every `check` run; density and `score` say what
+  they count.
+- `ARTICULATE_LOCAL_ONLY=1` or `--local-only` refuses every hosted command with
+  exit 3 before any subprocess starts; each hosted run first says the full text
+  leaves the machine; the README and `articulate --help` carry a map of local
+  and hosted commands; `--advise` is `--review` under a name that cannot be read
+  as peer review.
+- `python -m articulate.editor` works again: it failed on this branch with a
+  circular import between `editor` and `polish`. A smoke test runs it.
+- `disclose` prints the CRediT role strings as NISO names them ("Writing –
+  original draft", "Writing – review & editing").
+- `process verify` on a document with no log reports no record and exits 3, apart
+  from a broken log's 1. Verify, export and disclose print one limits line, and
+  the process summary's does-not-prove line speaks about the record.
+- `writing-allow` is documented with its scope and its leak.
+- The desk's `course` venue asks which assignment criterion each section serves
+  and no longer asks every submission how it came together.
+
 Review fixes on this branch (three reviews: correctness, fairness, product
 truth):
 
@@ -149,7 +198,7 @@ truth):
   brute-force withheld word counts and times. Input methods live in a private
   file outside the chain. `continue` refuses an intact log and carries
   assistance forward; `disclose` refuses a broken or missing log; `verify`
-  reports a missing log as `missing` with exit 1, reads a summary by its schema
+  reports a missing log as `missing` (exit 3 since the domain review below), reads a summary by its schema
   and fails one whose chain is not intact. The git anchor follows a worktree
   `.git` file. Salts and snapshots are keyed per document and by commitment.
   `--track` keeps the private files out of git. `fix` and `polish` log a

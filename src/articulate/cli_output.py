@@ -100,20 +100,24 @@ def _tag(f):
     return f"{f['tier']} {f['category']}" + (", house style" if f.get("house") else "")
 
 
+def _print_finding(f, verbose):
+    print(f"  L{f['line']} [{_tag(f)}] {f.get('label', f['category'])}: {f.get('snippet', '')}")
+    if verbose and f.get("reason"):
+        print(f"      why: {f['reason']}")
+
+
 def print_check(name, pname, r, verbose):
+    """One file's result. The caller prints the does-not-prove line once per run."""
     n = r["counts"]
     state = ("no findings" if r["findings"] == "no_findings"
              else f"{n['high']} high, {n['medium']} medium")
     print(f"[articulate] {name} [{pname}]: {state}, {n['low']} low, gate {r['gate']}")
     # A LOW finding that a profile promotes blocks, so it always prints.
     for f in r["high"] + r["medium"] + [f for f in r["low"] if f.get("gates")]:
-        print(f"  L{f['line']} [{_tag(f)}] {f.get('label', f['category'])}: {f.get('snippet', '')}")
+        _print_finding(f, verbose)
     if verbose:
         for f in (f for f in r["low"] if not f.get("gates")):
-            print(f"  L{f['line']} [{_tag(f)}] "
-                  f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
-    if r["gate"] == "blocked":
-        print(f"  {DOES_NOT_PROVE}")
+            _print_finding(f, verbose)
 
 
 def print_spans(name, pname, blocks):

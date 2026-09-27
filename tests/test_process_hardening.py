@@ -142,8 +142,9 @@ def test_reordering_or_removing_a_middle_entry_breaks_the_chain(doc):
 
 def test_verify_reports_a_missing_log(doc, tmp_path, capsys):
     assert px.verify_log(doc)["state"] == "missing"
-    assert main(["process", "verify", doc]) == 1
-    assert main(["process", "verify", str(tmp_path / "no-such-file.md")]) == 1
+    # No log is no record: exit 3, apart from a broken log's 1 (C4a).
+    assert main(["process", "verify", doc]) == 3
+    assert main(["process", "verify", str(tmp_path / "no-such-file.md")]) == 3
 
 
 def test_verify_reads_a_summary_by_its_schema_and_its_chain(doc, tmp_path):

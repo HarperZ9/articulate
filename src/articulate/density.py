@@ -18,6 +18,9 @@ from __future__ import annotations
 from .fairness_stats import poisson_exact
 
 DENSITY_MIN_WORDS = 250
+MEASURES = ("the findings that block under this profile and carry a cited reason, per "
+            "1,000 words; it counts findings in the text and does not show who or what "
+            "wrote it")
 
 
 def gating_findings(result):
@@ -53,4 +56,5 @@ def density(result):
         "ci": [round(lo * scale, 2), round(hi * scale, 2)] if shown else None,
         "shown": shown,
         "min_words": DENSITY_MIN_WORDS,
+        "measures": MEASURES,
     }

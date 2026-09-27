@@ -12,7 +12,7 @@ Standard library only.
 from .aliases import profile_field
 from .density import density
 from .markup import FENCE, _mk
-from .rule_reasons import HOUSE_CATEGORIES, resolve_all
+from .rule_reasons import HOUSE_CATEGORIES, HOUSE_REASON, reason_for, resolve_all
 from .rules_low import INJECTION
 from .scan import scan_lines
 from .tool_text import DOES_NOT_PROVE
@@ -33,9 +33,13 @@ def gate_level(profile):
 
 
 def _finding(tier, f, gates=False):
-    """Attach the tier, whether the finding blocks under the profile in use, and
-    whether it belongs to the house pack, to a span-level record."""
-    return {**f, "tier": tier, "gates": gates, "house": f["category"] in HOUSE_CATEGORIES}
+    """Attach the tier, whether the finding blocks under the profile in use,
+    whether it belongs to the house pack, and its reason, to a span-level record."""
+    house = f["category"] in HOUSE_CATEGORIES
+    reason, source = (HOUSE_REASON, None) if house else (reason_for(f["category"])
+                                                         or (None, None))
+    return {**f, "tier": tier, "gates": gates, "house": house,
+            "reason": reason, "reason_source": source}
 
 
 def house_retier(high, medium, low, profile, house_notes=False):

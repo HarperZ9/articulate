@@ -16,18 +16,48 @@ tiers:
   email that says real-time access is missing raise nothing.
 - MEDIUM: patterns with a cited reader cost, such as padded phrases, worn idioms,
   unsupported superlatives, throat-clearing openers, stacked hedges and appeals
-  to unnamed studies. They block under a strict profile.
+  to unnamed studies with no citation marker in the sentence. They block under a
+  strict profile. The citation check reads every common style: AMA and
+  Vancouver superscripts, `(12)` and `[12]`, MLA `(Jones 118)`, Chicago
+  footnotes, Pandoc keys, LaTeX `\cite`, alpha keys, author and year, legal
+  citations, links, and "according to" a named source. "Our data show" beside a
+  figure, table or test statistic is the writer's own evidence.
 - LOW: notes that never block and expand only with `--verbose`. A reply opener
   that hands over a deliverable ("Certainly! Here is ...") is a LOW note, since
   an email reply does that on purpose; the `essay` and house profiles promote it
   to a blocking finding. "In order to" (`padded-purpose`) and "state of the
   art" in a sentence with no number, year or citation (`unanchored-claim`) are
   LOW notes that never block, because usage guides accept both in some uses.
-  "It is important to" at a sentence start (`expletive-opener`) is one too.
+  "It is important to", "It is worth noting that" and "It is important to note
+  that", at a sentence start or after one leading clause (`expletive-opener`),
+  are one LOW note too, with no MEDIUM finding beside it. "With respect to"
+  (`padded-preposition`) is a LOW note, silent in its operator sense (a gradient
+  with respect to a variable). A sentence that announces what the text will do
+  ("In this article, we will explore", `announcement`) is a LOW note; a thesis or
+  scope statement ("In this essay, I argue", "This article examines") raises
+  nothing. "It should be noted that" stays MEDIUM.
 
-Every rule that can block a writer who did not choose a house style carries a
-one-sentence reader-cost reason and a published source. SARIF shows both in each
-rule's help text. Every finding carries a line, an end line, a column and a
+Every rule that can report outside the house pack carries a one-sentence
+reader-cost reason and a published source; a house finding says it is house
+style. Each finding in `check --json` carries `reason` and `reason_source`,
+`check --verbose` prints the reason under each finding, and SARIF shows both in
+each rule's help text. Every `check` run prints the boundary sentence, a passing
+gate included.
+
+Quoted text is the source's words. The phrasing rules read each text with its
+direct quotations (double and curly quotes, LaTeX ``...''), Markdown block quotes
+and LaTeX `quote` and `quotation` environments blanked. The rule on a line where
+the speaker calls itself software also skips table rows, transcript turns (a
+speaker name and a colon at a line start), `verbatim` environments and
+`\texttt{}` or `\verb` spans. An interface markup token and a hidden character
+block everywhere, quotes included.
+
+A `writing-allow:` line in the first 15 lines (an HTML comment, a `%` comment or
+YAML front matter works) keeps terms of art for the whole file: a finding whose
+matched text contains an allowed term as a substring, in any case, is dropped.
+The contrast and cadence devices ignore it. Because the match is a substring,
+allowing `revolutionary` for a war's name also clears "a revolutionary product"
+in the same file. Every finding carries a line, an end line, a column and a
 character span, and says whether it blocks under the profile in use.
 
 The checks read a paragraph as one logical line, so the same text gives the same
@@ -99,6 +129,12 @@ about whether a theorem is true.
 
 ## The editor layer
 
+Every command here sends the full text to a hosted model through the `claude`
+CLI, and each run says so first. `ARTICULATE_LOCAL_ONLY=1` or `--local-only`
+refuses every hosted command with exit code 3 before any network call, and the
+MCP tools of the same names return an error. `--advise` is `--review` under a
+name that cannot be read as peer review.
+
 - `judge` reads judgment-level failures: a fluent paragraph with no fact a reader
   could restate, vague abstraction, hedging with no position, a weak verb.
 - `fix` rewrites so the intended reader can follow the text on one read and
@@ -139,8 +175,10 @@ Nothing records until you run a command.
   your disclosure statement and the limits of what the summary shows. It carries
   no entry hash, so nothing in it can be tested against a withheld field.
   `--reveal N` attaches draft N's text and salt.
-- `verify` on a log reports `intact`, `broken` or `missing`, and only `intact`
-  exits 0. On a summary (found by its schema) it checks the chain state the
+- `verify` on a log reports `intact` (exit 0), `broken` (exit 1) or `missing`
+  (exit 3). A missing log is no record, and an absent or short record shows
+  nothing about a writer; `verify`, `export` and `disclose` each print that
+  limits line. On a summary (found by its schema) it checks the chain state the
   summary records and each reveal.
 - `continue` starts a new log only after a broken one. The new first entry names
   the last good entry and carries every recorded assistance entry forward.

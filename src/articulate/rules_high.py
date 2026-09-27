@@ -64,3 +64,14 @@ HIGH = [
     ("invisible-unicode", "zero-width character inside Latin text",
      re.compile("(?<=[A-Za-z0-9!-/:-@\\[-`{-~])[\u200b\u2060](?=[A-Za-z0-9!-/:-@\\[-`{-~])")),
 ]
+
+# The rules that read the rendered document: they fire on every character,
+# quotations included, because an unrendered token or a hidden character costs
+# every reader whoever wrote the words around it (articulate.quoting).
+RENDERED = frozenset({
+    ("chat-interface-text", "interface or citation markup token"),
+    ("invisible-unicode", "zero-width character inside Latin text"),
+})
+# The self-description rule also skips what a document shows as data: tables,
+# transcripts, verbatim text and code spans.
+SELF_DESCRIPTION = "first-person self-description as software"

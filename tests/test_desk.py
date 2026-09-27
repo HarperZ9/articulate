@@ -140,13 +140,19 @@ def test_venue_requirements_ask_one_question_each():
     assert "missing-tool-statement" not in {i["check"] for i in with_statement["inside"]["items"]}
 
 
-def test_a_process_question_goes_to_every_submission_alike():
+def test_the_course_venue_asks_about_criteria_and_never_about_provenance():
+    # C6a: "how did this piece come together?" put to every submission steers a
+    # grader toward provenance. The course venue asks which criterion each
+    # section serves, of every submission alike.
     a = _run(CLEAN, venue="course")["inside"]["items"]
     b = _run(PAPER, venue="course")["inside"]["items"]
-    qa = [i["question"] for i in a if i["check"] == "process-question"]
-    qb = [i["question"] for i in b if i["check"] == "process-question"]
-    assert qa == qb and len(qa) == 1
-    assert not [i for i in _run(CLEAN)["inside"]["items"] if i["check"] == "process-question"]
+    for items in (a, b):
+        assert not [i for i in items if i["check"] == "process-question"]
+        assert not [i for i in items if "came together" in i["question"]]
+    qa = [i["question"] for i in a if i["check"] == "criteria-question"]
+    qb = [i["question"] for i in b if i["check"] == "criteria-question"]
+    assert qa == qb == ["Which assignment criterion does each section serve?"]
+    assert not [i for i in _run(CLEAN)["inside"]["items"] if i["check"] == "criteria-question"]
 
 
 def test_a_process_record_on_disk_changes_nothing(tmp_path, capsys):

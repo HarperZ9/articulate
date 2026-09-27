@@ -28,7 +28,6 @@ text to a hosted Anthropic model. There is no local-model backend. The CLI is
 found through ARTICULATE_CLAUDE_CLI when that is set, and on the PATH otherwise
 (see claude_cli.py).
 """
-import argparse
 import json
 import os
 import re
@@ -221,52 +220,18 @@ def accept(before_scores, after_scores, before_gate, after_gate, required_open, 
     return True, "accepted"
 
 
-from .polish import polish  # noqa: E402  (polish reads the names above)
+if __name__ == "__main__":
+    # `python -m articulate.editor` runs this file as __main__, and polish and fix
+    # import articulate.editor. Run the package module, so both bind to one
+    # editor and the circular import never sees a half-built module.
+    import importlib
+    sys.exit(importlib.import_module("articulate.editor").main())
+
+from .polish import polish  # noqa: E402,F401  (polish reads the names above)
 from .fix import fix, review  # noqa: E402,F401
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Articulate editor layer (judge / fix).")
-    g = ap.add_mutually_exclusive_group(required=True)
-    for flag in ("--judge", "--fix", "--polish", "--review"):
-        g.add_argument(flag, metavar="FILE")
-    ap.add_argument("--out", metavar="FILE", default=None)
-    ap.add_argument("--passes", type=int, default=3)
-    ap.add_argument("--bar", type=int, default=4, help="quality bar 1-5 for --polish")
-    ap.add_argument("--mode", default=None,
-                    help="a writing mode (domain/articulation, e.g. memo/argue)")
-    ap.add_argument("--profile", default=None,
-                    help="a profile; `house` sends the house writing standard")
-    args = ap.parse_args()
-    target = args.judge or args.fix or args.polish or args.review
-    reason = _unreadable(target)
-    if reason:
-        print(f"[articulate] {reason}")
-        return 2
-    if args.judge:
-        judge(args.judge, args.mode, args.profile)
-        return 0
-    if args.review:
-        review(args.review, args.mode, args.profile)
-        return 0
-    if args.polish:
-        return polish(args.polish, args.out, max(1, args.passes),
-                      max(1, min(5, args.bar)), mode=args.mode, profile=args.profile)
-    return fix(args.fix, args.out, max(1, args.passes), mode=args.mode, profile=args.profile)
-
-
-def _unreadable(target):
-    if not os.path.isfile(target):
-        return f"no such file: {target}"
-    from . import detector
-    try:
-        with open(target, "rb") as fh:
-            head = fh.read(8192)
-    except OSError as e:
-        return f"cannot read {target}: {e}"
-    reason = detector.binary_reason(head, name=target)
-    return f"cannot edit {target}: {reason}" if reason else None
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+def main(argv=None):
+    """The editor command line (articulate.editor_cli)."""
+    from .editor_cli import main as _main
+    return _main(argv)

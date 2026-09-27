@@ -3,10 +3,13 @@
 """articulate.fingerprint -- the ruleset fingerprint a receipt pins, and the
 closed set of category names. Standard library only.
 """
-from .lexicon import (ADVERB, CLAIM_ANCHOR, EMOJI, EXISTENTIAL, EXPLETIVE, NEG,
-                      NOMINAL, PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT)
+from .lexicon import (ADVERB, ANNOUNCEMENT, CLAIM_ANCHOR, EMOJI, EXISTENTIAL, EXPLETIVE, NEG,
+                      NOMINAL, OPERATOR_AFTER, OPERATOR_BEFORE, PADDED_PREPOSITION,
+                      PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT)
+from .logical import ABBREVIATIONS
 from .advisories import FRAGMENT_OPENER, PRONOUN_SUBJ, STOP4
-from . import aliases, cadence, density, markup, rule_reasons, scan
+from . import (aliases, cadence, citations, density, markup, quoting, rule_reasons, scan,
+               sentence_notes)
 from .gate import GATE_TIERS
 from .rules_high import HIGH
 from .rules_low import FICTION_SLOP, INJECTION, LOW, REGISTER_JARGON
@@ -46,8 +49,17 @@ def _lexicon_parts():
         ("EXPLETIVE", EXPLETIVE), ("EXISTENTIAL", EXISTENTIAL),
         ("NOMINAL", NOMINAL), ("NEG", NEG), ("PASSIVE", PASSIVE), ("ADVERB", ADVERB),
         ("FRAGMENT_OPENER", FRAGMENT_OPENER), ("PADDED_PURPOSE", PADDED_PURPOSE),
-        ("UNANCHORED_CLAIM", UNANCHORED_CLAIM), ("CLAIM_ANCHOR", CLAIM_ANCHOR))]
-    return parts + [f"S|{cat}|{label}|{rx.pattern}" for cat, label, rx in scan._OPENERS]
+        ("UNANCHORED_CLAIM", UNANCHORED_CLAIM), ("CLAIM_ANCHOR", CLAIM_ANCHOR),
+        ("ANNOUNCEMENT", ANNOUNCEMENT), ("PADDED_PREPOSITION", PADDED_PREPOSITION),
+        ("OPERATOR_BEFORE", OPERATOR_BEFORE), ("OPERATOR_AFTER", OPERATOR_AFTER),
+        ("AUTHORITY", citations.AUTHORITY), ("CITATION_MARKER", citations.CITATION_MARKER),
+        ("OWN_EVIDENCE", citations.OWN_EVIDENCE), ("SPEAKER", quoting.SPEAKER),
+        ("TEX_QUOTE", quoting.TEX_QUOTE), ("TEX_ENV", quoting.TEX_ENV),
+        ("TEXTTT", quoting.TEXTTT), ("VERB_OPEN", quoting.VERB_OPEN),
+        ("ABBREVIATIONS", ABBREVIATIONS))]
+    parts.append(f"L|unsupported-authority|{citations.LABEL}")
+    return parts + [f"S|{cat}|{label}|{rx.pattern}" for cat, label, rx in
+                    sentence_notes.OPENERS + sentence_notes.PHRASE_NOTES]
 
 
 def ruleset_fingerprint():
@@ -103,6 +115,7 @@ def known_categories():
     cats = {"emoji", "emoji-structure", "em-dash", "vague-quantifier",
             "expletive-opener", "nominalization", "contrast-pair", "anaphora",
             "padded-purpose", "unanchored-claim", "existential-opener",
+            "announcement", "padded-preposition", "unsupported-authority",
             "fragment-opener", "header-reflex", "list-reflex", "bold-density",
             "ngram-repetition", "paragraph-uniformity", "hedge-cluster"}
     for lst in (HIGH, MEDIUM, REGISTER_JARGON, LOW, FICTION_SLOP, INJECTION):

@@ -34,7 +34,6 @@ from . import process_commit as pc
 from . import process_events as ev
 from . import process_ledger as pl
 from .provenance import SOURCE_TYPE, iptc_uri
-from .tool_text import DOES_NOT_PROVE
 
 SCHEMA = "articulate/process-summary/v1"
 LIMITS = (
@@ -45,6 +44,18 @@ LIMITS = (
     "does not show who composed the words, when anything happened, or that the record "
     "is complete. A writer can build a log after the fact. An absent record shows "
     "nothing about a writer.")
+# One line every process output prints: an intact verify, an export and a
+# disclosure statement. A missing log is no record, with an exit code of its own
+# (NO_RECORD_EXIT), kept apart from a broken log (exit 1).
+RECORD_LIMITS = ("A process record shows only what its entries hold: an absent or short "
+                 "record shows nothing about a writer, and a full one does not show who "
+                 "composed the words.")
+NO_RECORD = "no record; an absent or short record shows nothing about a writer"
+NO_RECORD_EXIT = 3
+# The summary's does-not-prove line speaks about the record itself.
+PROCESS_DOES_NOT_PROVE = ("This summary lists what the writer logged and declared. It does "
+                          "not show who composed the words or that the record is complete, "
+                          "and a missing or short record shows nothing about a writer.")
 _BASE = ("seq", "kind", "day")
 _DEFAULT = {"init": (), "draft": ("commitment",), "note": (), "source": (),
             "assist": ("tool", "version", "verb", "sections", "model", "receipt", "guard",
@@ -164,7 +175,7 @@ def summary(doc, include=(), reveal=None, contributions=None):
                                      if r.get("editorial_responsibility")],
         "disclosure": statement,
         "reveals": _reveals(doc, entries, reveal),
-        "limits": LIMITS, "does_not_prove": DOES_NOT_PROVE,
+        "limits": LIMITS, "does_not_prove": PROCESS_DOES_NOT_PROVE,
     }
     if "input_method" in include:
         out["input_methods"] = [{"method": e.get("method"), "sections": e.get("sections")}

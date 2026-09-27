@@ -92,20 +92,67 @@ the [feature reference](docs/features.md), the [CLI reference](docs/cli.md), the
 `academic/prove` and `science-writing/explain` target technical exposition. A
 `.tex` file checks under `research`, which blocks only the HIGH tier; add
 `% writing-profile: essay` in the first ten lines for the strict gate. "With
-respect to $t$" and other phrases followed by a math variable raise no padding
-finding. The proof mode does not rewrite by default, because a wrong change to a
+respect to" is a LOW note that never blocks under any profile. It stays silent
+after a derivative, gradient, partial, integral, Jacobian, convex, continuous,
+measurable, differentiable, integrable or invariant, and before a Greek letter, a
+subscripted symbol (`w_i`), a math span (`$`, `\(`, `\[`) or a single-letter
+variable other than "a". The proof mode does not rewrite by default, because a wrong change to a
 quantifier order or an inequality direction changes a theorem. On a `.tex` file
 `fix` and `polish` mask every math span before each model call and splice each
 span back byte for byte; a rewrite that drops or repeats a masked span is
 refused. An ok gate or a `Match` receipt says nothing about whether a theorem is
 true.
 
+## Quotations and citations
+
+Quoted text is the source's words, so the phrasing rules skip it: direct
+quotations in double or curly quotes, LaTeX ``...'', Markdown block quotes and
+LaTeX `quote` and `quotation` environments. The rule on a line where the speaker
+calls itself software also skips tables, transcript turns ("User:" at a line
+start), `verbatim` and `\texttt{}` or `\verb` spans, so a reflection that pastes
+a tool's reply, as many courses ask, does not block. An interface markup token
+and a hidden character block everywhere, quotes included. A quotation mark
+exempts only what it encloses, scare quotes too.
+
+An appeal to unnamed studies reports unless its sentence carries a citation
+marker in any common style: a superscript or a number after the period (AMA,
+Vancouver), `(12)` or `[12]`, `(Jones 118)` (MLA), a footnote `[^5]`, a Pandoc
+key `[@key]`, LaTeX `\cite`, an alpha key `[Smi20]`, an author and year, a legal
+citation (`998 F.3d 101`, `[2021] UKSC 5`), a link or "according to" a named
+source. "Our data show" counts as your own evidence beside a figure, table or
+test statistic. A count such as "in 1200 patients" is not a citation.
+
+## Keeping a term of art
+
+A line such as `writing-allow: substrate, load-bearing` (inside an HTML comment,
+a `%` comment or YAML front matter works) in the first 15 lines keeps those
+terms. A finding whose matched text contains an allowed term, as a substring and
+in any case, is dropped for the whole file. The contrast and cadence devices
+ignore the list, since each is a sentence structure. The match is by
+substring, so allowing `revolutionary` also clears "a revolutionary product" in
+the same file; choose the narrowest term that works.
+
 ## Privacy
 
-The checks, receipts, process record and desk never touch the network. The
-editor layer (`judge`, `fix`, `polish`, `review`) has one backend today, the
-`claude` CLI, which sends the full text to a hosted Anthropic model, so do not run
-it on text you may not upload. A content-free receipt drops the matched text and
+The checks, receipts, process record and desk never touch the network. Each
+command either stays on your machine or sends the full text to a hosted model:
+
+| Command | Where the text goes |
+|:-|:-|
+| `check`, `score`, `receipt`, `verify`, `audit`, `modes` | Nowhere: local |
+| `process`, `disclose`, `desk`, the LSP server | Nowhere: local |
+| `judge`, `review` (alias `advise`): advice | A hosted Anthropic model, through the `claude` CLI |
+| `fix`, `polish`: rewrites | A hosted Anthropic model, through the `claude` CLI |
+| The `judge`, `fix` and `polish` tools of both MCP servers | A hosted Anthropic model, through the `claude` CLI |
+
+Set `ARTICULATE_LOCAL_ONLY=1`, or pass `--local-only` to `python -m
+articulate.editor`, and every hosted command exits with code 3 before any
+network call; the MCP tools return an error. Each hosted run first prints that
+the full text leaves the machine. Under a brief that allows only spelling and
+grammar help, use the local commands: `judge` and `review` give structural
+advice, which such a brief may exclude. Do not run the hosted commands on a
+manuscript or grant application under review, on health records, or on unfiled
+patent material. A content-free receipt drops the matched text and
 exact offsets; which rule fired and the line remain. The process log lives in
 `.articulate/process/` beside your document with a `.gitignore` of its own. A
 default export carries no salt; `--reveal N` exports draft N's salt with its

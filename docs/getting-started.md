@@ -41,21 +41,22 @@ four-line note:
 articulate check notes.md
 ```
 
-You get one line per file, then a line for each HIGH or MEDIUM finding:
+You get one line per file, a line for each HIGH or MEDIUM finding, and a closing
+line on what the findings do not show:
 
 ```
-[articulate] notes.md [flavored]: 0 high, 3 medium, 4 low, gate ok
-  L3 [MEDIUM throat-clearing] throat-clearing opener: The survey ran twice in May. It is important to note that studies show the second run was cleaner, a
-  L3 [MEDIUM unsupported-authority] authority appeal, no citation nearby: It is important to note that studies show the second run was cleaner, and we need more data in orde
-  L3 [MEDIUM throat-clearing] worth-noting preamble: The survey ran twice in May. It is important to note that studies show the second run was cleaner, a
+[articulate] notes.md [flavored]: 0 high, 1 medium, 4 low, gate ok
+  L3 [MEDIUM unsupported-authority] authority appeal, no citation in the sentence: It is important to note that studies show the second run was cleaner, and we need more data in orde
+[articulate] These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.
 ```
 
 Read it this way:
 
 - The gate, `ok` or `blocked`, is the only pass-or-block signal. It depends on
   the profile shown in brackets. Under the strict `essay` profile the same file
-  is blocked by the three MEDIUM findings, and by the reply opener on line 1,
-  which `essay` promotes.
+  is blocked by the MEDIUM finding, and by the reply opener on line 1, which
+  `essay` promotes. "It is important to note that" is a LOW note under every
+  profile, and "in order to" is another.
 - Each finding carries a tier. HIGH is a narrow tier, such as an interface
   markup token or a hidden character inside Latin text. MEDIUM rules carry a
   cited reader cost and block under a strict profile. LOW notes never block

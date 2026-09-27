@@ -53,9 +53,10 @@ MEDIUM_REGISTER = [
                 r"notably|importantly|ultimately|in essence|essentially|"
                 r"consequently|nevertheless|nonetheless|henceforth)\b", re.I)),
     # --- throat-clearing openers ------------------------------------------ #
+    # "It is important / worth ... to" is the LOW expletive-opener note alone
+    # (lexicon.EXPLETIVE): style guides model it as an ordering move.
     ("throat-clearing", "throat-clearing opener",
-     re.compile(r"(?i)\b(?:(?:it'?s|it is) (?:important|essential|crucial|worth|vital|necessary) to \w+|"
-                r"needless to say|"
+     re.compile(r"(?i)\b(?:needless to say|"
                 r"at its core|when it comes to|in today'?s [a-z]+ (?:world|landscape|era)|"
                 r"in the (?:realm|world|age) of|here'?s the thing|the (?:reality|truth) is|"
                 r"make no mistake|let'?s (?:dive in|delve|explore|unpack)|"
@@ -75,10 +76,8 @@ MEDIUM_REGISTER = [
     ("hedge-stack", "stacked hedge",
      re.compile(r"\b(?:may|might|could|can)\s+(?:potentially|possibly|perhaps|arguably|conceivably)\b"
                 r"|\b(?:potentially|possibly|conceivably)\s+(?:could|may|might)\b", re.I)),
-    # --- self-referential meta -------------------------------------------- #
-    ("meta", "self-referential framing",
-     re.compile(r"(?i)\b(?:in this (?:essay|article|post|section|piece|guide),?\s*(?:we|i|you)|"
-                r"this (?:essay|article|post|piece|guide) (?:explores|examines|delves|covers|will))\b")),
+    # Self-reference ("In this essay, we will explore") is the LOW announcement
+    # note (lexicon.ANNOUNCEMENT); a thesis or scope statement raises nothing.
     # --- closers ----------------------------------------------------------- #
     ("closer", "landing / summary closer",
      re.compile(r"(?i)\b(?:in conclusion|in summary|to sum up|at the end of the day|"
@@ -113,11 +112,8 @@ MEDIUM_REGISTER = [
     ("email-stock-phrase", "cold-outreach flattery (came across, impressed)",
      re.compile(r"\bi came across (?:your|the)\b[^.]{0,50}"
                 r"\b(?:and (?:was|am) (?:impressed|inspired|blown away))\b", re.I)),
-    # --- authority appeal with no citation nearby (research spec #3) ------- #
-    ("unsupported-authority", "authority appeal, no citation nearby",
-     re.compile(r"(?i)\b(?:studies (?:have )?show(?:n)?|research (?:shows|suggests|indicates)|"
-                r"experts agree|scientists say|data shows?)\b"
-                r"(?![^.]{0,80}(?:\d{4}|https?://|et al\.|\[\d))")),
+    # The authority appeal with no citation is a sentence rule that reads every
+    # citation style (articulate.citations).
     # --- false-inclusivity framing (research spec #13) -------------------- #
     ("blog-stock-phrase", "false-inclusivity (whether you're X or Y)",
      re.compile(r"\bwhether you'?re (?:an?\s+)?\w+(?:\s+\w+){0,3}\s+or\s+(?:an?\s+)?\w+", re.I)),
@@ -125,10 +121,11 @@ MEDIUM_REGISTER = [
     ("blog-stock-phrase", "promotional filler (boasts a / nestled in)",
      re.compile(r"\bboasts (?:a |an )?\w+|\bnestled (?:in|amid|among|between)\b", re.I)),    # --- deletable padding circumlocutions ------------------------------- #
     # MEDIUM: it blocks under a strict profile and reports under the default.
-    # "in order to" is a LOW note of its own (lexicon.PADDED_PURPOSE).
+    # "in order to" and "with respect to" are LOW notes of their own
+    # (lexicon.PADDED_PURPOSE, lexicon.PADDED_PREPOSITION).
     ("wordiness", "deletable padding circumlocution",
      re.compile(r"\b(?:due to the fact that|for the purpose of|"
-                r"at this point in time|with regard to|with respect to(?!\s+(?:\$|\\\(|[b-zB-HJ-Z]\b(?!')))|"
+                r"at this point in time|with regard to|"
                 r"a wide range of|in the process of|in a timely manner|"
                 r"it should be noted that)\b", re.I)),
 ]

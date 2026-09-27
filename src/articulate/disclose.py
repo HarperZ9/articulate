@@ -38,6 +38,18 @@ def _norm_role(role):
     return role.replace("–", "-").replace("—", "-").replace("&", "and").strip()
 
 
+# The role strings as NISO's CRediT standard prints them, keyed by the plain
+# form a writer may type. A statement prints these, so a submission system that
+# reads the standard's list finds each role.
+_CANON = {r: r.replace(" - ", " – ").replace("review and", "review &")
+          for r in CREDIT_ROLES}
+CANONICAL_ROLES = tuple(_CANON.values())
+
+
+def _role(role):
+    return _CANON[_norm_role(role)]
+
+
 def validate_contributions(contrib):
     """Raise DisclosureRefused unless every author entry is a person with known
     CRediT roles and every declared tool task names a person who checked it. A
@@ -108,7 +120,7 @@ def build(entries, contributions=None, template="general", include=(), omit=(), 
             out += [f"- {e['method']}: {', '.join(e['sections'])}." for e in methods]
     if authors:
         out += ["", CREDIT_HEADING]
-        out += [f"- {a['name']}: {'; '.join(_norm_role(r) for r in a.get('roles', []))}."
+        out += [f"- {a['name']}: {'; '.join(_role(r) for r in a.get('roles', []))}."
                 for a in authors]
     owner = ("The authors named above take" if authors else "The writer takes")
     out += ["", "Responsibility", f"{owner} responsibility for every line of this text."]

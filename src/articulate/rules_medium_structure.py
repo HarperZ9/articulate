@@ -165,11 +165,9 @@ MEDIUM_STRUCTURE = [
      re.compile(r"(?i)\b(?:but|and|now)?\s*(?:here(?:'?s| is)|this\s+is)\s+where\s+"
                 r"(?:it|things|the\s+\w+)\s+get(?:s)?\s+(?:interesting|tricky|"
                 r"complicated|good|weird|fun|hairy|real)\b")),
-    ("throat-clearing", "worth-noting preamble",
-     re.compile(r"(?i)\bit(?:'?s| is)\s+worth\s+(?:noting|mentioning|remembering|"
-                r"pointing\s+out|highlighting|considering)\s+that\b"
-                r"|\bit\s+(?:is|should\s+be)\s+(?:important|worth|essential)\s+"
-                r"to\s+note\s+that\b")),
+    # "It is worth noting that" and "It is important to note that" are the LOW
+    # expletive-opener note alone (lexicon.EXPLETIVE); PR9 decision 3 placed
+    # that opener at LOW. "It should be noted that" stays MEDIUM wordiness.
 
     # --- structural framing pivots --------------------------------------- #
     ("antithesis", "this isn't about X, it's about Y",

@@ -5,8 +5,8 @@
 Deterministic checks of the document's own statements, each turned into one
 question for a reviewer: a number with no source nearby, an appeal to unnamed
 authority, a section or statement the venue asks for and cannot find, text that
-does not show to a reader, and the one process question a venue may set for
-every submission alike. Quotations and code are skipped.
+does not show to a reader, and the one criteria question a venue may set for
+every submission alike. No question asks how a text came about. Quotations and code are skipped.
 
 It loads two rule families and no others: the unsupported-authority pattern
 and the instruction-injection patterns (used only to say whether hidden text
@@ -17,19 +17,18 @@ from __future__ import annotations
 
 import re
 
+from .citations import unanchored_appeals
 from .gate import detect_injection, segment_blocks
 from .logical import sentences, units
-from .rules_medium_register import MEDIUM_REGISTER
 
 VENUES = {
     "none": {},
     "paper": {"sections": ("limitations",), "tool_statement": True},
     "course": {"tool_statement": True,
-               "process_question": "Would you walk us through how this piece came together?"},
+               "criteria_question": "Which assignment criterion does each section serve?"},
 }
 HIDDEN_QUESTION = "This passage does not show to a reader. Should it be in the submission?"
 
-_AUTHORITY = [rx for cat, _l, rx in MEDIUM_REGISTER if cat == "unsupported-authority"]
 _NUMBER = re.compile(r"(?<![\w.])\d+(?:\.\d+)?%|(?<![\w.,])\d{1,3}(?:,\d{3})+(?![\d,])"
                      r"|(?<![\w.])\d+\.\d+(?![\d.])")
 _CITED = re.compile(r"\[\d+(?:[,–-]\s*\d+)*\]|\([^()]*\b(?:1[89]|20)\d\d[a-z]?\)|et al\."
@@ -84,11 +83,10 @@ def claim_items(text):
                     out.append(_item("number-without-source", line, sent,
                                      f"Where does {m.group(0)} in paragraph "
                                      f"{_paragraph_of(blocks, line)} come from?"))
-            for rx in _AUTHORITY:
-                for m in rx.finditer(sent):
-                    out.append(_item("unsupported-authority", line, sent,
-                                     f"Which sources does '{m.group(0)}' refer to?",
-                                     category="unsupported-authority"))
+            for a, b in unanchored_appeals(sent, sent):
+                out.append(_item("unsupported-authority", line, sent,
+                                 f"Which sources does '{sent[a:b]}' refer to?",
+                                 category="unsupported-authority"))
     return out
 
 
@@ -161,8 +159,8 @@ def venue_items(text, venue, disclosure):
     if rules.get("tool_statement") and not (disclosure or "").strip():
         out.append(_item("missing-tool-statement", 0, "",
                          "The venue asks for a statement of tool use. Is one attached?"))
-    if rules.get("process_question"):
-        out.append(_item("process-question", 0, "", rules["process_question"]))
+    if rules.get("criteria_question"):
+        out.append(_item("criteria-question", 0, "", rules["criteria_question"]))
     return out
 
 

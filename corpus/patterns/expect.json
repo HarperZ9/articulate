@@ -15,10 +15,10 @@
     "antithesis",
     "corporate-verb",
     "cta",
+    "expletive-opener",
     "inflated-word",
     "marketing",
-    "stock-transition",
-    "throat-clearing"
+    "stock-transition"
    ]
   },
   "email-outreach.md": {
@@ -26,8 +26,8 @@
    "categories": [
     "corporate-verb",
     "email-stock-phrase",
-    "inflated-word",
-    "throat-clearing"
+    "expletive-opener",
+    "inflated-word"
    ]
   },
   "long-draft.txt": {
@@ -40,7 +40,15 @@
   "medium.md": {
    "profile": "house",
    "categories": [
-    "throat-clearing"
+    "expletive-opener"
+   ]
+  },
+  "quoted-sources.md": {
+   "profile": "essay",
+   "categories": [
+    "chat-interface-text",
+    "marketing",
+    "unsupported-authority"
    ]
   }
  },

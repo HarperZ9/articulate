@@ -13,17 +13,20 @@ articulate check post.md --verbose
 ```
 
 ```
-[articulate] post.md [flavored]: 0 high, 4 medium, 1 low, gate ok
+[articulate] post.md [flavored]: 0 high, 2 medium, 1 low, gate ok
   L3 [MEDIUM marketing] marketing superlative: We leverage cutting-edge tools to help teams write. It is important to note that this is not a featu
-  L3 [MEDIUM throat-clearing] throat-clearing opener: ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
-  L4 [MEDIUM unsupported-authority] authority appeal, no citation nearby: a feature, but a philosophy. Studies show that clear docs cut support tickets. Moreover, the result
-  L3 [MEDIUM throat-clearing] worth-noting preamble: ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
+      why: An unsupported superlative claims a comparison the text never makes, so the reader cannot check it.
+  L4 [MEDIUM unsupported-authority] authority appeal, no citation in the sentence: a feature, but a philosophy. Studies show that clear docs cut support tickets. Moreover, the result
+      why: An appeal to unnamed studies or experts gives the reader no source to check; cite the source, or state the claim as your own view with an example.
   L3 [LOW expletive-opener] empty opener (it is important / worth): ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
+      why: An opening 'It is important to' is metadiscourse that delays the subject; the reader waits for the claim it announces.
+[articulate] These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.
 ```
 
 The gate reads `ok`: the default profile blocks only the narrow HIGH tier, and
-nothing here is in it. The MEDIUM findings carry a reader-cost reason each, and a
-strict profile such as `essay` would block on them. The LOW note reports without
+nothing here is in it. Each finding carries a reader-cost reason, which
+`--verbose` prints under it, and a strict profile such as `essay` would block on
+the MEDIUM ones. The LOW note reports without
 blocking. The house style's patterns (the contrast device and the corporate
 verb here) do not show at all outside a house profile unless you pass
 `--house-notes`.
@@ -35,19 +38,17 @@ articulate check post.md --profile house
 ```
 
 ```
-[articulate] post.md [house]: 2 high, 5 medium, 1 low, gate blocked
+[articulate] post.md [house]: 2 high, 3 medium, 1 low, gate blocked
   L4 [HIGH antithesis, house style] not X but Y: mportant to note that this is not a feature, but a philosophy. Studies show that clear docs cut supp
   L3 [HIGH corporate-verb, house style] leverage / underscore (as corporate verb): We leverage cutting-edge tools to help teams write. It is important to note that this is not a featu
   L3 [MEDIUM marketing] marketing superlative: We leverage cutting-edge tools to help teams write. It is important to note that this is not a featu
   L5 [MEDIUM stock-transition, house style] stock connective: ear docs cut support tickets. Moreover, the results speak for themselves: tickets fell 38% in one qu
-  L3 [MEDIUM throat-clearing] throat-clearing opener: ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
-  L4 [MEDIUM unsupported-authority] authority appeal, no citation nearby: a feature, but a philosophy. Studies show that clear docs cut support tickets. Moreover, the result
-  L3 [MEDIUM throat-clearing] worth-noting preamble: ge tools to help teams write. It is important to note that this is not a feature, but a philosophy.
-  These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.
+  L4 [MEDIUM unsupported-authority] authority appeal, no citation in the sentence: a feature, but a philosophy. Studies show that clear docs cut support tickets. Moreover, the result
+[articulate] These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.
 ```
 
 Under `house` the house pack keeps its table tier and blocks, and each of its
-findings says `house style`. A blocked result ends with the does-not-prove line.
+findings says `house style`. Every result ends with the does-not-prove line.
 No path selects a house profile for you; this repository opts in for its own
 docs.
 
@@ -60,7 +61,7 @@ articulate check post.md --spans
 ```
 [articulate] post.md [flavored]: 4 paragraph(s)
   L1-1 (0H/0M/0L): no findings
-  L3-6 (0H/4M/1L): expletive-opener/empty-opener-it-is-important-worth x1, marketing/marketing-superlative x1, throat-clearing/throat-clearing-opener x1, throat-clearing/worth-noting-preamble x1, unsupported-authority/authority-appeal-no-citation-nearby x1
+  L3-6 (0H/2M/1L): expletive-opener/empty-opener-it-is-important-worth x1, marketing/marketing-superlative x1, unsupported-authority/authority-appeal-no-citation-in-the-sentence x1
   L8-8 (0H/0M/0L): no findings
   L10-10 (0H/0M/0L): no findings
 [articulate] These findings name prose patterns and where they occur. They do not show who or what wrote the text, and no finding or count is a basis for an accusation.
@@ -98,7 +99,7 @@ articulate verify post.receipt.json post.md
 ```
 
 ```
-[articulate] Match: re-derived 5 findings, gate ok
+[articulate] Match: re-derived 3 findings, gate ok
 ```
 
 The receipt pins the text hash and a fingerprint of the whole ruleset. A change
