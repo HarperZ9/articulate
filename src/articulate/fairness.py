@@ -72,11 +72,16 @@ def load_any(name):
 
 
 def config_key(prof):
-    """The fields the checker reads. Profiles with the same key behave the same."""
+    """The fields the checker reads. Profiles with the same key behave the same.
+    A profile's domain rule packs join the key only when it has some, so every
+    key a committed receipt grouped by stays the same."""
     keys = ("gate_level", "keep", "gate_promote", "unit", "structural_classify",
             "dialogue_exempt", "quote_exempt_all", "fiction_slop", "suppress_categories",
             "house")
-    return json.dumps({k: prof.get(k) for k in keys}, sort_keys=True, default=list)
+    fields = {k: prof.get(k) for k in keys}
+    if prof.get("rule_packs"):
+        fields["rule_packs"] = prof["rule_packs"]
+    return json.dumps(fields, sort_keys=True, default=list)
 
 
 # Rules whose label quotes the document ("'x y z' repeats 3x", "open with
@@ -86,9 +91,9 @@ TEXT_LABELS = content_free.TEXT_LABELS
 
 def rule_key(f):
     """A content-free key for a finding: tier and rule id, or tier and category
-    when the rule's label quotes the text."""
-    rid = f["category"] if f["category"] in TEXT_LABELS else f["rule_id"]
-    return f"{f['tier']}|{rid}"
+    when the rule's label can quote the text (articulate.content_free). Only the
+    two TEXT_LABELS notes occur in the committed receipts."""
+    return f"{f['tier']}|{content_free.rule_id(f)}"
 
 
 def measure(text, prof):
