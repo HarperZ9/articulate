@@ -7,6 +7,8 @@ phrase frames. Standard library only.
 """
 import re
 
+from .lexicon import OPENER_LEAD
+
 MEDIUM_REGISTER = [
     # --- inflated words (house pack): a long word where a short one serves #
     ("inflated-word", "inflated word",
@@ -40,13 +42,20 @@ MEDIUM_REGISTER = [
                 r"double[- ]edged sword|elephant in the room|rabbit hole|"
                 r"deep[- ]dives?|tip of the iceberg|best of both worlds|"
                 r"needle in a haystack|when push comes to shove|"
-                r"the fact of the matter)\b", re.I)),
+                r"the fact of the matter|"
+                r"(?:take[sn]?|taking|took)\s+(?:\w+\s+){0,3}?to the next level)\b", re.I)),
     # --- marketing superlatives ------------------------------------------- #
+    # Ruleset 0.9.0: "the power of" is an ordinary noun phrase ("the power of
+    # the people", "the power of the engine") and claims no comparison, so it
+    # left the list. "Next level" gates only as the adjective "next-level"; "the
+    # next level of learning" is literal, and "take it to the next level" is an
+    # idiom (idiom-cliche). "Revolutionary" before a capitalized word is a name
+    # ("the Revolutionary War").
     ("marketing", "marketing superlative",
      re.compile(r"\b(?:game[- ]?chang(?:er|ing)|cutting[- ]edge|"
-                r"revolutioni[sz]e[sd]?|revolutionary|next[- ]level|world[- ]class|"
-                r"supercharge[sd]?|best[- ]in[- ]class|unparalleled|top[- ]notch|"
-                r"the power of\b)\b", re.I)),
+                r"revolutioni[sz]e[sd]?|revolutionary(?!\s+(?-i:[A-Z]))|next-level|"
+                r"world[- ]class|supercharge[sd]?|best[- ]in[- ]class|unparalleled|"
+                r"top[- ]notch)\b", re.I)),
     # --- stock transitions ------------------------------------------------ #
     ("stock-transition", "stock connective",
      re.compile(r"\b(?:moreover|furthermore|additionally|that being said|as such|"
@@ -55,8 +64,12 @@ MEDIUM_REGISTER = [
     # --- throat-clearing openers ------------------------------------------ #
     # "It is important / worth ... to" is the LOW expletive-opener note alone
     # (lexicon.EXPLETIVE): style guides model it as an ordering move.
+    # An opener, as the label says (ruleset 0.9.0): the rule reads the start of
+    # a sentence, after a leading conjunction at most. Mid-sentence, "reliable
+    # when it comes to safety" delays nothing; lexicon.TOPIC_FRAME reports it
+    # as a padded preposition, a LOW note.
     ("throat-clearing", "throat-clearing opener",
-     re.compile(r"(?i)\b(?:needless to say|"
+     re.compile(r"(?i)^" + OPENER_LEAD + r"(?:needless to say|"
                 r"at its core|when it comes to|in today'?s [a-z]+ (?:world|landscape|era)|"
                 r"in the (?:realm|world|age) of|here'?s the thing|the (?:reality|truth) is|"
                 r"make no mistake|let'?s (?:dive in|delve|explore|unpack)|"
@@ -73,6 +86,9 @@ MEDIUM_REGISTER = [
     ("sweeping-range", "sweeping 'from X to Y' range",
      re.compile(r"\bfrom [a-z][a-z ]{2,30} to [a-z][a-z ]{2,30}(?:,| and )", re.I)),
     # --- hedge stacking --------------------------------------------------- #
+    # "As fun as they can possibly make it" and "the best it can possibly be"
+    # intensify a comparison and hedge nothing; scan.RULE_GUARDS skips a match
+    # in that position (lexicon.INTENSIFIER_BEFORE, ruleset 0.9.0).
     ("hedge-stack", "stacked hedge",
      re.compile(r"\b(?:may|might|could|can)\s+(?:potentially|possibly|perhaps|arguably|conceivably)\b"
                 r"|\b(?:potentially|possibly|conceivably)\s+(?:could|may|might)\b", re.I)),

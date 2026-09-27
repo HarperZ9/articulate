@@ -55,6 +55,20 @@ OPERATOR_BEFORE = re.compile(r"(?i)\b(?:derivatives?|gradients?|partials?|integr
 OPERATOR_AFTER = re.compile(r"\s*(?:\$|\\[(\[]|[Ͱ-Ͽἀ-῿]|"
                             r"[A-Za-z]_|[b-zB-HJ-Z]\b(?!['’]))")
 CLAIM_ANCHOR = re.compile(r"\d|https?://|\bet al\.|\\cite|\[@", re.I)
+# What may come before an opener at a sentence start: a quotation mark, a
+# bracket or emphasis, and one leading conjunction ("But the truth is").
+OPENER_LEAD = (r"[\"'“‘(*_\s]*(?:(?:and|but|so|yet|or|now|well|also|however)"
+               r"\s*,?\s+)?")
+# "When it comes to" after a sentence has started: a topic frame where "for",
+# "in" or "about" does the same work. A LOW note (padded-preposition); at a
+# sentence start the MEDIUM throat-clearing opener reads it (ruleset 0.9.0).
+TOPIC_FRAME = re.compile(r"(?i)\bwhen\s+it\s+comes\s+to\b")
+TOPIC_FRAME_START = re.compile(r"(?i)" + OPENER_LEAD)   # fullmatch on the lead-in
+# Before "can possibly" or "could possibly", a superlative or an "as X as"
+# comparison in the same sentence makes it an intensifier ("the best it can
+# possibly be"), not a second hedge (ruleset 0.9.0).
+INTENSIFIER_BEFORE = re.compile(r"(?i)\b(?:the\s+(?:best|most|worst|least|\w+est)\b|"
+                                r"as\s+\w+(?:\s+\w+)?\s+as\b)[^.!?]{0,80}$")
 
 WORD = re.compile(r"\b\w+\b")
 # Orwell/Williams structural signals, measured as document rates (length-

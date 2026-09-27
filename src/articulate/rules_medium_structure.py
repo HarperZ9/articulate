@@ -108,11 +108,13 @@ MEDIUM_STRUCTURE = [
     # ===================================================================== #
 
     # --- reply and closer phrases ----------------------------------------- #
+    # Praise of what the other party asked or caught. "This is a great idea" in
+    # an essay is the writer's own claim about a proposal and addresses no one,
+    # so idea, point, example, observation and call left the list (0.9.0).
     ("sycophancy", "sycophantic flattery of the interlocutor",
      re.compile(r"(?i)\b(?:that|this)(?:'s| is)\s+(?:a|an)\s+(?:great|excellent|"
                 r"fantastic|really\s+good|very\s+good|insightful|thoughtful|"
-                r"brilliant|smart|wonderful)\s+(?:point|question|idea|observation|"
-                r"catch|example|call)\b")),
+                r"brilliant|smart|wonderful)\s+(?:question|catch)\b")),
     ("closing-boilerplate", "boilerplate helpful closer",
      re.compile(r"(?i)\bi\s+hope\s+(?:this|that|these|the\s+above)\s+(?:helps?|"
                 r"is\s+helpful|clarifies|answers?\s+your\s+question|makes\s+sense)\b"
@@ -151,7 +153,7 @@ MEDIUM_STRUCTURE = [
      re.compile(r"(?i)\byou\s+(?:might|may|probably|likely)\s+(?:be\s+)?"
                 r"(?:wondering|asking|thinking|expecting)\b"
                 r"|\bif\s+you'?re\s+like\s+(?:most|many)\s+(?:people|of\s+us|"
-                r"developers|readers)\b|\bchances\s+are\b")),
+                r"developers|readers)\b")),
     ("scaffold", "roadmap-preview sentence (by the end of this guide)",
      re.compile(r"(?i)\bby\s+the\s+end\s+of\s+this\s+(?:article|post|guide|piece|"
                 r"section|tutorial|chapter)\b")),

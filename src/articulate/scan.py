@@ -9,7 +9,7 @@ from .binary import binary_reason
 from .cadence import cadence_stats
 import re
 
-from .lexicon import ADVERB, EMOJI, PASSIVE, WORD
+from .lexicon import ADVERB, EMOJI, INTENSIFIER_BEFORE, PASSIVE, WORD
 from .logical import line_kinds, sentences, units
 from .markup import (ALLOW_EXEMPT_CATEGORIES, _rid, allowed, classify_fountain,
                      mask_c2pa, mask_quotes, read_allowlist, strip_markup)
@@ -50,6 +50,20 @@ MEDIUM = MEDIUM_REGISTER + MEDIUM_STRUCTURE
 SCAN_ALGO = 7
 # A Markdown table delimiter row is structure, never an em-dash.
 SKIP_TABLE_SEP = True
+
+
+def _intensifier(text, m):
+    """True for "can possibly" or "could possibly" after a superlative or an
+    "as X as" comparison in the same sentence: it intensifies, it does not
+    hedge twice ("the best it can possibly be")."""
+    if not m.group(0).lower().endswith("possibly"):
+        return False
+    return INTENSIFIER_BEFORE.search(text, max(0, m.start() - 120), m.start()) is not None
+
+
+# A match a rule's own definition excludes, read from the words before it
+# (ruleset 0.9.0). The fingerprint hashes each guard's pattern.
+RULE_GUARDS = {"hedge-stack": _intensifier}
 
 
 def scan(path: str):
@@ -112,7 +126,10 @@ class _Scan:
 
     def table(self, dest, unit, text, inline, start):
         for cat, label, rx in inline:
+            guard = RULE_GUARDS.get(cat)
             for m in rx.finditer(text):
+                if guard is not None and guard(text, m):
+                    continue
                 self.add(dest, unit, cat, label, m.start(), m.end(),
                          cat in ALLOW_EXEMPT_CATEGORIES, text)
         for s, e in sentences(text):

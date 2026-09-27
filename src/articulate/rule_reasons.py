@@ -113,8 +113,9 @@ REASONS = {
         "the reader wait for content a scope statement could give now.",
         _WILLIAMS + ", metadiscourse"),
     "padded-preposition": (
-        "In 'with respect to', often 'on', 'about' or 'for' does the same work; keep "
-        "it where it names a variable, a measure or a statutory relation.",
+        "In 'with respect to', or 'when it comes to' inside a sentence, often 'on', "
+        "'about', 'for' or 'in' does the same work; keep 'with respect to' where it "
+        "names a variable, a measure or a statutory relation.",
         _STRUNK + ", omit needless words; " + _PLAIN + ", omit unnecessary words"),
     "sycophancy": (
         "Praise of a question addresses a chat partner; in a document it tells the "

@@ -13,6 +13,7 @@ from .citations import CITATION_MARKER, unanchored_appeals
 from .citations import LABEL as AUTHORITY_LABEL
 from .lexicon import (ANNOUNCEMENT, CLAIM_ANCHOR, DIGIT, EXISTENTIAL, EXPLETIVE, NOMINAL,
                       OPERATOR_AFTER, OPERATOR_BEFORE, PADDED_PREPOSITION, PADDED_PURPOSE,
+                      TOPIC_FRAME, TOPIC_FRAME_START,
                       UNANCHORED_CLAIM, VAGUE_QUANT)
 from .logical import sentences
 
@@ -81,6 +82,12 @@ def _phrase_notes(sc, unit, text, s, sent, raw_sent, marker_after):
         if OPERATOR_BEFORE.search(before) or OPERATOR_AFTER.match(sent, m.end()):
             continue
         sc.add(sc.low, unit, "padded-preposition", "padded preposition (with respect to)",
+               s + m.start(), s + m.end(), text=text)
+    for m in TOPIC_FRAME.finditer(sent):
+        # At a sentence start the MEDIUM throat-clearing opener reads it.
+        if TOPIC_FRAME_START.fullmatch(sent, 0, m.start()):
+            continue
+        sc.add(sc.low, unit, "padded-preposition", "padded preposition (when it comes to)",
                s + m.start(), s + m.end(), text=text)
     anchored = (marker_after or CLAIM_ANCHOR.search(raw_sent)
                 or CITATION_MARKER.search(raw_sent))

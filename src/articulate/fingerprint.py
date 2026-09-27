@@ -5,7 +5,8 @@ closed set of category names. Standard library only.
 """
 from .lexicon import (ADVERB, ANNOUNCEMENT, CLAIM_ANCHOR, EMOJI, EXISTENTIAL, EXPLETIVE, NEG,
                       NOMINAL, OPERATOR_AFTER, OPERATOR_BEFORE, PADDED_PREPOSITION,
-                      PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT)
+                      PADDED_PURPOSE, PASSIVE, UNANCHORED_CLAIM, VAGUE_QUANT,
+                      TOPIC_FRAME, TOPIC_FRAME_START, INTENSIFIER_BEFORE)
 from .logical import ABBREVIATIONS
 from .advisories import FRAGMENT_OPENER, PRONOUN_SUBJ, STOP4
 from . import (aliases, cadence, citations, density, markup, quoting, rule_reasons, scan,
@@ -25,6 +26,7 @@ def behavior_constants():
     return {
         "SCAN_ALGO": scan.SCAN_ALGO,
         "SKIP_TABLE_SEP": scan.SKIP_TABLE_SEP,
+        "RULE_GUARDS": sorted(scan.RULE_GUARDS),
         "DENSITY_MIN_WORDS": density.DENSITY_MIN_WORDS,
         "CADENCE_MIN_SENTENCES": cadence.CADENCE_MIN_SENTENCES,
         "CADENCE_MIN_WORDS": cadence.CADENCE_MIN_WORDS,
@@ -51,6 +53,8 @@ def _lexicon_parts():
         ("FRAGMENT_OPENER", FRAGMENT_OPENER), ("PADDED_PURPOSE", PADDED_PURPOSE),
         ("UNANCHORED_CLAIM", UNANCHORED_CLAIM), ("CLAIM_ANCHOR", CLAIM_ANCHOR),
         ("ANNOUNCEMENT", ANNOUNCEMENT), ("PADDED_PREPOSITION", PADDED_PREPOSITION),
+        ("TOPIC_FRAME", TOPIC_FRAME), ("TOPIC_FRAME_START", TOPIC_FRAME_START),
+        ("INTENSIFIER_BEFORE", INTENSIFIER_BEFORE),
         ("OPERATOR_BEFORE", OPERATOR_BEFORE), ("OPERATOR_AFTER", OPERATOR_AFTER),
         ("AUTHORITY", citations.AUTHORITY), ("CITATION_MARKER", citations.CITATION_MARKER),
         ("OWN_EVIDENCE", citations.OWN_EVIDENCE), ("SPEAKER", quoting.SPEAKER),
