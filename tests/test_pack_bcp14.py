@@ -4,8 +4,6 @@ Positive and negative cases per rule, plus two controls: the pack does not run
 under a general profile, and a declared document's quoted boilerplate keywords
 never count as uses.
 """
-import pytest
-
 import articulate
 from articulate import modes, profiles
 
