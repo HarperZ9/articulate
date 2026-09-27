@@ -150,10 +150,10 @@ svg.append(f'<g {mono} font-size="14.5" letter-spacing="1.5">')
 svg.append(f'<circle cx="101" cy="536" r="4" fill="{LIME}"/><text x="113" y="541" fill="{INK2}">MATCH</text>')
 svg.append(f'<circle cx="199" cy="536" r="4" fill="{EMBER}"/><text x="211" y="541" fill="{INK2}">DRIFT</text>')
 svg.append(f'<circle cx="291" cy="536" r="4" fill="{FAINT}"/><text x="303" y="541" fill="{INK2}">UNVERIFIABLE</text>')
-svg.append(f'<text x="96" y="576" fill="{FAINT}" font-size="12.5" letter-spacing="1">re-derivable verdict   ·   standard-library core   ·   seed 0x{SEED:04X}</text>')
+svg.append(f'<text x="96" y="576" fill="{FAINT}" font-size="12.5" letter-spacing="1">re-derivable receipt   ·   standard-library core</text>')
 svg.append('</g>')
 
 svg.append('</svg>')
 
-open("assets/articulate-hero.svg", "w", encoding="utf-8").write("\n".join(svg))
+open("assets/articulate-hero.svg", "w", encoding="utf-8", newline="\n").write("\n".join(svg))
 print("wrote assets/articulate-hero.svg", len("\n".join(svg)), "bytes,", len(lines), "lines,", len(flags), "flags")

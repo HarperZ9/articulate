@@ -289,6 +289,6 @@
 <circle cx="101" cy="536" r="4" fill="#a8e832"/><text x="113" y="541" fill="#c9c0d6">MATCH</text>
 <circle cx="199" cy="536" r="4" fill="#e8843a"/><text x="211" y="541" fill="#c9c0d6">DRIFT</text>
 <circle cx="291" cy="536" r="4" fill="#8c8296"/><text x="303" y="541" fill="#c9c0d6">UNVERIFIABLE</text>
-<text x="96" y="576" fill="#8c8296" font-size="12.5" letter-spacing="1">re-derivable verdict   ·   standard-library core   ·   seed 0x0A5C</text>
+<text x="96" y="576" fill="#8c8296" font-size="12.5" letter-spacing="1">re-derivable receipt   ·   standard-library core</text>
 </g>
 </svg>
