@@ -20,7 +20,10 @@ REFERENCE = [
     re.compile(r"\\\(.+?\\\)", re.S),
     re.compile(r"\\begin\{((?:" + ENVS + r")\*?)\}.*?\\end\{\1\}", re.S),
 ]
-QUOTE = re.compile("\"[^\"\\n]+\"|\u201c[^\u201d\\n]+\u201d")
+# The quote reference allows an empty body, so the regex engine consumes an
+# empty pair ("") as one match, and the check then drops the empty matches: an
+# empty pair is no span and does not lend its closing mark to the next quote.
+QUOTE = re.compile("\"[^\"\\n]*\"|\u201c[^\u201d\\n]*\u201d")
 
 ATOMS = list("a $\\[]()\n\"\u201c\u201d{}*") + [
     "$$", "\\[", "\\]", "\\(", "\\)", "\\begin{align}", "\\end{align}",
@@ -35,7 +38,8 @@ def _spans(rx, text):
 def _check(text):
     for find, rx in zip(invariants.MATH, REFERENCE):
         assert find(text) == _spans(rx, text), (rx.pattern, text)
-    assert finders.quote_spans(text) == _spans(QUOTE, text), text
+    assert finders.quote_spans(text) == [(s, e, x) for s, e, x in _spans(QUOTE, text)
+                                         if e - s > 2], text
 
 
 def test_finders_match_the_uncapped_regexes_on_known_cases():

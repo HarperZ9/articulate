@@ -277,7 +277,9 @@ that until the ruleset is measured. The PERSUADE 2.0 result above belongs to
   reordered, or mangled placeholder refuses the rewrite, and so does one moved
   into another paragraph when the paragraph count holds. `--unprotect
   quotes,blockquotes` releases the two configurable kinds, and the meaning
-  guard then reads a released quote as prose.
+  guard then reads a released quote as prose. An empty pair of quote marks
+  (`""`) holds nothing to protect and closes where it opens, so a quotation
+  later on the same line stays protected and the prose between them does not.
 - Change report. `--explain` (text) or `--explain json` after `--fix` or
   `--polish` lists each changed sentence before and after, the detector findings
   it carried (rule id and message), the findings left in the new sentence, the

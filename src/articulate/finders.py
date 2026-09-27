@@ -72,7 +72,9 @@ def _paired(text, opener, closer_of, *, min_body=1, exclusive=False, one_line=Fa
 
     `closer_of` maps the opener match to its closing string. A body holds at
     least `min_body` characters. An `exclusive` body cannot hold the closer, as
-    in a quote. A `one_line` span ends before the next newline. When an opener
+    in a quote; a pair whose body is shorter than `min_body` is consumed and
+    gives no span, as '"[^"]*"' finds it with the empty matches dropped. A
+    `one_line` span ends before the next newline. When an opener
     finds no closer, no later opener with the same closer can find one either
     (before the line end, for `one_line`), so the scan skips those openers
     where the regex engine would rescan to the end from each one."""
@@ -97,7 +99,10 @@ def _paired(text, opener, closer_of, *, min_body=1, exclusive=False, one_line=Fa
             dead[closer] = limit if one_line else n + 1
             pos = start + 1
         elif close < m.end() + min_body:
-            pos = start + 1          # an exclusive body that is too short
+            # An exclusive body that is too short, such as "": the pair is
+            # consumed and is no span. Its closing mark must not open the next
+            # span, where a straight quote would pair it with the next quote.
+            pos = close + len(closer)
         else:
             out.append((start, close + len(closer), None))
             pos = close + len(closer)
