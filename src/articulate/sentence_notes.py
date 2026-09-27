@@ -9,8 +9,8 @@ offsets.
 
 Standard library only.
 """
+from .citations import CITATION_MARKER, unanchored_appeals
 from .citations import LABEL as AUTHORITY_LABEL
-from .citations import unanchored_appeals
 from .lexicon import (ANNOUNCEMENT, CLAIM_ANCHOR, DIGIT, EXISTENTIAL, EXPLETIVE, NOMINAL,
                       OPERATOR_AFTER, OPERATOR_BEFORE, PADDED_PREPOSITION, PADDED_PURPOSE,
                       UNANCHORED_CLAIM, VAGUE_QUANT)
@@ -31,17 +31,25 @@ PHRASE_NOTES = (
 )
 
 
+def _marker_after(raw, e):
+    """True when a citation marker sits right after the sentence's closing
+    period, as a Chicago note or a LaTeX cite often does (SCAN_ALGO 7)."""
+    i = e + 1 if raw.startswith("~", e) else e
+    return CITATION_MARKER.match(raw, i) is not None
+
+
 def sentence_passes(sc, unit, text, raw):
     """Run the per-sentence rules over `text` (masked) with `raw` beside it."""
     for s, e in sentences(text):
         sent = text[s:e]
+        after = _marker_after(raw, e)
         if not DIGIT.search(sent):
             for mq in VAGUE_QUANT.finditer(sent):
                 sc.add(sc.low, unit, "vague-quantifier", "vague quantifier, no number given",
                        s + mq.start(), s + mq.end(), text=text)
         _openers(sc, unit, s, sent)
-        _phrase_notes(sc, unit, text, s, sent)
-        for a, b in unanchored_appeals(sent, raw[s:e]):
+        _phrase_notes(sc, unit, text, s, sent, raw[s:e], after)
+        for a, b in ([] if after else unanchored_appeals(sent, raw[s:e])):
             sc.add(sc.medium, unit, "unsupported-authority", AUTHORITY_LABEL,
                    s + a, s + b, text=text)
         noms = list(NOMINAL.finditer(sent))
@@ -59,10 +67,11 @@ def _openers(sc, unit, s, sent):
             sc.add(sc.low, unit, cat, label, s + lead + a, s + lead + b, True)
 
 
-def _phrase_notes(sc, unit, text, s, sent):
+def _phrase_notes(sc, unit, text, s, sent, raw_sent, marker_after):
     """"in order to", an announcement, "with respect to" outside its operator
     sense, and "state of the art" in a sentence with no number, year or
-    citation."""
+    citation. The anchors are read on the raw sentence, since the masks blank a
+    URL and a LaTeX cite, and a marker right after the period counts."""
     for cat, label, rx in PHRASE_NOTES:
         for m in rx.finditer(sent):
             sc.add(sc.low, unit, cat, label, s + m.start(), s + m.end(), text=text)
@@ -73,7 +82,9 @@ def _phrase_notes(sc, unit, text, s, sent):
             continue
         sc.add(sc.low, unit, "padded-preposition", "padded preposition (with respect to)",
                s + m.start(), s + m.end(), text=text)
-    if not CLAIM_ANCHOR.search(sent):
+    anchored = (marker_after or CLAIM_ANCHOR.search(raw_sent)
+                or CITATION_MARKER.search(raw_sent))
+    if not anchored:
         for m in UNANCHORED_CLAIM.finditer(sent):
             sc.add(sc.low, unit, "unanchored-claim",
                    "unanchored claim (state of the art, no comparison named)",

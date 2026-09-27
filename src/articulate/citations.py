@@ -5,8 +5,11 @@
 An appeal to unnamed studies or experts gives the reader no source to check. A
 citation marker in any common style gives one, so the rule reads the whole
 sentence for a marker, including a marker placed right after its closing
-period. A year counts only in citation position (in parentheses, or after an
-author name), so a count such as "in 1200 patients" does not silence the rule.
+period (articulate.sentence_notes). A year counts only in citation position:
+opening a parenthetical or after a name inside it, or after an author name in
+running text. So a count such as "in 1200 patients", "(1600 patients)" or
+"(n = 1850)" does not silence the rule, and neither does "according to" before
+an unnamed source ("according to a recent study").
 "Our data show", "these data show" and "this data shows" name the writer's own
 evidence when the sentence also points at a figure, a table, supplementary
 material or a test statistic.
@@ -46,13 +49,19 @@ CITATION_MARKER = re.compile(
     r"|\[[A-Z][A-Za-z]{1,3}\+?\d{2}[a-z]?\]"                    # alpha key [Smi20]
     r"|\((?!" + _NOT_AUTHOR + r")[A-Z][\w'’-]+(?:\s+(?:and|&)\s+[A-Z][\w'’-]+)?"
     r"(?:\s+et al\.)?,?\s+\d{1,4}(?:[-–]\d+)?\)"           # (Jones 118)
-    r"|\([^()]*\b" + _YEAR + r"\b[^()]*\)"                     # a year in parentheses
+    # A year in parentheses, opening it or after a name, and not a count:
+    # "(2019)", "(Smith, 2019)", but not "(1600 patients)" or "(n = 1850)".
+    r"|\((?:[^()]*?\b[A-Z][\w'’-]+(?:\s+et al\.)?,?\s+|\s*)" + _YEAR
+    + r"\b(?!\s+[a-z])[^()]*\)"
     r"|\b(?!" + _NOT_NAME + r")[A-Z][a-z]+(?:\s+et al\.)?,?\s+" + _YEAR + r"\b"
     r"|\bet al\.|https?://"
     r"|\b\d{1,4}\s+(?:[A-Z][A-Za-z]*\.\s?){1,4}(?:\d[a-z]{1,2}\s)?\d{1,5}\b"  # 998 F.3d 101
     r"|\[\d{4}\]\s+[A-Z]{2,}"                                  # [2021] UKSC 5
-    r"|\baccording to\b(?!\s+(?:many\s+|some\s+|most\s+|the\s+)?"
-    r"(?:experts|studies|research|scientists|sources)\b)")
+    # "according to" names a source, unless what follows is an unnamed one:
+    # "according to experts", "according to a recent study".
+    r"|\baccording to\b(?!\s+(?:(?:a|an|the|some|many|most|several|numerous|various|"
+    r"recent|new|leading|other|independent|top)\s+){0,3}"
+    r"(?:experts?|stud(?:y|ies)|research(?:ers?)?|scientists?|sources?)\b)")
 
 # The writer's own evidence: a figure, table or supplementary reference, or a
 # test statistic.

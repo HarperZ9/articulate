@@ -130,18 +130,41 @@ def units(lines, *, join=True, roles=None):
 
 
 # A period after one of these never ends a sentence: "Smith et al. (2019)".
-# Citation abbreviations too (SCAN_ALGO 6): "(ref. 7)", "(p. 4)", "Smith v.
-# Jones", "7th Cir.", "410 U.S. 113", so a citation stays in its sentence.
-ABBREVIATIONS = re.compile(r"(?i)(?:\bet al|\be\.g|\bi\.e|\bcf|\bvs|\bfig|\beq|\bno|"
-                           r"\bdr|\bmr|\bmrs|\bms|\bprof|\bst|\brefs?|\bpp?|\bv|\bcir|"
-                           r"\bu\.s|\bvol|\bch|\bsec|\beds?)$")
+# Citation abbreviations too (SCAN_ALGO 6): "7th Cir.", "410 U.S. 113", so a
+# citation stays in its sentence.
+ABBREVIATIONS = re.compile(r"(?i)(?:\bet al|\be\.g|\bi\.e|\bcf|\bvs|\bfig|\beq|"
+                           r"\bdr|\bmr|\bmrs|\bms|\bprof|\bcir|\bu\.s)$")
+# These are also ordinary words or names, so their period ends a sentence unless
+# the citation shape is there (SCAN_ALGO 7): a number after "No.", "p.", "pp.",
+# "vol.", "ch.", "sec." and "ref." ("p. 4", but "The answer was no."); a
+# capitalized word on each side of "v." ("Smith v. Jones"); a capitalized word
+# after "St." ("St. Louis"); parentheses around "Ed." or "eds." ("(Ed.)", but
+# "I asked Ed.").
+ABBREV_BEFORE_NUMBER = re.compile(r"(?i)(?:\bno|\bpp?|\bvol|\bch|\bsec|\brefs?)$")
+ABBREV_BEFORE_NAME = re.compile(r"(?:\b[A-Z][\w'’-]*\s+v|\bSt)$")
+ABBREV_IN_PARENS = re.compile(r"\((?:[Ee]ds?)$")
+
+
+def _abbreviation(text, dot, after):
+    """True when the period at `dot` belongs to an abbreviation, so it does not
+    end the sentence. `after` is the index of the next character that is not a
+    space."""
+    before = text[max(0, dot - 40):dot]
+    if ABBREVIATIONS.search(before[-6:]):
+        return True
+    nxt = text[after] if after < len(text) else ""
+    if ABBREV_BEFORE_NUMBER.search(before[-6:]):
+        return nxt.isdigit()
+    if ABBREV_BEFORE_NAME.search(before):
+        return nxt.isupper()
+    return bool(ABBREV_IN_PARENS.search(before[-6:])) and text.startswith(")", dot + 1)
 
 
 def sentences(text):
     """(start, end) of each sentence in a logical line, whitespace excluded."""
     out, pos = [], 0
     for m in SENTENCE_END.finditer(text):
-        if text[m.start()] == "." and ABBREVIATIONS.search(text[max(0, m.start() - 6):m.start()]):
+        if text[m.start()] == "." and _abbreviation(text, m.start(), m.end()):
             continue
         out.append((pos, m.start() + len(m.group(0).rstrip())))
         pos = m.end()
