@@ -54,8 +54,8 @@ September 2026 rules out one made after this result was read.
   (`anaphora`), on 49 learner and 244 other essays, ratio 2.29 [1.61, 3.08]. One
   is inconclusive: three hedges in one sentence, ratio 1.86 [1.64, 2.09]. That
   is one skewed reading among 61 notes read, with no correction for the number
-  read. The two notes that left the blocking tier under decision 2 of pull
-  request 9 are not skewed toward learner essays: `padded-purpose` ("in order
+  read. The two notes that left the blocking tier under
+  [decision 2](../fairness/DECISIONS-PR9.md) of pull request 9 are not skewed toward learner essays: `padded-purpose` ("in order
   to") fires on 32 learner and 854 other essays, ratio 0.42, and
   `unanchored-claim` fired on 0 and 2 essays, too rare to test. The
   pre-registered condition for moving them to the house pack is not met.
@@ -222,7 +222,8 @@ note's reading across keys.
 | flavored | `LOW\|expletive-opener/empty-opener-it-is-important-worth` | 18 | 262 | 0.75 | not skewed | yes |
 | flavored | `LOW\|announcement/announces-what-the-text-will-do-in-this-essay-we` | 0 | 4 | 0.0 | not skewed | yes |
 
-Under the principle of decision 3 on pull request 9, a note that measures as
+Under the principle of
+[decision 3](../fairness/DECISIONS-PR9.md) on pull request 9, a note that measures as
 skewed and carries no reliable reader cost belongs in the house pack, so
 `anaphora` is a candidate. Moving it changes the ruleset, which now waits for a
 corpus pre-registered for the next ruleset; this reading is exploratory for

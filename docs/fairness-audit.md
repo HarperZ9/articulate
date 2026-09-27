@@ -261,7 +261,8 @@ the learner texts by the G2 rule:
 Every one of them but the first is a house note. The first, the repeated-phrase
 note, shows by default. Its own reason concedes that repeating a key term is
 plain-language practice, so its cost to a reader depends on the use. By the
-principle of decision 3 on pull request 9, that makes it a candidate for the
+principle of [decision 3](../fairness/DECISIONS-PR9.md) on pull request 9,
+that makes it a candidate for the
 house pack. Moving it changes the ruleset, so it waits for the next
 pre-registered ruleset.
 
