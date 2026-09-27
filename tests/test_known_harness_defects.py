@@ -30,7 +30,7 @@ BLOCKING_PATTERNS = [
     (logical, "SENTENCE_END"), (lexicon, "HEADING"), (lexicon, "BULLET"),
     # added with ruleset 0.9.0 (SCAN_ALGO 7)
     (logical, "ABBREVIATIONS"), (logical, "ABBREV_BEFORE_NUMBER"),
-    (logical, "ABBREV_BEFORE_NAME"), (logical, "ABBREV_IN_PARENS"),
+    (logical, "ABBREV_BEFORE_NAME"), (logical, "ABBREV_IN_PARENS"), (logical, "_ORDERED"),
     (quoting, "CSQUOTES"), (quoting, "_TEX_COMMENT"),
 ]
 

@@ -73,7 +73,8 @@ READING_PATTERNS = (
     ("markup", "INLINE_CODE"), ("markup", "TEX"), ("markup", "FENCE"),
     ("logical", "SENTENCE_END"), ("logical", "ABBREVIATIONS"),
     ("logical", "ABBREV_BEFORE_NUMBER"), ("logical", "ABBREV_BEFORE_NAME"),
-    ("logical", "ABBREV_IN_PARENS"), ("lexicon", "HEADING"), ("lexicon", "BULLET"),
+    ("logical", "ABBREV_IN_PARENS"), ("logical", "_ORDERED"),
+    ("lexicon", "HEADING"), ("lexicon", "BULLET"),
     ("quoting", "CSQUOTES"), ("quoting", "_TEX_COMMENT"),
 )
 

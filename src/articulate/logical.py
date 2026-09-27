@@ -99,6 +99,22 @@ def line_kinds(lines, roles=None):
             kinds.append("quote")
         else:
             kinds.append("prose")
+    return _continuations(lines, kinds)
+
+
+_ORDERED = re.compile(r"^\s*(\d+)\.\s")
+
+
+def _continuations(lines, kinds):
+    """A numbered line right after a prose line continues the paragraph unless
+    it starts at 1, as in CommonMark (an ordered list interrupts a paragraph
+    only from 1). A hard wrap that puts "2019. The" at a line start therefore
+    changes nothing (SCAN_ALGO 7)."""
+    for i in range(1, len(kinds)):
+        if kinds[i] == "bullet" and kinds[i - 1] == "prose":
+            m = _ORDERED.match(lines[i])
+            if m and m.group(1) != "1":
+                kinds[i] = "prose"
     return kinds
 
 

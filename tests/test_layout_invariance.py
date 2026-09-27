@@ -119,6 +119,34 @@ def test_a_v1_receipt_reads_unverifiable_with_a_reason():
     assert verdict == "Unverifiable" and "ruleset changed" in detail
 
 
+QUOTED_RUN = ('The report said "studies show that it grew until\n'
+              '2009. That was the point" and moved on to the costs.\n')
+
+
+def test_a_wrapped_line_that_starts_with_a_number_continues_the_paragraph():
+    # CommonMark: an ordered list interrupts a paragraph only when it starts at
+    # 1, so "2009. Then" at a line start is the same paragraph. Reading it as a
+    # list item split the logical line and moved a quotation pair (SCAN_ALGO 7).
+    one_line = QUOTED_RUN.replace("until\n2009", "until 2009")
+    assert one_line != QUOTED_RUN
+    for prof in ("essay", "memoir"):
+        a, ra = _hm(QUOTED_RUN, prof)
+        b, rb = _hm(one_line, prof)
+        assert a == b and ra["cadence"]["words"] == rb["cadence"]["words"], prof
+
+
+def test_control_a_list_that_starts_at_one_still_interrupts_a_paragraph():
+    from articulate.logical import line_kinds
+    lines = ["Intro text here\n", "1. first item\n", "2. second item\n"]
+    assert line_kinds(lines) == ["prose", "bullet", "bullet"]
+    assert line_kinds(["- a dash item\n", "2. second item\n"]) == ["bullet", "bullet"]
+
+
+def test_a_numbered_line_after_prose_is_prose_unless_it_starts_at_one():
+    from articulate.logical import line_kinds
+    assert line_kinds(["Intro text here\n", "2. not a list\n"]) == ["prose", "prose"]
+
+
 def test_a_period_after_a_common_abbreviation_does_not_end_a_sentence():
     from articulate.logical import sentences
     t = "Unlike Smith et al. (2019), it runs in the field. E.g. this one. Done."
