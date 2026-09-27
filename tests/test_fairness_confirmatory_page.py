@@ -144,7 +144,12 @@ def test_the_g2_table_lists_every_failing_rule_and_matches_the_receipt():
         learner, other = s["docs"] if side == "learner" else s["docs"][::-1]
         assert [int(prot), int(ref)] == [learner, other], key
         assert str(s["ratio"]) == ratio and state == s["state"], key
-        assert ci == "[" + ", ".join(str(x) for x in s["ci"]) + "]", key
+        if s["ci"] == ["inf", "inf"]:
+            # A percentile bootstrap over an arm with no hits: named, not printed
+            # as an interval, and only where the learner arm has no hits.
+            assert ci == "not estimable" and learner == 0, key
+        else:
+            assert ci == "[" + ", ".join(str(x) for x in s["ci"]) + "]", key
         assert int(count) == len(profiles), key
         seen.add(key)
     assert seen == set(fails)
@@ -153,7 +158,7 @@ def test_the_g2_table_lists_every_failing_rule_and_matches_the_receipt():
 
 
 def test_the_power_table_matches_the_receipt():
-    rows = _rows("| Profile | Smallest gap it can see (points) |")
+    rows = _rows("| Profile | Gap seen about half the time (points) |")
     assert len(rows) >= 4
     for profile, size in rows:
         g1 = _config(CONFIRM, profile)["comparisons"][CONFIRM_NAME]["g1"]
@@ -174,3 +179,37 @@ def test_the_result_section_counts_match_the_receipt_rows():
             and all(x["blocked"][0] == 0 for x in v["g7"].values())]
     assert f"neither do {len(zero) - 1} other bound profiles" in FLAT
     assert ("**G7 opens a review.**" in FLAT) is bool(CONFIRM["gates"]["G7_review"])
+
+
+def test_the_band_intervals_match_the_report():
+    rows = _rows("| Band | Block rate (%) | 95% interval |")
+    assert len(rows) == 3
+    g7 = _config(ELLIPSE, "essay")["g7"]
+    for band, rate, ci in rows:
+        assert g7[BANDS[band]]["rate"] == float(rate), band
+        assert g7[BANDS[band]]["ci"] == json.loads(ci), band
+
+
+def _distinct(rule):
+    """A note's name: two notes put a per-document count in their rule id."""
+    tier, rid = rule.split("|", 1)
+    cat = rid.split("/", 1)[0]
+    return cat if cat in ("paragraph-uniformity", "nominalization") else rid
+
+
+def test_the_g8_counts_and_the_default_visible_skew_match_the_receipt():
+    g8 = _config(CONFIRM, "flavored")["comparisons"][CONFIRM_NAME]["g8"]
+    shown = [k for k, v in g8.items() if not v["house"]]
+    assert f"holds {len(g8)} keys" in FLAT
+    assert f"{len({_distinct(k) for k in g8})} distinct notes" in FLAT
+    assert f"{len({_distinct(k) for k in shown})} notes a writer sees by default" in FLAT
+    table = {r[1].strip("`").replace("\\|", "|"): r
+             for r in _rows("| Profile | Note | Learner essays | Other essays |")}
+    for k in shown:
+        if g8[k]["state"] in ("skewed", "inconclusive"):
+            assert k in table and table[k][5] == g8[k]["state"], k
+
+
+def test_the_g2_rule_count_matches_the_receipt():
+    g2 = _config(CONFIRM, "essay")["comparisons"][CONFIRM_NAME]["g2"]
+    assert f"Under the strict profiles {len(g2)} blocking rules fired" in FLAT
