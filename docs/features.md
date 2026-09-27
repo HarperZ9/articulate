@@ -55,8 +55,8 @@ block everywhere, quotes included.
 A `writing-allow:` line in the first 15 lines (an HTML comment, a `%` comment or
 YAML front matter works) keeps terms of art for the whole file: a finding whose
 matched text contains an allowed term as a substring, in any case, is dropped.
-The contrast and cadence devices ignore it. Because the match is a substring,
-allowing `revolutionary` for a war's name also clears "a revolutionary product"
+The contrast and cadence devices ignore it. The match is a substring: an allowed
+`revolutionary`, meant for a war's name, also clears "a revolutionary product"
 in the same file. Every finding carries a line, an end line, a column and a
 character span, and says whether it blocks under the profile in use.
 

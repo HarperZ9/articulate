@@ -20,16 +20,19 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
   inference.
 - `--gate`: exit 1 when any file is blocked or cannot be screened, otherwise 0.
 - `--json`: a machine-readable payload with the findings, whether each one
-  blocks, `blocking` (the count of blocking findings), per-rule counts, the gate,
-  density, passive-voice and adverb rates and the `does_not_prove` line. The
+  blocks and its `reason` and `reason_source`, `blocking` (the count of blocking
+  findings), per-rule counts, the gate, density (with `measures`, what it
+  counts), passive-voice and adverb rates and the `does_not_prove` line. The
   `clean` key (no HIGH or MEDIUM finding) is deprecated: it echoes the retired
   verdict, keeps its value in 0.6.0 and is removed in 0.7.0. Read `blocking` or
   `gate`.
 - `--sarif`: SARIF 2.1.0 for GitHub code scanning, Azure DevOps, and reviewdog.
   Each rule's help text carries its reader-cost reason and the does-not-prove
   line, and each result records the profile.
-- `--verbose`: expand the LOW advisories to line numbers. A LOW finding that the
-  profile promotes to blocking always prints.
+- `--verbose`: expand the LOW advisories to line numbers and print each
+  finding's reader-cost reason under it. A LOW finding that the profile promotes
+  to blocking always prints. Every console run ends with the does-not-prove line,
+  a passing gate included.
 - `--house-notes`: also report the house style's patterns as LOW notes marked
   `house style` (SARIF: `house: true`). Without it no profile but `house` and
   `house-essay` shows them.
@@ -182,8 +185,15 @@ The editor layer is a separate entry point, because it needs a model backend.
 python -m articulate.editor --judge FILE
 python -m articulate.editor --fix FILE [--out OUT] [--passes N] [--mode M] [--profile P]
 python -m articulate.editor --polish FILE [--out OUT] [--bar 1-5] [--mode M] [--profile P]
-python -m articulate.editor --review FILE
+python -m articulate.editor --review FILE     # --advise FILE is the same
+python -m articulate.editor --local-only --judge FILE   # refused, exit 3
 ```
+
+Each command sends the full text to a hosted model and says so before it
+starts. With `ARTICULATE_LOCAL_ONLY=1` set, or `--local-only` passed, every one
+exits 3 before any subprocess starts; the `judge`, `fix` and `polish` tools of
+both MCP servers return an error. `articulate --help` prints the map of local and
+hosted commands.
 
 These commands run the model through the `claude` CLI, which must be installed
 and logged in. The editor looks for it in two places. If `ARTICULATE_CLAUDE_CLI`

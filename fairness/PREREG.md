@@ -9,9 +9,10 @@ The harness is `python -m articulate.fairness`. Its code lives in
 
 - Written 26 September 2026. A git commit date can be set by whoever makes the
   commit, so the repository alone does not prove when this file was written.
-  The file as it stands with the confirmatory amendment below carries an RFC
-  3161 timestamp from a public time-stamping authority (FreeTSA) over its
-  SHA-256. `fairness/anchor/README.md` holds the token and the command that
+  The file as it stood with the confirmatory amendment below (commit 5a30364)
+  carries an RFC 3161 timestamp from a public time-stamping authority (FreeTSA)
+  over its SHA-256. A later extension of the tier-change amendment says so where
+  it starts, and that token does not cover it. `fairness/anchor/README.md` holds the token and the command that
   verifies it. The pull request's creation time on GitHub is a second, weaker
   anchor.
 - The thresholds below were chosen after an exploratory audit had already read
@@ -127,6 +128,51 @@ table and the machine-readable blocks state them.
   them. Confirmation needs a corpus the rules were not tuned on.
 - A receipt keys the n-gram repetition and anaphora rules by category, because
   their labels quote the text. This changes no gate.
+
+Extended later on 26 September 2026, after the RFC 3161 token over this file
+and before any run on the PERSUADE 2.0 corpus. A review of six writing domains
+(students and second-language writers, STEM, humanities and law, publishers and
+editors, graders, professional writers) found conventions the rules blocked.
+Each change below was judged on reader cost under the blocking-tier principle of
+the pull request 9 decisions, and none was adopted for its effect on a gate. All
+were made after reading the Liang et al. corpus, so on that corpus they are
+exploratory, like the two tier changes above.
+
+- Quotations are masked. Every phrasing rule reads a text with its direct
+  quotations (double and curly quotes, LaTeX ``...''), Markdown block quotes and
+  LaTeX `quote` and `quotation` environments blanked. The first-person
+  self-description rule also skips table rows, transcript turns, `verbatim`
+  environments and `\texttt{}` or `\verb` spans. An interface markup token and a
+  hidden character still read every character (`SCAN_ALGO` 6).
+- `unsupported-authority` stays MEDIUM and reads a citation marker anywhere in
+  its sentence, in every common style, and the writer's own data beside a
+  figure, table or test statistic. A year counts only in citation position, so a
+  four-digit count no longer silences it. Citation abbreviations ("ref.", "p.",
+  "v.", "Cir.", "U.S.") no longer end a sentence.
+- "It is important / worth / crucial / essential / necessary / vital to" and "It
+  is worth noting that" leave the MEDIUM throat-clearing and worth-noting rules.
+  The LOW `expletive-opener` note alone reports them, at a sentence start or
+  after one leading clause. "It should be noted that" stays MEDIUM.
+- The self-reference rule leaves MEDIUM `meta` for a LOW `announcement` note that
+  fires only on announcement verbs. "With respect to" leaves MEDIUM `wordiness`
+  for a LOW `padded-preposition` note, silent in its operator sense.
+- Every report-only note gains a reader-cost reason. The fingerprint hashes the
+  reason keys, so this moves it and changes no finding.
+- Rerun on the Liang et al. corpus under ruleset `sha256:46e1485cd2c98caa`
+  (receipt `fairness/receipts/sha256-46e1485cd2c98caa.json`): all 266 gate rows
+  pass, as they did under `sha256:1c8f54b02d8aa211`, and no row changes state.
+  The bound profiles block the same texts. Report-only rows move: under the
+  house profiles one college window (`house`) and two (`house-essay`) no longer
+  block, and G8 gains the `announcement` note (0 learner texts, 4 abstract
+  windows, not skewed).
+- Unchanged: every gate definition and threshold, the release requirements and
+  the set of bound profiles. The `essays/`, `blog/` and `writing/` path rule stays
+  for this release, so the profile set the confirmatory run measures is the one
+  the amendment below names. A changed ruleset ships only after it passes on
+  every listed corpus. The PERSUADE 2.0 receipt names the fingerprint it ran
+  under; at this writing that is `sha256:46e1485cd2c98caa`.
+- This extension is not covered by the RFC 3161 token, which signs the file as
+  it stood at commit 5a30364 (`fairness/anchor/README.md`).
 
 ### Amendment of 26 September 2026: the confirmatory corpus
 
