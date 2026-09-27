@@ -11,9 +11,10 @@ column values that select its rows. Rows that share an id are one document, and
 their texts must agree. Such a manifest lists no document rows.
 
 A set carries group labels as dimension=value pairs (first_language,
-disability, input_method, register, age_band) and an optional window rule that
-cuts a longer text to a sentence-aligned sample of about the protected set's
-length. The harness refuses any file whose hash differs from the manifest, and
+disability, input_method, register, age_band, proficiency) and an optional
+window rule that cuts a longer text to a sentence-aligned sample of about the
+protected set's length. A table set selects rows by one column value or by a
+list of values, so one set can hold a band of scores. The harness refuses any file whose hash differs from the manifest, and
 it never stores or prints text.
 
 The texts stay where the licence allows them to be. Most research corpora carry
@@ -31,7 +32,8 @@ import os
 import re
 
 SCHEMA = "articulate/fairness-manifest/v1"
-DIMENSIONS = ("first_language", "disability", "input_method", "register", "age_band")
+DIMENSIONS = ("first_language", "disability", "input_method", "register", "age_band",
+              "proficiency")
 WORD = re.compile(r"\b\w+\b")          # the token rule Articulate counts words with
 SENT = re.compile(r"(?<=[.!?])\s+")
 
@@ -93,9 +95,11 @@ def _validate_table(t, sets):
     missing = [k for k in TABLE_KEYS if not t.get(k)]
     if missing or t.get("format", "csv") != "csv":
         raise CorpusError(f"a table needs {list(TABLE_KEYS)} and format csv; missing {missing}")
-    for name in t["sets"]:
+    for name, where in t["sets"].items():
         if name not in sets or sets[name]["corpus"] != t["corpus"]:
             raise CorpusError(f"table {t['path']!r} names an unknown set {name!r}")
+        if any(isinstance(v, list) and not v for v in where.values()):
+            raise CorpusError(f"table {t['path']!r}: set {name!r} has an empty value list")
 
 
 def windows(text, target, minimum):
@@ -139,9 +143,14 @@ def _listed_rows(man, base):
         yield d, text
 
 
+def _matches(cell, want):
+    """A set names one value, or a list of values any of which selects the row."""
+    return cell in want if isinstance(want, list) else cell == want
+
+
 def _table_set(t, row):
     for name, where in t["sets"].items():
-        if all(row.get(k, "").strip() == v for k, v in where.items()):
+        if all(_matches(row.get(k, "").strip(), v) for k, v in where.items()):
             return name
     return None
 
