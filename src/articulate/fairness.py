@@ -9,7 +9,7 @@ The receipt records block rates by group with intervals in both directions,
 per-rule rates and skew states, density distributions, a layout check and the
 pre-registered gates G1 to G7 (fairness_gates, fairness/PREREG.md).
 
-  python -m articulate.fairness MANIFEST [--root DIR] [--out RECEIPT]
+  python -m articulate.fairness MANIFEST [--root DIR] [--out RECEIPT] [--jobs N]
   python -m articulate.fairness --release-check DIR [--published FILE]
 
 The release check is scoped to ruleset changes. When the current fingerprint
@@ -138,17 +138,31 @@ def _layout_applies(prof):
     return prof.get("unit", "sentence") != "line" and not prof.get("structural_classify")
 
 
-def _collect(man, base, configs):
-    """measurements[config][set] = [doc measurement], plus layout changes."""
+def configs_for(names):
+    """({config key: profile}, {config key: [profile names]}) in name order.
+    Profiles with the same key behave the same, so each key is measured once."""
+    configs, members = {}, {}
+    for n in names:
+        prof = load_any(n)
+        key = config_key(prof)
+        configs.setdefault(key, prof)
+        members.setdefault(key, []).append(n)
+    return configs, members
+
+
+def _collect(man, base, configs, members, jobs=1):
+    """measurements[config][set] = [doc measurement], plus layout changes. With
+    jobs above 1 the documents are scanned in that many processes; results come
+    back in document order, so the receipt is the same (fairness_scan)."""
+    from .fairness_scan import scan
     meas = {k: {} for k in configs}
     layout = {k: 0 for k in configs}
-    for row, text in corpora.load_documents(man, base):
-        for key, prof in configs.items():
-            m = measure(text, prof)
+    for row, per_config in scan(corpora.load_documents(man, base), configs, members, jobs):
+        for key, (m, changed) in zip(configs, per_config):
             m.update({"key": row.get("key"), "score": row.get("score"),
                       "prompt": row.get("prompt")})
             meas[key].setdefault(row["set"], []).append(m)
-            if _layout_applies(prof) and _layout_changed(text, m, prof):
+            if changed:
                 layout[key] += 1
     return meas, layout
 
@@ -201,21 +215,17 @@ def _gate_summary(results, bound):
             "G8": "report only", "release_ok": g1 and g2 and g4 and g5}
 
 
-def run(manifest_path, names=None, cadence_gates=False, root=None):
+def run(manifest_path, names=None, cadence_gates=False, root=None, jobs=1):
     """The receipt for one manifest. `root` is the folder the corpus files sit
-    in; by default the manifest's own `root`, beside the manifest."""
+    in; by default the manifest's own `root`, beside the manifest. `jobs` is the
+    number of processes that scan documents; it never changes the receipt."""
     man, man_hash = corpora.load_manifest(manifest_path)
     base = root or os.path.join(os.path.dirname(os.path.abspath(manifest_path)),
                                 man.get("root", "."))
     bound = bound_profiles()
     names = names or (bound + list(house_profiles()))
-    configs, members = {}, {}
-    for n in names:
-        prof = load_any(n)
-        key = config_key(prof)
-        configs.setdefault(key, prof)
-        members.setdefault(key, []).append(n)
-    meas, layout = _collect(man, base, configs)
+    configs, members = configs_for(names)
+    meas, layout = _collect(man, base, configs, members, jobs)
     results = {}
     for i, (key, sets) in enumerate(sorted(meas.items(), key=lambda kv: members[kv[0]])):
         notes = bool({profiles.DEFAULT, *house_profiles()} & set(members[key]))
@@ -250,6 +260,8 @@ def main(argv=None):
     ap.add_argument("--release-check", metavar="DIR", default=None)
     ap.add_argument("--published", metavar="FILE", default=None,
                     help="the published-ruleset record (default: beside DIR)")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="processes that scan documents; the receipt is the same")
     args = ap.parse_args(argv)
     if args.release_check:
         ok, lines = release_check(args.release_check, args.published)
@@ -261,7 +273,7 @@ def main(argv=None):
         ap.print_help()
         return 2
     try:
-        rec = run(args.manifest, root=args.root)
+        rec = run(args.manifest, root=args.root, jobs=args.jobs)
     except (corpora.CorpusError, OSError, ValueError) as e:
         print(f"[fairness] {e}", file=sys.stderr)
         return 2

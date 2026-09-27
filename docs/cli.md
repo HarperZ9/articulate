@@ -162,9 +162,14 @@ An unknown `--venue` exits 2 with the list of venues. The JSON output carries a
 ## The fairness harness
 
 ```bash
-python -m articulate.fairness MANIFEST [--out RECEIPT]
+python -m articulate.fairness MANIFEST [--root DIR] [--out RECEIPT] [--jobs N]
 python -m articulate.fairness --release-check DIR [--published FILE]
 ```
+
+`--root` names the folder the corpus files sit in when they are not beside the
+manifest. `--jobs N` scans the documents in N processes and computes every
+statistic in one, so the receipt is byte-identical to a single-process run; a
+test pins this.
 
 The release check reads the published-ruleset record, `published-ruleset.json`
 beside `DIR` unless `--published` names another. When the current ruleset

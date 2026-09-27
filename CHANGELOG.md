@@ -97,7 +97,8 @@ New:
   G1 to G8 (`fairness/PREREG.md`), plus `--release-check`, now a step in the
   publish workflow. The check recomputes the gates from the receipt's rows and
   pins the manifest and the comparisons. It gates only a release that changes
-  the ruleset (see "Decisions after the first fairness run" below).
+  the ruleset (see "Decisions after the first fairness run" below). `--jobs N`
+  scans documents in N processes and writes the same receipt, byte for byte.
 - `articulate process`: a local, opt-in record of your own drafts as salted
   commitments, with order and day by default, private input methods, reveals a
   reader can check, and a C2PA-shaped process summary.
