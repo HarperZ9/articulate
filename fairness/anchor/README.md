@@ -1,29 +1,36 @@
 # Timestamps for the pre-registration
 
-Two RFC 3161 time-stamp tokens from FreeTSA (freetsa.org) sign the SHA-256 of
-`fairness/PREREG.md` at two points. Only each digest was sent to the
+Four RFC 3161 time-stamp tokens from FreeTSA (freetsa.org) sign SHA-256
+digests: three of `fairness/PREREG.md` at three points, and one of the
+confirmatory receipt after the run. Only each digest was sent to the
 time-stamping authority.
 
 | Token | PREREG.md as it stood | SHA-256 | Time in the token | Serial |
 |:-|:-|:-|:-|:-|
 | `PREREG.tsr` | with the confirmatory corpus amendment (commit 5a30364) | `a52026395371cbb9b624715b32e266af43a4e969995b29c4fdc7800f4e96a643` | 2026-09-26 22:33:21 UTC | `0x08810CA9` |
 | `PREREG-2.tsr` | with the domain-review extension and the final ruleset fingerprint, before the confirmatory run (commit e247280) | `3f2863ff84d8e00d96b647d629e04095ca17f0086f5d8105111d5606ce586869` | 2026-09-27 03:28:14 UTC | `0x0883D111` |
+| `PREREG-3.tsr` | with the amendment of 27 September 2026, written after the confirmatory run (commit 25bbdec) | `5456cd79debe0b7cc1483f2ac9fada8ebf39e01c2d7a122f33cccbf0c4af975d` | 2026-09-27 11:18:50 UTC | `0x088837AD` |
+| `CONFIRM-persuade-2.0.tsr` | not PREREG: the confirmatory receipt `fairness/receipts/sha256-46e1485cd2c98caa-persuade-2.0.json` | `22992435165b85aa04f2096627060d0a5e0ccdb5b8cc9a72af2befd229f1e7a7` | 2026-09-27 11:18:50 UTC | `0x088837AF` |
 
-Both tokens carry the FreeTSA policy `tsa_policy1`.
+All four tokens carry the FreeTSA policy `tsa_policy1`.
 
 Files here:
 
-- `PREREG.tsq` and `PREREG-2.tsq`: the requests, each made with
+- `PREREG.tsq`, `PREREG-2.tsq` and `PREREG-3.tsq`: the requests, each made with
   `openssl ts -query -data fairness/PREREG.md -sha256 -cert -out <name>.tsq`.
-- `PREREG.tsr` and `PREREG-2.tsr`: the signed replies.
+  `CONFIRM-persuade-2.0.tsq` was made the same way with `-data` set to the
+  confirmatory receipt.
+- `PREREG.tsr`, `PREREG-2.tsr`, `PREREG-3.tsr` and `CONFIRM-persuade-2.0.tsr`:
+  the signed replies.
 - `freetsa-cacert.pem` and `freetsa-tsa.crt`: the FreeTSA root and signing
   certificates, fetched from freetsa.org/files/ on 26 September 2026 and fetched
-  again for the second token with the same bytes. For an independent check,
+  again for the second, third and fourth tokens with the same bytes. For an independent check,
   fetch them from freetsa.org yourself and compare.
 
 ## Verify
 
-From the repository root, for each token (`PREREG` or `PREREG-2`):
+From the repository root, for each PREREG token (`PREREG`, `PREREG-2` or
+`PREREG-3`):
 
 ```
 openssl ts -verify -in fairness/anchor/PREREG-2.tsr -queryfile fairness/anchor/PREREG-2.tsq \
@@ -34,13 +41,15 @@ openssl ts -verify -in fairness/anchor/PREREG-2.tsr -data fairness/PREREG.md \
 
 Each prints `Verification: OK`. The second command checks the file itself, so
 it holds only for the version of `fairness/PREREG.md` whose SHA-256 the token
-names. The amendment of 27 September 2026 was added after both tokens, so
-neither token matches the file as it stands now. Check each against its own
-version: write token 1's file with `git show 5a30364:fairness/PREREG.md > PREREG-first.md`
-and token 2's with `git show e247280:fairness/PREREG.md > PREREG-second.md`, then
-pass it to `-data`. No token covers the amendment of 27 September yet; a
-third token over the file with it is still to be taken. To read the time in a
-token:
+names. The third token matches the file as it stands, with the amendment of
+27 September 2026; any later edit breaks that match. Check the first two
+against their own versions: write token 1's file with
+`git show 5a30364:fairness/PREREG.md > PREREG-first.md` and token 2's with
+`git show e247280:fairness/PREREG.md > PREREG-second.md`, then pass it to
+`-data`. For the receipt token, use `-in fairness/anchor/CONFIRM-persuade-2.0.tsr`,
+`-queryfile fairness/anchor/CONFIRM-persuade-2.0.tsq` and
+`-data fairness/receipts/sha256-46e1485cd2c98caa-persuade-2.0.json`. To read the
+time in a token:
 
 ```
 openssl ts -reply -in fairness/anchor/PREREG-2.tsr -text

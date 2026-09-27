@@ -99,12 +99,15 @@ What touched the corpus before the receipt run, in UTC (the PREREG amendment of
 | 27 Sep, 03:28 to about 07:21 | A first attempt at this run, stopped before it wrote a receipt | Mean word count and seconds per essay on 20 essays |
 | 27 Sep, 04:14 to 04:18 | The report-only ELLIPSE receipt was read | Block counts by proficiency band, which include 449 of these learner essays |
 | 27 Sep, 08:14 to 09:45 | The receipt run | The receipt |
+| 27 Sep, 11:18 | Third timestamp, over the PREREG with the amendment of 27 September, and a timestamp over the receipt's bytes | |
 
 Two harness commits landed after the second timestamp: one lets a table set
 select rows by a list of values, and one adds `--jobs`. Neither touches a rule,
 a threshold, the corpus, the sampling or a seed, and the byte-identity proof
 covers both. No rule changed between the second timestamp and the run. The run's
 own time rests on the commit that adds the receipt, which its author can set.
+The timestamp over the receipt's bytes shows the receipt existed by 11:18 UTC
+on 27 September; it does not show when the run started.
 
 ## Block rates
 
