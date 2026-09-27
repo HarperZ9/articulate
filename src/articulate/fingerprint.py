@@ -58,8 +58,35 @@ def _lexicon_parts():
         ("TEXTTT", quoting.TEXTTT), ("VERB_OPEN", quoting.VERB_OPEN),
         ("ABBREVIATIONS", ABBREVIATIONS))]
     parts.append(f"L|unsupported-authority|{citations.LABEL}")
+    parts += _reading_parts()
     return parts + [f"S|{cat}|{label}|{rx.pattern}" for cat, label, rx in
                     sentence_notes.OPENERS + sentence_notes.PHRASE_NOTES]
+
+
+# Every constant that decides which text the blocking rules read: the URL, tag,
+# code, TeX and quotation masks, fenced lines, sentence ends and the citation
+# abbreviations, which lines are headings and list items, and the quotation-mark
+# pairing table (SCAN_ALGO 7). Read by module and name at call time, so an edited
+# pattern moves the fingerprint (review C-6).
+READING_PATTERNS = (
+    ("masking", "URL_PATTERN"), ("masking", "TAG_PATTERN"), ("masking", "QUOTED_PATTERN"),
+    ("markup", "INLINE_CODE"), ("markup", "TEX"), ("markup", "FENCE"),
+    ("logical", "SENTENCE_END"), ("logical", "ABBREVIATIONS"),
+    ("logical", "ABBREV_BEFORE_NUMBER"), ("logical", "ABBREV_BEFORE_NAME"),
+    ("logical", "ABBREV_IN_PARENS"), ("lexicon", "HEADING"), ("lexicon", "BULLET"),
+    ("quoting", "CSQUOTES"), ("quoting", "_TEX_COMMENT"),
+)
+
+
+def _reading_parts():
+    import importlib
+    parts = []
+    for mod, name in READING_PATTERNS:
+        value = getattr(importlib.import_module(f".{mod}", __package__), name)
+        parts.append(f"R|{mod}.{name}|{getattr(value, 'pattern', value)}")
+    parts.append(f"R|quoting.CSQUOTES_ARGS|{sorted(quoting.CSQUOTES_ARGS.items())}")
+    from . import quotemarks
+    return parts + quotemarks.table_parts()
 
 
 def ruleset_fingerprint():

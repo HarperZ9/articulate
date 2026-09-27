@@ -1,32 +1,26 @@
-"""Known defects in what the fingerprint covers and how a fairness receipt keys
-notes, recorded until the next pre-registered ruleset.
+"""Defects in what the fingerprint covers and how a fairness receipt keys
+notes, found in review of the 0.6.0 candidate and fixed in ruleset 0.9.0.
 
-- The fingerprint leaves out patterns that decide which text the blocking rules
-  read. An edit to one of them changes blocking and still passes the release
-  check as "ruleset unchanged". Folding them in moves the fingerprint of the
-  ruleset the confirmatory receipt names, so it lands with the next ruleset.
-- A fairness receipt keys the paragraph-uniformity and nominalization notes by
-  rule ids that carry a per-document count. That splits one note across keys
-  and records one essay's paragraph count. Keying them by category changes the
-  bytes the harness writes, so the committed receipts would no longer re-derive
-  from this code; the change lands with the next pre-registration.
+- The fingerprint left out patterns that decide which text the blocking rules
+  read, so an edit to one changed blocking and still passed the release check
+  as "ruleset unchanged". It now hashes each of them, and the quotation-mark
+  table, by module and name at call time.
+- A fairness receipt keyed the paragraph-uniformity and nominalization notes by
+  rule ids that carry a per-document count, which split one note across keys
+  and recorded one essay's paragraph count. They are keyed by category now.
 
-Each defect test is strict xfail (fairness/PREREG.md, amendment of 27 September
-2026). The controls are plain tests.
+Each defect test was strict xfail until the fix (fairness/PREREG.md, amendment
+of 27 September 2026). The tests now guard the fix; the controls are unchanged.
 """
 import re
 
 import pytest
 
-from articulate import fairness, fingerprint, lexicon, logical, markup, masking
+from articulate import (fairness, fingerprint, lexicon, logical, markup, masking,
+                        quotemarks, quoting)
 
 
-def _known(defect):
-    return pytest.mark.xfail(strict=True, reason=f"known defect ({defect}); the fix "
-                                                 "waits for the next pre-registration")
-
-
-# --- the fingerprint leaves out constants that decide blocking --------------- #
+# --- the fingerprint covers the constants that decide blocking -------------- #
 
 # Each decides which text the blocking rules read: quote, URL, tag, code and
 # LaTeX masks, fenced lines, sentence starts, and which lines join a paragraph.
@@ -34,6 +28,10 @@ BLOCKING_PATTERNS = [
     (masking, "QUOTED_PATTERN"), (masking, "URL_PATTERN"), (masking, "TAG_PATTERN"),
     (markup, "INLINE_CODE"), (markup, "TEX"), (markup, "FENCE"),
     (logical, "SENTENCE_END"), (lexicon, "HEADING"), (lexicon, "BULLET"),
+    # added with ruleset 0.9.0 (SCAN_ALGO 7)
+    (logical, "ABBREVIATIONS"), (logical, "ABBREV_BEFORE_NUMBER"),
+    (logical, "ABBREV_BEFORE_NAME"), (logical, "ABBREV_IN_PARENS"),
+    (quoting, "CSQUOTES"), (quoting, "_TEX_COMMENT"),
 ]
 
 
@@ -52,7 +50,6 @@ def test_control_a_covered_pattern_moves_the_fingerprint(monkeypatch):
     assert fingerprint.ruleset_fingerprint() != before
 
 
-@_known("the fingerprint does not hash this pattern")
 @pytest.mark.parametrize("module,name", BLOCKING_PATTERNS,
                          ids=[f"{m.__name__.rsplit('.', 1)[-1]}.{n}" for m, n in BLOCKING_PATTERNS])
 def test_every_pattern_that_decides_blocking_moves_the_fingerprint(monkeypatch, module, name):
@@ -72,10 +69,23 @@ def test_control_the_text_quoting_notes_are_keyed_by_category():
     assert fairness.rule_key(f) == "LOW|anaphora"
 
 
-@_known("a receipt key carries a per-document count")
 @pytest.mark.parametrize("category,rule_id", [
     ("paragraph-uniformity", "paragraph-uniformity/31-paragraphs-of-near-equal-length"),
     ("nominalization", "nominalization/4-nominalizations-in-one-sentence"),
 ])
 def test_a_note_whose_rule_id_carries_a_count_is_keyed_by_category(category, rule_id):
     assert fairness.rule_key(_finding(category, rule_id)) == f"LOW|{category}"
+
+
+@pytest.mark.parametrize("edit", ["positional", "open-after", "family"])
+def test_the_quotation_mark_table_moves_the_fingerprint(monkeypatch, edit):
+    before = fingerprint.ruleset_fingerprint()
+    if edit == "positional":
+        monkeypatch.setattr(quotemarks, "POSITIONAL", quotemarks.POSITIONAL - {quotemarks.DQ})
+    elif edit == "open-after":
+        monkeypatch.setattr(quotemarks, "OPEN_AFTER", quotemarks.OPEN_AFTER | {"."})
+    else:
+        fams = dict(quotemarks.FAMILIES)
+        fams["corner"] = {quotemarks.LCORNER: quotemarks.RCORNER}
+        monkeypatch.setattr(quotemarks, "FAMILIES", fams)
+    assert fingerprint.ruleset_fingerprint() != before, edit

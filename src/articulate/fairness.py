@@ -89,10 +89,18 @@ def config_key(prof):
 TEXT_LABELS = content_free.TEXT_LABELS
 
 
+# Notes whose rule id carries a per-document count ("31-paragraphs-of-...",
+# "4-nominalizations-..."). Keyed by category, so one note is one key and no key
+# records one essay's count (review F11; harness output from ruleset 0.9.0 on).
+COUNT_LABELS = frozenset({"paragraph-uniformity", "nominalization"})
+
+
 def rule_key(f):
     """A content-free key for a finding: tier and rule id, or tier and category
-    when the rule's label can quote the text (articulate.content_free). Only the
-    two TEXT_LABELS notes occur in the committed receipts."""
+    when the rule's label can quote the text (articulate.content_free) or carries
+    a per-document count (COUNT_LABELS)."""
+    if f["category"] in COUNT_LABELS:
+        return f"{f['tier']}|{f['category']}"
     return f"{f['tier']}|{content_free.rule_id(f)}"
 
 
