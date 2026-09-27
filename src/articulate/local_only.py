@@ -8,13 +8,17 @@ claude CLI. With ARTICULATE_LOCAL_ONLY set (or `--local-only` on the editor
 command), each of them is refused before any subprocess starts. The command
 line exits with LOCAL_ONLY_EXIT; a library or MCP caller gets LocalOnly.
 
+The switch fails closed. Unset, empty, 0, false, no and off leave it off; any
+other value turns it on, so a writer who spells "on" differently never sends
+the text.
+
 Standard library only.
 """
 import os
 
 LOCAL_ONLY_VAR = "ARTICULATE_LOCAL_ONLY"
 LOCAL_ONLY_EXIT = 3
-_TRUE = ("1", "true", "yes", "on")
+_OFF = ("", "0", "false", "no", "off")
 
 # What each command does with the text. The README and `articulate --help`
 # print this map; a test checks both.
@@ -28,15 +32,17 @@ class LocalOnly(RuntimeError):
 
 
 def local_only(environ=None):
-    """True when ARTICULATE_LOCAL_ONLY is set to 1, true, yes or on."""
+    """True unless ARTICULATE_LOCAL_ONLY is unset, empty, 0, false, no or off."""
     env = os.environ if environ is None else environ
-    return env.get(LOCAL_ONLY_VAR, "").strip().lower() in _TRUE
+    return env.get(LOCAL_ONLY_VAR, "").strip().lower() not in _OFF
 
 
 def refuse_if_local_only(environ=None):
-    if local_only(environ):
-        raise LocalOnly(f"local-only: {LOCAL_ONLY_VAR} is set, so no text is sent to the "
-                        f"hosted model; the local checks still run")
+    env = os.environ if environ is None else environ
+    if local_only(env):
+        raise LocalOnly(f"local-only: {LOCAL_ONLY_VAR} is {env.get(LOCAL_ONLY_VAR)!r}, which "
+                        "counts as on, so no text is sent to the hosted model; the local "
+                        "checks still run")
 
 
 def command_map():

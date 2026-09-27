@@ -212,7 +212,9 @@ python -m articulate.editor --local-only --judge FILE   # refused, exit 3
 Each command sends the full text to a hosted model and says so before it
 starts. With `ARTICULATE_LOCAL_ONLY=1` set, or `--local-only` passed, every one
 exits 3 before any subprocess starts; the `judge`, `fix` and `polish` tools of
-both MCP servers return an error. `articulate --help` prints the map of local and
+both MCP servers return an error whose note names the switch. The switch fails
+closed: any value other than an empty one, `0`, `false`, `no` or `off` turns it
+on. `articulate --help` prints the map of local and
 hosted commands.
 
 These commands run the model through the `claude` CLI, which must be installed

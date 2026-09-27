@@ -45,7 +45,8 @@ def _parser():
 
 def main(argv=None):
     args = _parser().parse_args(argv)
-    cmd = next(c for c in _COMMANDS if getattr(args, c))
+    # An empty FILE is still the command's argument: it reports "no such file".
+    cmd = next(c for c in _COMMANDS if getattr(args, c) is not None)
     target = getattr(args, cmd)
     if args.local_only or local_only():
         print(f"[articulate] local-only: {cmd} was refused and {target} was not sent. "

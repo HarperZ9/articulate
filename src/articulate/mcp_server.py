@@ -20,6 +20,7 @@ import tempfile
 
 from . import detector as core
 from . import editor
+from .local_only import LocalOnly
 from .origin_guard import note as origin_note
 from .origin_guard import strip_origin_guesses
 from .tool_text import DOES_NOT_PROVE, TOOLS
@@ -28,6 +29,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 _BACKEND_NOTE = "the editor layer needs the claude CLI, which sends the text to a hosted model"
 _REFUSED_NOTE = ("the rewrite dropped, repeated or invented a masked math span and was "
                  "refused; the text is unchanged")
+_LOCAL_ONLY_NOTE = ("local-only: the switch is on, so the text was not sent; the check and "
+                    "score tools still run")
+
+
+def _failure_note(err):
+    """Why a hosted tool returned no result: the local-only switch or the backend."""
+    return _LOCAL_ONLY_NOTE if isinstance(err, LocalOnly) else _BACKEND_NOTE
 
 
 def _scan_text(text):
@@ -104,9 +112,7 @@ def do_judge(text):
             out["note"] = origin_note(removed)
         return out
     except (RuntimeError, Exception) as e:  # noqa: BLE001 - report cleanly to the host
-        return {"ok": False, "error": str(e),
-                "note": "detection tools work offline; the editor layer needs the claude CLI, "
-                        "which sends the text to a hosted model"}
+        return {"ok": False, "error": str(e), "note": _failure_note(e)}
 
 
 def _rewrite(text, worst, is_html, is_tex):
@@ -125,8 +131,7 @@ def do_fix(text, is_html=False, is_tex=False):
     except editor.MathSpliceError as e:
         return {"ok": False, "error": str(e), "note": _REFUSED_NOTE}
     except (RuntimeError, Exception) as e:  # noqa: BLE001
-        return {"ok": False, "error": str(e),
-                "note": _BACKEND_NOTE}
+        return {"ok": False, "error": str(e), "note": _failure_note(e)}
     after = do_check(rewrite)
     return {"ok": True, "rewrite": rewrite,
             "findings_after": after["findings"], "gate_after": after["gate"],
@@ -167,7 +172,8 @@ def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False):
                 break
             cur, chk, q, sc = cand, c_chk, cq, csc
     except (RuntimeError, Exception) as e:  # noqa: BLE001
-        return {"ok": False, "error": str(e), "scorecard": scorecard, "note": _BACKEND_NOTE}
+        return {"ok": False, "error": str(e), "scorecard": scorecard,
+                "note": _failure_note(e)}
     out = {"ok": True, "final_text": cur, "scorecard": scorecard,
            "note": "accepted on the reader's qualities and the gate, never on an outside score",
            "does_not_prove": DOES_NOT_PROVE}
