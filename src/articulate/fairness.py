@@ -32,6 +32,7 @@ import re
 import sys
 import textwrap
 
+from . import content_free
 from . import density as density_mod
 from . import fairness_corpora as corpora
 from . import fairness_gates as G
@@ -80,7 +81,7 @@ def config_key(prof):
 
 # Rules whose label quotes the document ("'x y z' repeats 3x", "open with
 # 'The'"). A receipt keys them by category, so no corpus words reach it.
-TEXT_LABELS = frozenset({"ngram-repetition", "anaphora"})
+TEXT_LABELS = content_free.TEXT_LABELS
 
 
 def rule_key(f):

@@ -40,7 +40,8 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
   a gate, a label or a score; see
   [Boundaries](boundaries.md#no-output-is-an-authorship-finding).
 - `--content-free`: omit every verbatim substring and exact offset from the
-  console, JSON, and SARIF output.
+  console, JSON, and SARIF output. The repeated-phrase and repeated-opener notes
+  are keyed by category, since their rule ids would name the phrase or opener.
 
 ## score
 

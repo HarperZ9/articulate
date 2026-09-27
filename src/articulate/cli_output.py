@@ -9,6 +9,7 @@ the does-not-prove line: in the JSON result, in each SARIF rule's help text
 """
 from __future__ import annotations
 
+from . import content_free
 from .rule_reasons import reason_for
 from .tool_text import DOES_NOT_PROVE
 
@@ -26,20 +27,26 @@ def _pkgver():
 def redact(r):
     """Strip the content-bearing fields from a result, so no export path carries a
     verbatim substring or the exact offsets and length that reconstruct it under
-    --content-free. Keeps only line, rule_id, tier and category per finding."""
+    --content-free. Keeps only line, rule_id, tier and category per finding. A
+    rule id that quotes the text becomes its category, and the per-rule counts
+    are keyed the same way (articulate.content_free)."""
     def strip(f):
         # A label enumerates a closed-vocabulary rule's candidate words, so drop it
         # and report the category alone.
         for k in ("match", "snippet", "col", "start", "end", "label"):
             f.pop(k, None)
-    for tier in ("high", "medium", "low"):
-        for f in r.get(tier, []):
+        f["rule_id"] = content_free.rule_id(f)
+
+    def strip_all(holder):
+        found = [f for tier in ("high", "medium", "low") for f in holder.get(tier, [])]
+        for f in found:
             strip(f)
+        if "rule_counts" in holder:
+            holder["rule_counts"] = content_free.counts(found)
+    strip_all(r)
     for b in r.get("blocks", []):
         b.pop("snippet", None)
-        for tier in ("high", "medium", "low"):
-            for f in b.get(tier, []):
-                strip(f)
+        strip_all(b)
     return r
 
 

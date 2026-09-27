@@ -102,7 +102,9 @@ No study has measured how much time it saves a reviewer, and we claim none.
 ## Content-free is not zero-leakage
 
 A content-free audit receipt keeps no verbatim text: it drops the matched
-substring and the exact offsets. Which rules fired and the line remain, and for a
+substring and the exact offsets, and it keys the repeated-phrase and
+repeated-opener notes by category, since their rule ids would name the phrase
+or the opener. Which rules fired and the line remain, and for a
 closed-vocabulary rule that narrows the flagged word to that rule's small, public
 candidate set.
 

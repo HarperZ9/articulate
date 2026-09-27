@@ -39,6 +39,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
+from . import content_free as cf
 from . import detector, modes, profiles
 from .tool_text import DOES_NOT_PROVE
 
@@ -83,7 +84,8 @@ def _normalize(result, redaction=None) -> list:
     content_free = redaction in ("drop", "hash")
     out = []
     for f in result["high"] + result["medium"] + result["low"]:
-        rec = {"rule_id": f["rule_id"], "tier": f["tier"], "category": f["category"],
+        rid = cf.rule_id(f) if content_free else f["rule_id"]
+        rec = {"rule_id": rid, "tier": f["tier"], "category": f["category"],
                "line": f["line"], "end_line": f.get("end_line", f["line"])}
         if not content_free:
             rec["col"] = f["col"]
@@ -97,17 +99,20 @@ def _normalize(result, redaction=None) -> list:
     return out
 
 
-def _block_receipt(text, prof) -> list:
+def _block_receipt(text, prof, content_free=False) -> list:
     """Per-paragraph counts for the receipt: each block's line range, its own
     text hash, and its counts by tier and by rule, in document order. No block
-    carries a gate or a label; the gate belongs to the document."""
+    carries a gate or a label; the gate belongs to the document. A content-free
+    receipt keys the rules whose ids quote the text by category."""
     out = []
     for b in detector.analyze_blocks(text, profile=prof, house_notes=False):
+        found = b["high"] + b["medium"] + b["low"]
         out.append({
             "index": b["index"],
             "start_line": b["start_line"], "end_line": b["end_line"],
             "text_sha256": _sha256(text[b["start"]:b["end"]]),
-            "counts": b["counts"], "rule_counts": b["rule_counts"],
+            "counts": b["counts"],
+            "rule_counts": cf.counts(found) if content_free else b["rule_counts"],
         })
     return out
 
@@ -163,7 +168,7 @@ def make_receipt(text: str, profile_name: str = None, *, mode: str = None,
     if content_free:
         rec["redaction"] = redact
     if per_span:
-        rec["blocks"] = _block_receipt(text, prof)
+        rec["blocks"] = _block_receipt(text, prof, content_free)
     return rec
 
 
@@ -227,7 +232,8 @@ def verify_receipt(receipt: dict, text: str):
     if any(receipt.get(k) != v for k, v in summary.items()):
         return "Drift", "re-derived findings state, word count or counts differ from the receipt"
     # A per-span receipt also re-derives its per-paragraph counts.
-    if "blocks" in receipt and _block_receipt(text, prof) != receipt["blocks"]:
+    if "blocks" in receipt and _block_receipt(
+            text, prof, redaction in ("drop", "hash")) != receipt["blocks"]:
         return "Drift", "re-derived per-paragraph counts differ from the receipt"
     n = len(r["high"]) + len(r["medium"]) + len(r["low"])
     span = f", {len(receipt['blocks'])} paragraphs" if "blocks" in receipt else ""
