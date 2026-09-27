@@ -20,9 +20,12 @@ from __future__ import annotations
 
 import re
 
-from . import detector, invariants, terms
+from . import invariants, terms
+from .markup import FENCE, INLINE_CODE, TEX, _blank, _mk
 
-SEMVER = "1.0.0"
+# 1.1.0: the packs and project terms read a paragraph as one line (pack_util
+# .paragraph_hits), as the core checks read logical lines.
+SEMVER = "1.1.0"
 # name -> module. A pack module exposes NAME, CATEGORIES, OPTIONS (defaults),
 # scan(text, prose, options, make) -> {"HIGH": [...], "MEDIUM": [...],
 # "LOW": [...]}, and fingerprint() -> list of strings.
@@ -36,8 +39,8 @@ def mask_line(line):
     """Mask code, URLs and emails, tags, and TeX with equal-length spaces. The
     URL and tag patterns are bounded, so a long line of dotted tokens or of
     unclosed angle brackets stays linear."""
-    for rx in (detector.INLINE_CODE, invariants.URL, _TAG, detector.TEX):
-        line = rx.sub(detector._blank, line)
+    for rx in (INLINE_CODE, invariants.URL, _TAG, TEX):
+        line = rx.sub(_blank, line)
     return line
 
 
@@ -50,7 +53,7 @@ def prose_lines(lines):
     off = 0
     for i, raw in enumerate(lines, 1):
         start, off = off, off + len(raw)
-        if detector.FENCE.match(raw):
+        if FENCE.match(raw):
             in_fence = not in_fence
             continue
         if in_fence:
@@ -67,14 +70,14 @@ def scan(text, lines, profile):
     found = {"HIGH": [], "MEDIUM": [], "LOW": []}
     term = profile.get("terminology")
     if term:
-        for tier, items in terms.scan(prose_lines(lines), term, detector._mk).items():
+        for tier, items in terms.scan(prose_lines(lines), term, _mk).items():
             found[tier].extend(items)
     options = profile.get("options") or {}
     for name in profile.get("rule_packs", ()):
         pack = PACKS[name]
         opts = dict(pack.OPTIONS, **options.get(name, {}))
         for tier, items in pack.scan(text, list(prose_lines(lines)), opts,
-                                     detector._mk).items():
+                                     _mk).items():
             found[tier].extend(items)
     return found["HIGH"], found["MEDIUM"], found["LOW"]
 

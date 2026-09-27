@@ -97,12 +97,11 @@ def scan(text, prose, opts, make):
             found["LOW"].append(pack_util.finding(
                 make, s, "plain-long-sentence",
                 f"{n}-word sentence; split it at {opts['max_sentence_words']} words or fewer"))
-    for line_no, off, raw, masked in prose:
-        for m in _WORDY_RX.finditer(masked):
-            phrase = m.group(1).lower()
-            found["LOW"].append(make(line_no, off, "plain-wordy",
-                                     f"wordy phrase; plainer: {_SUGGEST[phrase]!r}",
-                                     m.start(), m.end(), raw, raw.strip()[:100]))
+    for line_no, off, raw, m in pack_util.paragraph_hits(prose, _WORDY_RX):
+        phrase = " ".join(m.group(1).lower().split())
+        found["LOW"].append(make(line_no, off, "plain-wordy",
+                                 f"wordy phrase; plainer: {_SUGGEST[phrase]!r}",
+                                 m.start(), m.end(), raw, raw.strip()[:100]))
     return found
 
 

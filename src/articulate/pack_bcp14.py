@@ -52,17 +52,14 @@ _MAY_NOT = re.compile(r"\bMAY\s+NOT\b")
 _LOWER = re.compile(r"\b(?:must|shall|should)\b")
 
 
-def _prose_hits(prose, rx, line_filter=None):
-    """(line_no, off, raw, match) for each match in the masked prose, skipping
+def _prose_hits(prose, rx):
+    """(line_no, off, raw, match) for each match in the masked prose, read a
+    paragraph at a time so a keyword phrase that wraps still matches, skipping
     quoted keywords such as the boilerplate's own "MUST"."""
-    for line_no, off, raw, masked in prose:
-        if line_filter and not line_filter(masked):
+    for line_no, off, raw, m in pack_util.paragraph_hits(prose, rx):
+        if m.before() in ("\"", "“") and m.after() in ("\"", "”"):
             continue
-        for m in rx.finditer(masked):
-            before, after = masked[m.start() - 1:m.start()], masked[m.end():m.end() + 1]
-            if before in ("\"", "“") and after in ("\"", "”"):
-                continue
-            yield line_no, off, raw, m
+        yield line_no, off, raw, m
 
 
 def _add(found, tier, make, hit, cat, label):

@@ -115,15 +115,14 @@ def scan(text, prose, opts, make):
     found = pack_util.empty()
     for s in pack_util.sentences(prose):
         _sentence_rules(s, opts, found, make)
-    for line_no, off, raw, masked in prose:
-        for cat, rx, table in (("controlled-idiom", _IDIOM_RX, _IDIOMS),
-                               ("controlled-phrasal-verb", _PHRASAL_RX, _PHRASAL)):
-            for m in rx.finditer(masked):
-                key = " ".join(m.group(1).lower().split())
-                found["LOW"].append(make(line_no, off, cat,
-                                         f"{m.group(1)!r} reads literally in translation; "
-                                         f"literal form: {table[key]!r}",
-                                         m.start(), m.end(), raw, raw.strip()[:100]))
+    for cat, rx, table in (("controlled-idiom", _IDIOM_RX, _IDIOMS),
+                           ("controlled-phrasal-verb", _PHRASAL_RX, _PHRASAL)):
+        for line_no, off, raw, m in pack_util.paragraph_hits(prose, rx):
+            key = " ".join(m.group(1).lower().split())
+            found["LOW"].append(make(line_no, off, cat,
+                                     f"{m.group(1)!r} reads literally in translation; "
+                                     f"literal form: {table[key]!r}",
+                                     m.start(), m.end(), raw, raw.strip()[:100]))
     return found
 
 

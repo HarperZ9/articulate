@@ -113,13 +113,14 @@ def rules(term):
 def scan(prose, term, make):
     """Findings by tier for the prose lines. `prose` yields (line_no, offset, raw,
     masked); `make` builds a finding record (the detector's span constructor)."""
+    from .pack_util import paragraph_hits
     found = {"HIGH": [], "MEDIUM": [], "LOW": []}
-    compiled = rules(term)
-    for line_no, off, raw, masked in prose:
-        for tier, rule_id, label, rx in compiled:
-            for m in rx.finditer(masked):
-                f = make(line_no, off, "terminology", label, m.start(), m.end(), raw,
-                         raw.strip()[:100])
-                f["rule_id"] = rule_id
-                found[tier].append(f)
+    prose = list(prose)
+    for tier, rule_id, label, rx in rules(term):
+        # A paragraph reads as one line, so a term that wraps is still found.
+        for line_no, off, raw, m in paragraph_hits(prose, rx):
+            f = make(line_no, off, "terminology", label, m.start(), m.end(), raw,
+                     raw.strip()[:100])
+            f["rule_id"] = rule_id
+            found[tier].append(f)
     return found
