@@ -169,3 +169,15 @@ def test_a_changed_ruleset_with_only_one_manifests_receipt_fails(tmp_path, monke
     assert not ok
     persuade = [m for m in fairness_release.RELEASE_MANIFESTS if m != rec["manifest_sha256"]]
     assert persuade and any(persuade[0] in x for x in lines)
+
+
+def test_the_liang_manifest_the_release_check_pins_is_committed():
+    # A reader who writes their own manifest gets another hash, so the receipt
+    # the release check accepts could not be reproduced without this file.
+    man, digest = fairness_corpora.load_manifest(str(ROOT / "fairness" / "manifests"
+                                                     / "liang-2023.json"))
+    assert digest in fairness_release.REQUIREMENTS
+    assert fairness_release.REQUIREMENTS[digest] == ("toefl-vs-abstracts", "toefl-vs-college")
+    # Paths and hashes only: no document row carries text.
+    assert {k for d in man["documents"] for k in d} == {"key", "path", "set", "sha256"}
+    assert max(len(d["path"]) for d in man["documents"]) < 80

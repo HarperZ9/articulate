@@ -1,0 +1,2457 @@
+{
+ "schema": "articulate/fairness-manifest/v1",
+ "root": "../work",
+ "corpora": {
+  "liang2023": {
+   "licence": "no licence file in the release; upstream terms unknown; local research use only",
+   "upstream": "https://github.com/Weixin-Liang/ChatGPT-Detector-Bias (tag v1.0.0, commit 8cc05ff4543557161c0874d553f10bbc9ee4cc26)",
+   "retrieved": "2026-09-25"
+  }
+ },
+ "sets": {
+  "toefl": {
+   "corpus": "liang2023",
+   "groups": {
+    "first_language": "L2",
+    "register": "exam script, probably spoken-task"
+   }
+  },
+  "college": {
+   "corpus": "liang2023",
+   "groups": {
+    "first_language": "L1 proxy (US college applicants, L1 not recorded)",
+    "register": "admission essay"
+   },
+   "window": {
+    "target": 104,
+    "min": 62,
+    "first_only": true
+   }
+  },
+  "abstracts": {
+   "corpus": "liang2023",
+   "groups": {
+    "first_language": "mixed, not recorded",
+    "register": "course project abstract"
+   },
+   "window": {
+    "target": 104,
+    "min": 62,
+    "first_only": true
+   }
+  },
+  "toefl_gpt4_rewrite": {
+   "corpus": "liang2023",
+   "groups": {
+    "first_language": "L2 text after a GPT-4 rewrite"
+   }
+  }
+ },
+ "documents": [
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/000.txt",
+   "sha256": "sha256:cd5480c3b07de3b55dcb467a6af0e074bff4d53bc385b14a36e5cd56462678f8",
+   "key": "0"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/001.txt",
+   "sha256": "sha256:6cecfdaca734383953eb40464f40720b0bea2e3475d66c0239115c112d8fe5d5",
+   "key": "1"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/002.txt",
+   "sha256": "sha256:1577a04d73669f61e778e2a7c3e3625f64cddbe7305670b166edea80be7540a6",
+   "key": "2"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/003.txt",
+   "sha256": "sha256:7e6179fc8f84751348db264216446bd7259a83a115f55e253e29915f8efa6a17",
+   "key": "3"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/004.txt",
+   "sha256": "sha256:009ca6c20a102a1d495dfdd2e76a6320ee00fbc436d9038c4889a6cd78175485",
+   "key": "4"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/005.txt",
+   "sha256": "sha256:8c64f9c7536b1526cb7b554ea2a66388454f755f8ee590a64b3f98f8bcb3fa74",
+   "key": "5"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/006.txt",
+   "sha256": "sha256:fe13399d0a85008f66cb36c53e6cfd0d32e946c08ccd882f3c1ff42079bedc50",
+   "key": "6"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/007.txt",
+   "sha256": "sha256:f32fd69f3b20e3cb1764412ef910244170d25f848fe010f33ee74052bf379fa1",
+   "key": "7"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/008.txt",
+   "sha256": "sha256:a21c9ca642f51731d14fff06ae0263972b66c83513ab8be102259b1b8bc0f92f",
+   "key": "8"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/009.txt",
+   "sha256": "sha256:e60561d613c951371a3469e7dd08e4cd0446199ee1d4b7b38e1ceee9cbc415d1",
+   "key": "9"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/010.txt",
+   "sha256": "sha256:f8f6a43917b8dda46114a91df5f0101ee1eb2bd13e435022dbbece81838aa669",
+   "key": "10"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/011.txt",
+   "sha256": "sha256:c2084fb2fe5936d73c8766f41c8bb2ebd486addb26d2d27a82b0812df5c28a1b",
+   "key": "11"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/012.txt",
+   "sha256": "sha256:74eb332dae929b61e28d14f4386b6f0e8c2960fe1c4a11ed9da5afdc2c98c1fc",
+   "key": "12"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/013.txt",
+   "sha256": "sha256:0b6ff90af783d9b499539ac9a1745c5d3cd75e5fa975896485f57fb0529c84d4",
+   "key": "13"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/014.txt",
+   "sha256": "sha256:611f478de72ca3fab702451650cad5f7b68b07537394424febed30dfff86d075",
+   "key": "14"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/015.txt",
+   "sha256": "sha256:e79e9c9e4227cca855c6d52e73402ff60f6c439fb4715a74a75ca1e17c96327e",
+   "key": "15"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/016.txt",
+   "sha256": "sha256:4c048ed9c21fefeafde6a7927daa3aa516f1be8ce0e254206e2d6d64b25afc74",
+   "key": "16"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/017.txt",
+   "sha256": "sha256:1d9884bf8f45980e3929fc5647f2da7cb6b9971e2f0cee15fd38251677d98c1c",
+   "key": "17"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/018.txt",
+   "sha256": "sha256:87a844671bb0187b43350200a81c3751e611a233e78ad3ebd92a1fc3e8372425",
+   "key": "18"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/019.txt",
+   "sha256": "sha256:e7e017088b46139f69cd6af0bd7383a1e5ef8339a74fffedf6b66b86c2c276b8",
+   "key": "19"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/020.txt",
+   "sha256": "sha256:7830dd4805d4479d8e2d758667e75fab90c97a3c5da73b1bdbba57e0ff825740",
+   "key": "20"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/021.txt",
+   "sha256": "sha256:9a787c41c49a3d4bedec5ffa9b093a47e6da0e327b5c084043935b3dc1dbdbf8",
+   "key": "21"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/022.txt",
+   "sha256": "sha256:2f783e80171a716c326eb91f62d20280c203dc6504bf18b2894f9719ad16d58d",
+   "key": "22"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/023.txt",
+   "sha256": "sha256:10ffec519e3ed4b010f9c01caeeb056489f70f2cef55538ed6ab4c995f57c14c",
+   "key": "23"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/024.txt",
+   "sha256": "sha256:cc0365bdd854be4922599e57081056db067bb7e683a7ce67974a4b79c6dd3e2c",
+   "key": "24"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/025.txt",
+   "sha256": "sha256:b131856754be7a82e327cdef4ee6e165b03cf46fe58f013f4b15d073b076e2a0",
+   "key": "25"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/026.txt",
+   "sha256": "sha256:b1f0c1aad49c0d7e8eb3c78976a3b94d0ca0c534b7a3c6eba191f75d571ed8e5",
+   "key": "26"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/027.txt",
+   "sha256": "sha256:5d41d2f46bf1ed1100ecfc5540efb147d580883798fa8434dcc52995b6d6be72",
+   "key": "27"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/028.txt",
+   "sha256": "sha256:94ba99caae96f32060f52447d6dc500905d802413550b185f0f99f6c3b3e59f0",
+   "key": "28"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/029.txt",
+   "sha256": "sha256:bd7bfcd51aafe2ac661bda7b2bf624ba33125249644b378800dfad8bfa362242",
+   "key": "29"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/030.txt",
+   "sha256": "sha256:78effd7781a5d7cd35c13123fc1c90e6128d87cb98bc987b6f5541194a211c0d",
+   "key": "30"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/031.txt",
+   "sha256": "sha256:6658e2b100a8c72e28af50a03be54991699748cdca50fd510782fff110e6095f",
+   "key": "31"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/032.txt",
+   "sha256": "sha256:9cd8adf5c0a89bcf9862f1acaa91bc75c85309bc5078a975786a98cffea1b121",
+   "key": "32"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/033.txt",
+   "sha256": "sha256:6d9b9e3f23aa3d8f15877b8df1639b1a77cda07abceee389199d503c0fbe104e",
+   "key": "33"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/034.txt",
+   "sha256": "sha256:251dbafa82ee8ba8cef31d045cfd2a125353741597b0c049a1348c178c603613",
+   "key": "34"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/035.txt",
+   "sha256": "sha256:8ef86350d51fe5f3d6c4e631fc59aa654446e28875abc7b1accf80fce5a6a51f",
+   "key": "35"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/036.txt",
+   "sha256": "sha256:0d490cba3e5205ffb65f92749e9233ab060765a2b9ef008ff5cb84a1f71aaf4e",
+   "key": "36"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/037.txt",
+   "sha256": "sha256:4f18f654f17fc8f156212f2f0638d3d5a8e381b1231af5c16dc344a4e217b34f",
+   "key": "37"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/038.txt",
+   "sha256": "sha256:164a0f623f8c74801e54e66cb562010fb3fb78b44b806f74ef53932de9a93f1d",
+   "key": "38"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/039.txt",
+   "sha256": "sha256:702b7d4940a2ba337b1fdf1a7299bcd32df2f9d89fa775627d8ac51e9d3a656c",
+   "key": "39"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/040.txt",
+   "sha256": "sha256:cb0be8ff1c9e23157a0b713f66f7aa98f3dcfff01fd66695198c84ffa8c09687",
+   "key": "40"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/041.txt",
+   "sha256": "sha256:6dbc405c6d1eb55ff220b0dc5071eae8ead9770e20dbd07b00e5c52624a62dc9",
+   "key": "41"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/042.txt",
+   "sha256": "sha256:bb8c395712de2d18552260649e72a46d9075d2c8a3503550b0b5bc3aec027bcf",
+   "key": "42"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/043.txt",
+   "sha256": "sha256:c7704560833b8790fee766e5df55e382c560a8db0fc97ffd6798d113d05fae13",
+   "key": "43"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/044.txt",
+   "sha256": "sha256:2fdf00b862ca580d03d835e34cf4e9e49a6ce795e4453a8f44297260b6c89b77",
+   "key": "44"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/045.txt",
+   "sha256": "sha256:2eff6d49a1204b5240e435b48883f78c2507de20fe6ea67e80c35add77a3c6c2",
+   "key": "45"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/046.txt",
+   "sha256": "sha256:fa21b7056579cf1be397ea7c5650e1f98b2cd31bdb8fcda338dcd8157341b3b5",
+   "key": "46"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/047.txt",
+   "sha256": "sha256:4ccda46523e8396afedbb61ecce55393327df765ccde89bf85333f739d225e85",
+   "key": "47"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/048.txt",
+   "sha256": "sha256:261562a6258b7aca03d2c0aa1a6ca918a86e5fdd17eb5153c045a857aa36c3bb",
+   "key": "48"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/049.txt",
+   "sha256": "sha256:f676d96e13aa8faf036174261f95476bab25ac8b05b95513d30cebd14b8b59da",
+   "key": "49"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/050.txt",
+   "sha256": "sha256:2eff6d49a1204b5240e435b48883f78c2507de20fe6ea67e80c35add77a3c6c2",
+   "key": "50"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/051.txt",
+   "sha256": "sha256:a6bb6ccd4bf03b402b4682ea4cc724275e103cdc1c22cc87a20a7dcba6d1afe3",
+   "key": "51"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/052.txt",
+   "sha256": "sha256:97a09ea06a8830e730ad26d858d9611fd319d504606d6f19aaac782b900225bb",
+   "key": "52"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/053.txt",
+   "sha256": "sha256:8928baa842db935c3c91a4a2c7c2ea843e626cec411c9fe7852e4b151ac960a2",
+   "key": "53"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/054.txt",
+   "sha256": "sha256:de3997015ea6b29c068a556457d3133a5a2a4b1c79ad58ae349018ba07219a25",
+   "key": "54"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/055.txt",
+   "sha256": "sha256:8460fc463d571b5b007f46697d318a146847c0f761cccc8033400aade82aaa04",
+   "key": "55"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/056.txt",
+   "sha256": "sha256:22126b1d015de47149c1d005af8da5d939468d68fb1415e130765db6d785b8fa",
+   "key": "56"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/057.txt",
+   "sha256": "sha256:bc66e433ac1101afe8d84721e6a70c12227b7dfde24c5c30b3e4a2213c1cfa46",
+   "key": "57"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/058.txt",
+   "sha256": "sha256:6e487bd059810d5599bfa713839573eff3f07773b8aa842bf979415fbf159315",
+   "key": "58"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/059.txt",
+   "sha256": "sha256:e5c675a4ca16556606b33c2bc5f97cfcc5ac0ade9bb2fb662838c8958f9a89bc",
+   "key": "59"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/060.txt",
+   "sha256": "sha256:03fe80daef4d1c0c87f2ab440f66e6a70a46fd3d3e84a177ff7bcf6f175c655c",
+   "key": "60"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/061.txt",
+   "sha256": "sha256:d2c2633f486c1ed7034a1113936c0bb346bde78a6d60d3cb222dfcd0c6f4e521",
+   "key": "61"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/062.txt",
+   "sha256": "sha256:3b3864947fc3f77756741f4ad8185afc930c6966a97c80065d28d704757501e4",
+   "key": "62"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/063.txt",
+   "sha256": "sha256:306aaa5c1e4b8f89d6389068bb1a14be424a6a367ccb7e9ce7f56e2cf3b6e054",
+   "key": "63"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/064.txt",
+   "sha256": "sha256:d65f5ff8738696c9be051ad51f1ff5bdb7123ceb8bc73990792bc1913f8bfee5",
+   "key": "64"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/065.txt",
+   "sha256": "sha256:626f37061d12cdadd5d7248e6a588e89b2879f7560fd4c0cf020b9d3930a03f9",
+   "key": "65"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/066.txt",
+   "sha256": "sha256:6107f71c5bee2343c7200a4c484ac8bc18260fb402a874a787569439a7406315",
+   "key": "66"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/067.txt",
+   "sha256": "sha256:549b1f4ce077c340e9254344dc7c7abd37d364fb9d40eb6fd6a11ab3f63010a2",
+   "key": "67"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/068.txt",
+   "sha256": "sha256:7bba0f667020737a2d99a42e7bf8d1751131f4af2a5a7ef5f95680a15e881809",
+   "key": "68"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/069.txt",
+   "sha256": "sha256:6a3b2642dbb9c81d78c06a7eb9477f6c206a2d27c7acdddf13b744681cd93853",
+   "key": "69"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/070.txt",
+   "sha256": "sha256:4b8fff86cc05ea585abfddea0c0ae31d0d1d238f90f6cfbd1c103ea4e96350fa",
+   "key": "70"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/071.txt",
+   "sha256": "sha256:861e3030cf0f2ae15f293eb4d0f75430282f7e137130f8592fab9f9f965c5f05",
+   "key": "71"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/072.txt",
+   "sha256": "sha256:8cfac35d6ffcea45e141be41cb058eb0c706066a31410e6d398013884784d374",
+   "key": "72"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/073.txt",
+   "sha256": "sha256:183c13b88c4ab22fa23a1f5f8ef16eb5de22eae9971124b927fd5345ad0afc08",
+   "key": "73"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/074.txt",
+   "sha256": "sha256:d639392beda66e0b08e75a05db6a7459968b8e01ac866c9deec19f05a70ed191",
+   "key": "74"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/075.txt",
+   "sha256": "sha256:25ca53e1e73cbc91b970a3fb8eb15b8689099a1b1f00014ab8bf8e3ca054e5c4",
+   "key": "75"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/076.txt",
+   "sha256": "sha256:be82eb941b8914b154233e946f5981d81212d17bb3fc4c991dc7aef7c55711ce",
+   "key": "76"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/077.txt",
+   "sha256": "sha256:bd316afa907c9b6fd56895925ce2ef8c6ad49b96ae9255eb8d28e08b47e2ba5c",
+   "key": "77"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/078.txt",
+   "sha256": "sha256:d8d44ecce2d3c64e347eb601804727647ddac3eab4ef2877f0c16394a86257f6",
+   "key": "78"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/079.txt",
+   "sha256": "sha256:3a7e8f655a4b92d55cf3e60024d3bffb92288e9d1924a1cacd0e028b7147d731",
+   "key": "79"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/080.txt",
+   "sha256": "sha256:4eaf23c982e10a5956efcc805eeaedba2e4506d73a7edb9298bad6a3555b0fe2",
+   "key": "80"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/081.txt",
+   "sha256": "sha256:043695860a24daa1cb372bd5adaf336263723526e3a4c3707a59221adea44545",
+   "key": "81"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/082.txt",
+   "sha256": "sha256:7463bda09f501c74444be4e3653012c0e08d9cdb9e532dbe192b63786090b8e6",
+   "key": "82"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/083.txt",
+   "sha256": "sha256:0a0842bcd6faedfc81f138bac5df67fb7376a32a1389042b9e4d0cc6905b34ee",
+   "key": "83"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/084.txt",
+   "sha256": "sha256:564067c46381006837bb6d6bbd45786dfd5801a72b960c203cef18cb02a9546d",
+   "key": "84"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/085.txt",
+   "sha256": "sha256:5f2293cd99fa84553cc34217965d15cff36b1f7692e630019c53738fc4b233a1",
+   "key": "85"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/086.txt",
+   "sha256": "sha256:5e20d063456f55356f0e7a10c2e9eaaf4e191cadec4b6ed4ba10bd88bed87fcd",
+   "key": "86"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/087.txt",
+   "sha256": "sha256:3ac4c93792acbcd689090773e1e01c2f562296345e21678440d42a2224b57a2a",
+   "key": "87"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/088.txt",
+   "sha256": "sha256:e759f76984a7ff1cd33429de1b38b0692d8fa872e26543a841e234664c31f0d6",
+   "key": "88"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/089.txt",
+   "sha256": "sha256:6f4092e04c91e91e7b29f62afd361348c2ff65564394697ad42dc88a29f179f7",
+   "key": "89"
+  },
+  {
+   "set": "toefl",
+   "path": "essays/TOEFL_real_91/090.txt",
+   "sha256": "sha256:44c18596f4b47e27749b7e77818470021749ecf31f6cc022425c9f7f660098e2",
+   "key": "90"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/000.txt",
+   "sha256": "sha256:2f182fa548b053a7d20f58d752a2b62479bee513f8c20617d07880955490e702",
+   "key": "0"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/001.txt",
+   "sha256": "sha256:25b13ebcfc03e92e140f706f5ff44e05d745c6d908e7aba4d7ee6317141add64",
+   "key": "1"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/002.txt",
+   "sha256": "sha256:d156f2ae048a923aedd430f439624257b97b60bb6ff08132c7f3b7bfca6df5b1",
+   "key": "2"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/003.txt",
+   "sha256": "sha256:39aa57a9e6ef7685c990be4d11117f896ea6d4460ba887f5a09cf517515de9ca",
+   "key": "3"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/004.txt",
+   "sha256": "sha256:ea0af40463cb2211be38349cfe24b801f890f2e9ca587a9705928d5f72381f06",
+   "key": "4"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/005.txt",
+   "sha256": "sha256:d546e3f7bb67d35158d315060eb08f4b6a1870ad75fbaf3ac56ac369c6ec23ba",
+   "key": "5"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/006.txt",
+   "sha256": "sha256:8141b83c33832ca2775552431dcbca486ff35e13bb5798632136e7a72430d273",
+   "key": "6"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/007.txt",
+   "sha256": "sha256:1f08a17ccd725aa2226c6fef374d81f212addd224992abcb1749735576b9e058",
+   "key": "7"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/008.txt",
+   "sha256": "sha256:c4876b50063fa0215e1437bd82bca6299992e25070fb632c5f6de1e8bc403034",
+   "key": "8"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/009.txt",
+   "sha256": "sha256:44f542f56a5fc627c2bf956190bd97dcde793d01bcb4a8994c070a9fb40987c0",
+   "key": "9"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/010.txt",
+   "sha256": "sha256:34eb0531db76a98a2592e62dce4bdc8afc49f297c8a52d25f46d63e309b40505",
+   "key": "10"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/011.txt",
+   "sha256": "sha256:71f846e92e091af984cbd3512d22f6afdc280a6761bd5ed2adef3d32258a88f3",
+   "key": "11"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/012.txt",
+   "sha256": "sha256:555a7b3d0ec38c033030628e735f9c695aed49d316b36b83759ff793e96fdce9",
+   "key": "12"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/013.txt",
+   "sha256": "sha256:e96f336ecc0eb2466441912defedce3c9630b99c0e078f748fb7d1d531b04082",
+   "key": "13"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/014.txt",
+   "sha256": "sha256:4318ade918a40d29742d4a47cafd5c54749a46ae6a2e378db9697160ff1485bb",
+   "key": "14"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/015.txt",
+   "sha256": "sha256:1479e10d087507b211cb460227a5ff9efe489e22a4b45d588394251063862021",
+   "key": "15"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/016.txt",
+   "sha256": "sha256:d6d624789916e237c1e89b3b421e375826bfb44f3019445e53e8793265fb0c12",
+   "key": "16"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/017.txt",
+   "sha256": "sha256:dd14a1a2884608cff863e4fdff7d175981cce075276c998a8da9722695362ac4",
+   "key": "17"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/018.txt",
+   "sha256": "sha256:86ca1e39a89813ed70f9725a093e3ea128c95aace2557ff70d1a3032a5cd3a08",
+   "key": "18"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/019.txt",
+   "sha256": "sha256:dd38c0f9f4c8b9f7fa719b966d9437e3f9d85755a983bcf1796aa3e18675aa07",
+   "key": "19"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/020.txt",
+   "sha256": "sha256:f28c08e99f0923b14f7fad6cdd02c6bbebd61c1cd00b0814e8dd38449e9ce303",
+   "key": "20"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/021.txt",
+   "sha256": "sha256:e6b220f81e52af464be959065afde66e2f313eb5057b8aa1326e6c8e873efc9e",
+   "key": "21"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/022.txt",
+   "sha256": "sha256:25151db4a36bafe2b3b61a1752d6316a958708774415b27c22cd42c59981e6ef",
+   "key": "22"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/023.txt",
+   "sha256": "sha256:7cd042845354918a3f67bdfdd4f1f9a2347452e2a75a6e5624f848df8641d22e",
+   "key": "23"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/024.txt",
+   "sha256": "sha256:5279d485f2eb03e23b6b04b2cd902adbed49aa1efcad60251336383754a61f07",
+   "key": "24"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/025.txt",
+   "sha256": "sha256:4ebaad5420023e350e8dd8e5b0e5658bf857e8bde0e8235640cbdebe592de6f1",
+   "key": "25"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/026.txt",
+   "sha256": "sha256:28fd4ee3e59da7c1ac423ecec975eafc4942b7c5e43d6c25803e47e0e3233b7d",
+   "key": "26"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/027.txt",
+   "sha256": "sha256:ac106b5b26b9786841db1c7417b442d4bd127a1f2f6e8b1a6247a4c92bfc1aaf",
+   "key": "27"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/028.txt",
+   "sha256": "sha256:656610449e0e184a1ad01926931e54353b852670e2a117f6d54d487548dbf6c0",
+   "key": "28"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/029.txt",
+   "sha256": "sha256:8375224d6daae94313e8bbe936f120310ed72ebc1b8252da281bc3f932ac19d5",
+   "key": "29"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/030.txt",
+   "sha256": "sha256:d0365e7042d27b32b5e87cc6b567f02358a42d876b5ac2a10bc854e3f724a4b9",
+   "key": "30"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/031.txt",
+   "sha256": "sha256:67402f97297013b249c45f0d460c03f4ce096146fd2af6f3f1291f7846856143",
+   "key": "31"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/032.txt",
+   "sha256": "sha256:a2ca00e222a737e4a33de2ccf9d98b6a9e9d87fcc2be1342c63310c2ce7413f2",
+   "key": "32"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/033.txt",
+   "sha256": "sha256:9cdc236173aed38216606d71fc11fede056254c5f500e3e8f6138ac1692326db",
+   "key": "33"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/034.txt",
+   "sha256": "sha256:a77036dea909492ca6ac9fcb9ffe3edb4ea93c8eb0f9d21257d318912cd36b2b",
+   "key": "34"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/035.txt",
+   "sha256": "sha256:adc2650557917ea64529f167ac20f50961b669d3442b5879888bb7e949d33713",
+   "key": "35"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/036.txt",
+   "sha256": "sha256:212f830552931b2a129a69921a43b4324016c89f653cb25d835d430da03dc07b",
+   "key": "36"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/037.txt",
+   "sha256": "sha256:f89d5dbbd88f2e408e74bf145cfdf69e0cad811d145101f7e91f3869b7da7088",
+   "key": "37"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/038.txt",
+   "sha256": "sha256:f760f9bb742fa795bbb794db73e466fb9272d210fd483d371878255542ff5972",
+   "key": "38"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/039.txt",
+   "sha256": "sha256:0815789e908b64e07fd32708db3abb7c6140a91cc82d96c71f205a526a08dab8",
+   "key": "39"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/040.txt",
+   "sha256": "sha256:d411fbd51681429acbbd2960b182bb2f3970d4a2fd00bfb873a96aab8034c7b8",
+   "key": "40"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/041.txt",
+   "sha256": "sha256:61b30f3617d18c0790cdd7d9e3604547b2bb166a5fa06c517f24fee38afc7a6a",
+   "key": "41"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/042.txt",
+   "sha256": "sha256:bdbf6f0db8fa7cf713e48acaadd44642ebec20bcd8670477b831089cd125bbde",
+   "key": "42"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/043.txt",
+   "sha256": "sha256:ec5ff0136792b84c93fe3d0fd045d84c4053da129e04616647726106926ee8f8",
+   "key": "43"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/044.txt",
+   "sha256": "sha256:083ccbdb17c36984a10ef2b931ab937b4debb029795f0ea03bce3c13def3dc2f",
+   "key": "44"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/045.txt",
+   "sha256": "sha256:8e5fe1e7790f15c87eff81f97bfe97e51fdd21f0ebcf74227d324a6babb2920b",
+   "key": "45"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/046.txt",
+   "sha256": "sha256:bee3ab24395914c89fecec706521d3d5b9aab02bd13afba42cf42794e3d8ced9",
+   "key": "46"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/047.txt",
+   "sha256": "sha256:b4c3cfefde1d69124ad79bb8245be05f59b511b86ccb9541bfee144e61461222",
+   "key": "47"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/048.txt",
+   "sha256": "sha256:6551f7bf6516213e0eaeab332801a6669e1d5fcfbb72289ad4228616029d551f",
+   "key": "48"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/049.txt",
+   "sha256": "sha256:cea2cbcf0f059861cb8d977391506e5b6b6820e1f42a9b2fe9a744a9699af968",
+   "key": "49"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/050.txt",
+   "sha256": "sha256:564009836accf6fb9f38242adf6151d68e1d9030a0561c2e2afedb5f87cdc151",
+   "key": "50"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/051.txt",
+   "sha256": "sha256:1f51a37d1957f125ea9f9d6cd3de9511fef0653946f7e0ea9f8b4a6d593e08a2",
+   "key": "51"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/052.txt",
+   "sha256": "sha256:cf34b394ba741845f55bb49aef5755b825850a1ab6a14f3f2e5deaf3bd9b7bf7",
+   "key": "52"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/053.txt",
+   "sha256": "sha256:b783c0837a0fe699d446c7cd66d9824a117bbb30476ee504c1ed3d9841ff5bd4",
+   "key": "53"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/054.txt",
+   "sha256": "sha256:006143285d60840211fff9b9e813923b8f4b81bfa24364709e17838b50302b2a",
+   "key": "54"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/055.txt",
+   "sha256": "sha256:f7a3355bda49a3fd302b20754b734486eb8389e8f934a38fea19ec923a3d39e2",
+   "key": "55"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/056.txt",
+   "sha256": "sha256:50b77189b071d1ba191beecac7bb21443ae20b6958be47adbee01cb25542ff13",
+   "key": "56"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/057.txt",
+   "sha256": "sha256:1cdaf70703752e9231ebd1e0ea5debb9e72afe8f9a1e09779870d05a0dc2cbcb",
+   "key": "57"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/058.txt",
+   "sha256": "sha256:afd80991277382de6311f5a300e796c54659e8fca640f90d370e29e7a8cd4088",
+   "key": "58"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/059.txt",
+   "sha256": "sha256:5926dbc5b6f55a5a2f4dbdfecb600827a65b87e94291928a7c93ca445093b021",
+   "key": "59"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/060.txt",
+   "sha256": "sha256:10b300bc2f5d5f15bc6dea90cd32e03b98e060d13a8cf36b909ed1b842982290",
+   "key": "60"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/061.txt",
+   "sha256": "sha256:ab7bb8c6720ab2630b005c7f92aeafd1fe363a11148c74bb37864a8b7312b90f",
+   "key": "61"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/062.txt",
+   "sha256": "sha256:e28e06ad89b76175319195552292ac19159d181bb2e7a2545f2bf57d5cdd9735",
+   "key": "62"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/063.txt",
+   "sha256": "sha256:83d269dd5c5e6dedf4f77871f73aca10bc4047b40e52e686946874eedca74d32",
+   "key": "63"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/064.txt",
+   "sha256": "sha256:d16f996b810aa3cf1e46b9b53ff476503ad80cc003baa6adf7bda71b18e78224",
+   "key": "64"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/065.txt",
+   "sha256": "sha256:1beb5a909d81120f262478be280b3d8122f494248e2eb14ba9e9884878b9839d",
+   "key": "65"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/066.txt",
+   "sha256": "sha256:4dc9c5e2126fe9f1ea5acb69aa4601084d8af228ebc2ce0bde0938d58cb065c5",
+   "key": "66"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/067.txt",
+   "sha256": "sha256:62f63a346d5463d3598ee10e3bf7ee203b0ab833f877f11f2e16fa80666606be",
+   "key": "67"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/068.txt",
+   "sha256": "sha256:eef1c8912e9aefa729b0492c0c66b358904889bda4c0d499e1a85897f46307d1",
+   "key": "68"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/069.txt",
+   "sha256": "sha256:48304b3f09d5be6f79acbeb2f388fe42f9d5d352d1eba1171811a0f16a245bda",
+   "key": "69"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/070.txt",
+   "sha256": "sha256:fe22da1dd2853020cfac3eb58d93fc6a4a59e28bd968dbbb9b8df5bd795a01fc",
+   "key": "70"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/071.txt",
+   "sha256": "sha256:7519cefe9cc34e41f2956c845479e7346a79b8cfcdbc021ba2ff8d437b0adb0f",
+   "key": "71"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/072.txt",
+   "sha256": "sha256:95a3ae4045ec20a153671ff967d712e3d29a9a3dcc8ff73b4fadb2142e9ebf3d",
+   "key": "72"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/073.txt",
+   "sha256": "sha256:3a1875d8c255c10fca854d337e3260c219f1b9a1b898d2f0276f08fce91c2d02",
+   "key": "73"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/074.txt",
+   "sha256": "sha256:89adeddb79816a4e6ce7be8a1acfbd32128411dd0da8c16df9f131c84cd99666",
+   "key": "74"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/075.txt",
+   "sha256": "sha256:5a3f4b58758a0e406aae75133a20c7129b1fffb1e56c5e538ccc512fe805489d",
+   "key": "75"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/076.txt",
+   "sha256": "sha256:be68aaa0b189f58938dc28957e3b1edd5ca106a37b498d6363170ec37e1b2fd0",
+   "key": "76"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/077.txt",
+   "sha256": "sha256:834125ce5498092d85c9d6c8510c3771daa7b1a26a96f0c8dbd8d3e4b8514ef6",
+   "key": "77"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/078.txt",
+   "sha256": "sha256:127986348ae5a5d45decf931a5b835ace35937efc7da39fff1bc95722fddb8cd",
+   "key": "78"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/079.txt",
+   "sha256": "sha256:578828f5085a8c7b3dbe709742e87e6a7b587e75dc6e68211fbb72b9dc574a40",
+   "key": "79"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/080.txt",
+   "sha256": "sha256:0e02e73079df6579551aa767aa52f5b63edfa2ea8b46a3d2980d9a2c5c18db92",
+   "key": "80"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/081.txt",
+   "sha256": "sha256:9d2cbff275a3dacb9f66f552edc90bb0a17414c09860b74a17e7cc6963432317",
+   "key": "81"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/082.txt",
+   "sha256": "sha256:e2f2ae4c724cca891c036266831d0da534ea689b1b8d1e856674cbf199bd52fb",
+   "key": "82"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/083.txt",
+   "sha256": "sha256:5e6a22a9b00fbfc07b3abc676a86a2487d3ce86dac9e8cbd7dc0f08f67fec4ec",
+   "key": "83"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/084.txt",
+   "sha256": "sha256:e324f95656d549c091f883cf9ae9b7d23db667510003e0a7c0c59602a96073dc",
+   "key": "84"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/085.txt",
+   "sha256": "sha256:e7ba7964bfe55df1e7dc18a0a762810cbf7baa43bea705cca5aca6a84126c98b",
+   "key": "85"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/086.txt",
+   "sha256": "sha256:d7c2bcb8e4285d79e44ecb3ccaa66ba93b268b721e6eae3557461f636c5d5895",
+   "key": "86"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/087.txt",
+   "sha256": "sha256:acce853260321c1c99c0c8aed96a10c674546b6e7731d85bc83b1a860264da6c",
+   "key": "87"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/088.txt",
+   "sha256": "sha256:4ffc222c54458ea393c727bd41b6248c9cc24b7d3de4a5ee5ae716fe054d4bcc",
+   "key": "88"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/089.txt",
+   "sha256": "sha256:3f0e6f0c2fae6915085a6ba077e0b03d95d7db6e80bddf9ae1aab4a0dcdc6431",
+   "key": "89"
+  },
+  {
+   "set": "toefl_gpt4_rewrite",
+   "path": "essays/TOEFL_gpt4polished_91/090.txt",
+   "sha256": "sha256:1949177369085eb6d795308853e79792c78d0e63375b53dda66b7c4d42676ef9",
+   "key": "90"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/000.txt",
+   "sha256": "sha256:00df2621fd3d99fda9872ff4f8a2e515cd6bc984a0c043a3a530bf84bf1f5bcf",
+   "key": "0"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/001.txt",
+   "sha256": "sha256:620a48b44b03b60919f88122455e76425b17e8ea6a98279f76aa63e96bd293e8",
+   "key": "1"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/002.txt",
+   "sha256": "sha256:cacd840ea7153b9a9b65c985211640d7cb4a340858f00f77618106b4ab631037",
+   "key": "2"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/003.txt",
+   "sha256": "sha256:f0da5a4ff84218bb26d2727f32ac619df5250fe778abfd612323082e53a4b9b2",
+   "key": "3"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/004.txt",
+   "sha256": "sha256:26e56f82e30b6490c4b01417d324019b10c84a78fe604f1ba85b3d01e9704f05",
+   "key": "4"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/005.txt",
+   "sha256": "sha256:f0aa44618d0a44d7fe38bdc57b2f6498e8b0fe51562acd781b9346eb9ca24fd6",
+   "key": "5"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/006.txt",
+   "sha256": "sha256:c3cca72fe5152231dbe3c1623c8213d7504eb369d9c0b3dc40a60b4d108df5e8",
+   "key": "6"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/007.txt",
+   "sha256": "sha256:147a36d35cd9cd604a51012908e440f39f93842aba6ec76367c48ac6f3f84f0f",
+   "key": "7"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/008.txt",
+   "sha256": "sha256:f281e5e282d02077ef41b6e8942b4b73b06562859132cb6e271f592ac1aa759b",
+   "key": "8"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/009.txt",
+   "sha256": "sha256:dcd1198e95b5a6e9b79d039a8d5ab296992a286a7d985e8c8c84ee6c19c80eca",
+   "key": "9"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/010.txt",
+   "sha256": "sha256:f12a1e8e0493fcbd06308b4ae3b7fe3469b04c78d4d367850dead1e12b649ccf",
+   "key": "10"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/011.txt",
+   "sha256": "sha256:0c536652c3e6dab8bcbc844f515c89fd170fe436232086abec4678907a88320f",
+   "key": "11"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/012.txt",
+   "sha256": "sha256:2043877bc3f24f5c0c1b5143aab6a960c2d784df57ee047e20f6e0591ca98610",
+   "key": "12"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/013.txt",
+   "sha256": "sha256:7c60e297ee95b1267e604c41d2fc7241133f3b2a8f8789796d4d8b3b1a1e428c",
+   "key": "13"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/014.txt",
+   "sha256": "sha256:4f58ca63ad5735e1e6a45a5d005511efb9de38d4946c421f3a6e40dbe86732c2",
+   "key": "14"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/015.txt",
+   "sha256": "sha256:497c1d9a36e10834fcba6a5794e1c2f1311e357500d26c0b6a9fbef4ee894c65",
+   "key": "15"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/016.txt",
+   "sha256": "sha256:a46c27ee0a58547ff4c151dad336f56c5c6da3842dd7a2ce343cbc8c1a73a3b2",
+   "key": "16"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/017.txt",
+   "sha256": "sha256:b0fcb6e2c62e4aa715f545113383871aaf10853a00e8724aefbc0df3ab466a3e",
+   "key": "17"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/018.txt",
+   "sha256": "sha256:46d6db346870c8d463df72139673808e54d5e417171391b71e2a92171f3434ac",
+   "key": "18"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/019.txt",
+   "sha256": "sha256:d59aa0c5b819811ae190f9329c980224e23090e0132c1b0d04c6d8e2b3ef0ad9",
+   "key": "19"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/020.txt",
+   "sha256": "sha256:09b196885b448ac60c53e467b86b75b0a4f589f3bcc9435721a238bcffd91af8",
+   "key": "20"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/021.txt",
+   "sha256": "sha256:712841a634ca9452378412aa6467431c3b3d316567f58f13c4f7022795c21b18",
+   "key": "21"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/022.txt",
+   "sha256": "sha256:f0ee13c99068891081745be1070c36d3bbefcf5304e0e227181eb919f82e5b3f",
+   "key": "22"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/023.txt",
+   "sha256": "sha256:6625b7a48fc0560968d6940305ecc51dcb0c3abaef5726d51862db27fdefac1c",
+   "key": "23"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/024.txt",
+   "sha256": "sha256:dca0ac703b7b51027a178a7f145fa3c9c17f865b7f580a97f631b882bdf9be8f",
+   "key": "24"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/025.txt",
+   "sha256": "sha256:4be20762ac9d2867ca973dcafd901c271a3bcbfa06ec96c1828b4353a319a3cc",
+   "key": "25"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/026.txt",
+   "sha256": "sha256:1d6f05962a5705baff6cb8458368c31a3c26b3583b28e15a3d704171c521a75d",
+   "key": "26"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/027.txt",
+   "sha256": "sha256:7fa6b313f5c7edb45037f1ed4eb6ffb384ad818c4ff1814dae1c2ebd4c9913f6",
+   "key": "27"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/028.txt",
+   "sha256": "sha256:453499bf63f170fd5563645429ca13fdf4e1c2d845dabcdf4652e4430e192d9c",
+   "key": "28"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/029.txt",
+   "sha256": "sha256:9f5e14aafdd3e871d1548f44b479ea1092b02472264ed99b9374d32136ef8698",
+   "key": "29"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/030.txt",
+   "sha256": "sha256:e3021f803bcd2a359d0e5544ee562e01aa137a128cb063df1e93de606398935c",
+   "key": "30"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/031.txt",
+   "sha256": "sha256:f3cd6cda58348260ca768faf0b28e4a610b18e9e6ab573272c7bebdf2e66e910",
+   "key": "31"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/032.txt",
+   "sha256": "sha256:3e74207b59914bb691896b372ec79487bf529fe60058770fcea5bc20d65f9224",
+   "key": "32"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/033.txt",
+   "sha256": "sha256:c4971c477a4177143df10e9c6bd3e7a5381871735d1366fb298e6f20a0d40c98",
+   "key": "33"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/034.txt",
+   "sha256": "sha256:dd7c4fb749d5583029b995e94aec43d3c334e582d5f19a47e8b9dd148d3d2d34",
+   "key": "34"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/035.txt",
+   "sha256": "sha256:40793fea66100aaa05d32df71f3319ad8a740f4ed6711c97ba1f52325db64f25",
+   "key": "35"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/036.txt",
+   "sha256": "sha256:810cf40fe27c654b024a3d5538c4c3b59310de34f49478a391e77d3327716f3e",
+   "key": "36"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/037.txt",
+   "sha256": "sha256:f5a2ad6de9de3e522ece5fdffeda78dec0915d2bebb1b3b3db829b4fd54f484c",
+   "key": "37"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/038.txt",
+   "sha256": "sha256:7e148f36f5653427ad92c186edf6323dc2c4494c692350a02b198c41ca679656",
+   "key": "38"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/039.txt",
+   "sha256": "sha256:337ca91791c0043344d4bfc59139d3701fe88879cebe788c6ef6c7d585d19767",
+   "key": "39"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/040.txt",
+   "sha256": "sha256:9ce0103fce1b9ba71b258f911a59b39b8225de49705033456a373f283c3616e4",
+   "key": "40"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/041.txt",
+   "sha256": "sha256:2b39789f7fac4b339c224a7f14d3f740467379cd14f86ed7bddcbf2f05457de8",
+   "key": "41"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/042.txt",
+   "sha256": "sha256:e4d66ffbfc4ecf3ec35c1b53932cf0c784d4f173202c856354457e87f90b4e95",
+   "key": "42"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/043.txt",
+   "sha256": "sha256:ecd3f8dd394dfedc8f4d093d91e73dcf7d4d1ce8147abfe9c36b5c85ec70f025",
+   "key": "43"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/044.txt",
+   "sha256": "sha256:26972ecb2f91170445815fc4a504facf76676712b696333195cad9180fe54580",
+   "key": "44"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/045.txt",
+   "sha256": "sha256:1a91e901583c775d460a92dcd289d648c95f303b6dd10ed285776c8406b5660c",
+   "key": "45"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/046.txt",
+   "sha256": "sha256:4178821b9c0ec6780cfebfd9d5995ffbdfa0b9ade6c7746ac0a39f7749fd16fc",
+   "key": "46"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/047.txt",
+   "sha256": "sha256:9fbff2e0c15e11228b99acb3f148dde3ed43ef82624585837c47af720aa2ea6f",
+   "key": "47"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/048.txt",
+   "sha256": "sha256:b25937cf77c492d4a02981fef4bcb44138ec5b36238d1679f2f3811db3a65d27",
+   "key": "48"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/049.txt",
+   "sha256": "sha256:9dd59f54bdbd17045ebd141699106b52024f7affe72c09a73e7d7505faece0fe",
+   "key": "49"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/050.txt",
+   "sha256": "sha256:3539bee9a09e84bb6d77305b4a8d016c008e81675d3163aaf6e627d6f87710ec",
+   "key": "50"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/051.txt",
+   "sha256": "sha256:b66b079d038e5c84b2e19596a1a005dfb60d0bb9a64707a5af4acfef4d5b7f00",
+   "key": "51"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/052.txt",
+   "sha256": "sha256:644e5462c903391b86d2aeda21381c2c15835612c235d6751593fce27dc511eb",
+   "key": "52"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/053.txt",
+   "sha256": "sha256:f037a5299e5cb5600649ada725e488d29564d2d57e96b114fd2ded9e3b0192d2",
+   "key": "53"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/054.txt",
+   "sha256": "sha256:45d5e7fdcbc27774f59733a074836ff41178d0dea814ac92a14728d3b344e372",
+   "key": "54"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/055.txt",
+   "sha256": "sha256:b45885b11549bc3c7a8dc1d39f4d1c201aa87e8a178bf03d38b956d2f67ea114",
+   "key": "55"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/056.txt",
+   "sha256": "sha256:14cf0e2790bf1e699deffba2486d8622a0bb7500cb562d02686d1816f524129f",
+   "key": "56"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/057.txt",
+   "sha256": "sha256:7b8efaa11a9bfb9cf01590c1ef73a9c53f77227db7e296e7de12ce0da4ea5535",
+   "key": "57"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/058.txt",
+   "sha256": "sha256:f0be073de8dd436eedbea6b009cc66c7299050a763f28b8a681adecff690d2e8",
+   "key": "58"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/059.txt",
+   "sha256": "sha256:211726fd7744037b752a72bba98c06f714fb1ee1ee90ca66a47cf0990257d1d4",
+   "key": "59"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/060.txt",
+   "sha256": "sha256:60095845761ca22c20f4c1584e6742c199cd52f54c98ab33fbd28f5853477a27",
+   "key": "60"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/061.txt",
+   "sha256": "sha256:5328322f47c3e0ee3a5e68ade638f361869f8b0e638034f69d0696c4ca5009b3",
+   "key": "61"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/062.txt",
+   "sha256": "sha256:06e4de2f8cb104567d8e80b66098258d8a93c80551d5ed5bc55d7ce1bf1d49c9",
+   "key": "62"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/063.txt",
+   "sha256": "sha256:70c9fd0b391af73b1276dd3f75d7d99fad85ea25e5559475e2cec515ca75692c",
+   "key": "63"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/064.txt",
+   "sha256": "sha256:915112e55026ea3f133bf78620d41037b304eac83f81eef1b4c22ff0d2ee0a34",
+   "key": "64"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/065.txt",
+   "sha256": "sha256:e0eb217daaf422ca7f5c154ad8e9191f965377f0cc324a4fc98acf4ea8ab6a17",
+   "key": "65"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/066.txt",
+   "sha256": "sha256:619701d45630e56cfcf5d18573c056bf0b9e9b840d0e9478029500abe8523d15",
+   "key": "66"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/067.txt",
+   "sha256": "sha256:5787f6a1d281d19bd434c7735cf6bee9b4a85fca6edb177d332633b6c8ff0b23",
+   "key": "67"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/068.txt",
+   "sha256": "sha256:19f6ec9f2215685fb59bfe3341dbf5225bc7f0a799a91020a04e695a4803e85d",
+   "key": "68"
+  },
+  {
+   "set": "college",
+   "path": "essays/CollegeEssay_real_70/069.txt",
+   "sha256": "sha256:3c18dea886f77598e1193d50b493a039fa9057a50cf4445f41c78fc85341dfe4",
+   "key": "69"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/000.txt",
+   "sha256": "sha256:1c44582d0b2529701e3c3bc9383066584bd8f3e247a87c2266d3056c3375c6f7",
+   "key": "0"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/001.txt",
+   "sha256": "sha256:34a8322ff6171954aedfc05dabd47dc81b1115740dd107cfc89cecb203516599",
+   "key": "1"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/002.txt",
+   "sha256": "sha256:bd8683e5c5141738b33e41db18089c4eb8f905c6728b12532f610085ceb1f7f2",
+   "key": "2"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/003.txt",
+   "sha256": "sha256:979bc2a91ca6479b0d5b4e03461cddd7de408529673cc95d3de6b36b7dfc59ea",
+   "key": "3"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/004.txt",
+   "sha256": "sha256:9e35d13edb3faa87588c3ff20f0d052d4b92928534de65915b0faebbcb2877af",
+   "key": "4"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/005.txt",
+   "sha256": "sha256:e9226bff107d09f3dc184abd49badca47e46b9268db216381f46986ece2dc5f6",
+   "key": "5"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/006.txt",
+   "sha256": "sha256:d1bdefb0711fff596eadbaea7b186c6e3d9e1c2e4ac47b8acae317ee2ac7c67a",
+   "key": "6"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/007.txt",
+   "sha256": "sha256:0fb901c922293d565cf8f8d5fea84e051b9f6cf440858a00c584887234e8d049",
+   "key": "7"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/008.txt",
+   "sha256": "sha256:19431d57587e05a9609d64c6e7f4c5abda12d440f13cc2f3c6277f6d186e1432",
+   "key": "8"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/009.txt",
+   "sha256": "sha256:7d80a321fbfcdddfb3717d979a941040dd07bfacd0c24adcabc00f5ceffb2a8d",
+   "key": "9"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/010.txt",
+   "sha256": "sha256:4498fedfddc88705ce87d3dd8bf3fdce5154911a9303644472eb01e8fc781ea4",
+   "key": "10"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/011.txt",
+   "sha256": "sha256:2d038a44216bda8f377bf6bbd1f3ec2743d14258ffc1ca5e366668d65a4bb24b",
+   "key": "11"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/012.txt",
+   "sha256": "sha256:9ee64b842a4127f768a608667a5385cb315c7f6cb430c1e49569f5cbf443e3ad",
+   "key": "12"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/013.txt",
+   "sha256": "sha256:13a4637ef7154b7e326363f6b1657ca35ca408257413a4aafdf2a90a58bfe7f4",
+   "key": "13"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/014.txt",
+   "sha256": "sha256:5681e9bfbad91c8838bdd76f1d57186d0bd39080818583c6e180e7241ad4db0a",
+   "key": "14"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/015.txt",
+   "sha256": "sha256:e6d6cd8f35bc0529a7a2c21e263f88439948c79a6bc5e5264aaa9e01ae822d09",
+   "key": "15"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/016.txt",
+   "sha256": "sha256:6b9207db9e70af576d534a380fe4904ec9c0df9c5d5a006b88e6433f49fcf033",
+   "key": "16"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/017.txt",
+   "sha256": "sha256:4059c6b2df5a140e94179ce9499d224dfcd7e3187264253d50ccabfbfdd49a34",
+   "key": "17"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/018.txt",
+   "sha256": "sha256:7a2fd48b0316529c5cb52fa4b7d1dd22dec0a5acc2d09aa05be2ff358bd99f42",
+   "key": "18"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/019.txt",
+   "sha256": "sha256:331edeceda3c5daf89b97a4940fe4253ede689e0c88f064cdf40b411a6e0584a",
+   "key": "19"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/020.txt",
+   "sha256": "sha256:7898cbb6a0b8600e5191e011abce6ad16e8095fce8a2f025e15a9a1d67866935",
+   "key": "20"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/021.txt",
+   "sha256": "sha256:130f720bb5b74a165fd0de068742c90fbda349f0261837309fd8a5af97692c3f",
+   "key": "21"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/022.txt",
+   "sha256": "sha256:3f654692160067662ce3d59102c3116b9093551c5e2480b665b45e3810a617ca",
+   "key": "22"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/023.txt",
+   "sha256": "sha256:b1ca69789ce303183be27b3dccd9157520aee06da2e1bf5a2301a934ea9fd613",
+   "key": "23"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/024.txt",
+   "sha256": "sha256:541a505dc33fb5822934895b86553abbe6a8514ab3759e90d6a09078367a51a4",
+   "key": "24"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/025.txt",
+   "sha256": "sha256:bf65bd22a0447d0b7d19ca0e69a50b786ce78c14f3bba5ae69bcaedd98036eb5",
+   "key": "25"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/026.txt",
+   "sha256": "sha256:56a0736534cd333b537af3191d42f21695b62cc4fb36d47ce1fce3f9ef1b924d",
+   "key": "26"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/027.txt",
+   "sha256": "sha256:891f1259fe3520d5c8bec9d52e14b42973abfe52d94abf2e9f5e963ab244b03d",
+   "key": "27"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/028.txt",
+   "sha256": "sha256:ed01c7defd8b6bab63296efb74bfff1e62dc4e5074d9c0dac4a2c4e173871901",
+   "key": "28"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/029.txt",
+   "sha256": "sha256:1de04ba46451809d9f840ed7969c019cafa73932ac08b5ed76c37a90a3cf5a1b",
+   "key": "29"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/030.txt",
+   "sha256": "sha256:1a0d1d8ef5b948b463a4943b750d8d51ec9dfaefa4b2924ce1c540a4d875e83f",
+   "key": "30"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/031.txt",
+   "sha256": "sha256:36b43d8615286498cf6ed0d727fa3fb21225688d77fd12127af1927194a1face",
+   "key": "31"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/032.txt",
+   "sha256": "sha256:19ab5b124fdf6a954a5c4c8fb2d49124f4a0f8f213d3178064c9b0a527efcd98",
+   "key": "32"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/033.txt",
+   "sha256": "sha256:80130b775ac289afe637ae4b2aebdd7d2a7eac31d4e6f8732d3e44764f614d2a",
+   "key": "33"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/034.txt",
+   "sha256": "sha256:5616f459d2c3ada5b9636f9b704934be3b2588234696972c1490170fc9da1328",
+   "key": "34"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/035.txt",
+   "sha256": "sha256:b0f065eeb7d8fde1c56c227e0293d0427649254e6eb7bf109a84be4c3e13f482",
+   "key": "35"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/036.txt",
+   "sha256": "sha256:b0581c4cc8e7f13b4bd71462d22ceb917f96a3ffa7c5271a635a6229d9db3891",
+   "key": "36"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/037.txt",
+   "sha256": "sha256:991f0fe79885893d528d0a55436b1e9cae32eec9fbedcbb37dcc958d90c05683",
+   "key": "37"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/038.txt",
+   "sha256": "sha256:2b354eeb317e56e9f4af470a8e84274818da18aabecdca6b8208eba8461ac0d9",
+   "key": "38"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/039.txt",
+   "sha256": "sha256:38adee50582eeacfb6b1a1db96f5f0f501e61d6d06df3b071931fe8568b9ac67",
+   "key": "39"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/040.txt",
+   "sha256": "sha256:58743a33b99feb23ae6e95414c9b2ce169062ae8c71487b1b308c0515dfded47",
+   "key": "40"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/041.txt",
+   "sha256": "sha256:e1bcc1d018b04ce9ecf4d7b3a5bdecc19d47027d9fe1f3ae901338c5a617b7b3",
+   "key": "41"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/042.txt",
+   "sha256": "sha256:36796dcb40186b0029af7daee18a7f511e4af403ac868eed0f384c343ee7a4fa",
+   "key": "42"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/043.txt",
+   "sha256": "sha256:ce19324e4700386ebe931f82d22446aa4e52d7cf6caf46eb43061ba22e3a9fb1",
+   "key": "43"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/044.txt",
+   "sha256": "sha256:e732bc22800aedd3822e219d4516f927a64221bc38b6c3d03143969476dbfada",
+   "key": "44"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/045.txt",
+   "sha256": "sha256:23853511aa931c0d250b642a44b731c4adfacc503dc5d7faaaa0871283143a8b",
+   "key": "45"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/046.txt",
+   "sha256": "sha256:6324d766d8c741f0e44c64fb92944689f78793ad06b4671966239d50f9e1f5cf",
+   "key": "46"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/047.txt",
+   "sha256": "sha256:b27a8e28afad88294025ab519f6d8a1eb8db5c03cf84f88d6f631fcfdceec31a",
+   "key": "47"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/048.txt",
+   "sha256": "sha256:a4f8df0771dad89a13a761b5f3e862e0d32d3e08956084e7797e2b0eb7c18208",
+   "key": "48"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/049.txt",
+   "sha256": "sha256:902fa359fefd5a272c27cbf78d44dfac4b09eadf031c62b9c15972085af22889",
+   "key": "49"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/050.txt",
+   "sha256": "sha256:0f87943c3ca3329b41b3d14e9e3ab490b9ac7682bc67f7093c0b012421ddf98f",
+   "key": "50"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/051.txt",
+   "sha256": "sha256:765444c612f2dff24995d21063c840067db55a85477a39fd71538bf70eafd579",
+   "key": "51"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/052.txt",
+   "sha256": "sha256:59bbf2d3076020e3de4fc914877e1245d0ee7a4932926f168ad44def2717543f",
+   "key": "52"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/053.txt",
+   "sha256": "sha256:7affac7d2f3e9f3c82da118b462d745f710fc2f646ea2cc450327b422a051eb5",
+   "key": "53"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/054.txt",
+   "sha256": "sha256:d0bb9659af517982221faadaf65e530ee786d8c5080769c5127822a148b1ca92",
+   "key": "54"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/055.txt",
+   "sha256": "sha256:40d586c53d7599662c3195691938b354c647bdb81b2fc1b27c33a8b03196f4e2",
+   "key": "55"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/056.txt",
+   "sha256": "sha256:1d84fccde437223d2605b1417ce53eae75b5e1c926c89b91e32b0c010066720d",
+   "key": "56"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/057.txt",
+   "sha256": "sha256:c912fde9f86a715b094c60095bce25e6539d20b38958c1232a7a22ee4f9b7320",
+   "key": "57"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/058.txt",
+   "sha256": "sha256:ac046cbeb8c0270b0f246082b4105e36cae6b976727a99813f8346069fb70430",
+   "key": "58"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/059.txt",
+   "sha256": "sha256:b19a5f663e5214ec991680a19f1182891dc873781280c0ae3ed47a490ef89e7f",
+   "key": "59"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/060.txt",
+   "sha256": "sha256:fcf4c0d48f979111e7cfcf733ef46cc2e40cda2d6ad166b59d5b3b158ba7ae34",
+   "key": "60"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/061.txt",
+   "sha256": "sha256:a22ea62bb9ba7ed435e9e258e73df7829abde3d15de7c5c8c9903fbd313e6748",
+   "key": "61"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/062.txt",
+   "sha256": "sha256:c03f2c1f32e9cf697b2e2fd0d7e35aa3f0b8123b96d5b944530001e9778fad77",
+   "key": "62"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/063.txt",
+   "sha256": "sha256:11514fc90e79c26de5cfa2f2efc2f14fe4515e5a1c3152e10d5da1152a301aeb",
+   "key": "63"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/064.txt",
+   "sha256": "sha256:4cfb327178011efd41ddafcdc32c789a9e1b34004d2ebe271752d39d905de091",
+   "key": "64"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/065.txt",
+   "sha256": "sha256:60d2edfb3264accfb88ee70c0969d11272d2733b3ede4afb2e1721278dd97e43",
+   "key": "65"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/066.txt",
+   "sha256": "sha256:11037cb14100848d8d61c6d8d8c8810534795f8a45376af9fd7c57a441884d74",
+   "key": "66"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/067.txt",
+   "sha256": "sha256:9b1ce246e7443c47500db6a4eb9fd7f68c562989d9a42ad27a3424c6b186d97a",
+   "key": "67"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/068.txt",
+   "sha256": "sha256:c610372a8472fd2b86f954ae3f1695ccc5e0acd286fb3e58b8a0a05557d8e3cd",
+   "key": "68"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/069.txt",
+   "sha256": "sha256:51e1caa1caf88cd147898424e357ed25227995154310d94a149534f7ee928117",
+   "key": "69"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/070.txt",
+   "sha256": "sha256:758b3a8f6ea9398f6bef11e998d9852b2558fab00f58c03ab16bd2f3c4aecc1e",
+   "key": "70"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/071.txt",
+   "sha256": "sha256:6a122246dffacc2d5b8f488584018ef5e1fd44269f72072b1c42f59588b4944e",
+   "key": "71"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/072.txt",
+   "sha256": "sha256:441c513f57336730d939cb8a986bca9d5edfac8a69e1404cd5118010299a28d2",
+   "key": "72"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/073.txt",
+   "sha256": "sha256:d959f205fbe256987e220a181023f78152ef23dba417d490ea3c5700226f5993",
+   "key": "73"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/074.txt",
+   "sha256": "sha256:ee1465cf824acfbed8dc5a3e01a764688eef3d9d48a857fdcbbc052afe13af00",
+   "key": "74"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/075.txt",
+   "sha256": "sha256:ab0d551bb298cd7fb427596433c68de4fd956fc5f273508a51fcca34d92fbcdf",
+   "key": "75"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/076.txt",
+   "sha256": "sha256:ee7a94a703fb5582eb7ca83b7411d22c8915e37f820510de21f7203301cbb4fc",
+   "key": "76"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/077.txt",
+   "sha256": "sha256:94b267fd2b97f974d064c705c892e18fa27019e1ba03935eea8780e70e7c969b",
+   "key": "77"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/078.txt",
+   "sha256": "sha256:e39aa7bced67c3ab1a330c05129f88b0be23a1b403c6fdd0b9824dd126ec1a39",
+   "key": "78"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/079.txt",
+   "sha256": "sha256:c193b9926d1a38bd8f12a72f8d688f16324f64a3a9af73b57ef3dfbc86d8f41e",
+   "key": "79"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/080.txt",
+   "sha256": "sha256:1ad955db16b4130fbd82a6704f2015a4f9912a226b726d1c906f81369e8c64ac",
+   "key": "80"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/081.txt",
+   "sha256": "sha256:e95073b70c27301387f5bd55137520a00c87c0bc65b1859649886573333c3ea0",
+   "key": "81"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/082.txt",
+   "sha256": "sha256:8f794cbba28945a2beb89a6da8380f632a66e1fc7704a84f52061e4e19221323",
+   "key": "82"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/083.txt",
+   "sha256": "sha256:4484234157e6b3c500596ae6dc9c13d78f317d0d74efa69fe67f2a04309b393a",
+   "key": "83"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/084.txt",
+   "sha256": "sha256:60380b4e2fe6d889369c181addf0705146893526a6071ad9a63b04e3a71967f4",
+   "key": "84"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/085.txt",
+   "sha256": "sha256:087730ebcc7e48b96ec03fea0feeca71b54197a8778453c0f87452a9c425001e",
+   "key": "85"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/086.txt",
+   "sha256": "sha256:ea3546aeb32469e2052cb6973bed39249ac7c940f52a4fb288643708282e9ee0",
+   "key": "86"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/087.txt",
+   "sha256": "sha256:5565577fa5948d8216dad2cb6a981e7c35fe71c0f6baa237c2cefabdf47056d9",
+   "key": "87"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/088.txt",
+   "sha256": "sha256:2e0176399e30cc4d16f8a6bc22e38fface25268270486711541396e595ed6547",
+   "key": "88"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/089.txt",
+   "sha256": "sha256:5162729f35e8a0da75372d82c85af4a343aa81d2543296254fc40e745c9cbd95",
+   "key": "89"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/090.txt",
+   "sha256": "sha256:c47b8b544ebb01d53d5f8f15abc9dbcab4c5c2ed4e443b21b4bc6cafd5f70690",
+   "key": "90"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/091.txt",
+   "sha256": "sha256:335303f21bc8fb7d4cf1aecb1baa3ddb86671060c5569c252c60357cbf26aa39",
+   "key": "91"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/092.txt",
+   "sha256": "sha256:fbe665be182718c1c7f1ce255bed320d10d96a1c05e451a9cd60f53b1af914d3",
+   "key": "92"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/093.txt",
+   "sha256": "sha256:eca9601bbb1d0bc537ec162b47efabf199195ab9a9f45d102e95c3e9c2a8d333",
+   "key": "93"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/094.txt",
+   "sha256": "sha256:24a7b7b20ad19ce68265c7e08be22b7fd7aa0847f0927de0dd4db91e331af630",
+   "key": "94"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/095.txt",
+   "sha256": "sha256:165a163ff066a28b27bc471b3a8f9d6277b966aca89b6f60f922302040f231b4",
+   "key": "95"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/096.txt",
+   "sha256": "sha256:07dc3cef3a537983e72b95e754ba76fdc14bd8198e8f9ab41d7058c4027386ee",
+   "key": "96"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/097.txt",
+   "sha256": "sha256:572bb352bde4f95c530879f3c46ec373aa7802b9244efb0917a9c9fb60b1e2a5",
+   "key": "97"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/098.txt",
+   "sha256": "sha256:07b34664d33144abf19d198d7ca2c3c81ee860e0157d2a14a1cc3813b979c13c",
+   "key": "98"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/099.txt",
+   "sha256": "sha256:8486944a0c9168defd43841ccd4c2a94755aa2cc25aedfa65a68b00b1e18b677",
+   "key": "99"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/100.txt",
+   "sha256": "sha256:6b3e78798e516fab49bf4f46fab61abb2d3e91b2256e40fd0050751f7c6c8867",
+   "key": "100"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/101.txt",
+   "sha256": "sha256:74704874a200d77598819fff23fee14849bf513208e7a5b56d72d7f4a9620dd6",
+   "key": "101"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/102.txt",
+   "sha256": "sha256:b1103a4a7c438a3c8f0e6e9bffef0fa0de0fbc27263814ab6045e2be704f82ad",
+   "key": "102"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/103.txt",
+   "sha256": "sha256:a3597bcf14bc31b6641ca97f538c27c8bb01c874ec96b531f93648e7e670c4e6",
+   "key": "103"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/104.txt",
+   "sha256": "sha256:545ede4a55d3c5365fd6e6a80cd0891deacbf75daa6b9283fe654d2c995566ec",
+   "key": "104"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/105.txt",
+   "sha256": "sha256:3845bc9ea1e2e62e064f8411646b0338ba4aacc79b9c3aeff91cd09a116eb925",
+   "key": "105"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/106.txt",
+   "sha256": "sha256:663d4c489b1b6029f898d4b8a1824d44fc315c685ace1dbc270e0784707dede0",
+   "key": "106"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/107.txt",
+   "sha256": "sha256:c6006f58e240b25c7626fbee32be7fb006f41d52d29082522b2de75ccedb6380",
+   "key": "107"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/108.txt",
+   "sha256": "sha256:136aaae8d72d6c353220f86b8e7a6526f4b7f000afcd7b03bac98beddef994aa",
+   "key": "108"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/109.txt",
+   "sha256": "sha256:0b1213e5700378b7f7219cd458d70fb25d93fe2cf55d4426d26647b92c9f1dab",
+   "key": "109"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/110.txt",
+   "sha256": "sha256:19f74989818b3fa37b2030361ea798587e71194be06e6327810e89f6006fbb56",
+   "key": "110"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/111.txt",
+   "sha256": "sha256:9fe555754f8fc61a946f144e453db7e8d465d6923b120900f510ba0b711a6be8",
+   "key": "111"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/112.txt",
+   "sha256": "sha256:69f5dd991ab9b79ad3620ea534ccee87621d64e9a78f05a5d43aacc3efe190bd",
+   "key": "112"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/113.txt",
+   "sha256": "sha256:2e5301a10f84e5954df5330099f70b1da662ec99c48cdd07896a2ae321762768",
+   "key": "113"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/114.txt",
+   "sha256": "sha256:317fe69d9d1fc0c9cb6544b7afd1ab3e72d345aafaa906c86cc6c0938d8ea87c",
+   "key": "114"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/115.txt",
+   "sha256": "sha256:6737ecf22d9fca45875ff91ab2fc9a79b2ce390ce978c43a7199863aec47afab",
+   "key": "115"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/116.txt",
+   "sha256": "sha256:a902552aad040883df33cbefc12473914c7b341f3e2e689db60177a2ba139d04",
+   "key": "116"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/117.txt",
+   "sha256": "sha256:da3c6172e69ed79294e9685350f4d863f6271a5bd9830c40df7af03b9d504c7d",
+   "key": "117"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/118.txt",
+   "sha256": "sha256:688a10d36de9da5867e0404a683800badf16c0024cfde9188d2f51e024e17959",
+   "key": "118"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/119.txt",
+   "sha256": "sha256:8a8d321185c8890069be991dcc92bf0fb90d97b9357ceef9518fd8503ecfdb73",
+   "key": "119"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/120.txt",
+   "sha256": "sha256:053a60884a30d591da4a844f932f3ea5a0de7c329daf2e27cf5e3f01ec8413a9",
+   "key": "120"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/121.txt",
+   "sha256": "sha256:1b4bf9c0fdb06f82c7d5b35bf6cb38d04d6a4b6f74e7b539076a78f222f96694",
+   "key": "121"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/122.txt",
+   "sha256": "sha256:0e1bde9105b03a2901c326ec3b0dc35ac6e71880e57bd672c4525bf8811a9237",
+   "key": "122"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/123.txt",
+   "sha256": "sha256:e34119ec19db99c33d343622e89232dff9b72e05835261cdc676a27674014750",
+   "key": "123"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/124.txt",
+   "sha256": "sha256:56c28a6a0e94d4f553af64bd41950db0dd5b2d3a3eeaa8bcf6d0ef06bbafe861",
+   "key": "124"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/125.txt",
+   "sha256": "sha256:6032d6a9a562e66aa8e9062a16e61d05745553476dfe5b4d77fb938f34713918",
+   "key": "125"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/126.txt",
+   "sha256": "sha256:d52e724a5c2e777cc146f2ea5b9557a54e51056d40a7e22e59b664d66e0181c5",
+   "key": "126"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/127.txt",
+   "sha256": "sha256:cd09ba52b4bdbfd0ee507993bfa7d357278ce19182a5a3087230962f88174fa7",
+   "key": "127"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/128.txt",
+   "sha256": "sha256:184ef70e3f128750caba77a31955055cdf9fee69729e9797784e5d446cfd23e3",
+   "key": "128"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/129.txt",
+   "sha256": "sha256:884e81515cc8c9ee84a92c9f330887d52148fa459bae5d805689a4bbc653a4df",
+   "key": "129"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/130.txt",
+   "sha256": "sha256:b81b18ec7e59e87da063e64ff1f3c92a582f1a6d7178c191a75edfe7713f0358",
+   "key": "130"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/131.txt",
+   "sha256": "sha256:2fdbc41c89ea61111b4868367223aed001baf8319537df5648c6a8821639bba6",
+   "key": "131"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/132.txt",
+   "sha256": "sha256:ffd7f5bd669e79fe5ea9ba08ca398ec27bc3ee69a723753d878d15d07bcd1430",
+   "key": "132"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/133.txt",
+   "sha256": "sha256:6d4c1fb17fb23c8ea3700c7d5f19dd754e75dbda35db71362a3589884161c5d4",
+   "key": "133"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/134.txt",
+   "sha256": "sha256:99164810ea7c982a76e5157a986166bf37a623f915082a2f278d4baeebf15dc9",
+   "key": "134"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/135.txt",
+   "sha256": "sha256:1799827a820c1cef1b6f2cbf16b443d867fa34cd1dc3278ed2587e38697b9bf2",
+   "key": "135"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/136.txt",
+   "sha256": "sha256:20e42a5a9018be0e0f1d9d7ad5ec838fb4d73599939b6833df3cfec5f6a4539a",
+   "key": "136"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/137.txt",
+   "sha256": "sha256:f7ff093aaaefd9d8f82e137ce3367b81119ab70bb383493952c5a62d8d5ac0a3",
+   "key": "137"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/138.txt",
+   "sha256": "sha256:456a86d8e1c8747b05cc62f8ccbd3602b84e742a590a2c9766560f80327f47fb",
+   "key": "138"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/139.txt",
+   "sha256": "sha256:1ee0953a26ed55366c1439a669074e7f041424ebc378efa0b485efff948dee7b",
+   "key": "139"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/140.txt",
+   "sha256": "sha256:488876d7af4f58f73700011d7cb4082051fce0efb72da18b2a09fa492f30c5b3",
+   "key": "140"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/141.txt",
+   "sha256": "sha256:28cf010d0323059df0e1838e6cd8a91459f7860de84ec95fc75ddd52da45b8c8",
+   "key": "141"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/142.txt",
+   "sha256": "sha256:d60d91d09965c104a3a98bda27559a4438529d23ee51a9b8660368a7db0f094c",
+   "key": "142"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/143.txt",
+   "sha256": "sha256:5d3723e2ba32e096f6cd2fb1b7b3b4d02e1c15a76a151f594c4c51e6df3d29a9",
+   "key": "143"
+  },
+  {
+   "set": "abstracts",
+   "path": "essays/CS224N_real_145/144.txt",
+   "sha256": "sha256:6572d14e764bab29e5df8675138a3e1b2bb97bc559e24fc9b86c634aa1b4cf4d",
+   "key": "144"
+  }
+ ],
+ "comparisons": [
+  {
+   "name": "toefl-vs-college",
+   "dimension": "first_language",
+   "protected": "toefl",
+   "reference": "college",
+   "design": "proxy"
+  },
+  {
+   "name": "toefl-vs-abstracts",
+   "dimension": "first_language",
+   "protected": "toefl",
+   "reference": "abstracts",
+   "design": "proxy"
+  }
+ ],
+ "pairs": [
+  {
+   "name": "toefl-original-vs-gpt4-rewrite",
+   "a": "toefl",
+   "b": "toefl_gpt4_rewrite"
+  }
+ ]
+}
