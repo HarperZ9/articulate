@@ -98,8 +98,9 @@ Claude sends your conversation to Anthropic under your Claude account's terms,
 and that conversation includes any text you ask Claude to check. Anthropic's
 privacy policy and your account settings govern that data.
 
-**Retention.** The plugin keeps nothing after a call returns. The text and the
-result remain in your Claude conversation, which your Claude account settings
+**Retention.** The plugin writes no persistent copy of the text, log or cache.
+Request and response text can remain in process memory during the server session.
+The text and result remain in your Claude conversation, which your account settings
 govern. Claude Code also saves a copy of the conversation on your computer, tool
 calls and results included, and its own settings govern that copy.
 
