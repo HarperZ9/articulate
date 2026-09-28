@@ -180,9 +180,10 @@ it inspects installed models through `/api/tags`, preferring `qwen3:8b`,
 It never pulls a model.
 
 Set `ARTICULATE_LOCAL_ONLY=1` to permit only Ollama on a loopback address and
-`none`. Hosted backends, host plans and sampling are refused before any network
-call under this switch. It does not change the calling host's own handling of
-a document already present in its conversation. For deterministic editing alone,
+`none`. The editor backend selector refuses hosted routes, host and sampling
+before a connection. Direct `plan` and `submit` calls perform local checks only;
+they do not control the calling host's handling of a document already in its
+conversation. For deterministic editing alone,
 use `--backend none`.
 
 For the Claude CLI, `ARTICULATE_CLAUDE_CLI` must be an absolute executable path;

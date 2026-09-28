@@ -1,6 +1,6 @@
 """Find and start the claude CLI for the editor layer.
 
-The judge, fix and polish commands run the model through the local `claude` CLI
+The optional `claude-cli` editor backend runs the model through the Claude CLI
 in headless mode. Two things break a bare "claude" on Windows. A process that
 a bundler or an MCP host starts can inherit a PATH that holds only System32.
 And subprocess without a shell asks CreateProcess for the name, which appends

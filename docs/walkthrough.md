@@ -50,8 +50,9 @@ the word floor, so the tool abstains and does not guess.
 
 The detector catches mechanical tells. The editor layer reads the failures a
 regex cannot see: a fluent paragraph with no fact a reader could restate, hedging
-with no committed position, a weak verb carrying the meaning. It needs a local
-model backend or the `claude` CLI.
+with no committed position, a weak verb carrying the meaning. Use the calling
+host's model through `plan` and `submit`, or select a configured model backend.
+Without a model, the judge returns local findings and rule reasons.
 
 ```bash
 python -m articulate.editor --judge post.md
