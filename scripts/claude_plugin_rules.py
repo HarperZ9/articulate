@@ -4,7 +4,8 @@ Each check returns a list of problems, empty when the folder passes. The rules
 come from Claude's plugin pre-submission checklist and manifest reference, read
 on 2026-09-27: file limits that hold a version for review, names that stop
 validation, the manifest fields the directory reads, a README of at least 40
-words with a privacy policy, and skill front matter. A clean result here does
+words with a privacy policy, and skill front matter. One more rule is this
+repository's own: no file named or shaped like a credential. A clean result here does
 not predict the directory's own validation, which runs more checks.
 
 Standard library only, so it runs wherever the build runs.
@@ -26,6 +27,13 @@ SERVER_FILE = "${CLAUDE_PLUGIN_ROOT}/server/serve.py"
 PUBLIC_TEXT = (".md", ".json")
 EM_DASH = "—"
 LOCAL_PATH = re.compile(r"\b[A-Za-z]:[\\/]|/Users/|/home/[a-z]")
+# A file named like a credential store, or text shaped like a key or token. The
+# build copies only tracked files; this catches one that was committed.
+SECRET_NAME = re.compile(r"(?i)^(?:\.env(?!\.example$)(?:\..*)?|.*\.(?:pem|key|p12|pfx|jks)"
+                         r"|id_(?:rsa|dsa|ecdsa|ed25519)(?:\.pub)?|\.netrc|\.npmrc|\.pypirc)$")
+SECRET_TEXT = re.compile(r"sk-ant-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9]{20,}"
+                         r"|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}"
+                         r"|xox[abprs]-[A-Za-z0-9-]{10,}|-----BEGIN (?:[A-Z]+ )*PRIVATE KEY-----")
 
 
 def _json(root, rel, problems):
@@ -135,6 +143,10 @@ def check_files(root):
             problems.append(f"{rel}: {len(data)} bytes, at or over 256 KiB")
         if b"\0" in data or not _utf8(data):
             problems.append(f"{rel}: not a text file")
+        if SECRET_NAME.match(path.name):
+            problems.append(f"{rel}: named like a credential file")
+        elif SECRET_TEXT.search(data.decode("utf-8", "replace")):
+            problems.append(f"{rel}: holds text shaped like a credential")
         if path.suffix in (".mcpb", ".dxt", ".pyc", ".pyo", ".pyd"):
             problems.append(f"{rel}: bundle or compiled file")
     count = sum(1 for p in files if p.is_file())

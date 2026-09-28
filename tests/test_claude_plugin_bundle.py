@@ -36,26 +36,29 @@ def test_the_build_passes_every_rule(plugin):
     assert rules.check_bundle(plugin) == []
 
 
-def _shipping_package_files():
-    """Package files git would commit (tracked plus new, minus ignored), or None."""
+def _tracked_files(folder):
+    """The files git tracks under folder that exist, relative to it, or None. The
+    build ships exactly these, minus caches and bytecode."""
+    git = load("find_program").find_program("git", avoid=[ROOT])
+    if git is None:
+        return None
     try:
-        run = subprocess.run(["git", "ls-files", "-z", "--cached", "--others",
-                              "--exclude-standard", "src/articulate"],
-                             cwd=ROOT, capture_output=True, timeout=60)
+        run = subprocess.run([git, "ls-files", "-z", "--cached", folder], cwd=ROOT,
+                             capture_output=True, timeout=60)
     except (OSError, subprocess.SubprocessError):
         return None
     if run.returncode != 0:
         return None
     names = [n.decode("utf-8") for n in run.stdout.split(b"\0") if n]
-    return sorted(n[len("src/articulate/"):] for n in names
-                  if (ROOT / n).is_file())
+    return sorted(n[len(folder) + 1:] for n in names
+                  if (ROOT / n).is_file() and "__pycache__" not in n)
 
 
 def test_the_bundled_source_is_the_package_byte_for_byte(plugin):
     bundled = plugin / "src" / "articulate"
     shipped = sorted(p.relative_to(bundled).as_posix()
                      for p in bundled.rglob("*") if p.is_file())
-    expected = _shipping_package_files()
+    expected = _tracked_files("src/articulate")
     if expected is not None:
         assert shipped == expected
     assert "local_mcp.py" in shipped and "py.typed" in shipped
@@ -63,11 +66,15 @@ def test_the_bundled_source_is_the_package_byte_for_byte(plugin):
         assert (bundled / rel).read_bytes() == (PKG / rel).read_bytes(), rel
 
 
-def test_every_template_file_lands_unchanged(plugin):
-    for path in TEMPLATE.rglob("*"):
-        if path.is_file():
-            rel = path.relative_to(TEMPLATE)
-            assert (plugin / rel).read_bytes() == path.read_bytes(), rel
+def test_every_tracked_template_file_lands_unchanged_and_nothing_else(plugin):
+    expected = _tracked_files("claude-plugin")
+    assert expected is not None, "the build reads the files git tracks, so this test does"
+    landed = sorted(p.relative_to(plugin).as_posix() for p in plugin.rglob("*")
+                    if p.is_file() and p.relative_to(plugin).parts[0] != "src"
+                    and p.relative_to(plugin).as_posix() != "LICENSE")
+    assert landed == expected
+    for rel in expected:
+        assert (plugin / rel).read_bytes() == (TEMPLATE / rel).read_bytes(), rel
     assert (plugin / "LICENSE").read_bytes() == (ROOT / "LICENSE").read_bytes()
 
 
@@ -152,6 +159,9 @@ BREAKS = {
     "skill-tool": (lambda p: _edit(p / "skills" / "prose-review" / "SKILL.md",
                                    "allowed-tools: ", "allowed-tools: Bash, "),
                    "allowed tool Bash"),
+    "secret-name": (lambda p: (p / ".env").write_text("TOKEN=1\n"), "credential"),
+    "secret-text": (lambda p: (p / "server" / "notes.txt").write_text(
+        "key sk-" + "ant-" + "PLANTED-for-a-test-0000\n"), "credential"),
     "short-readme": (lambda p: (p / "README.md").write_text(
         "# Articulate\n\n## Privacy Policy\n\nNone.\n", encoding="utf-8"),
         "fewer than 40 words"),

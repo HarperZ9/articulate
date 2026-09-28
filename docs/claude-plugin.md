@@ -81,18 +81,29 @@ the one table both servers read.
 ## Build the plugin from this repository
 
 ```bash
-python scripts/build_claude_plugin.py build/claude-plugin
+python scripts/build_claude_plugin.py build/claude-plugin --dev
 python scripts/smoke_claude_plugin.py build/claude-plugin
 ```
 
-The build copies `claude-plugin/`, every file of `src/articulate/` except caches
-and bytecode, and `LICENSE` into the output folder, then checks the result: file
-count and sizes, text-only files, names that work on Windows and macOS, the
-manifest fields, a single server variable, a README of at least 40 words with a
-Privacy Policy section that matches `PRIVACY.md`, and the skill front matter.
-It exits 1 and lists each problem when a check fails. The smoke script starts the
-built server with the command and arguments in `.mcp.json` and prints one line
-for each check, so it is the quick test on a new machine.
+The build copies the files git tracks in `claude-plugin/` and `src/articulate/`,
+except caches and bytecode, and `LICENSE` into the output folder. An untracked
+or ignored file in those folders, such as a `.env`, never ships. The build then
+checks the result: file count and sizes, text-only files, names that work on
+Windows and macOS, no file named or shaped like a credential, the manifest
+fields, a single server variable, a README of at least 40 words with a Privacy
+Policy section that matches `PRIVACY.md`, and the skill front matter. It exits 1
+and lists each problem when a check fails.
+
+Without `--dev` the build is a release build. Before it writes anything, it
+refuses untracked or changed files in the folders it copies, and it refuses
+package code that differs from the release its version names (the tag
+`v<version>`), because Claude Code keeps a user on a plugin until the version
+string changes. It prints the source commit it built from.
+
+The smoke script starts the built server with the command and arguments in
+`.mcp.json` and prints one line for each check, so it is the quick test on a new
+machine. It looks `python3` up on absolute `PATH` entries outside the working
+folder and the plugin folder; `--command` names another interpreter.
 
 To check the manifest with Claude Code itself:
 
@@ -106,10 +117,17 @@ your own Claude Code configuration alone.
 ## Publish a new version
 
 1. Release the package version first. The plugin's `version` must equal the
-   package version, and a test holds the two equal.
-2. Build into a clone of the plugin repository with `--replace`, which rewrites
-   every file the build owns and keeps `.git`.
-3. Run the smoke script on the build, commit, and push.
+   package version, and a test holds the two equal. A release build refuses
+   package code that differs from that release.
+2. From a clean checkout of the release commit, build into a clone of the plugin
+   repository with `--replace`, which rewrites every file the build owns and
+   keeps `.git`.
+3. Run the smoke script on the build, commit with the source commit the build
+   printed in the message, and push.
+
+Each user's Claude Code starts whatever the plugin repository's default branch
+holds at their next session after an update, so that branch needs protection
+with a required review.
 
 The plugin folder is the root of its own repository. Claude's directory holds a
 Python server in a plugin that sits in a subfolder of a larger repository for a

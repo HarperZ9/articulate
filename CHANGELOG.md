@@ -29,6 +29,16 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 - **`check` returns up to `max_hits` span records**, 50 by default, so a long
   document's result fits a host's output limit. The gate and `rule_counts` still
   cover every finding, and `hits_omitted` says how many records were left out.
+- **The plugin build copies only the files git tracks**, so an untracked or
+  ignored file such as a `.env` never ships, and its checks refuse a file named
+  or shaped like a credential. A release build, the default, also refuses a
+  working tree with untracked or changed files and package code that differs
+  from the release its version names, and prints the source commit; `--dev`
+  skips those two checks for a test build. The plugin template ships a
+  `.gitignore`.
+- **The plugin scripts start `git` and `python3` only from an absolute `PATH`
+  entry outside the working folder**, so a planted file of that name never runs.
+- **CI jobs read the repository only** (`permissions: contents: read`).
 - **Protocol details.** The stdio server answers `ping`, marks a result whose
   `ok` field is false as an error, returns compact JSON with non-ASCII text left
   readable, and its doctor tool reports the Python version, the tool set, the

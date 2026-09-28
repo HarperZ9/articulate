@@ -9,7 +9,9 @@ adds the declared env to this environment, starts the declared command, and
 sends one batch of requests: initialize, tools/list, ping, two check calls with
 non-ASCII text, a call to a hosted tool, and doctor. It prints one line per check
 and exits 1 when any check fails. --command replaces the interpreter, for a
-machine where the one to test has another name.
+machine where the one to test has another name. Without it, the declared command
+is looked up on absolute PATH entries outside the working folder and the plugin
+folder, so a file named python3 in either never runs.
 
 Run it on each operating system the plugin supports. It needs only the Python
 standard library, and the server it starts sends nothing over the network.
@@ -20,6 +22,10 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from find_program import find_program  # noqa: E402  (the path is set just above)
 
 HOSTED = ("judge", "fix", "polish")
 # A quoted marketing line: the quotation exemption must keep it from being a
@@ -40,7 +46,12 @@ def launch_spec(plugin_dir, command=None, drop=(), extra_env=None):
         del args[at:at + (2 if flag == "-X" else 1)]
     env = dict(os.environ, CLAUDE_PLUGIN_ROOT=root, **entry.get("env", {}))
     env.update(extra_env or {})
-    return [command or entry["command"]] + args, env
+    if command is None:
+        command = find_program(entry["command"], avoid=[Path.cwd(), plugin_dir])
+        if command is None:
+            raise SystemExit(f"{entry['command']} was not found on an absolute PATH "
+                             "entry outside the working folder; pass --command")
+    return [command] + args, env
 
 
 def _requests():
