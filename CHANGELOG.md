@@ -10,7 +10,7 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 - **Claude plugin.** `claude-plugin/` and `scripts/build_claude_plugin.py` build
   Articulate Writing, a plugin for Claude Code that carries the
-  package source, starts the standard-library server with `python3 -I -B -X
+  package source, starts the standard-library server with `python3 -I -S -B -X
   utf8`, lists only the local tools, and bundles a `prose-review` skill. The
   plugin's README holds its privacy policy. `scripts/smoke_claude_plugin.py`
   starts a built plugin's server the way Claude Code does and checks its answers.

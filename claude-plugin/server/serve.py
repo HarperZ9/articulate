@@ -3,12 +3,14 @@
 
 Claude Code runs this file as
 
-    python3 -I -B -X utf8 ${CLAUDE_PLUGIN_ROOT}/server/serve.py
+    python3 -I -S -B -X utf8 ${CLAUDE_PLUGIN_ROOT}/server/serve.py
 
--I keeps Python from reading PYTHONPATH, the user site-packages folder and any
-other installed copy of articulate, so the copy in this plugin is the one that
-runs. -B keeps Python from writing bytecode into the plugin folder. -X utf8 makes
-the standard streams UTF-8; the server also switches them itself.
+-I keeps Python from reading PYTHONPATH and the user site-packages folder, and
+from putting the working folder on the module path. -S skips the site module, so
+no site-packages folder is searched and no .pth file there runs: the server runs
+on the standard library and this plugin's source, which the path insert below
+puts first. -B keeps Python from writing bytecode into the plugin folder.
+-X utf8 makes the standard streams UTF-8; the server also switches them itself.
 
 The server reads JSON-RPC requests on stdin and writes responses on stdout. It
 opens no network connection, starts no other program and writes no file.

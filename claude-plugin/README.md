@@ -54,8 +54,8 @@ connected.
 
 | What | Detail |
 |:-|:-|
-| Processes | One: `python3 -I -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. It runs the first `python3` on your PATH, which is a virtual environment's Python when you have one activated. |
-| Files | It loads its own source from the plugin folder and the Python standard library. It opens none of your files and writes no file: no log, no cache, no bytecode. |
+| Processes | One: `python3 -I -S -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. It runs the first `python3` on your PATH, which is a virtual environment's Python when you have one activated. |
+| Files | It loads its own source from the plugin folder and the Python standard library, and no installed package: `-S` skips every site-packages folder. It opens none of your files and writes no file: no log, no cache, no bytecode. |
 | Network | None. It opens no connection. |
 | Other programs | None. |
 | Settings | It sets `ARTICULATE_MCP_TOOLS=local` and `ARTICULATE_LOCAL_ONLY=1` for its own process and changes no Claude setting. |

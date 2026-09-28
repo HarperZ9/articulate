@@ -35,12 +35,16 @@ claude plugin install articulate-writing@articulate-writing
 Claude Code starts one process for the session:
 
 ```text
-python3 -I -B -X utf8 ${CLAUDE_PLUGIN_ROOT}/server/serve.py
+python3 -I -S -B -X utf8 ${CLAUDE_PLUGIN_ROOT}/server/serve.py
 ```
 
-`-I` keeps Python from reading `PYTHONPATH`, the user site-packages folder and
-any other installed copy of Articulate, so the plugin's copy is the one that
-runs. `-B` stops Python from writing bytecode into the plugin folder. `-X utf8`
+`-I` keeps Python from reading `PYTHONPATH` and the user site-packages folder,
+and from putting the working folder on the module path. `-S` skips the site
+module, so no site-packages folder is searched and no `.pth` file there runs,
+including one in an activated virtual environment: the server runs on the
+standard library and the plugin's own copy of Articulate, which `serve.py` puts
+first on the path. `-B` stops Python from writing bytecode into the plugin
+folder. `-X utf8`
 makes the standard streams UTF-8, and the server switches them to UTF-8 itself
 as well, because Windows reads a pipe in the console code page by default.
 

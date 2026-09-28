@@ -5,7 +5,9 @@ with this test run's Python in place of python3, so every Python in the CI
 matrix starts the bundled server through the launcher and the exact arguments in
 .mcp.json. Claude Code reads the server's stdin as UTF-8 bytes; the cases here
 also force a legacy code page on stdin, which is how Windows reads it by
-default, and put a decoy on PYTHONPATH that the launcher flags must keep out.
+default, put a decoy on PYTHONPATH that the launcher flags must keep out, and
+start the server from a virtual environment whose site-packages holds a .pth file
+that -S must keep out.
 """
 import subprocess
 import sys
@@ -70,11 +72,16 @@ def _base_env():
 
 
 def _decoy(tmp_path):
-    """A PYTHONPATH folder whose sitecustomize stops any Python that reads it."""
+    """A PYTHONPATH folder that stops any Python that reads it: a sitecustomize,
+    which the site module runs, and a json module, which shadows the standard
+    library one the server imports. -S alone keeps the first out; only -I keeps
+    the second out."""
     decoy = tmp_path / "decoy"
     decoy.mkdir()
-    (decoy / "sitecustomize.py").write_text(
-        "import sys\nsys.stderr.write('DECOY LOADED\\n')\nsys.exit(7)\n", encoding="utf-8")
+    for name in ("sitecustomize.py", "json.py"):
+        (decoy / name).write_text(
+            "import sys\nsys.stderr.write('DECOY LOADED\\n')\nsys.exit(7)\n",
+            encoding="utf-8")
     return {"PYTHONPATH": str(decoy)}
 
 
@@ -114,3 +121,34 @@ def test_the_launcher_says_when_the_bundled_source_is_missing(plugin, tmp_path):
     run = _run_launcher(lonely / "serve.py")
     assert run.returncode == 1
     assert "bundled source is missing" in run.stderr
+
+
+@pytest.fixture(scope="module")
+def venv_with_pth(tmp_path_factory):
+    """A virtual environment whose site-packages holds a .pth file that announces
+    itself. Python runs the import lines of a .pth file at startup, before any
+    script, so -I alone cannot keep it out; only skipping the site module does."""
+    import os
+    import pathlib
+    venv = tmp_path_factory.mktemp("venv") / "env"
+    subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(venv)],
+                   check=True, timeout=300, capture_output=True)
+    python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    purelib = subprocess.run(
+        [str(python), "-c", "import sysconfig; print(sysconfig.get_paths()['purelib'])"],
+        check=True, capture_output=True, text=True, timeout=60).stdout.strip()
+    pathlib.Path(purelib, "decoy.pth").write_text(
+        "import sys; sys.stderr.write('PTH LOADED' + chr(10))\n", encoding="utf-8")
+    return str(python)
+
+
+def test_the_launch_flags_keep_site_packages_code_out(plugin, venv_with_pth):
+    results, stderr = smoke.smoke(plugin, command=venv_with_pth)
+    assert not _failures(results), (_failures(results), stderr)
+    assert "PTH LOADED" not in stderr
+
+
+def test_the_pth_decoy_runs_when_the_site_flag_is_dropped(plugin, venv_with_pth):
+    """Control: without -S the same interpreter runs the .pth file under -I."""
+    _results, stderr = smoke.smoke(plugin, command=venv_with_pth, drop=("-S",))
+    assert "PTH LOADED" in stderr
