@@ -10,8 +10,8 @@ randrange, so the old draw could give a different interval on a newer Python.
   wilson          95% Wilson score interval for a proportion
   newcombe        95% Newcombe hybrid-score interval for p1 - p2 (method 10)
   stratified_diff a difference of proportions pooled over strata (score bands)
-                  with Cochran-Mantel-Haenszel weights, plus a Newcombe-style
-                  interval built from the pooled counts
+                  with Cochran-Mantel-Haenszel weights, with a Sato interval
+  cluster_boot_diff   percentile bootstrap of p1 - p2 over whole clusters
   boot2           percentile bootstrap for a statistic of two independent samples
   mcnemar_exact   two-sided exact McNemar p-value from the discordant counts
   poisson_exact   exact (Garwood) 95% interval for a Poisson count
@@ -52,21 +52,46 @@ def newcombe(k1, n1, k2, n2):
 
 
 def stratified_diff(strata):
-    """strata: list of (k1, n1, k2, n2), one per score band. Returns the
-    CMH-weighted difference and an interval from the pooled Newcombe limits
-    scaled to the weighted estimate, or None when no stratum has both arms."""
+    """strata: list of (k1, n1, k2, n2), one per score band or cell. Returns the
+    Mantel-Haenszel (CMH-weighted) difference p1 - p2 over the strata that hold
+    both arms, with a 95% interval from Sato's variance estimator (Sato 1989,
+    Biometrics 45: 1323-1324), which holds with many small strata as well as a
+    few large ones. None when no stratum has both arms. (Ruleset 0.9.0 harness;
+    the interval before it took the crude pooled width, re-centred.)"""
     usable = [s for s in strata if s[1] and s[3]]
     if not usable:
         return None
-    weights = [(n1 * n2) / (n1 + n2) for _k1, n1, _k2, n2 in usable]
-    total = sum(weights)
-    d = sum(w * (k1 / n1 - k2 / n2) for w, (k1, n1, k2, n2) in zip(weights, usable)) / total
-    k1 = sum(s[0] for s in usable)
-    n1 = sum(s[1] for s in usable)
-    k2 = sum(s[2] for s in usable)
-    n2 = sum(s[3] for s in usable)
-    pooled, (lo, hi) = newcombe(k1, n1, k2, n2)
-    return d, (d - (pooled - lo), d + (hi - pooled))
+    w = p = q = 0.0
+    num = 0.0
+    for k1, n1, k2, n2 in usable:
+        n = n1 + n2
+        w += n1 * n2 / n
+        num += (k1 * n2 - k2 * n1) / n
+        p += (n1 * n1 * k2 - n2 * n2 * k1 + n1 * n2 * (n2 - n1) / 2) / (n * n)
+        q += (k1 * (n2 - k2) + k2 * (n1 - k1)) / (2 * n)
+    d = num / w
+    half = Z * math.sqrt(max(0.0, d * p + q)) / w
+    return d, (d - half, d + half)
+
+
+def cluster_boot_diff(prot, ref, seed=SEED, b=2000):
+    """(p1 - p2, (low, high)) for two arms of (cluster, outcome) pairs: a
+    percentile bootstrap that resamples whole clusters within each arm, so texts
+    by one writer are drawn together."""
+    def groups(rows):
+        out = {}
+        for c, y in rows:
+            out.setdefault(c, []).append(y)
+        return [out[c] for c in sorted(out)]
+
+    def rate(clusters):
+        n = sum(len(c) for c in clusters)
+        return sum(sum(c) for c in clusters) / n if n else float("nan")
+
+    gp, gr = groups(prot), groups(ref)
+    rng = random.Random(seed)
+    out = [rate(_draw(rng, gp)) - rate(_draw(rng, gr)) for _ in range(b)]
+    return rate(gp) - rate(gr), percentile(out)
 
 
 def _draw(rng, xs):

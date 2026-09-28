@@ -6,9 +6,12 @@ A manifest names each corpus with its licence, upstream location and retrieval
 date, and lists every document by path and SHA-256 with its set, an optional
 prompt id, an optional human score and a key that pairs a document with its
 rewrite. A corpus released as one CSV table is named by a `tables` entry: the
-file's SHA-256, the id, text, prompt and score columns, and for each set the
-column values that select its rows. Rows that share an id are one document, and
-their texts must agree. Such a manifest lists no document rows.
+file's SHA-256, the id, text, prompt and score columns, an optional writer
+column, and for each set the column values that select its rows. Rows that
+share an id are one document, and their texts must agree. Such a manifest lists
+no document rows. A listed document row may name its writer too. The writer
+is read only to group texts by one writer in a report-only interval
+(fairness_reports); it never reaches a receipt.
 
 A set carries group labels as dimension=value pairs (first_language,
 disability, input_method, register, age_band, proficiency) and an optional
@@ -178,7 +181,7 @@ def _table_rows(t, base):
 
 
 def _read_table(t, reader):
-    cols = [t[k] for k in ("id", "text", "prompt", "score") if t.get(k)]
+    cols = [t[k] for k in ("id", "text", "prompt", "score", "writer") if t.get(k)]
     absent = [c for c in cols + [k for w in t["sets"].values() for k in w]
               if c not in (reader.fieldnames or ())]
     if absent:
@@ -194,9 +197,11 @@ def _read_table(t, reader):
                 raise CorpusError(f"table {t['path']!r}: id {key} has more than one text")
             continue
         score = row.get(t.get("score") or "", "").strip()
+        writer = row.get(t["writer"], "").strip() if t.get("writer") else ""
         docs[key] = ({"set": name, "path": f"{t['path']}#{key}", "key": key,
                       "prompt": row.get(t.get("prompt") or "") or None,
-                      "score": int(score) if score.isdigit() else None}, text)
+                      "score": int(score) if score.isdigit() else None,
+                      "writer": writer or None}, text)
     yield from docs.values()
 
 

@@ -21,6 +21,7 @@ Standard library only.
 """
 from __future__ import annotations
 
+from . import fairness_reports as R
 from . import fairness_stats as S
 
 THRESHOLDS = {
@@ -95,6 +96,11 @@ def g1(prot, ref):
     if dp and dr:
         est, (dlo, dhi) = S.boot2(dp, dr, lambda a, b: S.median(a) - S.median(b), b=2000)
         out["density_median_diff"] = [round(est, 2), [round(dlo, 2), round(dhi, 2)]]
+    # Report only (fairness_reports): never part of out["pass"].
+    for name, report in (("writer_cluster", R.writer_cluster(prot, ref)),
+                         ("length_quintiles", R.length_quintiles(prot, ref))):
+        if report is not None:
+            out[name] = report
     return out
 
 
@@ -173,7 +179,7 @@ def g3(a_docs, b_docs):
     b = sum(1 for p, q in pairs if p["blocked"] and not q["blocked"])
     c = sum(1 for p, q in pairs if q["blocked"] and not p["blocked"])
     return {"pairs": len(pairs), "original_only": b, "rewrite_only": c,
-            "mcnemar_p": round(S.mcnemar_exact(b, c), 4), "gates": False}
+            "mcnemar_p": S.mcnemar_exact(b, c), "gates": False}
 
 
 def g5(prot, ref, cadence_gates):

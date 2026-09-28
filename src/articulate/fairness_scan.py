@@ -62,3 +62,19 @@ def scan(docs, configs, members, jobs=1, chunksize=4):
         texts = [text for _row, text in docs]
         for (row, _text), per in zip(docs, ex.map(_scan, texts, chunksize=chunksize)):
             yield row, per
+
+
+def collect(man, base, configs, members, jobs=1):
+    """measurements[config][set] = [doc measurement], plus layout changes. With
+    jobs above 1 the documents are scanned in that many processes; results come
+    back in document order, so the receipt is the same."""
+    meas = {k: {} for k in configs}
+    layout = {k: 0 for k in configs}
+    for row, per_config in scan(F.corpora.load_documents(man, base), configs, members, jobs):
+        for key, (m, changed) in zip(configs, per_config):
+            m.update({"key": row.get("key"), "score": row.get("score"),
+                      "prompt": row.get("prompt"), "writer": row.get("writer")})
+            meas[key].setdefault(row["set"], []).append(m)
+            if changed:
+                layout[key] += 1
+    return meas, layout

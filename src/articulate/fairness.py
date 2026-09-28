@@ -162,23 +162,6 @@ def configs_for(names):
     return configs, members
 
 
-def _collect(man, base, configs, members, jobs=1):
-    """measurements[config][set] = [doc measurement], plus layout changes. With
-    jobs above 1 the documents are scanned in that many processes; results come
-    back in document order, so the receipt is the same (fairness_scan)."""
-    from .fairness_scan import scan
-    meas = {k: {} for k in configs}
-    layout = {k: 0 for k in configs}
-    for row, per_config in scan(corpora.load_documents(man, base), configs, members, jobs):
-        for key, (m, changed) in zip(configs, per_config):
-            m.update({"key": row.get("key"), "score": row.get("score"),
-                      "prompt": row.get("prompt")})
-            meas[key].setdefault(row["set"], []).append(m)
-            if changed:
-                layout[key] += 1
-    return meas, layout
-
-
 def _for_config(man, sets, names, cadence_gates, notes=False):
     out = {"profiles": names, "comparisons": {}, "skipped": [], "g7": {}, "pairs": {}}
     for c in man.get("comparisons", []):
@@ -237,14 +220,15 @@ def run(manifest_path, names=None, cadence_gates=False, root=None, jobs=1):
     bound = bound_profiles()
     names = names or (bound + list(house_profiles()))
     configs, members = configs_for(names)
-    meas, layout = _collect(man, base, configs, members, jobs)
+    from .fairness_scan import collect
+    meas, layout = collect(man, base, configs, members, jobs)
     results = {}
     for i, (key, sets) in enumerate(sorted(meas.items(), key=lambda kv: members[kv[0]])):
         notes = bool({profiles.DEFAULT, *house_profiles()} & set(members[key]))
         res = _for_config(man, sets, members[key], cadence_gates, notes)
         res["g4"] = {"changed": layout[key], "applies": _layout_applies(configs[key])}
         results[f"config-{i}"] = res
-    return {
+    rec = {
         "schema": SCHEMA, "ruleset_version": ruleset_fingerprint(), "scan_algo": SCAN_ALGO,
         "manifest_sha256": man_hash, "python": sys.version.split()[0],
         "corpora": man.get("corpora"), "bound_profiles": bound,
@@ -253,6 +237,12 @@ def run(manifest_path, names=None, cadence_gates=False, root=None, jobs=1):
         "g6": G.G6_NOT_RUN, "results": results,
         "gates": _gate_summary(results, bound), "does_not_prove": DOES_NOT_PROVE,
     }
+    if man.get("report_only"):
+        # A report-only manifest gates no release, so its receipt says so and
+        # carries no release verdict (fairness review 16).
+        rec["report_only"] = man["report_only"]
+        del rec["gates"]["release_ok"]
+    return rec
 
 
 def release_check(directory, published=None):
