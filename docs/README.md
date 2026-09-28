@@ -22,7 +22,7 @@ output is a suggestion that no receipt reproduces.
   held-out school essays, gate by gate.
 - [Boundaries](boundaries.md): what each output means and never means. Read this
   before you rely on any of them.
-- [Claude plugin](claude-plugin.md): the local checks in Claude Code and Cowork,
+- [Claude plugin](claude-plugin.md): the local checks in Claude Code,
   what the plugin runs, and how to build it.
 
 ## The one boundary worth stating up front

@@ -10,7 +10,8 @@ that shows the problem.
 ## What counts
 
 - Text leaving your computer, or a network connection of any kind.
-- A file created, changed or read outside the plugin folder.
+- A file created or changed anywhere, or read outside the plugin folder and the
+  Python installation.
 - A program started by the plugin, or code run through its launcher.
 - A line in a checked document that makes a tool do anything beyond checking it.
 - An input that crashes the server or keeps it busy for a long time.

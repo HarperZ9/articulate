@@ -23,10 +23,11 @@ _EDITOR = ("It sends the text to a hosted model through the claude CLI and retur
 
 TOOLS = {
     "check": ("Check a passage for named prose patterns. Runs fully local with no "
-              "network call. Returns up to max_hits findings (50 by default), each with "
-              "its rule, tier, line and span and whether it blocks under the profile; "
-              "per-rule counts and the gate (ok or blocked) with the count of blocking "
-              "findings cover every finding. Also returns density with an interval at "
+              "network call. Returns up to max_hits HIGH and MEDIUM findings (50 by "
+              "default), each with its rule, tier, line and span and whether it blocks "
+              "under the default profile, and a count of LOW advisories; per-rule "
+              "counts and the gate (ok or blocked) with the count of blocking findings "
+              "cover every finding. Also returns density with an interval at "
               "250 words or more, and passive-voice and adverb rates. The `clean` field "
               "is deprecated and leaves in package 0.7.0. " + DOES_NOT_PROVE),
     "score": ("Per-rule counts, density per 1,000 words with an exact interval (shown "

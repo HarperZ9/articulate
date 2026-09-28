@@ -4,14 +4,16 @@ Articulate Writing checks prose on your computer before you ship it. It names
 writing patterns such as filler openers, stacked hedges and unsupported
 superlatives, shows the line and the words where each one occurs, and gives the
 reason each one costs a reader. Use it on documentation, READMEs, release notes,
-commit messages and drafts. The text stays on your machine.
+commit messages and drafts. The checker runs on your computer and sends the text
+nowhere; Claude still reads the text as part of your conversation.
 
 ## What you get
 
-- `check` returns each finding with its rule, tier, line, span and reason, and
-  a gate (`ok` or `blocked`) with the count of blocking findings. A long document
-  returns the first 50 span records by default; the gate and the per-rule counts
-  always cover every finding.
+- `check` returns each HIGH and MEDIUM finding with its rule, tier, line, span
+  and reason, a count of LOW advisories (`advisory_count`), and a gate (`ok` or
+  `blocked`) under the default profile with the count of blocking findings. A
+  long document returns the first 50 span records by default; the gate and the
+  per-rule counts always cover every finding.
 - `score` returns per-rule counts, density per 1,000 words with an interval at
   250 words or more, and the passive-voice and adverb rates.
 - `articulate.status` reports the server version, and `articulate.doctor`
@@ -21,8 +23,9 @@ commit messages and drafts. The text stays on your machine.
 
 ## Requirements
 
-- Claude Code, or Cowork on your own computer. Chat on claude.ai loads the skill
-  and does not start the local checker.
+- Claude Code. The plugin is tested in Claude Code on Windows and Linux. Cowork
+  also loads plugins, and this plugin has not been tested there. Chat on
+  claude.ai loads the skill and does not start the local checker.
 - Python 3.9 or later, runnable as `python3`. Nothing else to install: the
   plugin carries its own copy of the checker, which uses only the Python
   standard library.
@@ -50,8 +53,8 @@ connected.
 
 | What | Detail |
 |:-|:-|
-| Processes | One: `python3 -I -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. |
-| Files | It loads its own source from the plugin folder. It opens none of your files and writes no file: no log, no cache, no bytecode. |
+| Processes | One: `python3 -I -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. It runs the first `python3` on your PATH, which is a virtual environment's Python when you have one activated. |
+| Files | It loads its own source from the plugin folder and the Python standard library. It opens none of your files and writes no file: no log, no cache, no bytecode. |
 | Network | None. It opens no connection. |
 | Other programs | None. |
 | Settings | It sets `ARTICULATE_MCP_TOOLS=local` and `ARTICULATE_LOCAL_ONLY=1` for its own process and changes no Claude setting. |
@@ -63,7 +66,8 @@ line. The plugin does not list them, and the two settings above turn them off.
 ## Privacy Policy
 
 Last updated: 2026-09-27. This policy covers the Articulate Writing plugin for
-Claude.
+Claude. It is also published at
+https://github.com/HarperZ9/articulate/blob/main/claude-plugin/PRIVACY.md.
 
 **Data collected.** The plugin reads only the text Claude passes to one of its
 tools in a call. It does not read your files, your conversation history or
@@ -80,15 +84,17 @@ and that conversation includes any text you ask Claude to check. Anthropic's
 privacy policy and your account settings govern that data.
 
 **Retention.** The plugin keeps nothing after a call returns. The text and the
-result remain only in your Claude conversation, which Claude Code and your
-Claude account settings govern.
+result remain in your Claude conversation, which your Claude account settings
+govern. Claude Code also saves a copy of the conversation on your computer, tool
+calls and results included, and its own settings govern that copy.
 
 **Contact.** Ask a question about this policy or the plugin at
 https://github.com/HarperZ9/articulate/issues. Report a security problem
 privately as SECURITY.md describes.
 
 **Changes.** A change to this policy ships in a new plugin version with a new
-date above, and the repository changelog lists it.
+date above, and the changelog at
+https://github.com/HarperZ9/articulate/blob/main/CHANGELOG.md lists it.
 
 ## Troubleshooting
 
@@ -96,12 +102,12 @@ date above, and the repository changelog lists it.
 start `python3`, or the Python it found is too old. Check with `python3
 --version` in a terminal.
 
-- Windows, "Python was not found" or a Microsoft Store window: install Python
-  with the Python install manager from python.org or from the Microsoft Store.
-  Both provide `python3`. The older python.org installer provides `python` and
-  `py` only. Restart Claude Code afterwards.
+- Windows, "Python was not found" or a Microsoft Store window: install the
+  Python install manager, which provides `python3`. The traditional python.org
+  installer provides `python` and no `python3`. Restart Claude Code afterwards.
 - macOS, a prompt to install the command line developer tools: accept it, or
-  install Python from python.org or Homebrew.
+  install Python from python.org or Homebrew. The plugin has not been tested on
+  macOS yet.
 - Linux: install the `python3` package with your distribution's package
   manager.
 - "needs Python 3.9 or later": install a newer Python 3 and restart Claude

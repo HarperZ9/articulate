@@ -13,9 +13,9 @@ local check as a tool that deletes data and reaches the network.
 
 The local tools read the text they are given and nothing else: no file, no
 network, no other program. The hosted tools send the text to a hosted model
-through the claude CLI. They change none of the user's files, and they are marked
-as not read-only so a host asks before each call: the text leaves the machine and
-the call spends the user's quota.
+through the claude CLI. They edit none of the user's files, though the claude CLI
+saves its own session record, and they are marked as not read-only so a host asks
+before each call: the text leaves the machine and the call spends the user's quota.
 
 Standard library only.
 """

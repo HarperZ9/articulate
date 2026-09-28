@@ -81,6 +81,20 @@ def test_a_hidden_tool_refuses_by_name_and_starts_nothing(monkeypatch, no_proces
     assert local_mcp.TOOLS_VAR + "=all" in message
 
 
+@pytest.mark.parametrize("name", sorted(HOSTED))
+def test_the_plugin_refusal_points_to_no_switch(monkeypatch, no_process, name):
+    """Under the plugin's settings a hidden tool says only that this server runs
+    the local checks. A how-to for listing the hosted tools would steer Claude
+    toward editing the plugin's settings, which the plugin cannot honor."""
+    monkeypatch.setenv(local_mcp.TOOLS_VAR, "local")
+    monkeypatch.setenv("ARTICULATE_LOCAL_ONLY", "1")
+    result = _call(name, {"text": "A short passage."})
+    assert result["isError"] is True
+    message = result["content"][0]["text"]
+    assert "local checks only" in message, message
+    assert "=all" not in message and local_mcp.TOOLS_VAR not in message, message
+
+
 def test_a_failed_hosted_call_is_marked_as_an_error(monkeypatch, no_process):
     monkeypatch.delenv(local_mcp.TOOLS_VAR, raising=False)
     monkeypatch.setenv("ARTICULATE_LOCAL_ONLY", "1")

@@ -1,11 +1,13 @@
 # Claude plugin
 
 Articulate Writing is the Claude plugin form of Articulate. It gives Claude Code
-and Cowork the local `check` and `score` tools, a status and a doctor tool, and a
+the local `check` and `score` tools, a status and a doctor tool, and a
 `prose-review` skill that tells Claude when to run the checks and how to report
-them. The checker runs on your computer and sends the text nowhere. The plugin's
-own README, which is also its listing text, covers install, example prompts, the
-privacy policy and troubleshooting: see `claude-plugin/README.md`.
+them. The checker runs on your computer and sends the text nowhere; Claude reads
+the text as part of your conversation. The plugin is tested in Claude Code on
+Windows and Linux. The plugin's own README, which is also its listing text,
+covers install, example prompts, the privacy policy and troubleshooting: see
+`claude-plugin/README.md`.
 
 ## Install
 
@@ -71,8 +73,10 @@ Every tool in both MCP servers declares a title and all four behavior hints.
 The local tools are read-only, not destructive, idempotent and closed-world.
 The hosted tools are open-world and marked as not read-only, so a host asks
 before each call: the text leaves the machine and the call spends your quota.
-They change none of your files. `src/articulate/tool_meta.py` holds the one
-table both servers read.
+They edit none of your files. The `claude` command line saves its own record of
+each session on disk unless it is started with `--no-session-persistence`, and
+the package does not pass that option yet. `src/articulate/tool_meta.py` holds
+the one table both servers read.
 
 ## Build the plugin from this repository
 

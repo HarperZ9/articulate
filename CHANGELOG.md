@@ -9,7 +9,7 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 ### Claude plugin, tool titles and hints, UTF-8 input on Windows
 
 - **Claude plugin.** `claude-plugin/` and `scripts/build_claude_plugin.py` build
-  Articulate Writing, a plugin for Claude Code and Cowork that carries the
+  Articulate Writing, a plugin for Claude Code that carries the
   package source, starts the standard-library server with `python3 -I -B -X
   utf8`, lists only the local tools, and bundles a `prose-review` skill. The
   plugin's README holds its privacy policy. `scripts/smoke_claude_plugin.py`
@@ -23,8 +23,9 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   page, so a curly quote arrived as three wrong characters and a quoted passage
   was reported as a finding. It now switches stdin and stdout to UTF-8.
 - **`ARTICULATE_MCP_TOOLS=local`** lists only the tools that send nothing; a
-  hidden tool called by name returns an error that names the variable. Any value
-  other than empty or `all` counts as `local`.
+  hidden tool called by name returns an error. The error names the variable only
+  when the local-only switch is off, since the plugin sets both. Any value other
+  than empty or `all` counts as `local`.
 - **`check` returns up to `max_hits` span records**, 50 by default, so a long
   document's result fits a host's output limit. The gate and `rule_counts` still
   cover every finding, and `hits_omitted` says how many records were left out.

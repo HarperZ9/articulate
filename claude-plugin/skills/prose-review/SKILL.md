@@ -1,6 +1,6 @@
 ---
 name: prose-review
-description: Use when the user asks to review, proofread, lint or tighten prose such as documentation, a README, release notes, an essay, a commit message or a message draft, and wants each problem named with where it occurs and what it costs a reader. Runs the Articulate checks on the user's computer; the text is not sent anywhere.
+description: Use when the user asks to review, proofread, lint or tighten prose such as documentation, a README, release notes, an essay, a commit message or a message draft, and wants each problem named with where it occurs and what it costs a reader. The Articulate checker runs on the user's computer when Claude Code has this plugin's server running; the checker sends the text nowhere, and Claude reads the text as part of the conversation.
 allowed-tools: mcp__plugin_articulate-writing_articulate__check, mcp__plugin_articulate-writing_articulate__score, mcp__plugin_articulate-writing_articulate__articulate_status, mcp__plugin_articulate-writing_articulate__articulate_doctor
 ---
 
@@ -42,11 +42,11 @@ and a `reason` field that says what the pattern costs a reader.
 
 ## When the tools are missing
 
-The checks run as a program on the user's computer. Claude Code and Cowork start
-it when the plugin is enabled. Chat on claude.ai does not start local programs.
-When the `check` tool is not available, tell the user the checks need Claude
-Code or Cowork with this plugin enabled, and do not produce findings in the
-checker's format yourself.
+The checks run as a program on the user's computer. Claude Code starts it when
+the plugin is enabled. Chat on claude.ai does not start local programs. When the
+`check` tool is not available, tell the user the checks need Claude Code with
+this plugin enabled, and do not produce findings in the checker's format
+yourself.
 
 When the plugin is enabled and the tools are still missing, the server did not
 start. Ask the user to open `/mcp` to see its status. The usual cause is a

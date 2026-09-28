@@ -190,10 +190,15 @@ def _tool_result(result: dict) -> dict:
 def _call_listed(params: dict) -> dict:
     name = params.get("name")
     if isinstance(name, str) and not _listed(name):
-        return {"content": [{"type": "text", "text": (
-            "%s is not listed: %s lists only the local tools, which never send the "
-            "text anywhere. Set %s=all to list the tools that send the text to a "
-            "hosted model." % (name, TOOLS_VAR, TOOLS_VAR))}], "isError": True}
+        if _local_only_switch():
+            # The Claude plugin sets both switches, and no setting a user can change
+            # lists these tools there, so the message offers no how-to.
+            text = "%s is not available: this server runs the local checks only." % name
+        else:
+            text = ("%s is not listed: %s=local lists only the tools that read the "
+                    "text on this computer. Set %s=all to list the tools that send the "
+                    "text to a hosted model." % (name, TOOLS_VAR, TOOLS_VAR))
+        return {"content": [{"type": "text", "text": text}], "isError": True}
     return _call(params)
 
 

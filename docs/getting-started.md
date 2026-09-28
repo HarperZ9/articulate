@@ -134,8 +134,8 @@ current directory. The CLI runs in a private empty folder with your user
 settings only, so a document folder's `.claude/settings.json` never loads. The
 check tools (`check`, `score`) need no CLI.
 
-In Claude Code or Cowork, the [Claude plugin](claude-plugin.md) installs the
-check tools with no pip step and lists only the tools that stay on your machine.
+In Claude Code, the [Claude plugin](claude-plugin.md) installs the check tools
+with no pip step and lists only the tools that run on your computer.
 
 ## Where to next
 
