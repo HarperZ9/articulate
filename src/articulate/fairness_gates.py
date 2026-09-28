@@ -135,12 +135,25 @@ def _ratio_ci(hi_docs, lo_docs, rule):
     return _G2_CACHE[key]
 
 
+def _hits_words(docs, rule):
+    return sum(d["rules"].get(rule, 0) for d in docs), sum(d["words"] for d in docs)
+
+
 def g2_state(hi_docs, lo_docs, rule):
-    """The skew state of one rule, in the direction hi over lo."""
+    """The skew state of one rule, in the direction hi over lo. When exactly one
+    arm has no hit, the percentile bootstrap cannot resample a hit that never
+    occurred and its interval collapses, so the interval comes from the exact
+    conditional method (fairness_stats.empty_arm_ratio_ci)."""
     t = THRESHOLDS
     fired_hi = sum(1 for d in hi_docs if d["rules"].get(rule))
     fired_lo = sum(1 for d in lo_docs if d["rules"].get(rule))
-    est, (lo, hi) = _ratio_ci(hi_docs, lo_docs, rule)
+    (h_hi, w_hi), (h_lo, w_lo) = _hits_words(hi_docs, rule), _hits_words(lo_docs, rule)
+    exact = (h_hi == 0) != (h_lo == 0) and w_hi > 0 and w_lo > 0
+    if exact:
+        est = _ratio(hi_docs, lo_docs, rule)
+        lo, hi = S.empty_arm_ratio_ci(h_hi, w_hi, h_lo, w_lo)
+    else:
+        est, (lo, hi) = _ratio_ci(hi_docs, lo_docs, rule)
     share = max(fired_hi / len(hi_docs), fired_lo / len(lo_docs))
     if fired_hi + fired_lo == 0:
         state = "bounded"
@@ -153,9 +166,12 @@ def g2_state(hi_docs, lo_docs, rule):
         state = "bounded"
     else:
         state = "inconclusive"
-    return {"docs": [fired_hi, fired_lo],
-            "per_1000": [round(_pooled(hi_docs, rule), 3), round(_pooled(lo_docs, rule), 3)],
-            "ratio": fmt(est), "ci": [fmt(lo), fmt(hi)], "state": state}
+    out = {"docs": [fired_hi, fired_lo],
+           "per_1000": [round(_pooled(hi_docs, rule), 3), round(_pooled(lo_docs, rule), 3)],
+           "ratio": fmt(est), "ci": [fmt(lo), fmt(hi)], "state": state}
+    if exact:
+        out["ci_method"] = "exact conditional"
+    return out
 
 
 def g2(prot, ref, rules, design):

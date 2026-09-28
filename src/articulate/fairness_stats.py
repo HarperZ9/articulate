@@ -11,6 +11,8 @@ randrange, so the old draw could give a different interval on a newer Python.
   newcombe        95% Newcombe hybrid-score interval for p1 - p2 (method 10)
   stratified_diff a difference of proportions pooled over strata (score bands)
                   with Cochran-Mantel-Haenszel weights, with a Sato interval
+  empty_arm_ratio_ci  exact conditional interval for a rate ratio when one arm
+                  has no hit
   cluster_boot_diff   percentile bootstrap of p1 - p2 over whole clusters
   boot2           percentile bootstrap for a statistic of two independent samples
   mcnemar_exact   two-sided exact McNemar p-value from the discordant counts
@@ -72,6 +74,26 @@ def stratified_diff(strata):
     d = num / w
     half = Z * math.sqrt(max(0.0, d * p + q)) / w
     return d, (d - half, d + half)
+
+
+def clopper_pearson_zero(n, a=0.025):
+    """The one-sided upper limit on a proportion when 0 of n events are seen, at
+    level `a` per side: 1 - a ** (1 / n), the exact Clopper-Pearson bound."""
+    return 1.0 - a ** (1.0 / n)
+
+
+def empty_arm_ratio_ci(hits_hi, words_hi, hits_lo, words_lo):
+    """(low, high) for a ratio of per-word rates hi over lo when one arm has no
+    hit, by the exact conditional method. Given all hits, the empty arm's count
+    is binomial with that arm's share of hits under the ratio; the Clopper-Pearson
+    limit on that share, scaled by the arms' words, bounds the ratio. Hits count
+    as independent, which narrows the interval when a rule fires several times
+    in one document, so the reading errs toward calling a rule skewed."""
+    total = hits_hi + hits_lo
+    share = clopper_pearson_zero(total)
+    if hits_lo == 0:
+        return (1 - share) / share * words_lo / words_hi, float("inf")
+    return 0.0, share / (1 - share) * words_lo / words_hi
 
 
 def cluster_boot_diff(prot, ref, seed=SEED, b=2000):
