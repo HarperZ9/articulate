@@ -23,6 +23,7 @@ from . import editor
 from .local_only import LocalOnly
 from .origin_guard import note as origin_note
 from .origin_guard import strip_origin_guesses
+from .tool_meta import fastmcp_options
 from .tool_text import DOES_NOT_PROVE, TOOLS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -69,23 +70,34 @@ def _mech_summary(text):
 # Plain, testable implementations. The MCP tools are thin wrappers over these.
 # --------------------------------------------------------------------------- #
 
-def do_check(text):
-    """Named prose patterns with span records. Local, no network."""
+def do_check(text, max_hits=None):
+    """Named prose patterns with span records. Local, no network.
+
+    max_hits caps the span records returned, so a long document's result fits a
+    host's output limit; the gate, the counts and rule_counts still cover every
+    finding, and hits_omitted says how many records were left out.
+    """
+    if max_hits is not None and (type(max_hits) is not int or max_hits < 0):
+        raise ValueError("max_hits must be a whole number of 0 or more")
     r = core.check_text(text, house_notes=False)
     hits = sorted(r["high"] + r["medium"], key=lambda h: h["start"])
-    return {
+    omitted = 0 if max_hits is None else max(0, len(hits) - max_hits)
+    out = {
         "gate": r["gate"],
         "findings": r["findings"],
         "blocking": r["blocking"],
         # Deprecated: no HIGH or MEDIUM finding. Kept until package 0.7.0.
         "clean": r["clean"],
-        "hits": hits,
+        "hits": hits[:len(hits) - omitted],
         "advisory_count": len(r["low"]),
         "rule_counts": r["rule_counts"],
         "density": r["density"],
         "cadence": r["cadence"],
         "does_not_prove": DOES_NOT_PROVE,
     }
+    if omitted:
+        out["hits_omitted"] = omitted
+    return out
 
 
 def do_score(text):
@@ -195,8 +207,10 @@ def build_server():
     from fastmcp import FastMCP
     mcp = FastMCP("articulate")
 
-    def check(text: str) -> dict:
-        return do_check(text)
+    def check(text: str, max_hits: int = 50) -> dict:
+        if not 0 <= max_hits <= 1000:
+            raise ValueError("max_hits must be a whole number from 0 to 1000")
+        return do_check(text, max_hits)
 
     def score(text: str) -> dict:
         return do_score(text)
@@ -211,9 +225,10 @@ def build_server():
                is_tex: bool = False) -> dict:
         return do_polish(text, bar, passes, is_html, is_tex)
 
-    # One description table serves both MCP servers (tool_text.TOOLS).
+    # One description table serves both MCP servers (tool_text.TOOLS), and one
+    # title-and-hint table (tool_meta) does the same for the annotations.
     for fn in (check, score, judge, fix, polish):
-        mcp.tool(_described(fn, fn.__name__))
+        mcp.tool(_described(fn, fn.__name__), **fastmcp_options(fn.__name__))
     return mcp
 
 

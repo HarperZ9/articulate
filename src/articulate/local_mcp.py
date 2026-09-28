@@ -21,12 +21,17 @@ else belongs on stderr.
 """
 from __future__ import annotations
 
+import io
 import json
 import sys
 
 from . import __version__
 from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score
 from .tool_text import TOOLS as TOOL_TEXT
+from .local_only import local_only as _local_only_switch
+from .tool_meta import TOOLS_VAR, tool_set
+from .tool_meta import annotations as _annotations
+from .tool_meta import is_listed as _listed
 
 PROTOCOL = "2025-06-18"
 
@@ -38,8 +43,14 @@ _IS_TEX = {"is_tex": {"type": "boolean", "default": False,
                                       "before each model call and restore it byte "
                                       "for byte")}}
 
+_MAX_HITS = {"max_hits": {"type": "integer", "default": 50, "minimum": 0,
+                          "maximum": 1000,
+                          "description": ("the most findings to return in hits; the gate "
+                                          "and rule_counts always cover every finding")}}
+
 _SCHEMAS = {
-    "check": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
+    "check": {"type": "object", "required": ["text"],
+              "properties": dict(_TEXT, **_MAX_HITS)},
     "score": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
     "judge": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
     "fix": {"type": "object", "required": ["text"],
@@ -77,13 +88,38 @@ def _valid_request_id(value) -> bool:
     return type(value) is str or type(value) is int
 
 
+def listed_tools(environ=None) -> list:
+    """The tools/list payload: each listed tool with its title and behavior hints."""
+    return [dict(tool, title=_annotations(tool["name"])["title"],
+                 annotations=_annotations(tool["name"]))
+            for tool in TOOLS if _listed(tool["name"], environ)]
+
+
+def _backend_found() -> bool:
+    from .claude_cli import ClaudeUnavailable, resolve
+    try:
+        resolve()
+    except ClaudeUnavailable:
+        return False
+    return True
+
+
 def _identity(include_detail: bool) -> dict:
     info = {"ok": True, "server": "articulate", "version": __version__,
             "protocol": PROTOCOL}
     if include_detail:
-        info["tools"] = [t["name"] for t in TOOLS]
+        info["tools"] = [t["name"] for t in listed_tools()]
         info["local_only"] = list(LOCAL_ONLY)
         info["needs_llm_backend"] = list(NEEDS_BACKEND)
+        # Facts a user can paste into an issue. None of them is a path.
+        info["tool_set"] = tool_set()
+        info["hidden"] = [t["name"] for t in TOOLS if not _listed(t["name"])]
+        info["python"] = "%d.%d.%d" % sys.version_info[:3]
+        info["local_only_switch"] = _local_only_switch()
+        if info["tool_set"] == "all":
+            # Looked up on the PATH only when the hosted tools are listed, so the
+            # local tool set never reads the file system.
+            info["backend_cli_found"] = _backend_found()
     return info
 
 
@@ -101,11 +137,10 @@ def _call(params: dict) -> dict:
         return {"content": [{"type": "text", "text": "'arguments' must be an object"}],
                 "isError": True}
     if name in ("articulate.status", "articulate.doctor"):
-        info = _identity(name == "articulate.doctor")
-        return {"content": [{"type": "text", "text": json.dumps(info, indent=2)}]}
+        return _tool_result(_identity(name == "articulate.doctor"))
     try:
         if name == "check":
-            result = do_check(_text_arg(args))
+            result = do_check(_text_arg(args), _max_hits(args))
         elif name == "score":
             result = do_score(_text_arg(args))
         elif name == "judge":
@@ -125,7 +160,41 @@ def _call(params: dict) -> dict:
         return {"content": [{"type": "text",
                              "text": "[error] %s: %s" % (type(exc).__name__, exc)}],
                 "isError": True}
-    return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+    return _tool_result(result)
+
+
+def _max_hits(args: dict) -> int:
+    value = args.get("max_hits")
+    if value is None:                 # absent, or null from a client that sends one
+        return 50
+    if type(value) is not int or not 0 <= value <= 1000:
+        raise ValueError("'max_hits' must be a whole number from 0 to 1000; the gate "
+                         "and rule_counts always cover every finding")
+    return value
+
+
+def _tool_result(result: dict) -> dict:
+    """One tool result as MCP content.
+
+    Compact JSON keeps a long check inside a host's output cap, and non-ASCII
+    text stays readable in the result. A result whose ok field is false is marked
+    as an error, so a host never reads a failed call as a success.
+    """
+    out = {"content": [{"type": "text", "text": json.dumps(
+        result, separators=(",", ":"), ensure_ascii=False)}]}
+    if result.get("ok") is False:
+        out["isError"] = True
+    return out
+
+
+def _call_listed(params: dict) -> dict:
+    name = params.get("name")
+    if isinstance(name, str) and not _listed(name):
+        return {"content": [{"type": "text", "text": (
+            "%s is not listed: %s lists only the local tools, which never send the "
+            "text anywhere. Set %s=all to list the tools that send the text to a "
+            "hosted model." % (name, TOOLS_VAR, TOOLS_VAR))}], "isError": True}
+    return _call(params)
 
 
 def handle(req):
@@ -145,13 +214,15 @@ def handle(req):
     if method == "initialize":
         return _ok(rid, {"protocolVersion": PROTOCOL, "capabilities": {"tools": {}},
                          "serverInfo": {"name": "articulate", "version": __version__}})
+    if method == "ping":
+        return _ok(rid, {})
     if method == "tools/list":
-        return _ok(rid, {"tools": TOOLS})
+        return _ok(rid, {"tools": listed_tools()})
     if method == "tools/call":
         params = req["params"] if "params" in req else {}
         if not isinstance(params, dict):
             return _err(rid, -32602, "invalid params")
-        return _ok(rid, _call(params))
+        return _ok(rid, _call_listed(params))
     return _err(rid, -32601, "method not found: %s" % (method,))
 
 
@@ -164,9 +235,24 @@ def handle(req):
 handle_request = handle
 
 
+def _utf8(stream, **options):
+    """Switch a standard stream to UTF-8, the encoding MCP messages use.
+
+    Without this, Windows reads stdin in the console code page (cp1252 on an
+    English install): a curly quote arrives as three wrong characters, the
+    quotation exemption fails, and a quoted passage is reported as a finding.
+    """
+    try:
+        stream.reconfigure(encoding="utf-8", **options)
+    except (AttributeError, ValueError, io.UnsupportedOperation) as exc:
+        sys.stderr.write("articulate-mcp: could not switch %s to UTF-8 (%s); non-ASCII "
+                         "text may be misread\n" % (getattr(stream, "name", "a stream"), exc))
+    return stream
+
+
 def serve(stdin=None, stdout=None) -> int:
-    stdin = stdin if stdin is not None else sys.stdin
-    stdout = stdout if stdout is not None else sys.stdout
+    stdin = stdin if stdin is not None else _utf8(sys.stdin, errors="replace")
+    stdout = stdout if stdout is not None else _utf8(sys.stdout, newline="\n")
     for line in stdin:
         line = line.strip()
         if not line:

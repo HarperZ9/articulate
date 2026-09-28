@@ -17,16 +17,18 @@ DOES_NOT_PROVE = ("These findings name prose patterns and where they occur. They
                   "show who or what wrote the text, and no finding or count is a basis "
                   "for an accusation.")
 
-_EDITOR = ("It sends the text to a hosted model through the claude CLI; the checks "
-           "themselves run offline.")
+_EDITOR = ("It sends the text to a hosted model through the claude CLI and returns "
+           "the result; it edits none of your files. The checks themselves run "
+           "offline.")
 
 TOOLS = {
     "check": ("Check a passage for named prose patterns. Runs fully local with no "
-              "network call. Returns each finding with its rule, tier, line and span, "
-              "whether it blocks under the profile, per-rule counts, the gate "
-              "(ok or blocked) with the count of blocking findings, density with an "
-              "interval at 250 words or more, and passive-voice and adverb rates. The "
-              "`clean` field is deprecated and leaves in package 0.7.0. " + DOES_NOT_PROVE),
+              "network call. Returns up to max_hits findings (50 by default), each with "
+              "its rule, tier, line and span and whether it blocks under the profile; "
+              "per-rule counts and the gate (ok or blocked) with the count of blocking "
+              "findings cover every finding. Also returns density with an interval at "
+              "250 words or more, and passive-voice and adverb rates. The `clean` field "
+              "is deprecated and leaves in package 0.7.0. " + DOES_NOT_PROVE),
     "score": ("Per-rule counts, density per 1,000 words with an exact interval (shown "
               "at 250 words or more), and passive-voice and adverb rates for a passage. "
               "Local, no network. " + DOES_NOT_PROVE),
@@ -45,6 +47,7 @@ TOOLS = {
                "is masked before every model call. " + _EDITOR),
     "articulate.status": ("Liveness and identity of the articulate MCP server (name, "
                           "version, protocol). Network-free health probe."),
-    "articulate.doctor": ("Readiness diagnostic: identity, the tools exposed, and which "
-                          "of them need a model backend and which run local."),
+    "articulate.doctor": ("Readiness diagnostic: identity, the Python version, the "
+                          "tools listed and hidden, and which of them need a model "
+                          "backend. Local, no network."),
 }
