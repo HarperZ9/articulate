@@ -104,7 +104,7 @@ jobs:
         run: |
           python -m venv /tmp/sd
           /tmp/sd/bin/pip install --upgrade pip build
-          /tmp/sd/bin/python -m build --wheel --outdir /tmp/sdout "$(echo dist/*.tar.gz)"
+          /tmp/sd/bin/python -m pip wheel --no-deps --wheel-dir /tmp/sdout "$(echo dist/*.tar.gz)"
           ls -l /tmp/sdout
 
       - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
