@@ -58,7 +58,11 @@ The plugin sets two variables for that process only:
 The server opens no network connection, starts no other program, opens none of
 your files and writes no file. The test suite runs every tool marked local with
 sockets, process creation and file access made to fail, and checks that no
-module keeps a copy of the text after a call.
+module keeps a copy of the text after a call. It also starts the built server
+with the declared command under Python's audit hooks and calls every tool,
+listed and hidden: the session fails on any file opened for writing or outside
+the plugin folder and the Python installation, and on any process, network or
+file-change event.
 
 ## Why the editor tools stay out
 

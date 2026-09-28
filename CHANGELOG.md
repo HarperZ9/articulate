@@ -46,6 +46,10 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 - **The plugin scripts start `git` and `python3` only from an absolute `PATH`
   entry outside the working folder**, so a planted file of that name never runs.
 - **CI jobs read the repository only** (`permissions: contents: read`).
+- **An audit-hook test of the launched plugin.** The built server runs with its
+  declared command behind `sys.addaudithook` for a session that calls every
+  tool; any write, any file outside the plugin and the Python installation, and
+  any process or network event fails it. Planted controls show it catches each.
 - **A long paragraph of many short lines checks in linear time.** Locating a
   match's line scanned every earlier piece, and the paragraph text was copied on
   every line; one paragraph of 20,000 short lines with an unmatched opening
