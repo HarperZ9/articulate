@@ -1,0 +1,24 @@
+{
+  "name": "articulate-writing",
+  "displayName": "Articulate Writing",
+  "version": "0.5.1",
+  "description": "Checks prose on your computer for named writing patterns and shows where each one occurs and what it costs a reader. The checker sends the text nowhere; Claude reads the text as part of your conversation.",
+  "author": {
+    "name": "Zain Dana Harper",
+    "url": "https://github.com/HarperZ9"
+  },
+  "homepage": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md",
+  "repository": "https://github.com/HarperZ9/articulate",
+  "license": "FSL-1.1-MIT",
+  "keywords": [
+    "writing",
+    "prose",
+    "linter",
+    "editing",
+    "documentation",
+    "style"
+  ],
+  "metadata": {
+    "privacyPolicy": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/claude-plugin/PRIVACY.md"
+  }
+}
