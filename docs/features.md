@@ -85,15 +85,56 @@ A clear proof can still be false, and this tool never checks the mathematics.
 
 ## The editor layer
 
-The editor adds the two things a detector cannot do:
+With a model, the editor adds judgment and rewriting:
 
 - `judge` reads the judgment-level failures a regex cannot see: a fluent paragraph
   with no fact a reader could restate, vague abstraction, hedging with no
   committed position, a weak verb carrying the meaning. It reports.
-- `fix` rewrites to a plain, skilled standard, preserving every number, name,
-  citation, term of art, and code span, then re-runs the detector until clean.
+- `fix` rewrites to a plain, skilled standard, checks protected spans, and
+  re-runs the detector. Remaining findings stay visible.
 - `polish` runs a monotonic loop that accepts a pass only when the gate stays
-  clean and no quality score drops, so a rewrite never regresses.
+  clean and no assessed quality score drops. Missing scores leave host-submitted
+  quality unassessed; the model loop keeps the best prior text. These checks bound acceptance;
+  they cannot prove that the meaning or writing quality improved.
+
+Every result identifies its backend, model and failed attempts. The available
+backends are `host`, `sampling`, `anthropic`, `claude-cli`, `openai`, `ollama`
+and `none`, with `auto` choosing for the current surface.
+
+In an MCP session, automatic selection uses sampling only if the client
+advertised that capability. Otherwise it returns an edit plan to the calling
+model before trying a separately billed backend. The host protocol also works
+through `articulate plan` and `articulate submit` without MCP sampling support.
+The plan supplies local findings and their reasons, rewrite or judge
+instructions, masked text, protected spans and a plan ID bound to the source,
+profile and ruleset. The caller submits its rewrite with that ID and the
+original text. Articulate restores masks, checks the guard, reports gate and
+per-rule changes, and returns a receipt with `backend: host`. A caller-supplied
+model name records attribution; it does not authenticate the model.
+
+The guard checks numbers, URLs and link targets, citations, code, math and quoted
+text. A refused span keeps its original wording and gets a reason. The guard
+applies to model and deterministic edits. Protected spans cannot establish
+semantic equivalence: a rewrite can retain every number and still change a claim.
+
+Without a reachable model, `none` makes conservative mechanical edits and
+reports what remains. It can replace clause dashes and remove safe filler or
+extra spaces; it leaves protected content alone. Its `judge` returns local
+findings and reasons without inventing model scores. Backend unavailability
+does not prevent this result. A successful call can still contain blocked
+findings or refused edits; inspect the gate and refusal list.
+
+Plain CLI automatic selection tries configured Anthropic, the Claude CLI,
+configured OpenAI-compatible endpoints, Ollama and `none` in order. Ollama
+uses installed models only and never downloads one. Configuration and the model
+preference order are in the [CLI reference](cli.md#backend-configuration).
+
+Anthropic and the Claude CLI send text to their provider. OpenAI-compatible and
+Ollama backends send it to the configured endpoint, which can be remote. Host
+editing and sampling follow the host's data handling policy. `none` stays local.
+`ARTICULATE_LOCAL_ONLY=1` permits only loopback Ollama and `none`, refusing other
+editor backends before a connection. Plans and edit results contain source text;
+they are separate from content-free detector audit receipts.
 
 The document is treated strictly as data. A trust boundary is appended to every
 model call, so a directive embedded in the text (a line that says to ignore the
@@ -154,7 +195,8 @@ English literals, so they simply do not fire on it.
 
 The same detection reaches you through several surfaces:
 
-- CLI: `check`, `score`, `receipt`, `verify`, `audit`, and `modes`.
+- CLI: `check`, `score`, `receipt`, `verify`, `audit`, `modes`, `plan`, `submit`,
+  `judge`, `fix` and `polish`.
 - LSP server: inline squiggles in VS Code, JetBrains through LSP4IJ, and Neovim.
   It is standard-library only, with no dependency.
 - SARIF: `check --sarif` for GitHub code scanning, Azure DevOps, and reviewdog.

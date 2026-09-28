@@ -4,6 +4,32 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.5.1
+
+The editor can use the calling model, a configured endpoint or deterministic
+editing. An unavailable Claude account no longer ends the editing workflow.
+Detector rules remain unchanged on this patch line.
+
+- MCP `edit_plan` and `edit_submit` let a calling model edit with no second
+  account. Plans bind the source and configuration to a ruleset; submission
+  checks that binding, restores masks and reports protected-span refusals.
+- MCP automatic selection uses sampling only when the client advertises it,
+  otherwise returning a host edit plan. CLI automatic selection tries configured
+  Anthropic, the Claude CLI, configured OpenAI-compatible endpoints, Ollama and
+  deterministic editing. Failed attempts are recorded without credentials.
+- `none` applies conservative mechanical fixes and reports remaining findings.
+  Its judge reports local reasons without model quality scores. Ollama uses
+  installed models and never pulls one.
+- Every rewrite passes the protected-span guard. Refused spans retain their
+  original text; gate and per-rule changes are reported. Protected content
+  surviving a rewrite does not prove unchanged meaning.
+- `ARTICULATE_LOCAL_ONLY=1` allows only loopback Ollama and deterministic editing,
+  refusing other editor backends before a connection. Host and sampling paths
+  follow the calling host's privacy policy when local-only mode is off.
+- CLI `plan`, `submit`, `fix`, `judge` and `polish` expose these paths. Legacy
+  `python -m articulate.editor` commands remain available with `--backend`.
+  Results and editor receipts name the backend, model and failed attempts.
+
 ## 0.5.0
 
 A document folder can no longer run commands through `judge`, `fix` or

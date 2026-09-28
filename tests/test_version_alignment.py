@@ -2,7 +2,7 @@
 
 articulate writes its version in three places: ``pyproject.toml`` for the built
 distribution, ``articulate.__version__`` for anything that asks the running
-package, and the README line that tells a reader what is on PyPI. The MCP
+package, and the README line that names the release being prepared or on PyPI. The MCP
 server reports the module value in its ``serverInfo``, so a client asking which
 version it is talking to gets that one rather than the wheel's.
 
@@ -60,10 +60,11 @@ def test_the_changelog_has_an_entry_for_the_declared_version():
         "without saying what changed")
 
 
-def test_the_readme_names_the_published_version():
+def test_the_readme_names_the_release_version():
     readme = (_ROOT / "README.md").read_text(encoding="utf-8")
     version = _declared_version()
-    stated = re.findall(r"Version (\d+\.\d+\.\d+) is on PyPI", readme)
-    assert stated, "README no longer states which version is on PyPI"
+    stated = re.findall(
+        r"Version (\d+\.\d+\.\d+) is (?:on PyPI|prepared for release)", readme)
+    assert stated, "README no longer states the published or prepared version"
     assert set(stated) == {version}, (
-        f"README says {stated} is on PyPI while the package declares {version}")
+        f"README names release {stated} while the package declares {version}")

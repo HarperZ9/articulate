@@ -44,7 +44,8 @@ say what a verdict and a receipt mean and what they never claim.
   `fix` rewrites to the standard, self-checked against the detector. `polish`
   loops until five qualities (concreteness, commitment, economy, rhythm, a
   restatable fact per paragraph) clear a bar. Gated on writing quality, never a
-  detector score. Needs an LLM backend (local model or the `claude` CLI).
+  detector score. Use the calling model, a configured backend, or mechanical
+  fixes with no model. Every result names its backend and any failed attempts.
 
 ## Use
 
@@ -111,11 +112,38 @@ about whether the theorem is true. A clearly written proof can still be false, a
 Articulate never checks the mathematics. Correctness comes from referees and proof
 assistants (Lean, Coq, Isabelle), never from this tool.
 
+### Editing from a host or the command line
+
+In an MCP host, `fix`, `judge` and `polish` use sampling only when the client
+advertises it. Otherwise they return an edit plan for the calling model.
+The host reads the plan's instructions and masked text, then calls `edit_submit`
+with the original text, its rewrite and the plan ID. Articulate checks protected
+spans and returns the accepted text, gate changes and a host receipt. No second
+model account is needed. Sampling and host edits follow the host's privacy policy.
+
+```bash
+articulate plan notes.md --goal fix > plan.json
+articulate submit notes.md rewrite.md --plan PLAN_ID --model HOST_MODEL
+articulate fix notes.md --backend none --out edited.md
+articulate polish notes.md --backend ollama --json
+```
+
+Replace `PLAN_ID` with the ID in `plan.json`; the host writes `rewrite.md` from
+the plan's masked text. The CLI's `auto` selection tries configured Anthropic,
+the Claude CLI, configured OpenAI-compatible endpoints, Ollama and deterministic
+editing in that order. A failed backend is recorded before the next is tried.
+See the [backend configuration reference](docs/cli.md#backend-configuration).
+
 ## Privacy
 
-The detector never touches the network. The editor layer defaults to a local
-model where configured, and an `--offline` mode is on the roadmap for air-gapped
-use. A content-free audit receipt keeps no verbatim text: it drops the matched
+The detector and `--backend none` never call a model or the network. Anthropic
+and the Claude CLI send text to their provider; an OpenAI-compatible endpoint
+receives text at its configured address. Ollama receives text at its configured
+server. Host editing and MCP sampling share text with the calling host, which
+may use a remote model. Set `ARTICULATE_LOCAL_ONLY=1` to allow only loopback
+Ollama and deterministic editing; other editor backends are refused before a
+connection. Plan payloads and edit results contain document text; handle them
+as source material. A content-free audit receipt keeps no verbatim text: it drops the matched
 substring and the exact offsets, keeping only which rule fired, its tier and
 category, and the line. A team can retain and replay a record without storing the
 sensitive source. Content-free is not zero-leakage: which rules fired and the line
@@ -136,6 +164,7 @@ screenplay, poetry), the editor injection boundary, per-span mixed-authorship
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.5.0 is on PyPI as `articulate-writing`; the
+one package. Version 0.5.1 is prepared for release as `articulate-writing`; the
 [changelog](CHANGELOG.md) records what each release added. A local-model editor
-backend and a labeled non-native corpus for a fairness check remain on the roadmap.
+backend is included. A labeled non-native corpus for a fairness check remains
+on the roadmap for this release line.

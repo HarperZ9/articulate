@@ -1,15 +1,16 @@
 # Getting started
 
 Articulate reads prose and tells you where it reads as machine-written or breaks
-a plain-writing standard, with a line number for each finding. It runs on your
-machine with no network call. This page takes you from install to a first check,
-a first receipt, and an editor squiggle in about five minutes.
+a plain-writing standard, with a line number for each finding. The detector runs on your
+machine with no network call. Model editing follows the selected backend's
+privacy policy. Install the package, run a check, create a receipt and connect
+your editor with the commands below.
 
 ## Install
 
 The core detector needs only Python 3.9 or newer and the standard library.
 
-From PyPI (once published):
+From PyPI:
 
 ```bash
 pip install articulate-writing
@@ -23,8 +24,10 @@ cd articulate
 pip install -e .
 ```
 
-Two console commands are installed: `articulate` (the CLI) and `articulate-lsp`
-(the editor language server). The MCP server surface needs one extra package:
+Three console commands are installed: `articulate` (the CLI), `articulate-lsp`
+(the language server) and `articulate-mcp` (the stdio MCP server). They work from
+a bare install. The optional FastMCP surface, `python -m articulate.mcp_server`,
+uses the `mcp` extra:
 
 ```bash
 pip install "articulate-writing[mcp]"
@@ -43,7 +46,7 @@ You get a one-line verdict per file, then a line for each finding:
 ```
 [articulate] notes.md [flavored]: 2 high, 1 medium (blocked)  texture 41/100
   L3 [HIGH antithesis] not X but Y: This is not a tool, but a force.
-  L7 [HIGH em-dash] em-dash: a long, winding sentence — you know the kind.
+  L7 [HIGH em-dash] em-dash: a clause break using an em dash.
   L9 [MEDIUM register-word] AI-register vocabulary: we leverage synergy here.
 ```
 
@@ -105,26 +108,57 @@ For VS Code, a thin client that launches the same command is in
 ## From an MCP host
 
 `articulate-mcp` serves the tools over stdio from a bare install. Register it
-in the host's MCP configuration. The editor tools (`judge`, `fix`, `polish`)
-run the `claude` CLI, and a host often starts servers with a short PATH, so
-name the CLI by its absolute path:
+in your host's MCP configuration:
 
 ```json
 {
   "mcpServers": {
-    "articulate": {
-      "command": "articulate-mcp",
-      "env": { "ARTICULATE_CLAUDE_CLI": "C:\\Users\\you\\.local\\bin\\claude.exe" }
-    }
+    "articulate": { "command": "articulate-mcp" }
   }
 }
 ```
 
-On macOS or Linux the value looks like `/home/you/.local/bin/claude`. Without
-the variable, the editor searches the absolute PATH entries and never the
-current directory. The CLI runs in a private empty folder with your user
-settings only, so a document folder's `.claude/settings.json` never loads. The
-detection tools (`check`, `score`) need no CLI.
+Ask the host to call `fix`, `judge` or `polish`. If the client advertised MCP
+sampling, Articulate can request the host's model. Otherwise it returns a plan:
+the calling model follows its instructions and calls `edit_submit` with the
+original text, rewrite and plan ID. Articulate checks protected spans, retains
+refused spans and returns the accepted text with a gate and host receipt. The
+same pair is available directly as `edit_plan` and `edit_submit`.
+
+This path needs no second model account. The host can still send text to a
+remote model under its own policy. Plans and edit results contain source text;
+keep them private when the source is private.
+
+## Edit without a model
+
+Mechanical editing works with no account, model or network:
+
+```bash
+articulate fix notes.md --backend none --out edited.md
+articulate judge notes.md --backend none --json
+```
+
+The deterministic backend fixes only conservative mechanical cases and reports
+remaining findings. It does not provide model quality scores or establish that
+a document is accurate. Inspect the gate and refusal list before accepting it.
+
+## Use an installed local model
+
+With Ollama running and a model already installed:
+
+```bash
+articulate fix notes.md --backend ollama --out edited.md
+```
+
+Set `ARTICULATE_LOCAL_MODEL` to choose the installed model. Articulate never
+downloads one. Set `ARTICULATE_LOCAL_ONLY=1` to restrict editor selection to
+loopback Ollama and deterministic editing. This refuses host and hosted editor
+paths before a connection. It does not control the calling host's conversation.
+
+The CLI also supports Anthropic, the Claude CLI and OpenAI-compatible endpoints.
+Automatic selection records unavailable backends and continues to a usable path,
+ending with deterministic editing. See the [backend configuration reference](cli.md#backend-configuration)
+for selection order, credentials and privacy.
 
 ## Where to next
 
