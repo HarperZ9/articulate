@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import re
 
+from . import quotemarks
+
 TRAIL = ".,;:!?'\""
 # A URL run stops at whitespace, an angle bracket, or a quote mark. It takes
 # brackets; url_spans trims the unbalanced ones. The e-mail alternative keeps its
@@ -108,14 +110,34 @@ def _paired(text, opener, closer_of, *, min_body=1, exclusive=False, one_line=Fa
             pos = close + len(closer)
 
 
-_QUOTE_OPEN = re.compile("[\"\u201c]")
-_QUOTE_CLOSE = {"\"": "\"", "\u201c": "\u201d"}
-
-
 def quote_spans(text):
-    """Quoted material on one line, in straight or curly double quotes."""
-    return _paired(text, _QUOTE_OPEN, lambda m: _QUOTE_CLOSE[m.group()],
-                   exclusive=True, one_line=True)
+    """Quoted material on one line, paired as the phrasing rules pair it
+    (articulate.quotemarks): straight and curly quotes, guillemets, low
+    German quotes and CJK corner brackets, each by direction, so an inch mark
+    (6"), an apostrophe or an autocorrected year (\u201890s) opens nothing. An
+    empty pair ("") holds nothing to protect and is no span; it closes where it
+    opens, so the next quotation on the line still pairs on its own."""
+    return [(s, e, None) for s, e in quotemarks.quote_spans(text) if e - s > 2]
+
+
+# Inline code as the meaning guard and the protected spans read it: a double
+# backtick pair may hold a single backtick, and a single pair holds none.
+INLINE_CODE = re.compile(r"``[^\n]+?``|`[^`\n]+`")
+_TICK = re.compile("`")
+
+
+def code_spans(text):
+    """Inline code spans, as (start, end, None). A backtick between two letters
+    is an apostrophe typed on a keyboard that puts it there ("didn`t"), as the
+    rules read it (masking.code_spans), so it neither opens nor closes a span."""
+    chars = None
+    for m in _TICK.finditer(text):
+        i = m.start()
+        if 0 < i < len(text) - 1 and text[i - 1].isalpha() and text[i + 1].isalpha():
+            chars = chars or list(text)
+            chars[i] = "'"
+    seen = text if chars is None else "".join(chars)
+    return [(m.start(), m.end(), None) for m in INLINE_CODE.finditer(seen)]
 
 
 def display_math_finders(envs):

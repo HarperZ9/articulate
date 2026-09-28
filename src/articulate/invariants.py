@@ -30,8 +30,9 @@ KINDS = ("code", "math", "url", "citation", "quote", "freeze", "number",
          "modal", "scope", "negation", "entity")
 
 # No length cap: a negated class that runs to its delimiter stays linear, and a
-# cap would leave a long span unprotected.
-INLINE_CODE = re.compile(r"``[^\n]+?``|`[^`\n]+`")
+# cap would leave a long span unprotected. finders.code_spans applies it with a
+# backtick between two letters read as an apostrophe.
+INLINE_CODE = finders.INLINE_CODE
 # The environments whose body is math, plus the theorem-like ones the 0.4.1 math
 # mask protected, because a changed quantifier order changes a theorem. Any
 # other environment (document, abstract, itemize) holds prose the model edits.
@@ -178,7 +179,7 @@ def container_passes(freeze=(), *, numbers=True, quotes=True, block_quotes=False
     if block_quotes and not tex:
         passes.append(("blockquote", lambda t: [(s, e, None) for s, e in blockquotes(t)]))
     if not tex:
-        passes.append(("code", _rx_pass(INLINE_CODE, trim=False)))
+        passes.append(("code", finders.code_spans))
     passes += [("math", find) for find in MATH]
     passes += [("math", _rx_pass(INLINE_MATH, trim=False,
                                  keep=None if tex else TEX_SIGN.search)),
