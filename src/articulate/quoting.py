@@ -43,15 +43,21 @@ SPEAKER = re.compile(r"^\s*(?:>\s*)?(?:\*\*)?(?:ChatGPT|Assistant|Model|User|AI|
                      r"Gemini|Copilot)(?:\*\*)?\s*:")
 
 
-def mask_direct(text, raw=None):
-    """Blank direct quotations: the marks articulate.quotemarks pairs, LaTeX
-    ``...'' and the csquotes commands. The LaTeX forms are found in `raw`, the
-    same text before markup was blanked (the code-span mask reads a backtick
-    pair as code, and the TeX mask blanks a command name)."""
+def direct_spans(text, raw=None):
+    """(start, end) of each direct quotation, sorted and merged: the marks
+    articulate.quotemarks pairs, LaTeX ``...'' and the csquotes commands. The
+    LaTeX forms are found in `raw`, the same text before markup was blanked (the
+    code-span mask reads a backtick pair as code, and the TeX mask blanks a
+    command name)."""
     src = text if raw is None else raw
     spans = set(quote_spans(text)) | {m.span() for m in TEX_QUOTE.finditer(src)}
     spans |= set(_csquote_spans(src))
-    return blank_spans(text, _merge(spans))
+    return _merge(spans)
+
+
+def mask_direct(text, raw=None):
+    """Blank the direct quotations direct_spans finds."""
+    return blank_spans(text, direct_spans(text, raw))
 
 
 _BRACE = re.compile(r"[{}\n]")

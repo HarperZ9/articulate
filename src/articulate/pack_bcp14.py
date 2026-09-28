@@ -41,6 +41,10 @@ NAME = "bcp14"
 CATEGORIES = ("bcp14-mixed-case", "bcp14-no-boilerplate", "bcp14-may-not",
               "bcp14-lowercase", "bcp14-shall-must", "bcp14-old-boilerplate")
 OPTIONS = {}
+# Findings skip quoted text (articulate.rules_ext); whether the document
+# declares BCP 14 is read from all of its prose, since a document may state its
+# conventions by quoting the boilerplate.
+WHOLE_PROSE = True
 
 _DECLARED = re.compile(r"\b(?:BCP\s?14|RFC\s?2119|RFC\s?8174)\b")
 _RFC8174_CLAUSE = re.compile(r"(?i)when,?\s+and\s+only\s+when,?\s+they\s+appear\s+in\s+all\s+capitals")
@@ -68,14 +72,17 @@ def _add(found, tier, make, hit, cat, label):
                             raw.strip()[:100]))
 
 
-def _declaration_checks(prose, masked_text, found, make):
+def _declaration_checks(prose, whole, found, make):
+    """`prose` has quotations blanked; `whole` keeps them, since the declaration
+    is a fact about the document that a quotation can state."""
+    masked_text = "\n".join(rec[3] for rec in whole)
     declared = bool(_DECLARED.search(masked_text))
     upper = list(_prose_hits(prose, _UPPER))
     if upper and not declared:
         _add(found, "MEDIUM", make, upper[0], "bcp14-no-boilerplate",
              "BCP 14 keywords with no boilerplate citing BCP 14 (RFC 2119, RFC 8174)")
     if declared and not _RFC8174_CLAUSE.search(masked_text):
-        hit = next(_prose_hits(prose, _DECLARED), None)
+        hit = next(_prose_hits(whole, _DECLARED), None)
         if hit:
             _add(found, "LOW", make, hit, "bcp14-old-boilerplate",
                  "the declaration lacks the RFC 8174 clause 'when, and only when, they "
@@ -83,10 +90,10 @@ def _declaration_checks(prose, masked_text, found, make):
     return declared, upper
 
 
-def scan(text, prose, opts, make):
+def scan(text, prose, opts, make, whole=None):
     found = pack_util.empty()
-    masked_text = "\n".join(rec[3] for rec in prose)
-    declared, upper = _declaration_checks(prose, masked_text, found, make)
+    declared, upper = _declaration_checks(prose, prose if whole is None else whole,
+                                          found, make)
     for hit in _prose_hits(prose, _MIXED):
         _add(found, "HIGH", make, hit, "bcp14-mixed-case",
              f"BCP 14 keyword in mixed case: {hit[3].group(0)!r}; write it all in capitals")

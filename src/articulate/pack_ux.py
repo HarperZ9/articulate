@@ -46,6 +46,9 @@ CATEGORIES = ("ux-length", "ux-case", "ux-vague-error", "ux-link-text")
 OPTIONS = {"button_max_words": 3, "button_max_chars": 26, "label_max_words": 4,
            "error_max_words": 25, "case": "sentence"}
 CHOICES = {"case": ("sentence", "title", "off")}
+# In a string file the quotes delimit the interface text this pack checks, so
+# it reads the prose with quotations kept (articulate.rules_ext).
+READS_QUOTES = True
 
 _PREFIX = re.compile(r"^\s*(?:[-*+]\s+)?(?P<key>[A-Za-z][\w.\-]{0,60})\s*:\s+(?P<text>\S.*?)\s*$")
 _KEYVAL = re.compile(r"^\s*[\"']?(?P<key>[\w.\-]{1,80})[\"']?\s*[:=]\s*"
