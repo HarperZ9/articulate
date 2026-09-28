@@ -36,6 +36,19 @@ THRESHOLDS = {
     "g7_review": 0.10,         # absolute block rate on human text that opens a review
 }
 
+# The method a receipt ran under (fairness/PREREG.md, ruleset 0.9.0 on). A
+# receipt written earlier carries no such record and keeps the method it ran
+# under: a rewrap that joined paragraphs, a percentile bootstrap for an arm with
+# no hits, and a within-group interval that re-centred the crude width.
+METHOD = {
+    "g4_layouts": "one sentence per line inside each paragraph, and a 60-column hard "
+                  "wrap, neither starting a line with a block marker; the "
+                  "paragraph-joining rewrap is reported and never gated",
+    "g2_empty_arm": "exact conditional: a Clopper-Pearson limit on the empty arm's "
+                    "share of hits, scaled by the arms' words",
+    "stratified_interval": "Sato variance of the Mantel-Haenszel risk difference",
+}
+
 
 def _pct(x):
     return None if x is None else round(100 * x, 1)

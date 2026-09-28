@@ -28,15 +28,14 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import sys
-import textwrap
 
 from . import content_free
 from . import density as density_mod
 from . import fairness_corpora as corpora
 from . import fairness_gates as G
 from . import modes, profiles
+from .fairness_layout import hardwrap, rewrap, rewrap_joined
 from .fingerprint import ruleset_fingerprint
 from .gate import check_text
 from .scan import SCAN_ALGO
@@ -46,7 +45,7 @@ DOES_NOT_PROVE = (
     "This receipt shows how these rules behave on these corpora. It says nothing "
     "about who or what wrote any text, and nothing about any group trait as a cause "
     "of a difference. It covers only the groups, genres and profiles it lists.")
-_SENT = re.compile(r"(?<=[.!?])\s+")
+METHOD = G.METHOD
 
 
 
@@ -126,24 +125,24 @@ def measure(text, prof):
             "hm": {k: v for k, v in rules.items() if not k.startswith("LOW|")}}
 
 
-def rewrap(text):
-    """The same words, one sentence per line."""
-    return "\n".join(s.strip() for s in _SENT.split(text.replace("\n", " ")) if s.strip()) + "\n"
+def _moved(text, m, prof):
+    """True when the HIGH and MEDIUM counts, the density count or the word count
+    of `text` differ from the measurement `m`."""
+    w = measure(text, prof)
+    return (w["hm"], w["density_count"], w["words"]) != (m["hm"], m["density_count"],
+                                                          m["words"])
 
 
-def hardwrap(text, width=60):
-    """The same words hard-wrapped at `width` columns, breaking at hyphens too."""
-    paras = [p.replace("\n", " ") for p in re.split(r"\n\s*\n", text) if p.strip()]
-    return "\n\n".join(textwrap.fill(p, width, break_long_words=False) for p in paras) + "\n"
-
-
-def _layout_changed(text, m, prof):
-    for variant in (rewrap(text), hardwrap(text)):
-        w = measure(variant, prof)
-        if (w["hm"], w["density_count"], w["words"]) != (m["hm"], m["density_count"],
-                                                        m["words"]):
-            return True
-    return False
+def layout_changes(text, m, prof):
+    """(changed, changed when joined): whether the document's findings or counts
+    move under the G4 layouts (fairness_layout.rewrap and hardwrap), and whether
+    they move under the paragraph-joining rewrap that is reported only. A
+    document of one paragraph lays out the same under both rewraps, so it is
+    measured once."""
+    kept, joined = rewrap(text), rewrap_joined(text)
+    moved_kept = _moved(kept, m, prof)
+    moved_joined = moved_kept if joined == kept else _moved(joined, m, prof)
+    return moved_kept or _moved(hardwrap(text), m, prof), moved_joined
 
 
 def _layout_applies(prof):
@@ -220,13 +219,13 @@ def run(manifest_path, names=None, cadence_gates=False, root=None, jobs=1):
     bound = bound_profiles()
     names = names or (bound + list(house_profiles()))
     configs, members = configs_for(names)
-    from .fairness_scan import collect
+    from .fairness_scan import collect, g4_record
     meas, layout = collect(man, base, configs, members, jobs)
     results = {}
     for i, (key, sets) in enumerate(sorted(meas.items(), key=lambda kv: members[kv[0]])):
         notes = bool({profiles.DEFAULT, *house_profiles()} & set(members[key]))
         res = _for_config(man, sets, members[key], cadence_gates, notes)
-        res["g4"] = {"changed": layout[key], "applies": _layout_applies(configs[key])}
+        res["g4"] = g4_record(layout[key], _layout_applies(configs[key]))
         results[f"config-{i}"] = res
     rec = {
         "schema": SCHEMA, "ruleset_version": ruleset_fingerprint(), "scan_algo": SCAN_ALGO,
@@ -234,7 +233,7 @@ def run(manifest_path, names=None, cadence_gates=False, root=None, jobs=1):
         "corpora": man.get("corpora"), "bound_profiles": bound,
         "house_profiles": list(house_profiles()), "measured_profiles": sorted(names),
         "thresholds": G.THRESHOLDS, "bootstrap": {"b": 2000, "seed": G.S.SEED},
-        "g6": G.G6_NOT_RUN, "results": results,
+        "method": METHOD, "g6": G.G6_NOT_RUN, "results": results,
         "gates": _gate_summary(results, bound), "does_not_prove": DOES_NOT_PROVE,
     }
     if man.get("report_only"):

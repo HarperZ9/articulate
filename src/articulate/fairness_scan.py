@@ -25,12 +25,14 @@ _WORKER = []
 
 
 def scan_document(text, profs):
-    """[(measurement, layout changed)] for one document, one entry per profile
-    in `profs`, in order."""
+    """[(measurement, layout changed, changed when joined)] for one document, one
+    entry per profile in `profs`, in order (fairness.layout_changes)."""
     out = []
     for prof in profs:
         m = F.measure(text, prof)
-        out.append((m, F._layout_applies(prof) and F._layout_changed(text, m, prof)))
+        changed = F.layout_changes(text, m, prof) if F._layout_applies(prof) else (False,
+                                                                                  False)
+        out.append((m, *changed))
     return out
 
 
@@ -65,16 +67,27 @@ def scan(docs, configs, members, jobs=1, chunksize=4):
 
 
 def collect(man, base, configs, members, jobs=1):
-    """measurements[config][set] = [doc measurement], plus layout changes. With
-    jobs above 1 the documents are scanned in that many processes; results come
-    back in document order, so the receipt is the same."""
+    """measurements[config][set] = [doc measurement], plus layout changes by set.
+    With jobs above 1 the documents are scanned in that many processes; results
+    come back in document order, so the receipt is the same."""
     meas = {k: {} for k in configs}
-    layout = {k: 0 for k in configs}
+    sets = sorted(man["sets"])
+    layout = {k: {"kept": dict.fromkeys(sets, 0), "joined": dict.fromkeys(sets, 0)}
+              for k in configs}
     for row, per_config in scan(F.corpora.load_documents(man, base), configs, members, jobs):
-        for key, (m, changed) in zip(configs, per_config):
+        for key, (m, changed, joined) in zip(configs, per_config):
             m.update({"key": row.get("key"), "score": row.get("score"),
                       "prompt": row.get("prompt"), "writer": row.get("writer")})
             meas[key].setdefault(row["set"], []).append(m)
-            if changed:
-                layout[key] += 1
+            layout[key]["kept"][row["set"]] += bool(changed)
+            layout[key]["joined"][row["set"]] += bool(joined)
     return meas, layout
+
+
+def g4_record(layout, applies):
+    """The G4 record: documents that change under the gated layouts, in all and
+    by set, and the paragraph-joining rewrap's count, reported only."""
+    kept, joined = layout["kept"], layout["joined"]
+    return {"changed": sum(kept.values()), "by_set": kept, "applies": applies,
+            "joined_rewrap": {"changed": sum(joined.values()), "by_set": joined,
+                              "gates": False}}
