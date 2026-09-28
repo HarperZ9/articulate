@@ -100,7 +100,8 @@ articulate-mcp
 the [feature reference](docs/features.md), the [CLI reference](docs/cli.md), the
 [fairness audit](docs/fairness-audit.md), the
 [confirmatory run](docs/fairness-confirmatory.md) and the
-[boundaries](docs/boundaries.md).
+[boundaries](docs/boundaries.md). The [Claude plugin](docs/claude-plugin.md) page
+covers the local checks in Claude Code and Cowork.
 
 ## Scientific and mathematical writing
 

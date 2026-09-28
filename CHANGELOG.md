@@ -6,6 +6,33 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+### Claude plugin, tool titles and hints, UTF-8 input on Windows
+
+- **Claude plugin.** `claude-plugin/` and `scripts/build_claude_plugin.py` build
+  Articulate Writing, a plugin for Claude Code and Cowork that carries the
+  package source, starts the standard-library server with `python3 -I -B -X
+  utf8`, lists only the local tools, and bundles a `prose-review` skill. The
+  plugin's README holds its privacy policy. `scripts/smoke_claude_plugin.py`
+  starts a built plugin's server the way Claude Code does and checks its answers.
+  See `docs/claude-plugin.md`.
+- **Titles and behavior hints on every MCP tool.** Both servers now declare a
+  title and all four hints from one table, `tool_meta.py`. The local tools are
+  read-only and closed-world. The hosted tools are open-world and not read-only,
+  so a host asks before each call.
+- **UTF-8 input on Windows.** The stdio server read its input in the console code
+  page, so a curly quote arrived as three wrong characters and a quoted passage
+  was reported as a finding. It now switches stdin and stdout to UTF-8.
+- **`ARTICULATE_MCP_TOOLS=local`** lists only the tools that send nothing; a
+  hidden tool called by name returns an error that names the variable. Any value
+  other than empty or `all` counts as `local`.
+- **`check` returns up to `max_hits` span records**, 50 by default, so a long
+  document's result fits a host's output limit. The gate and `rule_counts` still
+  cover every finding, and `hits_omitted` says how many records were left out.
+- **Protocol details.** The stdio server answers `ping`, marks a result whose
+  `ok` field is false as an error, returns compact JSON with non-ASCII text left
+  readable, and its doctor tool reports the Python version, the tool set, the
+  hidden tools and the local-only switch, with no file paths.
+
 ### Reader-cost rules, no origin claims, a writer-held process record
 
 The release check blocks this ruleset. Ruleset `sha256:46e1485cd2c98caa` fails

@@ -69,6 +69,20 @@ def test_the_readme_names_the_published_version():
         f"README says {stated} is on PyPI while the package declares {version}")
 
 
+def test_the_claude_plugin_declares_the_package_version():
+    # The plugin bundles this package's source, so its version is the package's.
+    # Claude Code keeps users on a plugin version until the string changes, so a
+    # release that leaves it behind never reaches them.
+    import json
+    plugin_dir = _ROOT / "claude-plugin" / ".claude-plugin"
+    manifest = json.loads((plugin_dir / "plugin.json").read_text(encoding="utf-8"))
+    assert manifest["version"] == _declared_version()
+    # A version in the marketplace entry would lose to plugin.json and draw a
+    # validation warning, so it lives in one place.
+    marketplace = json.loads((plugin_dir / "marketplace.json").read_text(encoding="utf-8"))
+    assert all("version" not in entry for entry in marketplace["plugins"])
+
+
 def _triple(version):
     return tuple(int(x) for x in re.findall(r"\d+", version)[:3])
 
