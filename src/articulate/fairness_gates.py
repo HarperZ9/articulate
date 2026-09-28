@@ -41,8 +41,10 @@ THRESHOLDS = {
 # under: a rewrap that joined paragraphs, a percentile bootstrap for an arm with
 # no hits, and a within-group interval that re-centred the crude width.
 METHOD = {
-    "g4_layouts": "one sentence per line inside each paragraph, and a 60-column hard "
-                  "wrap, neither starting a line with a block marker; the "
+    "g4_layouts": "one sentence per line inside each paragraph and list item as the "
+                  "scanner reads them, and a 60-column hard wrap of each, with every "
+                  "other line kept, no line starting with a block marker and every "
+                  "break joining back as the scanner joins lines; the "
                   "paragraph-joining rewrap is reported and never gated",
     "g2_empty_arm": "exact conditional: a Clopper-Pearson limit on the empty arm's "
                     "share of hits, scaled by the arms' words",
