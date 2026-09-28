@@ -1,9 +1,10 @@
 # Getting started
 
 Articulate reads prose and names the patterns that cost a reader something,
-with a line number for each finding. It runs on your
-machine with no network call. This page takes you from install to a first check,
-a first receipt, and an editor squiggle in about five minutes.
+with a line number for each finding. The checks run on your machine with no
+network call. Model editing follows the selected backend's privacy policy.
+Install the package, run a check, create a receipt and connect your editor with
+the commands below.
 
 ## Install
 
@@ -113,26 +114,58 @@ For VS Code, a thin client that launches the same command is in
 ## From an MCP host
 
 `articulate-mcp` serves the tools over stdio from a bare install. Register it
-in the host's MCP configuration. The editor tools (`judge`, `fix`, `polish`)
-run the `claude` CLI, and a host often starts servers with a short PATH, so
-name the CLI by its absolute path:
+in your host's MCP configuration:
 
 ```json
 {
   "mcpServers": {
-    "articulate": {
-      "command": "articulate-mcp",
-      "env": { "ARTICULATE_CLAUDE_CLI": "C:\\Users\\you\\.local\\bin\\claude.exe" }
-    }
+    "articulate": { "command": "articulate-mcp" }
   }
 }
 ```
 
-On macOS or Linux the value looks like `/home/you/.local/bin/claude`. Without
-the variable, the editor searches the absolute PATH entries and never the
-current directory. The CLI runs in a private empty folder with your user
-settings only, so a document folder's `.claude/settings.json` never loads. The
-check tools (`check`, `score`) need no CLI.
+Ask the host to call `fix`, `judge` or `polish`. If the client advertised MCP
+sampling, Articulate can request the host's model. Otherwise it returns a plan:
+the calling model follows its instructions and calls `edit_submit` with the
+original text, rewrite and plan ID. Articulate checks protected spans, retains
+refused spans and returns the accepted text with a gate and host receipt. The
+same pair is available directly as `edit_plan` and `edit_submit`.
+
+This path needs no second model account. The host can still send text to a
+remote model under its own policy. Plans and edit results contain source text;
+keep them private when the source is private.
+
+## Edit without a model
+
+Mechanical editing works with no account, model or network:
+
+```bash
+articulate fix notes.md --backend none --out edited.md
+articulate judge notes.md --backend none --json
+```
+
+The deterministic backend fixes only conservative mechanical cases and reports
+remaining findings. It does not provide model quality scores or establish that
+a document is accurate. Inspect the gate and refusal list before accepting it.
+
+## Use an installed local model
+
+With Ollama running and a model already installed:
+
+```bash
+articulate fix notes.md --backend ollama --out edited.md
+```
+
+Set `ARTICULATE_LOCAL_MODEL` to choose the installed model. Articulate never
+downloads one. Set `ARTICULATE_LOCAL_ONLY=1` to restrict editor selection to
+loopback Ollama and deterministic editing. Direct plan and submit calls still
+perform local preparation and validation. The switch cannot control the calling
+host's conversation or model.
+
+The CLI also supports Anthropic, the Claude CLI and OpenAI-compatible endpoints.
+Automatic selection records unavailable backends and continues to a usable path,
+ending with deterministic editing. See the [backend configuration reference](cli.md#backend-configuration)
+for selection order, credentials and privacy.
 
 ## Where to next
 

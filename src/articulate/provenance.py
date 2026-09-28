@@ -41,7 +41,7 @@ SOURCE_TYPE = {
 # A model translation of the writer's own draft: the writer picks one of these.
 TRANSLATION_CHOICES = ("compositeWithTrainedAlgorithmicMedia", "trainedAlgorithmicMedia")
 
-ASSIST_VERBS = ("generated", "drafted", "edited", "translated")
+ASSIST_VERBS = ("generated", "drafted", "edited", "translated", "deterministic-fix")
 INPUT_METHODS = ("dictation", "handwriting-then-typed", "screen-reader", "switch-access",
                  "drafted-in-another-language")
 REVIEW_ROLES = ("tutor", "supervisor", "peer", "editor")

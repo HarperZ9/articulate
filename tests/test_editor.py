@@ -39,19 +39,19 @@ def _read(p):
 
 
 def test_monotonic_accepts_improvement_then_rejects_regression(work):
-    src = _write(work, "x.md", "v0 text\n")
+    src = _write(work, "x.md", "draft text\n")
     out = os.path.join(work, "x.polished.md")
     scores = {
-        "v0 text": _scored(concreteness=2, commitment=2, economy=2, rhythm=2, restatable=2),
-        "v1": _scored(concreteness=4, commitment=4, economy=4, rhythm=4, restatable=4),
-        "v2": _scored(concreteness=3, commitment=4, economy=4, rhythm=4, restatable=4),  # regresses
+        "draft text": _scored(concreteness=2, commitment=2, economy=2, rhythm=2, restatable=2),
+        "revised text": _scored(concreteness=4, commitment=4, economy=4, rhythm=4, restatable=4),
+        "final text": _scored(concreteness=3, commitment=4, economy=4, rhythm=4, restatable=4),  # regresses
     }
-    outputs = iter(["v1", "v2"])
+    outputs = iter(["revised text", "final text"])
     editor.polish(src, out, passes=3, bar=5,
                   rewrite_fn=lambda t, mech, worst: next(outputs),
                   judge_fn=lambda t: scores.get(t.strip(), _scored()))
-    # v0(2s) -> v1(4s) accepted -> v2 regresses concreteness (3<4) -> rejected, keep v1
-    assert _read(out).strip() == "v1"
+    # draft(2s) -> revised text(4s) accepted -> final text regresses concreteness (3<4) -> rejected, keep revised text
+    assert _read(out).strip() == "revised text"
 
 
 def test_bar_met_stops_early(work):
@@ -65,6 +65,15 @@ def test_bar_met_stops_early(work):
                   judge_fn=lambda t: _scored(concreteness=5, commitment=5, economy=5,
                                              rhythm=5, restatable=5))
     assert _read(out).strip() == "already good"
+
+
+def test_injected_rewrite_is_still_guarded(work):
+    src = _write(work, "numbers.md", "We shipped 14 items.\n")
+    out = os.path.join(work, "numbers.polished.md")
+    editor.polish(src, out, passes=1, bar=5,
+                  rewrite_fn=lambda *a: "We shipped 15 items.",
+                  judge_fn=lambda t: _scored())
+    assert _read(out).strip() == "We shipped 14 items."
 
 
 def test_narrative_mode_does_not_rewrite(work):
@@ -84,7 +93,7 @@ def test_narrative_mode_does_not_rewrite(work):
 def test_a_judge_failure_inside_the_loop_keeps_the_best_and_exits_cleanly(work, capsys, error):
     # The backend can drop halfway through the loop, for example on a rate
     # limit. That must end the loop with a message, not a traceback.
-    src = _write(work, "z.md", "v0 text\n")
+    src = _write(work, "z.md", "draft text\n")
     out = os.path.join(work, "z.polished.md")
     calls = []
 
@@ -95,7 +104,7 @@ def test_a_judge_failure_inside_the_loop_keeps_the_best_and_exits_cleanly(work, 
         return _scored(concreteness=2, commitment=2, economy=2, rhythm=2, restatable=2)
 
     rc = editor.polish(src, out, passes=3, bar=5,
-                       rewrite_fn=lambda t, mech, worst: "v1", judge_fn=judge)
+                       rewrite_fn=lambda t, mech, worst: "revised text", judge_fn=judge)
     assert rc == 0
-    assert _read(out).strip() == "v0 text"
+    assert _read(out).strip() == "draft text"
     assert "judge failed" in capsys.readouterr().out

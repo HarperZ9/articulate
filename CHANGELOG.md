@@ -4,7 +4,12 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.6.0 (unreleased)
+
+The editor backend work from the 0.5.1 patch line is carried forward here,
+including host plans, endpoint selection, deterministic edits and the meaning
+guard. This version also contains the ruleset changes below; the patch's
+unchanged-ruleset check does not clear this version's fairness release gate.
 
 ### Reader-cost rules, no origin claims, a writer-held process record
 
@@ -40,7 +45,8 @@ What you gain:
   and a hidden character inside Latin text can block. The phrasing rules skip
   quoted text, and an appeal to studies accepts every common citation style.
 - **A local-only switch.** `ARTICULATE_LOCAL_ONLY=1` or `--local-only` refuses
-  every hosted command before any subprocess starts. Any value other than an
+  every hosted backend before any subprocess starts. Editor selection can
+  continue with loopback Ollama or deterministic editing. Any value other than an
   explicit off value counts as on.
 - **Content-free outputs that carry no word of the text.** `check
   --content-free` and `receipt --redact` key the two notes whose rule ids quoted
@@ -235,6 +241,32 @@ Fairness harness and release check:
   ruleset's own receipt.
 - A receipt of the first draft of these rules is kept, with the report-only rows
   whose keys quoted words of the corpus removed.
+
+## 0.5.1
+
+The editor can use the calling model, a configured endpoint or deterministic
+editing. An unavailable Claude account no longer ends the editing workflow.
+Detector rules remain unchanged on this patch line.
+
+- MCP `edit_plan` and `edit_submit` let a calling model edit with no second
+  account. Plans bind the source and configuration to a ruleset; submission
+  checks that binding, restores masks and reports protected-span refusals.
+- MCP automatic selection uses sampling only when the client advertises it,
+  otherwise returning a host edit plan. CLI automatic selection tries configured
+  Anthropic, the Claude CLI, configured OpenAI-compatible endpoints, Ollama and
+  deterministic editing. Failed attempts are recorded without credentials.
+- `none` applies conservative mechanical fixes and reports remaining findings.
+  Its judge reports local reasons without model quality scores. Ollama uses
+  installed models and never pulls one.
+- Every rewrite passes the protected-span guard. Refused spans retain their
+  original text; gate and per-rule changes are reported. Protected content
+  surviving a rewrite does not prove unchanged meaning.
+- `ARTICULATE_LOCAL_ONLY=1` allows only loopback Ollama and deterministic editing,
+  refusing other editor backends before a connection. Host and sampling paths
+  follow the calling host's privacy policy when local-only mode is off.
+- CLI `plan`, `submit`, `fix`, `judge` and `polish` expose these paths. Legacy
+  `python -m articulate.editor` commands remain available with `--backend`.
+  Results and editor receipts name the backend, model and failed attempts.
 
 ## 0.5.0
 

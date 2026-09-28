@@ -13,7 +13,7 @@ import subprocess
 
 import pytest
 
-from articulate import editor
+from articulate import backends, editor
 from articulate import process_commit as pc
 from articulate import process_events as ev
 from articulate import process_export as px
@@ -260,15 +260,20 @@ def test_fix_logs_the_rewrite_when_pass_two_fails(doc, monkeypatch, capsys):
     pl.init(doc)
     calls = []
 
-    def fake(instr, text, timeout=600):
+    accepted = "As mentioned above, the rain fell in order to flood the field.\n"
+
+    def fake(instr, text, timeout=600, **kwargs):
         calls.append(1)
         if len(calls) > 1:
-            raise editor.ClaudeUnavailable("backend down")
-        return "As mentioned above, the rain fell in order to flood the field.\n"
+            return "", backends.BackendInfo("none", None, [{"backend": "stub", "reason": "backend down"}])
+        return accepted, backends.BackendInfo("stub", "stub", [])
 
-    monkeypatch.setattr(editor, "claude_call", fake)
-    assert editor.fix(doc, doc + ".fixed.md", passes=2, profile="essay") == 1
+    monkeypatch.setattr(backends, "complete", fake)
+    assert editor.fix(doc, doc + ".fixed.md", passes=2, profile="essay") == 0
     assert len(calls) == 2
+    assert pathlib.Path(doc + ".fixed.md").read_text(encoding="utf-8") == accepted
+    printed = capsys.readouterr().out
+    assert "backend down" in printed and "kept the best checked version" in printed
     kinds = [e["kind"] for e in pl.load(doc)[0]]
     assert kinds[-1] == "assist"
 

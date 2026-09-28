@@ -203,48 +203,120 @@ published ruleset itself, and an override never excuses a malformed receipt.
 
 ## Editor commands
 
-The editor layer is a separate entry point, because it needs a model backend.
+The main CLI exposes model editing and deterministic fixes:
 
 ```bash
-python -m articulate.editor --judge FILE
-python -m articulate.editor --fix FILE [--out OUT] [--passes N] [--mode M] [--profile P]
-python -m articulate.editor --polish FILE [--out OUT] [--bar 1-5] [--mode M] [--profile P]
-python -m articulate.editor --review FILE     # --advise FILE is the same
-python -m articulate.editor --local-only --judge FILE   # refused, exit 3
+articulate judge FILE --backend auto --json
+articulate fix FILE --backend none --out edited.md
+articulate polish FILE --backend ollama --json
 ```
 
-Each command sends the full text to a hosted model and says so before it
-starts. With `ARTICULATE_LOCAL_ONLY=1` set, or `--local-only` passed, every one
-exits 3 before any subprocess starts; the `judge`, `fix` and `polish` tools of
-both MCP servers return an error whose note names the switch. The switch fails
-closed: any value other than an empty one, `0`, `false`, `no` or `off` turns it
-on. `articulate --help` prints the map of local and
-hosted commands.
+All three accept `--backend auto|host|sampling|anthropic|claude-cli|openai|ollama|none`,
+`--mode M`, `--profile P`, `--out OUT` and `--json`. The legacy editor also
+accepts `--local-only` to enable the same restriction as the environment switch.
+Sampling requires an MCP
+session that advertised sampling; a plain CLI cannot request the host's model
+through that transport. `host` returns a plan for a calling model to complete.
+Without a model, `none` makes conservative mechanical fixes and reports remaining
+findings; its judge reports local findings and rule reasons. Inspect the gate
+and refused spans even when a call succeeds.
 
-These commands run the model through the `claude` CLI, which must be installed
-and logged in. The editor looks for it in two places. If `ARTICULATE_CLAUDE_CLI`
-is set, its value must be the absolute path of the CLI, such as
-`C:\Users\you\.local\bin\claude.exe`. Otherwise the editor searches the
-absolute entries on the PATH. It prefers `claude.exe` in any entry, and on
-Windows it falls back to the `claude.cmd` shim from an npm install. The search
-for the CLI skips the current directory. Set the variable when the editor runs
-from a process whose PATH does not hold the CLI, such as an MCP host or a
-bundled app. When neither place gives a runnable file, the command stops with
-an error that names the variable.
+The legacy entry point remains available:
 
-The model session gets the prompt in a temporary file, the document on stdin,
-no tools and no project settings. Every call passes
-`--setting-sources user --strict-mcp-config --tools ""`. The CLI starts in a
-new empty folder under the temporary directory, which the editor removes after
-the call. It never starts in your current directory. `claude -p` skips the
-workspace trust prompt and reads `.claude/settings.json` from its working
-directory, so a document folder that holds one could otherwise run its hooks.
-On Windows the child also gets `NoDefaultCurrentDirectoryInExePath=1`, so the
-npm shim's `node` comes from the PATH.
+```bash
+python -m articulate.editor --judge FILE --backend auto
+python -m articulate.editor --fix FILE --backend none --out edited.md
+python -m articulate.editor --polish FILE --backend ollama --mode memo/argue
+python -m articulate.editor --review FILE     # --advise FILE is the same
+python -m articulate.editor --fix FILE --local-only --backend none
+```
 
-The editor is tested with CLI version 2.1.251. The first version that accepts
-all four flags is unknown. An older CLI that rejects one of them stops the
-command with an error that says to upgrade.
+### plan and submit
+
+Use a calling agent's model without a separate model account:
+
+```bash
+articulate plan FILE [--mode M] [--profile P] [--goal fix|polish|judge]
+                     [--is-html] [--is-tex]
+articulate submit FILE REWRITE --plan PLAN_ID [--scores JSON] [--model NAME]
+```
+
+`plan` writes JSON with the local findings, their reasons, the hardened model
+instructions, masked text, protected spans and a plan ID. Give the model those
+instructions and the masked text. Save its output as `REWRITE`, then submit it
+with the unchanged original `FILE` and the plan ID. Keep mask tokens intact.
+The optional model name is caller-reported attribution. `--scores` accepts a
+JSON object with `before` and `after` objects, each holding integer scores from
+1 to 5 for `concreteness`, `commitment`, `economy`, `rhythm` and `restatable`.
+For polish, these scores support the quality non-regression check. Without
+them, quality is reported as `unassessed`; gate and span checks still apply.
+Mode, profile, goal and mask settings are carried in the plan ID and need not
+be repeated on submission.
+
+Submission checks the source and plan configuration against the plan ID,
+restores masks and runs the meaning guard. Protected numbers, URLs, citations,
+code, math and quotations must survive; refused spans retain their original
+wording and report a reason. The result includes accepted text, gates before
+and after, per-rule deltas and a host receipt. A matching plan ID binds inputs;
+it is not authentication or proof of semantic equivalence. A plan and its
+result can contain source text, so store them with the document's protections.
+
+### Backend configuration
+
+Use `--backend` to select a backend for one call, or set `ARTICULATE_BACKEND`
+for the process. The default is `auto`.
+
+- `host`: the calling model uses `plan` and `submit`; text follows the calling
+  host's model policy.
+- `sampling`: the MCP client must advertise sampling at initialization; text
+  goes to the host's selected model.
+- `anthropic`: `ANTHROPIC_API_KEY`, with optional `ARTICULATE_MODEL`; text goes
+  to Anthropic's Messages API. The default model is `claude-sonnet-5`.
+- `claude-cli`: an installed, authenticated Claude CLI, with optional absolute
+  `ARTICULATE_CLAUDE_CLI` path; text goes to its provider.
+- `openai`: `ARTICULATE_OPENAI_BASE_URL`, `ARTICULATE_OPENAI_API_KEY` and
+  `ARTICULATE_MODEL`; text goes to the configured compatible endpoint.
+- `ollama`: `ARTICULATE_OLLAMA_URL` and `ARTICULATE_LOCAL_MODEL`; text goes to
+  the configured Ollama server.
+- `none`: no account or model needed; no model or network call.
+
+In MCP, `auto` uses sampling when advertised, otherwise returning a host edit
+plan before trying a separately billed backend. The calling model can complete
+that plan with `edit_submit`. In the plain CLI, automatic selection tries
+configured Anthropic, the Claude CLI, configured OpenAI-compatible endpoints,
+Ollama and `none`, recording failures before continuing. Explicit backend
+selection tries the requested route first, then the automatic fallback chain.
+Use local-only mode to constrain where fallback can send text.
+
+`OPENAI_API_KEY` is accepted for the default OpenAI address. A custom compatible
+endpoint, including vLLM or LM Studio, uses `ARTICULATE_OPENAI_API_KEY`; an
+unrelated OpenAI key is not forwarded to it. `ARTICULATE_MODEL` is required
+for every OpenAI-compatible endpoint, including the default OpenAI address.
+
+Ollama defaults to `http://127.0.0.1:11434`. With `ARTICULATE_LOCAL_MODEL` unset,
+it inspects installed models through `/api/tags`, preferring `qwen3:8b`,
+`qwen2.5:7b`, `llama3.2:3b`, then `gemma3:4b`, then the first installed model.
+It never pulls a model.
+
+Set `ARTICULATE_LOCAL_ONLY=1` to restrict editor backend selection to Ollama on a
+loopback address and `none`. Hosted backends, the `host` selection and sampling
+are refused before a connection. Direct `plan` and `submit` remain available:
+they perform local preparation and validation without a model or network call.
+The switch cannot control how a calling host uses the text or chooses its model.
+For deterministic editing alone, use `--backend none`.
+
+For the Claude CLI, `ARTICULATE_CLAUDE_CLI` must be an absolute executable path;
+otherwise Articulate searches absolute PATH entries and skips the current
+folder. Authentication is checked before the model call. A credit, login or
+rate-limit failure records a reason and allows automatic selection to continue.
+To repair an account failure, use `claude login` with the intended subscription
+account, configure `ANTHROPIC_API_KEY`, or choose Ollama or `none`.
+
+The CLI child runs in a private empty temporary folder with user settings only,
+using `--setting-sources user --strict-mcp-config --tools ""`. Document-folder
+settings do not load. On Windows, `NoDefaultCurrentDirectoryInExePath=1` keeps
+the npm shim's `node` lookup on PATH. An older CLI that rejects these flags is
+reported as unavailable. This isolation does not make a hosted call local.
 
 ## Exit codes
 
@@ -255,8 +327,8 @@ command with an error that says to upgrade.
 - `disclose`: 2 when the statement is refused.
 - `process verify`: 0 when intact, 1 when broken, 3 when missing.
 - `desk`: 2 on an unknown `--venue`.
-- `python -m articulate.editor`: 3 when the local-only switch refuses a hosted
-  command, 2 when the file is missing or cannot be read.
+- `python -m articulate.editor`: 2 when the file is missing or cannot be read.
+  Local-only mode selects loopback Ollama or deterministic editing.
 - `python -m articulate.fairness --release-check`: 0 when the ruleset is
   unchanged since the published one or every gate passes; 1 when a gate fails
   and no accepted override names the current ruleset, or a receipt is missing

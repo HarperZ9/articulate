@@ -15,7 +15,7 @@ import subprocess
 
 import pytest
 
-from articulate import claude_cli, cli, editor, mcp_server
+from articulate import backends, claude_cli, cli, editor, mcp_server
 from articulate import local_only as lo
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -29,6 +29,10 @@ def no_subprocess(monkeypatch):
     monkeypatch.setattr(subprocess, "Popen", boom)
     monkeypatch.setattr(subprocess, "run", boom)
     monkeypatch.setattr(claude_cli, "_bounded_run", boom)
+    monkeypatch.setattr(backends, "_ollama", lambda *a, **k: (_ for _ in ()).throw(
+        backends.BackendUnavailable("no local model")))
+    for name in ("_anthropic", "_openai", "_claude"):
+        monkeypatch.setattr(backends, name, boom)
 
 
 @pytest.fixture()
@@ -44,17 +48,17 @@ def _main(monkeypatch, argv):
 
 
 @pytest.mark.parametrize("flag", HOSTED)
-def test_the_environment_switch_refuses_every_hosted_command(monkeypatch, capsys,
+def test_the_environment_switch_keeps_editor_commands_local(monkeypatch, capsys,
                                                              no_subprocess, doc, flag):
     monkeypatch.setenv(lo.LOCAL_ONLY_VAR, "1")
-    assert _main(monkeypatch, [flag, doc]) == lo.LOCAL_ONLY_EXIT
-    assert "local-only" in capsys.readouterr().err
+    assert _main(monkeypatch, [flag, doc, "--backend", "claude-cli"]) == 0
+    assert "ARTICULATE_LOCAL_ONLY" in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("flag", HOSTED)
-def test_the_flag_refuses_every_hosted_command(monkeypatch, capsys, no_subprocess, doc, flag):
+def test_the_flag_keeps_editor_commands_local(monkeypatch, capsys, no_subprocess, doc, flag):
     monkeypatch.delenv(lo.LOCAL_ONLY_VAR, raising=False)
-    assert _main(monkeypatch, ["--local-only", flag, doc]) == lo.LOCAL_ONLY_EXIT
+    assert _main(monkeypatch, ["--local-only", flag, doc, "--backend", "claude-cli"]) == 0
 
 
 def test_the_guard_holds_below_the_command_line(monkeypatch, no_subprocess):
@@ -64,21 +68,22 @@ def test_the_guard_holds_below_the_command_line(monkeypatch, no_subprocess):
         claude_cli.run("prompt", "text")
 
 
-@pytest.mark.parametrize("call", [lambda: mcp_server.do_judge("A draft."),
-                                  lambda: mcp_server.do_fix("A draft."),
-                                  lambda: mcp_server.do_polish("A draft.", passes=1)])
+@pytest.mark.parametrize("call", [lambda: mcp_server.do_judge("A draft.", backend="claude-cli"),
+                                  lambda: mcp_server.do_fix("A draft.", backend="claude-cli"),
+                                  lambda: mcp_server.do_polish("A draft.", passes=1, backend="claude-cli")])
 def test_the_mcp_hosted_tools_refuse(monkeypatch, no_subprocess, call):
     monkeypatch.setenv(lo.LOCAL_ONLY_VAR, "1")
     out = call()
-    assert out["ok"] is False and "local-only" in out["error"]
+    assert out["ok"] is True and out["backend"] == "none"
+    assert out["attempts"][0] == {"backend": "claude-cli", "reason": "refused by ARTICULATE_LOCAL_ONLY"}
 
 
-def test_a_hosted_call_names_the_backend_and_that_the_text_leaves(monkeypatch, capsys, doc):
+def test_cli_passes_the_explicit_backend(monkeypatch, capsys, doc):
     monkeypatch.delenv(lo.LOCAL_ONLY_VAR, raising=False)
-    monkeypatch.setattr(editor, "judge", lambda *a, **k: None)
-    assert _main(monkeypatch, ["--judge", doc]) == 0
-    err = capsys.readouterr().err
-    assert "claude CLI" in err and "full text" in err and "draft.md" in err
+    seen = []
+    monkeypatch.setattr(editor, "judge", lambda *a, **k: seen.append(k))
+    assert _main(monkeypatch, ["--judge", doc, "--backend", "anthropic"]) == 0
+    assert seen == [{"backend": "anthropic"}]
 
 
 def test_the_local_checks_run_with_the_switch_set(monkeypatch, capsys, no_subprocess, doc):

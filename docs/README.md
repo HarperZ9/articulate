@@ -2,9 +2,11 @@
 
 Articulate runs local prose checks: named writing patterns, where they occur, and
 what each costs a reader. It runs on the standard library with no network call,
-and a reviewer can reproduce every check. An optional editor rewrites for the
-reader through the `claude` CLI, which sends the text to a hosted model; its
-output is a suggestion that no receipt reproduces.
+and a reviewer can reproduce every check. The editor uses the calling model,
+a configured backend or deterministic fixes. Model output remains a suggestion;
+an editor receipt records checks and attribution. It cannot reproduce model
+generation.
+See [backend configuration](cli.md#backend-configuration) for where text goes.
 
 ## Read in this order
 

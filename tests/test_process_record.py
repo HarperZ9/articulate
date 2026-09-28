@@ -16,7 +16,7 @@ import pathlib
 import pytest
 
 import articulate
-from articulate import editor
+from articulate import backends, editor
 from articulate import process_events as ev
 from articulate import process_export as px
 from articulate import process_ledger as pl
@@ -231,16 +231,74 @@ def test_the_summary_never_calls_itself_a_credential(doc):
 
 def test_a_fix_pass_appends_an_assist_entry_when_a_log_exists(doc, monkeypatch, capsys):
     pl.init(doc)
-    monkeypatch.setattr(editor, "claude_call", lambda i, t, timeout=600: TEXT2)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: (TEXT2, backends.BackendInfo("stub", "stub", [])))
     editor.fix(doc, doc + ".fixed.md", passes=1)
     entries, _ = pl.load(doc)
     assert entries[-1]["kind"] == "assist" and entries[-1]["verb"] == "edited"
 
 
 def test_no_log_means_no_record(doc, monkeypatch, capsys):
-    monkeypatch.setattr(editor, "claude_call", lambda i, t, timeout=600: TEXT2)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: (TEXT2, backends.BackendInfo("stub", "stub", [])))
     editor.fix(doc, doc + ".fixed.md", passes=1)
     assert not pathlib.Path(pl.paths(doc)["log"]).exists()
+
+
+def test_main_cli_fix_with_output_records_delivered_edit(doc, monkeypatch, capsys):
+    from articulate.cli import main
+    pl.init(doc)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: (TEXT2, backends.BackendInfo("stub", "stub", [])))
+    output = doc + ".fixed.md"
+    assert main(["fix", doc, "--out", output]) == 0
+    assert pathlib.Path(output).read_text(encoding="utf-8").strip() == TEXT2.strip()
+    entries, _ = pl.load(doc)
+    assert entries[-1]["kind"] == "assist" and entries[-1]["verb"] == "edited"
+    result = json.loads(capsys.readouterr().out)
+    assert result["backend"] == result["receipt"]["backend"] == "stub"
+    assert entries[-1]["model"] == "stub"
+    assert "backend: stub" in entries[-1]["receipt"]
+
+
+def test_main_cli_deterministic_edit_records_no_model_assistance(doc, monkeypatch, capsys):
+    from articulate.cli import main
+    pathlib.Path(doc).write_text("The rain  fell.\n", encoding="utf-8")
+    pl.init(doc)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: ("", backends.BackendInfo("none", None, [])))
+    output = doc + ".fixed.md"
+    assert main(["fix", doc, "--out", output, "--backend", "none"]) == 0
+    assert pathlib.Path(output).read_text(encoding="utf-8") == "The rain fell.\n"
+    entry = pl.load(doc)[0][-1]
+    assert entry["verb"] == "deterministic-fix"
+    assert "model" not in entry
+    assert "backend: none" in entry["receipt"]
+
+
+def test_main_cli_failed_output_does_not_record_an_edit(doc, monkeypatch, capsys):
+    from articulate.cli import main
+    pl.init(doc)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: (TEXT2, backends.BackendInfo("stub", "stub", [])))
+    output = str(pathlib.Path(doc).parent / "missing" / "fixed.md")
+    assert main(["fix", doc, "--out", output]) == 2
+    assert all(entry["kind"] != "assist" for entry in pl.load(doc)[0])
+
+
+@pytest.mark.parametrize("backend,model,verb", [
+    ("ollama", "local-model", "edited"),
+    ("host", "caller-model", "edited"),
+    ("none", None, "deterministic-fix"),
+    (None, None, "edited"),
+])
+def test_editor_process_record_names_actual_backend_without_inventing_model(doc, backend, model, verb):
+    pl.init(doc)
+    ev.record_editor_pass(doc, "fix", backend=backend, model=model)
+    entry = pl.load(doc)[0][-1]
+    assert entry["verb"] == verb
+    assert entry.get("model") == model
+    assert "backend: " + (backend or "unknown") in entry["receipt"]
+    assert "claude CLI" not in entry.get("model", "")
+    summary = px.summary(doc)
+    assert summary["chain"]["state"] == "intact"
+    if backend == "none":
+        assert summary["actions"][-1]["digitalSourceType"].endswith("/algorithmicallyEnhanced")
 
 
 def test_the_cli_runs_the_whole_record(doc, capsys):

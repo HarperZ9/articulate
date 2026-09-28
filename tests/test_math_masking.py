@@ -5,7 +5,7 @@ Masking must keep that nesting restorable, so a rewrite of an ordinary LaTeX
 paper round-trips every formula byte for byte. Polish must also keep formulas out
 of the quality-scoring call, not only the rewrite call.
 
-No test here calls a model. Each one replaces ``editor.claude_call`` with a fake
+No test here calls a model. Each one replaces ``backends.complete`` with a fake
 that answers the quality-scoring prompt with score JSON and every other prompt
 with a canned rewrite, and records every call. Uses a project-local temp dir (the
 pytest tmp_path fixture's symlink management is denied on this Windows host).
@@ -16,7 +16,7 @@ import shutil
 
 import pytest
 
-from articulate import editor, mcp_server
+from articulate import backends, editor, mcp_server
 
 _TMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_tmp_masking")
 
@@ -59,7 +59,7 @@ def _read(p):
 
 
 class Model:
-    """Stands in for claude_call. The quality-scoring prompt gets score JSON whose
+    """Stands in for backends.complete. The quality-scoring prompt gets score JSON whose
     'worst' note quotes the first line of the text it was sent, as a real judge
     quotes an offender. Every other prompt gets transform(text)."""
 
@@ -67,12 +67,12 @@ class Model:
         self.transform = transform
         self.calls = []
 
-    def __call__(self, instructions, text, timeout=600):
+    def __call__(self, instructions, text, timeout=600, **kwargs):
         self.calls.append((instructions, text))
         if instructions.startswith("Score the text"):
             first = text.strip().splitlines()[0]
-            return json.dumps(dict(LOW, worst=[f"tighten this line: {first}"]))
-        return self.transform(text)
+            return json.dumps(dict(LOW, worst=[f"tighten this line: {first}"])), backends.BackendInfo("stub", "stub", [])
+        return self.transform(text), backends.BackendInfo("stub", "stub", [])
 
     def judge_calls(self):
         return [c for c in self.calls if c[0].startswith("Score the text")]
@@ -109,7 +109,7 @@ def test_fix_identity_on_nested_math_returns_the_input(work, monkeypatch):
     src = _write(work, "paper.tex", NESTED)
     out = os.path.join(work, "paper.fixed.tex")
     fake = Model(lambda t: t)
-    monkeypatch.setattr(editor, "claude_call", fake)
+    monkeypatch.setattr(backends, "complete", fake)
     assert editor.fix(src, out, passes=1, mode="academic/prove") == 0
     assert fake.rewrite_calls()
     assert _read(out) == NESTED
@@ -118,7 +118,7 @@ def test_fix_identity_on_nested_math_returns_the_input(work, monkeypatch):
 def test_fix_benign_rewrite_on_nested_math_keeps_every_formula(work, monkeypatch):
     src = _write(work, "paper.tex", NESTED)
     out = os.path.join(work, "paper.fixed.tex")
-    monkeypatch.setattr(editor, "claude_call", Model(_benign))
+    monkeypatch.setattr(backends, "complete", Model(_benign))
     assert editor.fix(src, out, passes=1) == 0
     result = _read(out)
     assert result.startswith("We use a simple bound here.")
@@ -130,7 +130,7 @@ def test_polish_accepts_a_benign_rewrite_on_nested_math(work, monkeypatch, capsy
     src = _write(work, "paper.tex", NESTED)
     out = os.path.join(work, "paper.polished.tex")
     fake = Model(_benign)
-    monkeypatch.setattr(editor, "claude_call", fake)
+    monkeypatch.setattr(backends, "complete", fake)
     assert editor.polish(src, out, passes=1, bar=5) == 0
     assert "rewrite failed" not in capsys.readouterr().out
     assert len(fake.rewrite_calls()) == 1
@@ -138,18 +138,18 @@ def test_polish_accepts_a_benign_rewrite_on_nested_math(work, monkeypatch, capsy
 
 
 def test_mcp_fix_on_nested_math(monkeypatch):
-    monkeypatch.setattr(editor, "claude_call", Model(lambda t: t))
+    monkeypatch.setattr(backends, "complete", Model(lambda t: t))
     res = mcp_server.do_fix(NESTED, is_tex=True)
     assert res["ok"], res
     # rewrite_once strips surrounding whitespace, so compare without the final newline.
-    assert res["rewrite"] == NESTED.rstrip()
+    assert res["text"] == NESTED.rstrip()
 
 
 def test_mcp_polish_on_nested_math(monkeypatch):
-    monkeypatch.setattr(editor, "claude_call", Model(_benign))
+    monkeypatch.setattr(backends, "complete", Model(_benign))
     res = mcp_server.do_polish(NESTED, bar=5, passes=1, is_tex=True)
     assert res["ok"], res
-    assert res["final_text"] == NESTED.replace("We leverage", "We use").rstrip()
+    assert res["text"] == NESTED.replace("We leverage", "We use").rstrip()
 
 
 # --- polish keeps formulas out of every model call --------------------------- #
@@ -165,7 +165,7 @@ def test_cli_polish_sends_no_formula_on_any_model_call(work, monkeypatch):
     src = _write(work, "note.tex", FLAT)
     out = os.path.join(work, "note.polished.tex")
     fake = Model(_benign)
-    monkeypatch.setattr(editor, "claude_call", fake)
+    monkeypatch.setattr(backends, "complete", fake)
     assert editor.polish(src, out, passes=1, bar=5) == 0
     assert len(fake.judge_calls()) == 2 and len(fake.rewrite_calls()) == 1
     _assert_no_formula_in(fake.calls)
@@ -176,19 +176,19 @@ def test_cli_polish_sends_no_formula_on_any_model_call(work, monkeypatch):
 
 def test_mcp_polish_sends_no_formula_on_any_model_call(monkeypatch):
     fake = Model(_benign)
-    monkeypatch.setattr(editor, "claude_call", fake)
+    monkeypatch.setattr(backends, "complete", fake)
     res = mcp_server.do_polish(FLAT, bar=5, passes=1, is_tex=True)
     assert res["ok"], res
     assert len(fake.judge_calls()) == 2 and len(fake.rewrite_calls()) == 1
     _assert_no_formula_in(fake.calls)
-    assert INLINE in res["final_text"] and DISPLAY in res["final_text"]
+    assert INLINE in res["text"] and DISPLAY in res["text"]
 
 
 def test_polish_without_tex_still_scores_the_full_text(work, monkeypatch):
     # Regression guard: masking applies to math files only.
     src = _write(work, "note.md", FLAT)
     fake = Model(_benign)
-    monkeypatch.setattr(editor, "claude_call", fake)
+    monkeypatch.setattr(backends, "complete", fake)
     editor.polish(src, os.path.join(work, "note.polished.md"), passes=1, bar=5)
     assert INLINE in fake.judge_calls()[0][1]
 
@@ -196,22 +196,22 @@ def test_polish_without_tex_still_scores_the_full_text(work, monkeypatch):
 # --- MCP reports a refused rewrite as a refusal, not a backend fault ---------- #
 
 def test_mcp_fix_reports_a_refused_rewrite(monkeypatch):
-    monkeypatch.setattr(editor, "claude_call", Model(_drop_all))
+    monkeypatch.setattr(backends, "complete", Model(_drop_all))
     res = mcp_server.do_fix(FLAT, is_tex=True)
-    assert res["ok"] is False
-    assert "altered masked math" in res["error"]
-    assert "refused" in res["note"] and "claude CLI" not in res["note"]
+    assert res["ok"] is True
+    assert res["text"] == FLAT
+    assert res["refused"]
 
 
 def test_mcp_polish_keeps_the_best_text_when_a_rewrite_is_refused(monkeypatch):
     fake = Model(_drop_all)
-    monkeypatch.setattr(editor, "claude_call", fake)
+    monkeypatch.setattr(backends, "complete", fake)
     res = mcp_server.do_polish(FLAT, bar=5, passes=2, is_tex=True)
     assert res["ok"] is True
-    assert res["final_text"] == FLAT
-    assert "refused" in res["note"] and "claude CLI" not in res["note"]
-    assert len(fake.rewrite_calls()) == 1          # the loop stops at the refusal
-    assert len(res["scorecard"]) == 1
+    assert res["text"] == FLAT
+    assert res["refused"]
+    assert 1 <= len(fake.rewrite_calls()) <= 2
+    assert res["quality_met"] is False
 
 
 def test_a_dropped_environment_span_is_still_refused():

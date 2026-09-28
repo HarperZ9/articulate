@@ -27,8 +27,10 @@ def test_the_documented_editor_command_prints_its_help():
         assert flag in r.stdout, flag
 
 
-def test_the_documented_editor_command_refuses_under_local_only(tmp_path):
+def test_the_documented_editor_command_runs_without_a_model_under_local_only(tmp_path):
     p = tmp_path / "draft.md"
     p.write_text("The team met on Tuesday.\n", encoding="utf-8")
-    r = _run("--local-only", "--judge", str(p))
-    assert r.returncode == 3 and "local-only" in r.stderr, (r.returncode, r.stderr)
+    r = _run("--local-only", "--backend", "none", "--judge", str(p))
+    assert r.returncode == 0, (r.returncode, r.stdout, r.stderr)
+    assert "backend: none" in r.stdout
+    assert "Traceback" not in r.stderr

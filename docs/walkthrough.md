@@ -74,8 +74,11 @@ says nothing about who wrote any paragraph; see
 
 ## 4. Rewrite for the reader
 
-The editor layer runs through the `claude` CLI, which sends the document to a
-hosted Anthropic model.
+The editor can use the calling model, a configured backend or deterministic
+fixes. These commands use automatic backend selection; inspect the result's
+backend and attempts. Use `--backend none` for mechanical edits without a model,
+or set `ARTICULATE_LOCAL_ONLY=1` to allow only loopback Ollama and deterministic
+editing. See [backend configuration](cli.md#backend-configuration) for privacy.
 
 ```bash
 python -m articulate.editor --judge post.md
@@ -83,7 +86,8 @@ python -m articulate.editor --fix post.md --out post.fixed.md
 python -m articulate.editor --polish post.md --mode marketing/persuade
 ```
 
-`judge` quotes each weak passage and says what a skilled writer would do. `fix`
+With a model, `judge` quotes each weak passage and suggests changes. Without
+one, it returns local findings and reasons. `fix`
 writes a rewrite so the intended reader can follow the text on one read and
 re-checks it under the same profile. `polish` keeps a pass only when no quality
 score falls, the gate does not go from ok to blocked and no note the mode

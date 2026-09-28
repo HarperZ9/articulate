@@ -82,6 +82,9 @@ def _run(loop, passes, judge, rewrite):
         except ed._UNAVAILABLE as e:
             print(f"[polish] rewrite failed: {e}")
             return
+        from .meaning_guard import guard_rewrite
+        cand = guard_rewrite(loop.best, cand, is_html=loop.path.lower().endswith((".html", ".htm")),
+                             is_tex=ed.is_math_file(loop.path))["text"]
         if not cand or not cand.strip():
             print("[polish] empty rewrite; stopping")
             return
@@ -102,7 +105,9 @@ def _run(loop, passes, judge, rewrite):
 
 
 def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=None,
-           profile=None):
+           profile=None, backend=None):
+    if rewrite_fn is None and judge_fn is None:
+        return ed._execute_file(path, "polish", out_path, passes, bar, mode, profile, backend)
     ext = os.path.splitext(path)[1]
     out_path = out_path or os.path.splitext(path)[0] + ".polished" + ext
     prof, ecfg = ed._resolve(mode, profile, path)
