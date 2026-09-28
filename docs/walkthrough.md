@@ -1,7 +1,8 @@
 # Walkthrough
 
 This is a full pass over one document, from a first screening to a rewrite to a
-committed audit record a reviewer can replay. Every command runs locally. The
+committed audit record a reviewer can replay. Checks stay local; editor privacy
+follows the selected backend. The
 example file is a short blog draft, `post.md`, that was written with an assistant
 and lightly edited by hand.
 
@@ -63,17 +64,19 @@ a skilled writer would do. It reports; it does not rewrite.
 
 ## 4. Rewrite to the standard
 
-`--fix` rewrites to plain, skilled prose and re-runs the detector until the
-result is clean. It preserves every number, name, citation, and code span:
+`--fix` offers a rewrite and re-runs the detector. It retains original paragraphs
+when protected spans change, including numbers, links, citations and code.
+Remaining findings are reported when the result still needs work:
 
 ```bash
 python -m articulate.editor --fix post.md --out post.fixed.md
 ```
 
-`--polish` runs a stricter loop that stops only when five qualities clear a bar:
+`--polish` runs a bounded loop that aims for five assessed qualities to clear a bar:
 concreteness, commitment, economy, rhythm, and a restatable fact in each
 paragraph. It accepts a pass only when the detector gate stays clean and no
-quality score drops, so a rewrite never regresses.
+quality score drops. Missing scores leave quality unassessed. These checks do
+not establish semantic equivalence or guarantee better writing.
 
 The rewrite is a suggestion. Read it against the original before you ship it. The
 tool optimizes writing quality, and it never tunes prose toward a lower detector
@@ -162,5 +165,5 @@ The repository ships a GitHub Action and a pre-commit hook. The Action can also
 re-verify committed receipts and fail the build on drift. See
 [Features](features.md#surfaces) and the `action.yml` in the repository root.
 
-That is the full loop: screen, localize, judge, rewrite, record, and gate. Each
-step is local, and each verdict is one a reviewer can reproduce.
+Checks and receipts run locally and can be replayed. Model edits follow the
+selected backend; their assessments may vary between calls.
