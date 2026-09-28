@@ -11,6 +11,7 @@ wording rules that the rest of the docs follow.
 import json
 import pathlib
 import subprocess
+import sys
 
 import pytest
 
@@ -54,16 +55,61 @@ def _tracked_files(folder):
                   if (ROOT / n).is_file() and "__pycache__" not in n)
 
 
-def test_the_bundled_source_is_the_package_byte_for_byte(plugin):
+def test_the_bundled_source_is_the_server_closure_byte_for_byte(plugin):
+    """The bundle holds the modules the server can import and the package's other
+    files, each byte for byte, and none of the modules it never imports."""
     bundled = plugin / "src" / "articulate"
     shipped = sorted(p.relative_to(bundled).as_posix()
                      for p in bundled.rglob("*") if p.is_file())
-    expected = _tracked_files("src/articulate")
-    if expected is not None:
-        assert shipped == expected
-    assert "local_mcp.py" in shipped and "py.typed" in shipped
+    tracked = _tracked_files("src/articulate")
+    assert tracked is not None, "the build reads the files git tracks, so this test does"
+    assert set(shipped) <= set(tracked)
+    assert {f for f in tracked if not f.endswith(".py")} <= set(shipped)
+    assert "local_mcp.py" in shipped and "__init__.py" in shipped and "py.typed" in shipped
+    for never_imported in ("cli.py", "lsp_server.py", "fairness.py", "bench.py"):
+        assert never_imported not in shipped, never_imported
     for rel in shipped:
         assert (bundled / rel).read_bytes() == (PKG / rel).read_bytes(), rel
+
+
+def _package_imports(path):
+    """The articulate module names one source file imports, at any depth."""
+    import ast
+    names = set()
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.ImportFrom) and node.level == 1:
+            names |= {node.module.split(".")[0]} if node.module else {
+                a.name for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and (node.module or "").startswith(
+                "articulate."):
+            names.add(node.module.split(".")[1])
+        elif isinstance(node, ast.Import):
+            names |= {a.name.split(".")[1] for a in node.names
+                      if a.name.startswith("articulate.")}
+    return names
+
+
+def test_every_package_import_in_the_bundle_resolves_inside_it(plugin):
+    bundled = plugin / "src" / "articulate"
+    modules = {p.stem for p in bundled.glob("*.py")}
+    package = {p.stem for p in PKG.glob("*.py")}
+    for path in sorted(bundled.glob("*.py")):
+        missing = (_package_imports(path) & package) - modules
+        assert not missing, (path.name, sorted(missing))
+
+
+def test_every_bundled_module_imports_with_only_the_bundle_and_the_stdlib(plugin):
+    names = sorted(p.stem for p in (plugin / "src" / "articulate").glob("*.py")
+                   if p.stem != "__init__")
+    code = ("import importlib, sys; sys.path.insert(0, %r)\n"
+            "for n in %r: importlib.import_module('articulate.' + n)\n"
+            "print(sorted(m for m in sys.modules if m.startswith('articulate')) == "
+            "sorted(['articulate'] + ['articulate.' + n for n in %r]))\n"
+            % (str(plugin / "src"), names, names))
+    run = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", code],
+                         capture_output=True, text=True, timeout=120)
+    assert run.returncode == 0, run.stderr[-2000:]
+    assert run.stdout.strip() == "True"
 
 
 def test_every_tracked_template_file_lands_unchanged_and_nothing_else(plugin):

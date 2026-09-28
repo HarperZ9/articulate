@@ -12,10 +12,14 @@ of its repository avoids that hold.
 What lands in OUT_DIR, taken from the files git tracks:
 
     claude-plugin/*            manifest, server launcher, skill and documents
-    src/articulate/            every tracked package file except caches and bytecode
+    src/articulate/            the modules the server can import, and the
+                               package's files that are not Python source
     LICENSE
 
 An untracked or git-ignored file in those folders, such as a .env, never ships.
+The modules the server can import are every module reachable from local_mcp and
+the package __init__ through any import statement, one inside a function
+included; the command line, the LSP server and the other tools stay out.
 
 A release build, the default, first checks the source: no untracked or changed
 file in the folders it copies, and, when the tag v<version> exists, package code
@@ -29,6 +33,7 @@ stops the build, so nothing stale ships. The result is then checked against
 scripts/claude_plugin_rules.py, and the build exits 1 when a check fails.
 """
 import argparse
+import ast
 import shutil
 import subprocess
 import sys
@@ -45,6 +50,8 @@ SOURCES = (("claude-plugin", ""), ("src/articulate", "src/articulate"))
 SKIP_DIRS = {"__pycache__"}
 SKIP_SUFFIXES = {".pyc", ".pyo", ".pyd"}
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
+# serve.py runs articulate.local_mcp, and importing it runs the package __init__.
+ENTRY = ("__init__", "local_mcp")
 
 
 def _git(repo, *args):
@@ -67,6 +74,40 @@ def _tracked(repo, folder):
         if ((base / rel).is_file() and not SKIP_DIRS & set(rel.parts)
                 and rel.suffix not in SKIP_SUFFIXES and rel.name not in SKIP_NAMES):
             yield rel
+
+
+def _imported(source, known):
+    """The package modules one source file imports, at any depth in the file."""
+    names = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.ImportFrom) and node.level == 1:
+            names |= {node.module.split(".")[0]} if node.module else {
+                a.name for a in node.names}
+        elif (isinstance(node, ast.ImportFrom) and node.level == 0
+              and (node.module or "").split(".")[0] == "articulate"):
+            parts = node.module.split(".")
+            names |= {parts[1]} if len(parts) > 1 else {a.name for a in node.names}
+        elif isinstance(node, ast.Import):
+            names |= {a.name.split(".")[1] for a in node.names
+                      if a.name.startswith("articulate.")}
+    return names & known
+
+
+def server_closure(package, files):
+    """The names of the modules the server can import: every module reachable from
+    ENTRY through any import statement, one inside a function included."""
+    sources = [f for f in files if f.endswith(".py")]
+    if any("/" in f or "\\" in f for f in sources):
+        raise SystemExit("the closure reads a flat package; teach it subpackages first")
+    known = {f[:-3] for f in sources}
+    seen, todo = set(), [name for name in ENTRY if name in known]
+    while todo:
+        name = todo.pop()
+        if name not in seen:
+            seen.add(name)
+            text = (Path(package) / f"{name}.py").read_text(encoding="utf-8")
+            todo.extend(_imported(text, known) - seen)
+    return seen
 
 
 def managed_entries(repo=REPO):
@@ -99,7 +140,11 @@ def build(out, replace=False, repo=REPO):
     _prepare(out, replace, repo)
     written = []
     for folder, dest in SOURCES:
-        for rel in _tracked(repo, folder):
+        files = list(_tracked(repo, folder))
+        if folder == "src/articulate":
+            keep = server_closure(repo / folder, [f.as_posix() for f in files])
+            files = [f for f in files if f.suffix != ".py" or f.stem in keep]
+        for rel in files:
             target = out / dest / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes((repo / folder / rel).read_bytes())

@@ -161,3 +161,19 @@ def test_the_smoke_run_never_starts_python3_from_the_working_folder(tmp_path, mo
 def test_the_smoke_run_takes_an_explicit_interpreter_as_given():
     argv, _env = smoke.launch_spec(TEMPLATE, command=sys.executable)
     assert argv[0] == sys.executable
+
+
+def test_the_server_closure_follows_every_import_statement(tmp_path):
+    """Control for the bundle's module list: an import inside a function counts,
+    a chain of imports is followed, and a module nothing imports stays out."""
+    package = tmp_path / "articulate"
+    package.mkdir()
+    files = {"__init__.py": "from .version import VERSION\n",
+             "version.py": "VERSION = '1'\n",
+             "local_mcp.py": "import json\n\ndef run():\n    from . import cli\n",
+             "cli.py": "from .util import helper\nimport articulate.extra as extra\n",
+             "util.py": "helper = 1\n", "extra.py": "", "orphan.py": "import os\n"}
+    for name, text in files.items():
+        (package / name).write_text(text, encoding="utf-8")
+    found = build.server_closure(package, sorted(files))
+    assert found == {"__init__", "version", "local_mcp", "cli", "util", "extra"}

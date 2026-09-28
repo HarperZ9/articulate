@@ -43,6 +43,10 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   from the release its version names, and prints the source commit; `--dev`
   skips those two checks for a test build. The plugin template ships a
   `.gitignore`.
+- **The plugin carries only the modules its server can import**: 44 of the 67
+  package modules, found by following every import statement from `local_mcp`.
+  The command line, the LSP server and the fairness, desk, bench and receipt
+  modules stay out, and the bundle shrinks from 78 files to 55.
 - **The plugin scripts start `git` and `python3` only from an absolute `PATH`
   entry outside the working folder**, so a planted file of that name never runs.
 - **CI jobs read the repository only** (`permissions: contents: read`).

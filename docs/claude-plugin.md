@@ -93,9 +93,13 @@ python scripts/build_claude_plugin.py build/claude-plugin --dev
 python scripts/smoke_claude_plugin.py build/claude-plugin
 ```
 
-The build copies the files git tracks in `claude-plugin/` and `src/articulate/`,
-except caches and bytecode, and `LICENSE` into the output folder. An untracked
-or ignored file in those folders, such as a `.env`, never ships. The build then
+The build copies the files git tracks in `claude-plugin/`, the package modules
+the server can import, the package's files that are not Python source, and
+`LICENSE` into the output folder. The modules the server can import are every
+module reachable from `local_mcp` and the package `__init__` through any import
+statement, one inside a function included, so the command line, the LSP server
+and the fairness and desk tools stay out. An untracked or ignored file, such as a
+`.env`, never ships. The build then
 checks the result: file count and sizes, text-only files, names that work on
 Windows and macOS, no file named or shaped like a credential, the manifest
 fields, a single server variable, a README of at least 40 words with a Privacy
