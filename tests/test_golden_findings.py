@@ -54,7 +54,8 @@ def findings_digest():
 
 def _current():
     from articulate import detector
-    return {"fingerprint": detector.ruleset_fingerprint(), "digest": findings_digest()}
+    return {"fingerprint": detector.ruleset_fingerprint(), "digest": findings_digest(),
+            "semver": detector.RULESET_SEMVER}
 
 
 def test_findings_match_the_pin_for_this_fingerprint():
@@ -86,6 +87,11 @@ def write_pin(argv, pin=PIN, current=None):
               "the fingerprint with the change, or pass --corpus-changed when only the "
               "corpus changed.", file=sys.stderr)
         return 1
+    if (old.get("semver") and now.get("semver") == old.get("semver")
+            and now["fingerprint"] != old.get("fingerprint")):
+        print(f"refused: the ruleset changed while RULESET_SEMVER stayed {now['semver']}. "
+              "Give the new rule tables their own label.", file=sys.stderr)
+        return 1
     pin.write_bytes((json.dumps(now, indent=1) + "\n").encode("utf-8"))
     return 0
 
@@ -100,6 +106,26 @@ def test_the_writer_refuses_a_new_digest_under_the_same_fingerprint(tmp_path):
     assert json.loads(pin.read_text())["digest"] == "sha256:2"
     # Control: a moved fingerprint regenerates without the flag.
     assert write_pin(["--write"], pin, {"fingerprint": "sha256:bb", "digest": "sha256:3"}) == 0
+
+
+def test_the_writer_refuses_a_new_fingerprint_under_the_same_semver(tmp_path):
+    # Two rule tables must never share one RULESET_SEMVER label: a receipt, a
+    # changelog entry and a fairness page name a ruleset by it.
+    pin = tmp_path / "pin.json"
+    pin.write_text(json.dumps({"fingerprint": "sha256:aa", "digest": "sha256:1",
+                               "semver": "0.8.0"}))
+    moved = {"fingerprint": "sha256:bb", "digest": "sha256:2", "semver": "0.8.0"}
+    assert write_pin(["--write"], pin, moved) == 1
+    assert json.loads(pin.read_text())["fingerprint"] == "sha256:aa"
+    # Control: the same move under a new label is written.
+    assert write_pin(["--write"], pin, dict(moved, semver="0.9.0")) == 0
+    assert json.loads(pin.read_text())["semver"] == "0.9.0"
+
+
+def test_the_pin_names_the_current_ruleset_semver():
+    from articulate.fingerprint import RULESET_SEMVER
+    pin = json.loads(PIN.read_text(encoding="utf-8"))
+    assert pin.get("semver") == RULESET_SEMVER
 
 
 if __name__ == "__main__" and "--write" in sys.argv:

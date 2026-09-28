@@ -16,7 +16,10 @@ from .rules_high import HIGH
 from .rules_low import FICTION_SLOP, INJECTION, LOW, PHRASING_NOTES, REGISTER_JARGON
 from .scan import MEDIUM
 
-RULESET_SEMVER = "0.8.0"
+# 0.9.0: quotation pairing by direction, citation and sentence fixes, five rules
+# scoped to their named pattern, four notes moved to LOW or the house pack, and
+# the packs and project terms reading text with quotations blanked.
+RULESET_SEMVER = "0.9.0"
 
 
 def behavior_constants():
