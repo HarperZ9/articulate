@@ -2,8 +2,9 @@
 
 tool_meta marks them readOnlyHint true and openWorldHint false, and the Claude
 plugin's privacy policy says they open no network connection, start no other
-program, open none of the user's files, write nothing and keep no copy of the
-text. This file runs every tool the server lists as local, through the same
+program, open none of the user's files and write nothing. The module-state scan
+below checks for retained module-level copies; it does not inspect transient
+transport or session memory. This file runs every tool the server lists as local, through the same
 JSON-RPC entry point a host uses, with each of those actions made to fail. The
 tool set comes from the listing's own hints, so a new tool marked local is held
 to the same rules the moment it is listed.
@@ -80,6 +81,9 @@ def sealed(monkeypatch, tmp_path):
     real_open = builtins.open
     monkeypatch.setattr(builtins, "open", _package_read_only(real_open))
     monkeypatch.setattr(io, "open", _package_read_only(real_open))
+    # Older pathlib versions cache their opener, bypassing patches to io.open.
+    # Guard the public Path entrypoint as well, with the same package-read rule.
+    monkeypatch.setattr(pathlib.Path, "open", _package_read_only(real_open))
     monkeypatch.setattr(os, "open", _refuse("open a file descriptor"))
     return tmp_path
 
@@ -151,7 +155,7 @@ def _strings(value, depth=0):
             yield from _strings(item, depth + 1)
 
 
-def test_no_copy_of_the_text_outlives_the_call(monkeypatch, sealed):
+def test_no_module_level_copy_of_the_text_remains_after_calls(monkeypatch, sealed):
     for name, value in PLUGIN_ENV.items():
         monkeypatch.setenv(name, value)
     for tool in _local_tools(PLUGIN_ENV):
@@ -174,10 +178,13 @@ def test_the_plugin_tool_set_lists_only_local_tools():
     lambda tmp: subprocess.run([sys.executable, "--version"]),
     lambda tmp: open(tmp / "leak.txt", "w"),
     lambda tmp: pathlib.Path(tmp / "leak.txt").write_text("x"),
+    lambda tmp: pathlib.Path(tmp / "leak.bin").write_bytes(b"x"),
+    lambda tmp: pathlib.Path(tmp / "leak.txt").open("w"),
+    lambda tmp: pathlib.Path.home().joinpath("notes.md").read_text(),
     lambda tmp: open(pathlib.Path.home() / "notes.md"),
     lambda tmp: os.open(str(tmp / "leak.txt"), os.O_WRONLY | os.O_CREAT),
-], ids=["socket", "connect", "process", "open-write", "path-write", "read-user-file",
-        "os-open"])
+], ids=["socket", "connect", "process", "open-write", "path-write", "path-write-bytes",
+        "path-open", "path-read-user-file", "read-user-file", "os-open"])
 def test_each_guard_trips(sealed, attempt):
     """Control: every escape the sealed fixture claims to block is blocked and
     recorded."""
