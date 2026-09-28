@@ -229,13 +229,14 @@ def record_anchor(doc, commit=None, token_sha256=None, now=None):
     return pl.append(doc, "anchor", {"git_commit": commit}, now)
 
 
-def record_editor_pass(doc, pass_name, where="whole document"):
+def record_editor_pass(doc, pass_name, where="whole document", *, backend=None, model=None):
     """When the writer keeps a log for this document, a fix or polish pass that
     produced a rewrite appends its own assistance entry, so the statement built
     from the log cannot leave it out. Without a log, nothing is recorded."""
     if not pl.exists(doc):
         return None
     from . import __version__
-    return record_assist(doc, "articulate", "edited", [where], version=__version__,
-                         model="as selected by the claude CLI",
-                         receipt=f"articulate {pass_name} pass")
+    verb = "deterministic-fix" if backend == "none" else "edited"
+    return record_assist(doc, "articulate", verb, [where], version=__version__,
+                         model=model if backend != "none" else None,
+                         receipt=f"articulate {pass_name} pass (backend: {backend or 'unknown'})")

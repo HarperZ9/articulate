@@ -15,7 +15,7 @@ import subprocess
 
 import pytest
 
-from articulate import claude_cli, editor_cli, mcp_server
+from articulate import backends, claude_cli, editor_cli, mcp_server
 from articulate import local_only as lo
 
 
@@ -26,6 +26,10 @@ def no_subprocess(monkeypatch):
     monkeypatch.setattr(subprocess, "Popen", boom)
     monkeypatch.setattr(subprocess, "run", boom)
     monkeypatch.setattr(claude_cli, "_bounded_run", boom)
+    monkeypatch.setattr(backends, "_ollama", lambda *a, **k: (_ for _ in ()).throw(
+        backends.BackendUnavailable("no local model")))
+    for name in ("_anthropic", "_openai", "_claude"):
+        monkeypatch.setattr(backends, name, boom)
 
 
 @pytest.mark.parametrize("value", ["y", "Y", "2", "enabled", "local", " TRUE "])
@@ -55,15 +59,14 @@ def test_an_empty_file_argument_exits_with_no_such_file(monkeypatch, capsys):
 
 def test_an_empty_file_argument_is_refused_under_local_only(monkeypatch, no_subprocess):
     monkeypatch.setenv(lo.LOCAL_ONLY_VAR, "1")
-    assert editor_cli.main(["--judge", ""]) == lo.LOCAL_ONLY_EXIT
+    assert editor_cli.main(["--judge", ""]) == 2
 
 
-@pytest.mark.parametrize("call", [lambda: mcp_server.do_judge("A draft."),
-                                  lambda: mcp_server.do_fix("A draft."),
-                                  lambda: mcp_server.do_polish("A draft.", passes=1)])
+@pytest.mark.parametrize("call", [lambda: mcp_server.do_judge("A draft.", backend="claude-cli"),
+                                  lambda: mcp_server.do_fix("A draft.", backend="claude-cli"),
+                                  lambda: mcp_server.do_polish("A draft.", passes=1, backend="claude-cli")])
 def test_an_mcp_refusal_names_the_switch_not_the_backend(monkeypatch, no_subprocess, call):
     monkeypatch.setenv(lo.LOCAL_ONLY_VAR, "1")
     out = call()
-    assert out["ok"] is False
-    assert "local-only" in out["note"] and "was not sent" in out["note"]
-    assert "needs the claude CLI" not in out["note"]
+    assert out["ok"] is True and out["backend"] == "none"
+    assert out["attempts"][0] == {"backend": "claude-cli", "reason": "refused by ARTICULATE_LOCAL_ONLY"}

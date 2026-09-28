@@ -4,8 +4,9 @@
 
 Local prose checks: named writing patterns, where they occur, and what each
 costs a reader. The checks run on your machine with no network call and the
-standard library only. An optional editor rewrites for your reader through the
-`claude` CLI, which sends the text to a hosted model.
+standard library only. The editor rewrites for your reader through the calling
+model, a configured backend or conservative mechanical fixes with no model.
+Every result identifies its backend and any failed attempts.
 
 No Articulate output shows who or what wrote a text, and no finding is a basis
 for an accusation. Read [the boundaries](docs/boundaries.md#no-output-is-an-authorship-finding)
@@ -43,9 +44,10 @@ before you rely on any output.
   readme, essay, narrative and more) set which findings block. Writing modes
   such as `memo/argue` and genres such as `memoir`, `screenplay` and `poetry`
   read each kind of writing by its own convention.
-- **Edit for the reader.** `judge` reads judgment-level failures. `fix` writes
-  each rewrite and re-checks it. `polish` keeps a pass only when no quality score
-  falls, the gate does not go from ok to blocked and no note the mode requires
+- **Edit for the reader.** `judge` reads judgment-level failures. `fix` checks
+  protected spans and re-checks each accepted rewrite. `polish` keeps a pass
+  only when no quality score falls, the gate does not go from ok to blocked and
+  no note the mode requires
   opens. No instruction names an outside score, a sentence-length target or a
   vocabulary level.
 - **Keep your own process record.** `articulate process` keeps a local,
@@ -151,10 +153,32 @@ clears "a revolutionary product" in the same file; choose the narrowest term
 that works. The line sits in a comment that a rendered page does not show, so a
 CI owner should review `writing-allow:` lines in a diff.
 
+## Editing from a host or the command line
+
+In an MCP host, `fix`, `judge` and `polish` use sampling only when the client
+advertises it. Otherwise they return an edit plan for the calling model.
+The host reads the plan's instructions and masked text, then calls `edit_submit`
+with the original text, its rewrite and the plan ID. Articulate checks protected
+spans and returns the accepted text, gate changes and a host receipt. No second
+model account is needed. Sampling and host edits follow the host's privacy policy.
+
+```bash
+articulate plan notes.md --goal fix > plan.json
+articulate submit notes.md rewrite.md --plan PLAN_ID --model HOST_MODEL
+articulate fix notes.md --backend none --out edited.md
+articulate polish notes.md --backend ollama --json
+```
+
+Replace `PLAN_ID` with the ID in `plan.json`; the host writes `rewrite.md` from
+the plan's masked text. The CLI's `auto` selection tries configured Anthropic,
+the Claude CLI, configured OpenAI-compatible endpoints, Ollama and deterministic
+editing in that order. A failed backend is recorded before the next is tried.
+See the [backend configuration reference](docs/cli.md#backend-configuration).
+
 ## Privacy
 
 The checks, receipts, process record and desk never touch the network. Each
-command either stays on your machine or sends the full text to a hosted model:
+editor call follows its selected backend. Other commands stay local:
 
 | Command | Where the text goes |
 |:-|:-|
@@ -162,17 +186,19 @@ command either stays on your machine or sends the full text to a hosted model:
 | `articulate process`, `disclose`, `desk`, the LSP server | Nowhere: local |
 | `python -m articulate.fairness`, `python -m articulate.bench` | Nowhere: local |
 | The `check` and `score` tools of both MCP servers | Nowhere: local |
-| `python -m articulate.editor --judge`, `--review` (alias `--advise`): advice | A hosted model, through the `claude` CLI and the service it is set up to use |
-| `python -m articulate.editor --fix`, `--polish`: rewrites | A hosted model, through the `claude` CLI and the service it is set up to use |
-| The `judge`, `fix` and `polish` tools of both MCP servers | A hosted model, through the `claude` CLI and the service it is set up to use |
+| Editor commands with `--backend none` | Nowhere: deterministic edits stay local |
+| Editor commands with `--backend ollama` | Configured Ollama server; loopback by default |
+| Editor commands with `--backend anthropic` or `claude-cli` | The backend's provider |
+| Editor commands with `--backend openai` | Configured OpenAI-compatible endpoint |
+| Host plans and MCP sampling | The calling host and its selected model |
 
 Set `ARTICULATE_LOCAL_ONLY=1`, or pass `--local-only` to `python -m
-articulate.editor`, and every hosted command exits with code 3 before any
-network call; the MCP tools return an error that names the switch. Any value
-other than an empty one, `0`, `false`, `no` or `off` turns the switch on. The
-editor command line prints that the full text leaves the machine before each
-hosted run; the MCP tool descriptions say so, and their results do not repeat
-it. Under a brief that allows only spelling and
+articulate.editor`, to allow only loopback Ollama and deterministic editing.
+Other editor backends are refused before a connection. Any value other than an
+empty one, `0`, `false`, `no` or `off` turns the switch on. Plans and edit results
+contain source text. Host editing and sampling follow the host's privacy policy;
+local-only mode does not control a document already in its conversation.
+Under a brief that allows only spelling and
 grammar help, use the local commands: `judge` and `review` give structural
 advice, which such a brief may exclude. Do not run the hosted commands on a
 manuscript or grant application under review, on health records, or on unfiled
@@ -184,8 +210,8 @@ text, and nothing else.
 
 ## Status
 
-Pre-1.0. Version 0.5.0 is on PyPI as `articulate-writing`; the changes on this
-page are unreleased and listed in the [changelog](CHANGELOG.md). The fairness
+Pre-1.0. Version 0.6.0 is prepared for release as `articulate-writing`; it is
+unreleased and listed in the [changelog](CHANGELOG.md). The fairness
 harness has run on proxy corpora only. No arm yet groups adult academic writers
 by first language, and none covers dictated text, disabled writers or World
 Englishes. The release gate for the new ruleset passes on the Liang et al.

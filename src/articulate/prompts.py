@@ -169,6 +169,8 @@ def findings_block(summary):
 def hardened(instructions):
     """Every model call carries the content-as-data trust boundary, appended last
     so it has the final word over anything the document tries to assert."""
+    if instructions.rstrip().endswith(CONTENT_BOUNDARY):
+        return instructions.rstrip()
     return instructions.rstrip() + "\n\n" + CONTENT_BOUNDARY
 
 
@@ -189,3 +191,10 @@ def rewrite_instructions(summary, profile=None, mode_note="", notes=(), is_html=
 def judge_instructions(summary, mode_note=""):
     note = f"\nMODE TARGET for this piece: {mode_note}\n" if mode_note else ""
     return f"{JUDGE_TASK}{note}\n\nFor reference, {findings_block(summary)}\n"
+
+
+QUALITIES = ("concreteness", "commitment", "economy", "rhythm", "restatable")
+
+
+def quality_instructions():
+    return QUALITY_INSTRUCTIONS

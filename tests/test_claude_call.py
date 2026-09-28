@@ -70,6 +70,7 @@ def test_an_old_cli_that_rejects_a_flag_is_told_to_upgrade(monkeypatch):
 
 
 def test_editor_reports_a_missing_cli_through_its_closed_error(monkeypatch, capsys, work):
+    from articulate import backends
     monkeypatch.delenv(claude_cli.ENV_VAR, raising=False)
     monkeypatch.setenv("PATH", "")
     assert editor.ClaudeUnavailable is claude_cli.ClaudeUnavailable
@@ -77,6 +78,11 @@ def test_editor_reports_a_missing_cli_through_its_closed_error(monkeypatch, caps
     with pytest.raises(editor.ClaudeUnavailable) as info:
         editor.claude_call("instructions", "text")
     assert claude_cli.ENV_VAR in str(info.value)
+    # The public editor now falls back; stub selection to keep the test offline.
+    reason = str(info.value)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: (
+        "", backends.BackendInfo(backend="none", model=None,
+                                 attempts=[{"backend": "claude-cli", "reason": reason}])))
     doc = os.path.join(work, "d.md")
     with open(doc, "w", encoding="utf-8") as fh:
         fh.write("Some prose.\n")

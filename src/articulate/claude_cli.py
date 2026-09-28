@@ -34,6 +34,7 @@ first. A timeout stops the whole process tree (a batch shim runs the CLI as a
 grandchild). With ARTICULATE_LOCAL_ONLY set, run() refuses before any of this.
 """
 import ntpath
+import json
 import os
 import posixpath
 import shutil
@@ -275,6 +276,36 @@ def run(prompt, text, timeout=600, environ=None, exists=None,
 
 def _reason(exc):
     return exc.strerror or type(exc).__name__
+
+
+def auth_status(timeout=15, environ=None, exists=None, runner=None, windows=None, tmpdir=None):
+    """Read authentication metadata without a model call or document settings.
+
+    Reuses the same absolute executable resolution, isolated working directory,
+    Windows argument check, and process-tree timeout as completions.
+    """
+    windows = os.name == 'nt' if windows is None else windows
+    cli = resolve(environ, exists, windows)
+    runner = _bounded_run if runner is None else runner
+    try:
+        session, cwd, _ = _make_session('', tmpdir)
+    except OSError:
+        raise ClaudeUnavailable('claude CLI auth preflight could not create a temporary folder') from None
+    try:
+        argv = [cli, 'auth', 'status', '--json']
+        if is_batch(cli, windows) and any(cmd_unsafe(arg) for arg in argv):
+            raise ClaudeUnavailable(_UNSAFE_BATCH)
+        try:
+            result = runner(argv, timeout=timeout, cwd=cwd, env=_child_env(windows))
+            status = json.loads(result.stdout)
+            if not isinstance(status, dict) or not isinstance(status.get('loggedIn'), bool):
+                raise ValueError
+            return {'loggedIn':status['loggedIn'], **({'subscriptionType':status['subscriptionType']}
+                    if 'subscriptionType' in status else {})}
+        except (OSError, ValueError, TypeError):
+            raise ClaudeUnavailable('claude CLI auth status unavailable') from None
+    finally:
+        _remove_quietly(session)
 
 
 _BACKEND_ERRORS = (

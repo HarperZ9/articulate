@@ -1,73 +1,15 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-articulate.mcp_server -- the fastmcp server for Articulate, and the tool bodies
-both MCP transports share.
+"""Shared MCP tool bodies and the optional FastMCP transport.
 
-Exposes the local checks and the editor layer over the Model Context Protocol
-(stdio). The checks (check, score) run entirely local, with no network call. The
-editor tools (judge, fix, polish) need a model backend; today the only one is the
-`claude` CLI, which sends the text to a hosted Anthropic model. They return a
-clean "unavailable" result when the backend cannot be reached and never fail the
-call. Tool descriptions come from articulate.tool_text, the same table the
-zero-dependency server (local_mcp) reads.
-
-Run:  python -m articulate.mcp_server   (needs the [mcp] extra; stdio)
-stdout carries the MCP protocol; all logging goes to stderr.
+Detection and host planning/submission are local. Auto editing borrows the
+connected caller's model only when sampling was advertised, otherwise it
+returns a host plan. Explicit hosted backends can send text off this machine.
 """
-import os
-import tempfile
+import asyncio
+from typing import Optional
 
 from . import detector as core
-from . import editor
-from .local_only import LocalOnly
-from .origin_guard import note as origin_note
-from .origin_guard import strip_origin_guesses
 from .tool_text import DOES_NOT_PROVE, TOOLS
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-_BACKEND_NOTE = "the editor layer needs the claude CLI, which sends the text to a hosted model"
-_REFUSED_NOTE = ("the rewrite dropped, repeated or invented a masked math span and was "
-                 "refused; the text is unchanged")
-_LOCAL_ONLY_NOTE = ("local-only: the switch is on, so the text was not sent; the check and "
-                    "score tools still run")
-
-
-def _failure_note(err):
-    """Why a hosted tool returned no result: the local-only switch or the backend."""
-    return _LOCAL_ONLY_NOTE if isinstance(err, LocalOnly) else _BACKEND_NOTE
-
-
-def _scan_text(text):
-    """Write text to a temp file and run the deterministic detector on it."""
-    fd, path = tempfile.mkstemp(suffix=".md", text=True)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            fh.write(text)
-        return core.scan(path)
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
-
-
-def _mech_summary(text):
-    fd, path = tempfile.mkstemp(suffix=".md", text=True)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            fh.write(text)
-        return editor.mechanical(path)          # (clean, summary_string)
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
-
-
-# --------------------------------------------------------------------------- #
-# Plain, testable implementations. The MCP tools are thin wrappers over these.
-# --------------------------------------------------------------------------- #
 
 def do_check(text):
     """Named prose patterns with span records. Local, no network."""
@@ -103,117 +45,138 @@ def do_score(text):
     }
 
 
-def do_judge(text):
-    """Skilled-editor read of judgment-level failures. Needs the LLM backend."""
-    _, mech = _mech_summary(text)
-    from .prompts import judge_instructions
-    instr = judge_instructions(mech)
+def _edit(text, goal, **options):
+    from .editing import run_edit
+    result = run_edit(text, goal, context="mcp", **options)
+    result["does_not_prove"] = DOES_NOT_PROVE + " " + result.get("does_not_prove", "")
+    if result.get("status") != "host_edit_required":
+        if goal == "judge":
+            result["read"] = result.get("assessment", "")
+        elif goal == "fix":
+            result["rewrite"] = result["text"]
+            # Detailed findings remain in remaining_findings; retain the public
+            # state string that existing MCP callers read from findings_after.
+            result["findings_after"] = (
+                "has_findings" if any(f["tier"] in ("HIGH", "MEDIUM")
+                                      for f in result["remaining_findings"])
+                else "no_findings")
+        else:
+            result["final_text"] = result["text"]
+    return result
+
+
+def do_judge(text, backend=None, mode=None, profile=None, is_html=False,
+             is_tex=False, **transport):
+    return _edit(text, "judge", backend=backend, mode=mode, profile=profile,
+                 is_html=is_html, is_tex=is_tex, **transport)
+
+
+def do_fix(text, is_html=False, is_tex=False, backend=None, mode=None, profile=None,
+           **transport):
+    return _edit(text, "fix", backend=backend, mode=mode, profile=profile,
+                 is_html=is_html, is_tex=is_tex, **transport)
+
+
+def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False, backend=None, mode=None,
+              profile=None, **transport):
+    return _edit(text, "polish", bar=bar, passes=passes, backend=backend,
+                 mode=mode, profile=profile, is_html=is_html, is_tex=is_tex,
+                 **transport)
+
+
+def do_edit_plan(text, mode=None, profile=None, goal="fix", is_html=False, is_tex=False):
+    from .host_edit import edit_plan
+    return edit_plan(text, mode=mode, profile=profile, goal=goal,
+                     is_html=is_html, is_tex=is_tex)
+
+
+def do_edit_submit(text, rewrite, plan_id, scores=None, model=None):
+    from .host_edit import edit_submit
+    return edit_submit(text, rewrite, plan_id, scores=scores, model=model)
+
+
+async def _fast_edit(ctx, text, goal, **options):
+    """Bridge synchronous editing to the negotiated SDK session without an account."""
+    from mcp.types import ClientCapabilities, SamplingCapability, SamplingMessage, TextContent
+    loop = asyncio.get_running_loop()
     try:
-        read, removed = strip_origin_guesses(editor.claude_call(instr, text))
-        out = {"ok": True, "read": read, "does_not_prove": DOES_NOT_PROVE}
-        if removed:
-            out["note"] = origin_note(removed)
-        return out
-    except (RuntimeError, Exception) as e:  # noqa: BLE001 - report cleanly to the host
-        return {"ok": False, "error": str(e), "note": _failure_note(e)}
+        session = ctx.session
+        advertised = session.check_client_capability(ClientCapabilities(sampling=SamplingCapability()))
+    except (AttributeError, RuntimeError):
+        session, advertised = None, False
 
+    def sampling(instructions, passage, timeout):
+        async def complete():
+            result = await session.create_message(
+                messages=[SamplingMessage(role="user", content=TextContent(type="text", text=passage))],
+                system_prompt=instructions, max_tokens=4096, include_context="none")
+            return result.model_dump(by_alias=True)
+        future = asyncio.run_coroutine_threadsafe(complete(), loop)
+        try:
+            return future.result(timeout=timeout)
+        except TimeoutError:
+            future.cancel()
+            raise RuntimeError("sampling timed out") from None
+        except Exception:
+            raise RuntimeError("sampling request failed") from None
 
-def _rewrite(text, worst, is_html, is_tex):
-    """One editor rewrite. With is_tex, every LaTeX math span is masked before the
-    model call and spliced back byte for byte, as the CLI does for a .tex file."""
-    if is_tex:
-        return editor.masked_rewrite(
-            text, lambda t, mech: editor.rewrite_once(t, mech, worst, is_html))
-    return editor.rewrite_once(text, _mech_summary(text)[1], worst, is_html)
-
-
-def do_fix(text, is_html=False, is_tex=False):
-    """Rewrite to the standard, self-gated on the detector. Needs the LLM backend."""
-    try:
-        rewrite = _rewrite(text, [], is_html, is_tex)
-    except editor.MathSpliceError as e:
-        return {"ok": False, "error": str(e), "note": _REFUSED_NOTE}
-    except (RuntimeError, Exception) as e:  # noqa: BLE001
-        return {"ok": False, "error": str(e), "note": _failure_note(e)}
-    after = do_check(rewrite)
-    return {"ok": True, "rewrite": rewrite,
-            "findings_after": after["findings"], "gate_after": after["gate"],
-            "note": "a suggestion; read it against the original before shipping",
-            "does_not_prove": DOES_NOT_PROVE}
-
-
-def _polish_scores(cur, is_tex):
-    q = editor.quality_judge(editor.mask_math(cur)[0] if is_tex else cur)
-    return q, {k: int(q.get(k, 0) or 0) for k in editor.QUALITIES}
-
-
-def do_polish(text, bar=4, passes=3, is_html=False, is_tex=False):
-    """The quality loop, with the CLI's acceptance rule (editor.accept): a pass is
-    kept only when no quality score falls and the gate does not go from ok to
-    blocked. With is_tex no model call sees a formula. A rewrite refused for
-    altering masked math stops the loop and keeps the last accepted text."""
-    scorecard, cur, refused = [], text, None
-    try:
-        chk = do_check(cur)
-        q, sc = _polish_scores(cur, is_tex)
-        for attempt in range(passes + 1):
-            scorecard.append({"pass": attempt, "scores": sc, "gate": chk["gate"],
-                              "overall": q.get("overall")})
-            if (chk["gate"] == "ok" and min(sc.values()) >= bar) or attempt == passes:
-                break
-            worst = q.get("worst", [])
-            try:
-                cand = _rewrite(cur, editor.scrub_math_notes(worst) if is_tex else worst,
-                                is_html, is_tex)
-            except editor.MathSpliceError as e:
-                refused = str(e)
-                break
-            c_chk = do_check(cand)
-            cq, csc = _polish_scores(cand, is_tex)
-            ok, _why = editor.accept(sc, csc, chk["gate"], c_chk["gate"], set(), None)
-            if not ok:
-                break
-            cur, chk, q, sc = cand, c_chk, cq, csc
-    except (RuntimeError, Exception) as e:  # noqa: BLE001
-        return {"ok": False, "error": str(e), "scorecard": scorecard,
-                "note": _failure_note(e)}
-    out = {"ok": True, "final_text": cur, "scorecard": scorecard,
-           "note": "accepted on the reader's qualities and the gate, never on an outside score",
-           "does_not_prove": DOES_NOT_PROVE}
-    if refused:
-        out.update(refused=refused, note=("a rewrite pass altered masked math and was "
-                                          "refused; final_text is the last accepted text"))
-    return out
-
-
-def _described(fn, name):
-    fn.__doc__ = TOOLS[name]
-    return fn
+    return await asyncio.to_thread(_edit, text, goal, sampling=sampling if advertised else None,
+                                   sampling_advertised=advertised, **options)
 
 
 def build_server():
-    from fastmcp import FastMCP
+    from fastmcp import FastMCP, Context
     mcp = FastMCP("articulate")
 
     def check(text: str) -> dict:
+        """Report named prose patterns and the gate. Local, no network."""
         return do_check(text)
 
     def score(text: str) -> dict:
+        """Return per-rule counts, density and structural rates. Local, no network."""
         return do_score(text)
 
-    def judge(text: str) -> dict:
-        return do_judge(text)
+    async def judge(text: str, ctx: Context, backend: Optional[str] = None,
+                    mode: Optional[str] = None, profile: Optional[str] = None,
+                    is_html: bool = False, is_tex: bool = False) -> dict:
+        """Assess prose using negotiated sampling or return a host edit plan; explicit hosted backends send text off the machine.
+        When a plan is returned, follow its instructions and call edit_submit with the original text, assessment and plan_id."""
+        return await _fast_edit(ctx, text, "judge", backend=backend, mode=mode,
+                                profile=profile, is_html=is_html, is_tex=is_tex)
 
-    def fix(text: str, is_html: bool = False, is_tex: bool = False) -> dict:
-        return do_fix(text, is_html, is_tex)
+    async def fix(text: str, ctx: Context, is_html: bool = False,
+                  backend: Optional[str] = None, mode: Optional[str] = None,
+                  profile: Optional[str] = None, is_tex: bool = False) -> dict:
+        """Edit prose using negotiated sampling or return a host edit plan; explicit hosted backends send text off the machine.
+        When a plan is returned, follow its instructions and call edit_submit with the original text, rewrite and plan_id."""
+        return await _fast_edit(ctx, text, "fix", backend=backend, mode=mode,
+                                profile=profile, is_html=is_html, is_tex=is_tex)
 
-    def polish(text: str, bar: int = 4, passes: int = 3, is_html: bool = False,
-               is_tex: bool = False) -> dict:
-        return do_polish(text, bar, passes, is_html, is_tex)
+    async def polish(text: str, ctx: Context, bar: int = 4, passes: int = 3,
+                     is_html: bool = False, backend: Optional[str] = None,
+                     mode: Optional[str] = None, profile: Optional[str] = None,
+                     is_tex: bool = False) -> dict:
+        """Polish prose with meaning and regression guards or return a host plan; explicit hosted backends send text off the machine.
+        When a plan is returned, follow its instructions and call edit_submit with the original text, rewrite, plan_id and assessed scores."""
+        return await _fast_edit(ctx, text, "polish", backend=backend, mode=mode,
+                                profile=profile, is_html=is_html, is_tex=is_tex,
+                                bar=bar, passes=passes)
 
-    # One description table serves both MCP servers (tool_text.TOOLS).
-    for fn in (check, score, judge, fix, polish):
-        mcp.tool(_described(fn, fn.__name__))
+    def edit_plan(text: str, mode: Optional[str] = None, profile: Optional[str] = None,
+                  goal: str = "fix", is_html: bool = False, is_tex: bool = False) -> dict:
+        """Prepare local findings, protected spans and exact instructions for the calling model without a second account.
+        Follow the instructions using masked_text and call edit_submit with the original text, rewrite or assessment, and plan_id."""
+        return do_edit_plan(text, mode, profile, goal, is_html, is_tex)
+
+    def edit_submit(text: str, rewrite: str, plan_id: str,
+                    scores: Optional[dict] = None, model: Optional[str] = None) -> dict:
+        """Submit the original text and a host rewrite or assessment using the plan_id from edit_plan.
+        Articulate restores masks, guards protected spans, checks the result and returns accepted text with a host receipt."""
+        return do_edit_submit(text, rewrite, plan_id, scores, model)
+
+    for fn in (check, score, judge, fix, polish, edit_plan, edit_submit):
+        fn.__doc__ = TOOLS[fn.__name__]
+        mcp.tool(fn)
     return mcp
 
 

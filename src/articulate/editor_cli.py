@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 """articulate.editor_cli -- the command line of the editor layer.
 
-`python -m articulate.editor` runs this. Every command here sends the full text
-to a hosted model through the claude CLI, so the first thing each run does is
-say so, and with the local-only switch set it refuses before any subprocess
-starts. `--advise` is `--review` under a name that cannot be read as peer
+`python -m articulate.editor` runs this. Commands select a configured backend, offer a host plan, or use local
+deterministic editing. Local-only permits loopback Ollama and no-model edits. `--advise` is `--review` under a name that cannot be read as peer
 review; the desk is the reviewer tool.
 
 Standard library only.
@@ -30,14 +28,14 @@ _COMMAND_HELP = (
 def _parser():
     ap = argparse.ArgumentParser(
         prog="python -m articulate.editor",
-        description="Articulate editor layer. Each command sends the full text to a "
-                    "hosted model through the claude CLI.",
+        description="Articulate editor layer with guarded backend selection.",
         epilog=command_map(), formatter_class=argparse.RawDescriptionHelpFormatter)
     g = ap.add_mutually_exclusive_group(required=True)
     for flag, text in _COMMAND_HELP:
         g.add_argument(flag, metavar="FILE", help=text)
     g.add_argument("--advise", metavar="FILE",
                    help="the same as --review: the checks plus an editor's read, no rewrite")
+    ap.add_argument("--backend", choices=("auto", "host", "sampling", "anthropic", "claude-cli", "openai", "ollama", "none"))
     ap.add_argument("--out", metavar="FILE", default=None)
     ap.add_argument("--passes", type=int, default=3)
     ap.add_argument("--bar", type=int, default=4, help="quality bar 1-5 for --polish")
@@ -55,27 +53,22 @@ def main(argv=None):
     # An empty FILE is still the command's argument: it reports "no such file".
     cmd = next(c for c in _COMMANDS if getattr(args, c) is not None)
     target = getattr(args, cmd)
-    if args.local_only or local_only():
-        print(f"[articulate] local-only: {cmd} was refused and {target} was not sent. "
-              f"The local checks (articulate check, score, desk) still run.", file=sys.stderr)
-        return LOCAL_ONLY_EXIT
+    if args.local_only:
+        os.environ[LOCAL_ONLY_VAR] = "1"
     reason = _unreadable(target)
     if reason:
         print(f"[articulate] {reason}")
         return 2
-    print(f"[articulate] {cmd} sends the full text of {os.path.basename(target)} to a hosted "
-          f"model through the claude CLI; the checks themselves run offline. Set "
-          f"{LOCAL_ONLY_VAR}=1 to refuse.", file=sys.stderr)
     if cmd == "judge":
-        ed.judge(target, args.mode, args.profile)
+        ed.judge(target, args.mode, args.profile, backend=args.backend)
         return 0
     if cmd in ("review", "advise"):
-        ed.review(target, args.mode, args.profile)
+        ed.review(target, args.mode, args.profile, backend=args.backend)
         return 0
     if cmd == "polish":
         return ed.polish(target, args.out, max(1, args.passes), max(1, min(5, args.bar)),
-                         mode=args.mode, profile=args.profile)
-    return ed.fix(target, args.out, max(1, args.passes), mode=args.mode, profile=args.profile)
+                         mode=args.mode, profile=args.profile, backend=args.backend)
+    return ed.fix(target, args.out, max(1, args.passes), mode=args.mode, profile=args.profile, backend=args.backend)
 
 
 def _unreadable(target):

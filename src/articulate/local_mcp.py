@@ -1,69 +1,149 @@
-"""local_mcp.py - a zero-dependency MCP server over stdio JSON-RPC 2.0.
+"""Dependency-free MCP stdio transport, with per-session negotiated sampling.
 
-articulate already speaks MCP through ``mcp_server.build_server()``, which is
-built on fastmcp. fastmcp is declared under the ``mcp`` extra, so a plain
-``pip install articulate-writing`` produces a package whose MCP entry point
-raises ``ModuleNotFoundError: No module named 'fastmcp'`` the moment a host
-launches it. The install succeeds and the server does not start, which is the
-worst shape for a defect: nothing fails until a user tries to use it.
-
-This module serves the same five tools with nothing but the standard library,
-so the package's MCP surface works from a bare install. It is not a second
-implementation. The tool bodies stay in ``mcp_server`` as ``do_check``,
-``do_score``, ``do_judge``, ``do_fix`` and ``do_polish``; both transports call
-those same functions, so the two surfaces cannot drift apart in behavior.
-Importing ``mcp_server`` is safe without fastmcp because that module imports it
-lazily, inside ``build_server``.
-
-``handle`` maps one request dict to one response dict and is testable without
-pipes. ``serve`` is the thin stdio loop. stdout carries the protocol; anything
-else belongs on stderr.
+The reader queues incoming lines while a tool waits for sampling. Unrelated
+requests are preserved for ordinary dispatch, and only a correlated response
+can supply generated text. Tool implementations are shared with FastMCP.
 """
 from __future__ import annotations
 
 import json
 import sys
+import queue
+import threading
+import time
+from collections import deque
 
 from . import __version__
-from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score
 from .tool_text import TOOLS as TOOL_TEXT
+from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score, do_edit_plan, do_edit_submit
 
 PROTOCOL = "2025-06-18"
 
 _TEXT = {"text": {"type": "string", "description": "the passage to read"}}
 _IS_HTML = {"is_html": {"type": "boolean", "default": False,
                         "description": "treat the input as HTML and preserve its markup"}}
-_IS_TEX = {"is_tex": {"type": "boolean", "default": False,
-                      "description": ("treat the input as LaTeX: mask every math span "
-                                      "before each model call and restore it byte "
-                                      "for byte")}}
 
-_SCHEMAS = {
-    "check": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
-    "score": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
-    "judge": {"type": "object", "required": ["text"], "properties": dict(_TEXT)},
-    "fix": {"type": "object", "required": ["text"],
-            "properties": dict(_TEXT, **_IS_HTML, **_IS_TEX)},
-    "polish": {"type": "object", "required": ["text"],
-               "properties": dict(
-                   _TEXT,
-                   bar={"type": "integer", "default": 4, "minimum": 1, "maximum": 5,
-                        "description": "the quality bar every dimension must clear"},
-                   passes={"type": "integer", "default": 3, "minimum": 1,
-                           "description": "how many rewrite attempts before giving up"},
-                   **_IS_HTML, **_IS_TEX)},
-    "articulate.status": {"type": "object", "properties": {}},
-    "articulate.doctor": {"type": "object", "properties": {}},
-}
-# One description table serves both MCP servers (tool_text.TOOLS).
+# Host preparation and acceptance have no network or separate-model dependency.
+LOCAL_ONLY = ("check", "score", "edit_plan", "edit_submit")
+NEEDS_BACKEND = ()
+
+_EDIT_OPTIONS = {'is_html': {'type': 'boolean',
+             'default': False,
+             'description': 'treat the input as HTML and preserve its markup'},
+ 'is_tex': {'type': 'boolean', 'default': False},
+ 'backend': {'type': 'string',
+             'enum': ['auto',
+                      'host',
+                      'sampling',
+                      'anthropic',
+                      'claude-cli',
+                      'openai',
+                      'ollama',
+                      'none']},
+ 'mode': {'type': 'string'},
+ 'profile': {'type': 'string'}}
+
+_SCHEMAS = {'check': {'type': 'object',
+           'required': ['text'],
+           'properties': {'text': {'type': 'string', 'description': 'the passage to read'}}},
+ 'score': {'type': 'object',
+           'required': ['text'],
+           'properties': {'text': {'type': 'string', 'description': 'the passage to read'}}},
+ 'judge': {'type': 'object',
+           'required': ['text'],
+           'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
+                          'is_html': {'type': 'boolean',
+                                      'default': False,
+                                      'description': 'treat the input as HTML and preserve its '
+                                                     'markup'},
+                          'is_tex': {'type': 'boolean', 'default': False},
+                          'backend': {'type': 'string',
+                                      'enum': ['auto',
+                                               'host',
+                                               'sampling',
+                                               'anthropic',
+                                               'claude-cli',
+                                               'openai',
+                                               'ollama',
+                                               'none']},
+                          'mode': {'type': 'string'},
+                          'profile': {'type': 'string'}}},
+ 'fix': {'type': 'object',
+         'required': ['text'],
+         'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
+                        'is_html': {'type': 'boolean',
+                                    'default': False,
+                                    'description': 'treat the input as HTML and preserve its '
+                                                   'markup'},
+                        'is_tex': {'type': 'boolean', 'default': False},
+                        'backend': {'type': 'string',
+                                    'enum': ['auto',
+                                             'host',
+                                             'sampling',
+                                             'anthropic',
+                                             'claude-cli',
+                                             'openai',
+                                             'ollama',
+                                             'none']},
+                        'mode': {'type': 'string'},
+                        'profile': {'type': 'string'}}},
+ 'polish': {'type': 'object',
+            'required': ['text'],
+            'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
+                           'bar': {'type': 'integer',
+                                   'default': 4,
+                                   'minimum': 1,
+                                   'maximum': 5,
+                                   'description': 'the quality bar every dimension must clear'},
+                           'passes': {'type': 'integer',
+                                      'default': 3,
+                                      'minimum': 1,
+                                      'description': 'how many rewrite attempts before giving up'},
+                           'is_html': {'type': 'boolean',
+                                       'default': False,
+                                       'description': 'treat the input as HTML and preserve its '
+                                                      'markup'},
+                           'is_tex': {'type': 'boolean', 'default': False},
+                           'backend': {'type': 'string',
+                                       'enum': ['auto',
+                                                'host',
+                                                'sampling',
+                                                'anthropic',
+                                                'claude-cli',
+                                                'openai',
+                                                'ollama',
+                                                'none']},
+                           'mode': {'type': 'string'},
+                           'profile': {'type': 'string'}}},
+ 'edit_plan': {'type': 'object',
+               'required': ['text'],
+               'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
+                              'mode': {'type': 'string'},
+                              'profile': {'type': 'string'},
+                              'goal': {'type': 'string',
+                                       'enum': ['fix', 'polish', 'judge'],
+                                       'default': 'fix'},
+                              'is_tex': {'type': 'boolean', 'default': False},
+                              'is_html': {'type': 'boolean',
+                                          'default': False,
+                                          'description': 'treat the input as HTML and preserve its '
+                                                         'markup'}}},
+ 'edit_submit': {'type': 'object',
+                 'required': ['text', 'rewrite', 'plan_id'],
+                 'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
+                                'rewrite': {'type': 'string'},
+                                'plan_id': {'type': 'string'},
+                                'scores': {'type': 'object'},
+                                'model': {'type': 'string'}}},
+ 'articulate.status': {'type': 'object', 'properties': {}},
+ 'articulate.doctor': {'type': 'object', 'properties': {}}}
 TOOLS = [{"name": name, "description": TOOL_TEXT[name], "inputSchema": schema}
          for name, schema in _SCHEMAS.items()]
 
-# check and score read the text and nothing else. The rest call out to an editor
-# backend, so a host with no backend still gets a working detector.
-LOCAL_ONLY = ("check", "score")
-NEEDS_BACKEND = ("judge", "fix", "polish")
 
+# Both transports share one public description table.
+for tool in TOOLS:
+    tool["description"] = TOOL_TEXT[tool["name"]]
 
 def _ok(rid, result):
     return {"jsonrpc": "2.0", "id": rid, "result": result}
@@ -77,13 +157,16 @@ def _valid_request_id(value) -> bool:
     return type(value) is str or type(value) is int
 
 
-def _identity(include_detail: bool) -> dict:
+def _identity(include_detail: bool, session=None) -> dict:
     info = {"ok": True, "server": "articulate", "version": __version__,
             "protocol": PROTOCOL}
     if include_detail:
         info["tools"] = [t["name"] for t in TOOLS]
         info["local_only"] = list(LOCAL_ONLY)
         info["needs_llm_backend"] = list(NEEDS_BACKEND)
+        info["optional_llm_backend"] = ["judge", "fix", "polish"]
+        info["sampling_advertised"] = bool(session and session.sampling_advertised)
+        info["editor_default"] = "sampling" if info["sampling_advertised"] else "host"
     return info
 
 
@@ -94,30 +177,36 @@ def _text_arg(args: dict) -> str:
     return text
 
 
-def _call(params: dict) -> dict:
+def _call(params: dict, session=None) -> dict:
     name = params.get("name")
     args = params.get("arguments") or {}
     if not isinstance(args, dict):
         return {"content": [{"type": "text", "text": "'arguments' must be an object"}],
                 "isError": True}
     if name in ("articulate.status", "articulate.doctor"):
-        info = _identity(name == "articulate.doctor")
+        info = _identity(name == "articulate.doctor", session)
         return {"content": [{"type": "text", "text": json.dumps(info, indent=2)}]}
     try:
         if name == "check":
             result = do_check(_text_arg(args))
         elif name == "score":
             result = do_score(_text_arg(args))
-        elif name == "judge":
-            result = do_judge(_text_arg(args))
-        elif name == "fix":
-            result = do_fix(_text_arg(args), bool(args.get("is_html", False)),
-                            bool(args.get("is_tex", False)))
-        elif name == "polish":
-            result = do_polish(_text_arg(args), int(args.get("bar", 4)),
-                               int(args.get("passes", 3)),
-                               bool(args.get("is_html", False)),
-                               bool(args.get("is_tex", False)))
+        elif name in ("judge", "fix", "polish"):
+            options = {key: args[key] for key in _EDIT_OPTIONS if key in args}
+            if session is not None:
+                options.update(sampling=session.sample, sampling_advertised=session.sampling_advertised)
+            if name == "polish":
+                options.update(bar=args.get("bar", 4), passes=args.get("passes", 3))
+            result = {"judge": do_judge, "fix": do_fix, "polish": do_polish}[name](_text_arg(args), **options)
+        elif name == "edit_plan":
+            result = do_edit_plan(_text_arg(args), **{key: args[key] for key in
+                ("mode", "profile", "goal", "is_html", "is_tex") if key in args})
+        elif name == "edit_submit":
+            for key in ("rewrite", "plan_id"):
+                if not isinstance(args.get(key), str):
+                    raise ValueError("'%s' is required and must be a string" % key)
+            result = do_edit_submit(_text_arg(args), args["rewrite"], args["plan_id"],
+                                    scores=args.get("scores"), model=args.get("model"))
         else:
             return {"content": [{"type": "text", "text": "unknown tool %r" % (name,)}],
                     "isError": True}
@@ -128,7 +217,7 @@ def _call(params: dict) -> dict:
     return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
 
 
-def handle(req):
+def handle(req, session=None):
     """Map one JSON-RPC request to a response dict, or None for a notification."""
     if not isinstance(req, dict):
         return _err(None, -32600, "invalid request")
@@ -143,6 +232,17 @@ def handle(req):
     if "id" not in req:
         return None
     if method == "initialize":
+        if session is not None:
+            params = req.get("params", {})
+            if not isinstance(params, dict):
+                return _err(rid, -32602, "invalid params")
+            if session.initialized:
+                return _err(rid, -32600, "session already initialized")
+            capabilities = params.get("capabilities", {})
+            if not isinstance(capabilities, dict):
+                return _err(rid, -32602, "invalid capabilities")
+            session.sampling_advertised = isinstance(capabilities.get("sampling"), dict)
+            session.initialized = True
         return _ok(rid, {"protocolVersion": PROTOCOL, "capabilities": {"tools": {}},
                          "serverInfo": {"name": "articulate", "version": __version__}})
     if method == "tools/list":
@@ -151,7 +251,7 @@ def handle(req):
         params = req["params"] if "params" in req else {}
         if not isinstance(params, dict):
             return _err(rid, -32602, "invalid params")
-        return _ok(rid, _call(params))
+        return _ok(rid, _call(params, session))
     return _err(rid, -32601, "method not found: %s" % (method,))
 
 
@@ -164,23 +264,99 @@ def handle(req):
 handle_request = handle
 
 
-def serve(stdin=None, stdout=None) -> int:
-    stdin = stdin if stdin is not None else sys.stdin
-    stdout = stdout if stdout is not None else sys.stdout
-    for line in stdin:
-        line = line.strip()
-        if not line:
-            continue
+class Session:
+    """One stdio connection; never share capabilities or outstanding replies."""
+    def __init__(self, stdin, stdout, sampling_timeout=60):
+        self.stdin, self.stdout = stdin, stdout
+        self.sampling_timeout = sampling_timeout
+        self.incoming = queue.Queue()
+        self.pending = deque()
+        self.initialized = False
+        self.sampling_advertised = False
+        self.counter = 0
+        self.closed = False
+
+    def send(self, message):
+        self.stdout.write(json.dumps(message) + "\n")
+        self.stdout.flush()
+
+    def read(self):
         try:
-            req = json.loads(line)
-        except ValueError:
-            stdout.write(json.dumps(_err(None, -32700, "parse error")) + "\n")
-            stdout.flush()
+            for line in self.stdin:
+                if not line.strip():
+                    continue
+                try:
+                    self.incoming.put(json.loads(line))
+                except ValueError:
+                    self.incoming.put(_ParseError())
+        finally:
+            self.incoming.put(_EndOfInput())
+
+    def sample(self, instructions, text, timeout):
+        if not self.initialized or not self.sampling_advertised:
+            raise RuntimeError("sampling was not advertised by this client")
+        self.counter += 1
+        rid = "articulate-sampling-%d" % self.counter
+        deadline = time.monotonic() + min(timeout, self.sampling_timeout)
+        self.send({"jsonrpc": "2.0", "id": rid, "method": "sampling/createMessage",
+                   "params": {"messages": [{"role": "user", "content": {"type": "text", "text": text}}],
+                              "systemPrompt": instructions, "maxTokens": 4096, "includeContext": "none"}})
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise RuntimeError("sampling timed out")
+            try:
+                message = self.incoming.get(timeout=remaining)
+            except queue.Empty:
+                raise RuntimeError("sampling timed out") from None
+            if isinstance(message, _EndOfInput):
+                self.closed = True
+                raise RuntimeError("sampling client disconnected")
+            if isinstance(message, dict) and "method" not in message and message.get("id") == rid:
+                if message.get("jsonrpc") != "2.0" or "error" in message:
+                    raise RuntimeError("sampling request failed")
+                result = message.get("result")
+                if not isinstance(result, dict):
+                    raise RuntimeError("sampling returned an invalid result")
+                content = result.get("content")
+                if not isinstance(content, dict) or content.get("type") != "text" or not isinstance(content.get("text"), str):
+                    raise RuntimeError("sampling did not return text")
+                if not isinstance(result.get("model"), str):
+                    raise RuntimeError("sampling did not name its model")
+                return result
+            # Responses with another id are stale/unrelated and cannot be used.
+            if not (isinstance(message, dict) and "method" not in message and
+                    ("result" in message or "error" in message)):
+                self.pending.append(message)
+
+
+class _ParseError:
+    pass
+
+
+class _EndOfInput:
+    pass
+
+
+def serve(stdin=None, stdout=None, *, sampling_timeout=60) -> int:
+    session = Session(stdin if stdin is not None else sys.stdin,
+                      stdout if stdout is not None else sys.stdout, sampling_timeout)
+    reader = threading.Thread(target=session.read, daemon=True)
+    reader.start()
+    while session.pending or not session.closed:
+        req = session.pending.popleft() if session.pending else session.incoming.get()
+        if isinstance(req, _EndOfInput):
+            session.closed = True
             continue
-        resp = handle(req)
+        if isinstance(req, _ParseError):
+            session.send(_err(None, -32700, "parse error"))
+            continue
+        # A late sampling response is not a new JSON-RPC request.
+        if isinstance(req, dict) and "method" not in req and ("result" in req or "error" in req):
+            continue
+        resp = handle(req, session)
         if resp is not None:
-            stdout.write(json.dumps(resp) + "\n")
-            stdout.flush()
+            session.send(resp)
     return 0
 
 

@@ -11,10 +11,13 @@ standard library, it answers the same five tools, and it cannot quietly drift
 away from the fastmcp surface it mirrors.
 """
 import ast
+import importlib.util
 import io
 import json
+import os
 import pathlib
 import sys
+import subprocess
 
 import pytest
 
@@ -61,15 +64,16 @@ def test_initialize_reports_identity_and_protocol():
 def test_tools_list_matches_the_fastmcp_surface():
     """A drift guard that does not need fastmcp installed.
 
-    The fastmcp server defines its tools as functions inside ``build_server``
-    and registers each with ``mcp.tool``. Parsing that file for those names is
+    The fastmcp server declares its tools as functions decorated with
+    ``@mcp.tool`` inside ``build_server``. Parsing that file for those names is
     cheaper than importing it, and it works in CI where the extra is absent.
     """
     tree = ast.parse((_SRC / "mcp_server.py").read_text(encoding="utf-8"))
     build = next(n for n in ast.walk(tree)
                  if isinstance(n, ast.FunctionDef) and n.name == "build_server")
-    decorated = {n.name for n in build.body if isinstance(n, ast.FunctionDef)}
-    assert decorated, "found no tool functions in build_server; the parse assumption broke"
+    decorated = {n.name for n in build.body
+                 if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    assert decorated, "found no tool functions in build_server"
     served = {tool["name"] for tool in local_mcp.TOOLS}
     assert decorated <= served, (
         "the fastmcp server exposes tools the stdio server does not: "
@@ -95,8 +99,11 @@ def test_status_and_doctor_answer_without_a_backend():
     assert doctor["tools"] == [t["name"] for t in local_mcp.TOOLS]
     # The split is the honest part: a host with no LLM backend still gets a
     # working detector, and doctor says which tools that covers.
-    assert doctor["local_only"] == ["check", "score"]
-    assert set(doctor["needs_llm_backend"]) == {"judge", "fix", "polish"}
+    assert doctor["local_only"] == ["check", "score", "edit_plan", "edit_submit"]
+    assert doctor["needs_llm_backend"] == []
+    assert set(doctor["optional_llm_backend"]) == {"judge", "fix", "polish"}
+    assert doctor["sampling_advertised"] is False
+    assert doctor["editor_default"] == "host"
 
 
 def test_check_runs_local_and_reports_findings():
@@ -166,9 +173,51 @@ def test_serve_round_trips_over_stdio_and_survives_a_bad_line():
     ]
     out = io.StringIO()
     assert local_mcp.serve(io.StringIO("\n".join(lines) + "\n"), out) == 0
-    responses = [json.loads(ln) for ln in out.getvalue().splitlines() if ln.strip()]
+    responses = [json.loads(l) for l in out.getvalue().splitlines() if l.strip()]
     # initialize, the parse error, and tools/list. The blank line and the
     # notification produce nothing, and one bad line does not kill the loop.
     assert [r.get("id") for r in responses] == [1, None, 2]
     assert responses[1]["error"]["code"] == -32700
     assert len(responses[2]["result"]["tools"]) == len(local_mcp.TOOLS)
+
+
+@pytest.mark.skipif(importlib.util.find_spec('fastmcp') is None,
+                    reason='optional FastMCP extra is not installed')
+def test_optional_fastmcp_negotiated_sampling_and_host_fallback():
+    # Keep optional SDK imports outside this process, preserving the bare-import
+    # guarantee tested above. This exercises a real in-memory SDK connection.
+    script = '''
+import asyncio
+import os
+import subprocess
+import urllib.request
+from fastmcp import Client
+from mcp.types import CreateMessageResult, TextContent
+from articulate.mcp_server import build_server
+os.environ.pop('ARTICULATE_BACKEND', None)
+os.environ.pop('ARTICULATE_LOCAL_ONLY', None)
+def forbidden(*args, **kwargs):
+    raise AssertionError('unexpected separate model boundary')
+subprocess.run = forbidden
+urllib.request.urlopen = forbidden
+async def sample(messages, params, context):
+    return CreateMessageResult(role='assistant',
+        content=TextContent(type='text', text='We wait. Today.'), model='scripted-fastmcp')
+async def main():
+    async with Client(build_server()) as client:
+        result = await client.call_tool('fix', {'text': 'We wait.'})
+        assert result.data['backend'] == 'host'
+        assert result.data['plan_id']
+    async with Client(build_server(), sampling_handler=sample) as client:
+        result = await client.call_tool('fix', {'text': 'We wait.'})
+        assert result.data['backend'] == 'sampling'
+        assert result.data['model'] == 'scripted-fastmcp'
+        assert result.data['text'] == 'We wait. Today.'
+asyncio.run(main())
+'''
+    env = os.environ.copy()
+    env['PYTHONPATH'] = str(_SRC.parent.resolve()) + (
+        os.pathsep + env['PYTHONPATH'] if env.get('PYTHONPATH') else '')
+    result = subprocess.run([sys.executable, '-c', script], capture_output=True,
+                            text=True, timeout=30, env=env)
+    assert result.returncode == 0, result.stdout + result.stderr

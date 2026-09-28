@@ -11,7 +11,7 @@ under the chosen profile and the required advisories. These tests pin that:
               or reject decision in polish stays the same
   signature   accept() takes quality scores, gate state, required advisories and
               a guard result, and no pattern score
-  imports     no module imports a detector client or a network library
+  imports     no detector clients; only the backend imports network libraries
   house       a writer who did not choose the house style is never asked to
               clear house-style patterns
 """
@@ -24,7 +24,7 @@ import re
 import pytest
 
 import articulate
-from articulate import editor, mcp_server, prompts
+from articulate import backends, editor, mcp_server, prompts
 
 BANNED = re.compile(
     r"(?i)\bdetector|\bdetection\b|\bai[- ]generated\b|\bhuman[- ]written\b|\btexture\b"
@@ -40,7 +40,7 @@ class Capture:
         self.reply = reply
         self.instructions = []
 
-    def __call__(self, instructions, text, timeout=600):
+    def __call__(self, instructions, text, timeout=600, **kwargs):
         self.instructions.append(instructions)
         return self.reply(instructions, text)
 
@@ -71,6 +71,7 @@ def work(tmp_path):
 def test_every_captured_instruction_is_clean(work, monkeypatch, capsys):
     cap = Capture(_reply)
     monkeypatch.setattr(editor, "claude_call", cap)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: (cap(*a, **k), backends.BackendInfo("stub", "stub", [])))
     editor.judge(str(work))
     editor.fix(str(work), str(work) + ".fixed", passes=1)
     editor.polish(str(work), str(work) + ".pol", passes=1, bar=4)
@@ -90,6 +91,7 @@ def test_house_patterns_reach_the_model_only_under_a_house_profile(work, monkeyp
                     encoding="utf-8")
     cap = Capture(_reply)
     monkeypatch.setattr(editor, "claude_call", cap)
+    monkeypatch.setattr(backends, "complete", lambda *a, **k: (cap(*a, **k), backends.BackendInfo("stub", "stub", [])))
     editor.fix(str(work), str(work) + ".a", passes=1)
     default = cap.instructions[-1]
     editor.fix(str(work), str(work) + ".b", passes=1, profile="house")
@@ -166,14 +168,14 @@ def _imports(path):
 def test_no_module_imports_a_detector_client_or_a_network_library():
     for p in PKG.glob("*.py"):
         names = set(_imports(p))
-        bad = {n for n in names for b in NETWORK | DETECTOR_CLIENTS
+        bad = {n for n in names for b in DETECTOR_CLIENTS | (NETWORK if p.name != "backends.py" else set())
                if n == b or n.startswith(b + ".")}
         assert not bad, (p.name, bad)
 
 
 def test_only_the_model_backend_starts_a_subprocess():
     users = {p.name for p in PKG.glob("*.py") if "subprocess" in set(_imports(p))}
-    assert users <= {"editor.py", "claude_cli.py"}, users
+    assert users <= {"editor.py", "claude_cli.py", "backends.py"}, users
 
 
 def test_rewrite_delta_measures_vocabulary_lift_and_rhythm():

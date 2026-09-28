@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 """articulate.local_only -- the switch that keeps every text on the machine.
 
-The checks never send text anywhere. `judge`, `fix`, `polish` and `review`, and
-the MCP tools of those names, send the full text to a hosted model through the
-claude CLI. With ARTICULATE_LOCAL_ONLY set (or `--local-only` on the editor
-command), each of them is refused before any subprocess starts. The command
-line exits with LOCAL_ONLY_EXIT; a library or MCP caller gets LocalOnly.
+The checks and host planning/submission run locally. With ARTICULATE_LOCAL_ONLY
+set, editor backend selection permits only loopback Ollama and deterministic
+editing. Direct hosted calls are refused before a subprocess or network call.
 
 The switch fails closed. Unset, empty, 0, false, no and off leave it off; any
 other value turns it on, so a writer who spells "on" differently never sends
@@ -52,11 +50,14 @@ def command_map():
     """The map of local and hosted commands, for `--help` and the README."""
     return (
         "Local, sending nothing: " + ", ".join(LOCAL_COMMANDS) + ".\n"
-        "Hosted, sending the full text to a model through the claude CLI: "
-        + ", ".join(HOSTED_COMMANDS) + " (python -m articulate.editor), and the judge, "
-        "fix and polish tools of both MCP servers.\n"
-        f"Set {LOCAL_ONLY_VAR}=1, or pass --local-only to the editor, and every hosted "
-        "command exits before any network call.\n"
+        "Editor commands: " + ", ".join(HOSTED_COMMANDS) +
+        " (python -m articulate.editor), and the corresponding MCP tools. "
+        "Auto MCP uses advertised sampling or a host plan; CLI auto tries configured "
+        "backends, then Ollama and deterministic editing. Explicit hosted backends "
+        "send the full text off the machine.\n"
+        f"Set {LOCAL_ONLY_VAR}=1, or pass --local-only to the editor, to allow only "
+        "loopback Ollama and deterministic editing; hosted calls are refused before "
+        "sending text.\n"
         "Under a brief that allows only spelling and grammar help, use the local "
         "commands; judge and review give structural advice. Do not run the hosted "
         "commands on a manuscript or grant application under review, on health "

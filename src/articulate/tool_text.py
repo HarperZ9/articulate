@@ -17,8 +17,10 @@ DOES_NOT_PROVE = ("These findings name prose patterns and where they occur. They
                   "show who or what wrote the text, and no finding or count is a basis "
                   "for an accusation.")
 
-_EDITOR = ("It sends the text to a hosted model through the claude CLI; the checks "
-           "themselves run offline.")
+_EDITOR = ("Auto uses negotiated sampling or returns a host edit plan. Explicit hosted "
+           "backends can send text off the machine; backend none runs deterministic edits. "
+           "When a plan is returned, follow its instructions and call edit_submit "
+           "with the original text, rewrite or assessment, and plan_id.")
 
 TOOLS = {
     "check": ("Check a passage for named prose patterns. Runs fully local with no "
@@ -48,3 +50,14 @@ TOOLS = {
     "articulate.doctor": ("Readiness diagnostic: identity, the tools exposed, and which "
                           "of them need a model backend and which run local."),
 }
+
+TOOLS.update({
+    "edit_plan": ("Prepare local findings, protected spans and instructions for the calling model. "
+                  "Follow the instructions using masked_text and call edit_submit with the original "
+                  "text, rewrite or assessment, and plan_id."),
+    "edit_submit": ("Submit the original text and a host rewrite or assessment with its plan_id. "
+                    "Articulate restores masks, guards protected spans, checks the result and "
+                    "returns accepted text with a host receipt."),
+    "articulate.doctor": ("Local readiness and tool identity, including optional editor backends "
+                          "and this session's sampling capability."),
+})

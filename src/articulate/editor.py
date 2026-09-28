@@ -23,10 +23,9 @@ reaches the model only under a house profile. No instruction names an outside
 score, a sentence-length target or a vocabulary level (prompts.py holds every
 template).
 
-The model runs through the `claude` CLI (headless `claude -p`), which sends the
-text to a hosted Anthropic model. There is no local-model backend. The CLI is
-found through ARTICULATE_CLAUDE_CLI when that is set, and on the PATH otherwise
-(see claude_cli.py).
+The shared editor selects a configured backend or uses guarded deterministic
+editing. A calling model can use the host edit protocol. The explicit
+claude_call helper remains available and retains its local-only restriction.
 """
 import json
 import os
@@ -164,27 +163,53 @@ def _resolve(mode=None, profile=None, path=None):
     return None, {}
 
 
-def judge(path, mode=None, profile=None):
+def _execute_file(path, goal, out_path=None, passes=3, bar=4, mode=None, profile=None, backend=None):
+    from .editing import run_edit
     text = open(path, encoding="utf-8", errors="replace").read()
-    prof, ecfg = _resolve(mode, profile, path)
-    _, mech = mechanical(path, prof)
-    instr = judge_instructions(mech, ecfg.get("standard_delta", ""))
-    print(f"[judge] {os.path.basename(path)} (via claude CLI)\n")
-    warn = injection_warning(text)
-    if warn:
-        print(warn + "\n")
-    try:
-        read, removed = strip_origin_guesses(claude_call(instr, text))
-        print(read)
-        if removed:
-            print(origin_note(removed))
-    except _UNAVAILABLE as e:
-        print(f"[judge] model layer unavailable: {e}")
+    ext = os.path.splitext(path)[1].lower()
+    warning = injection_warning(text)
+    if warning:
+        print(warning + "\n")
+    prof, _ = _resolve(mode, profile, path)
+    result = run_edit(text, goal=goal, backend=backend, mode=mode, profile=None if mode else prof,
+                      is_html=ext in (".html", ".htm"), is_tex=ext == ".tex",
+                      passes=passes, bar=bar)
+    if "plan_id" in result and "next_step" in result:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    print(f"[{goal}] {os.path.basename(path)} (backend: {result['backend']}, "
+          f"model: {result.get('model') or 'none'})")
+    for attempt in result.get("attempts", []):
+        print(f"[{goal}] model layer unavailable: {attempt.get('backend')}: "
+              f"{attempt.get('reason', 'unavailable')}")
+    if goal == "judge":
+        print(result.get("assessment") or mechanical_text(text, prof)[1])
+        if result.get("origin_claims_removed"):
+            print(origin_note(result["origin_claims_removed"]))
+    else:
+        out_path = out_path or os.path.splitext(path)[0] + (".fixed" if goal == "fix" else ".polished") + ext
+        accepted = result["text"]
+        with open(out_path, "w", encoding="utf-8") as fh:
+            fh.write(accepted + ("\n" if accepted and not accepted.endswith("\n") else ""))
+        if accepted != text:
+            from .fix import _log_pass
+            _log_pass(path, goal, backend=result["backend"], model=result.get("model"))
+        print(f"[{goal}] final -> {out_path}; gate: {result.get('gate_after')}")
+        if result.get("refused"):
+            print(f"[{goal}] kept protected content in {len(result['refused'])} refused span(s)")
+    if result.get("note"):
+        print(result["note"])
+    return 0
+
+def judge(path, mode=None, profile=None, backend=None):
+    return _execute_file(path, "judge", mode=mode, profile=profile, backend=backend)
+
 
 
 def rewrite_once(text, mech, quality_notes, is_html, standard_delta="", profile=None):
     instr = rewrite_instructions(mech, profile, standard_delta, quality_notes or (), is_html)
-    return strip_preamble(claude_call(instr, text))
+    from .meaning_guard import guard_rewrite
+    return guard_rewrite(text, strip_preamble(claude_call(instr, text)), is_html=is_html)["text"]
 
 
 def quality_judge(text):

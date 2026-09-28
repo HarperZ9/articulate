@@ -135,21 +135,56 @@ about whether a theorem is true.
 
 ## The editor layer
 
-Every command here sends the full text to a hosted model through the `claude`
-CLI, and each run says so first. `ARTICULATE_LOCAL_ONLY=1` or `--local-only`
-refuses every hosted command with exit code 3 before any network call, and the
-MCP tools of the same names return an error. `--advise` is `--review` under a
-name that cannot be read as peer review.
+With a model, the editor adds judgment and rewriting:
 
-- `judge` reads judgment-level failures: a fluent paragraph with no fact a reader
-  could restate, vague abstraction, hedging with no position, a weak verb.
-- `fix` rewrites so the intended reader can follow the text on one read and
-  re-checks the rewrite under the same profile. It writes each rewrite whatever
-  the re-check finds. The instruction asks the model to keep every number, name,
-  citation, term of art and code span; only the math spans of a `.tex` file are
-  checked by code.
-- `polish` keeps a pass only when `accept()` allows it: no quality score falls,
-  the gate does not go from ok to blocked, and no required advisory opens.
+- `judge` reads the judgment-level failures a regex cannot see: a fluent paragraph
+  with no fact a reader could restate, vague abstraction, hedging with no
+  committed position, a weak verb carrying the meaning. It reports.
+- `fix` rewrites for the intended reader, checks protected spans, and
+  re-runs the checks under the same profile. Remaining findings stay visible.
+- `polish` keeps a pass only when no assessed quality score falls, the gate
+  does not go from ok to blocked, and no required advisory opens. Missing scores
+  leave host-submitted quality unassessed; the model loop keeps the best prior
+  text. These checks cannot prove that meaning or writing quality improved.
+
+Every result identifies its backend, model and failed attempts. The available
+backends are `host`, `sampling`, `anthropic`, `claude-cli`, `openai`, `ollama`
+and `none`, with `auto` choosing for the current surface.
+
+In an MCP session, automatic selection uses sampling only if the client
+advertised that capability. Otherwise it returns an edit plan to the calling
+model before trying a separately billed backend. The host protocol also works
+through `articulate plan` and `articulate submit` without MCP sampling support.
+The plan supplies local findings and their reasons, rewrite or judge
+instructions, masked text, protected spans and a plan ID bound to the source,
+profile and ruleset. The caller submits its rewrite with that ID and the
+original text. Articulate restores masks, checks the guard, reports gate and
+per-rule changes, and returns a receipt with `backend: host`. A caller-supplied
+model name records attribution; it does not authenticate the model.
+
+The guard checks numbers, URLs and link targets, citations, code, math and quoted
+text. A refused span keeps its original wording and gets a reason. The guard
+applies to model and deterministic edits. Protected spans cannot establish
+semantic equivalence: a rewrite can retain every number and still change a claim.
+
+Without a reachable model, `none` makes conservative mechanical edits and
+reports what remains. It can replace clause dashes and remove safe filler or
+extra spaces; it leaves protected content alone. Its `judge` returns local
+findings and reasons without inventing model scores. Backend unavailability
+does not prevent this result. A successful call can still contain blocked
+findings or refused edits; inspect the gate and refusal list.
+
+Plain CLI automatic selection tries configured Anthropic, the Claude CLI,
+configured OpenAI-compatible endpoints, Ollama and `none` in order. Ollama
+uses installed models only and never downloads one. Configuration and the model
+preference order are in the [CLI reference](cli.md#backend-configuration).
+
+Anthropic and the Claude CLI send text to their provider. OpenAI-compatible and
+Ollama backends send it to the configured endpoint, which can be remote. Host
+editing and sampling follow the host's data handling policy. `none` stays local.
+`ARTICULATE_LOCAL_ONLY=1` permits only loopback Ollama and `none`, refusing other
+editor backends before a connection. Plans and edit results contain source text;
+they are separate from content-free detector audit receipts.
 
 The house writing standard reaches the model only under a house profile. No
 instruction names an outside score, a sentence-length target or a vocabulary
@@ -258,7 +293,7 @@ patterns simply do not fire on it.
 ## Surfaces
 
 - CLI: `check`, `score`, `receipt`, `verify`, `audit`, `modes`, `process`,
-  `disclose` and `desk`.
+  `disclose`, `desk`, `plan`, `submit`, `judge`, `fix` and `polish`.
 - LSP server: inline diagnostics in VS Code, JetBrains through LSP4IJ and Neovim.
 - SARIF for GitHub code scanning, Azure DevOps and reviewdog.
 - Two MCP servers that share one description table: `articulate-mcp` from a bare
