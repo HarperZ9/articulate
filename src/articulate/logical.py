@@ -19,6 +19,7 @@ Standard library only.
 from __future__ import annotations
 
 import re
+from bisect import bisect_right
 
 from .lexicon import BULLET, HEADING, WORD
 from .markup import FENCE, is_md_hr, is_md_table_sep, strip_markup
@@ -30,20 +31,41 @@ SENTENCE_END = re.compile(r"[.!?][\"'”’)\]]*\s+")
 
 
 class Unit:
-    """One logical line: its text and the map from text index to file offset."""
-    __slots__ = ("kind", "role", "text", "pieces")
+    """One logical line: its text and the map from text index to file offset.
+
+    `starts` holds each piece's start in the text, in order, for locate. The
+    text is kept as a list of parts and joined when first read, since growing
+    one string line by line copies it every time."""
+    __slots__ = ("kind", "role", "pieces", "starts", "_parts", "_length", "_tail",
+                 "_text")
 
     def __init__(self, kind, role):
-        self.kind, self.role, self.text, self.pieces = kind, role, "", []
+        self.kind, self.role, self.pieces, self.starts = kind, role, [], []
+        self._parts, self._length, self._tail, self._text = [], 0, "", ""
+
+    @property
+    def text(self):
+        if self._text is None:
+            self._text = "".join(self._parts)
+            self._parts = [self._text]
+        return self._text
+
+    def _append(self, part):
+        self._parts.append(part)
+        self._length += len(part)
+        self._tail = (self._tail + part)[-2:]
+        self._text = None
 
     def add(self, line_no, doc_start, content):
         # A hard wrap at a hyphen ("state-of-the-" then "art") joins with no
         # space, so the word reads the same as on one line.
-        if self.pieces and not (len(self.text) > 1 and self.text[-1] == "-"
-                                and self.text[-2].isalpha() and content[:1].isalpha()):
-            self.text += " "
-        self.pieces.append((len(self.text), doc_start, line_no, len(content)))
-        self.text += content
+        tail = self._tail
+        if self.pieces and not (len(tail) > 1 and tail[-1] == "-"
+                                and tail[-2].isalpha() and content[:1].isalpha()):
+            self._append(" ")
+        self.pieces.append((self._length, doc_start, line_no, len(content)))
+        self.starts.append(self._length)
+        self._append(content)
 
     @property
     def first_line(self):
@@ -51,11 +73,13 @@ class Unit:
 
     def locate(self, i):
         """(file offset, line number) of text index i. A joining space maps to
-        the end of the line before it."""
-        for log_start, doc_start, line_no, length in reversed(self.pieces):
-            if i >= log_start:
-                return doc_start + min(i - log_start, length), line_no
-        return self.pieces[0][1], self.pieces[0][2]
+        the end of the line before it. A binary search over the piece starts
+        keeps the scanner linear on a unit of many lines."""
+        at = bisect_right(self.starts, i) - 1
+        if at < 0:
+            return self.pieces[0][1], self.pieces[0][2]
+        log_start, doc_start, line_no, length = self.pieces[at]
+        return doc_start + min(i - log_start, length), line_no
 
     def span(self, s, e):
         """(start, end, line, end_line) in file coordinates for text span [s, e)."""

@@ -46,6 +46,10 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 - **The plugin scripts start `git` and `python3` only from an absolute `PATH`
   entry outside the working folder**, so a planted file of that name never runs.
 - **CI jobs read the repository only** (`permissions: contents: read`).
+- **A long paragraph of many short lines checks in linear time.** Locating a
+  match's line scanned every earlier piece, and the paragraph text was copied on
+  every line; one paragraph of 20,000 short lines with an unmatched opening
+  quote took 11 to 14 s and now takes about 1.2 s.
 - **Protocol details.** The stdio server answers `ping`, marks a result whose
   `ok` field is false as an error, returns compact JSON with non-ASCII text left
   readable, and its doctor tool reports the Python version, the tool set, the
