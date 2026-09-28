@@ -109,3 +109,25 @@ def test_control_the_citation_shapes_still_join(text):
                                   "Look at p. Then read on."])
 def test_a_listed_word_without_its_citation_shape_ends_the_sentence(text):
     assert len(sentences(text)) == 2
+
+
+# --- "According to" at a sentence start (found in the 0.9.0 build) ----------- #
+# "according to" before a named source anchors the appeal. The pattern was read
+# with its case, so a sentence that opens "According to NASA," went unread.
+
+@pytest.mark.parametrize("text", [
+    "According to NASA, research shows that the surface is too hot for a probe.",
+    "According to the WHO, studies show that sleep improves recall.",
+    "ACCORDING TO THE WHO, studies show that sleep improves recall.",
+])
+def test_according_to_a_named_source_anchors_at_a_sentence_start(text):
+    assert "unsupported-authority" not in _cats(text, "medium", ESSAY)
+
+
+@pytest.mark.parametrize("text", [
+    "According to experts, research shows that sleep improves recall.",
+    "According to a recent study, studies show that sleep improves recall.",
+    "According To Recent Studies, research shows that sleep improves recall.",
+])
+def test_control_according_to_an_unnamed_source_still_fires_at_a_sentence_start(text):
+    assert "unsupported-authority" in _cats(text, "medium", ESSAY)

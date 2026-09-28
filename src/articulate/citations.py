@@ -58,10 +58,11 @@ CITATION_MARKER = re.compile(
     r"|\b\d{1,4}\s+(?:[A-Z][A-Za-z]*\.\s?){1,4}(?:\d[a-z]{1,2}\s)?\d{1,5}\b"  # 998 F.3d 101
     r"|\[\d{4}\]\s+[A-Z]{2,}"                                  # [2021] UKSC 5
     # "according to" names a source, unless what follows is an unnamed one:
-    # "according to experts", "according to a recent study".
-    r"|\baccording to\b(?!\s+(?:(?:a|an|the|some|many|most|several|numerous|various|"
+    # "according to experts", "according to a recent study". Read in any case,
+    # so a sentence that opens "According to NASA," is anchored (ruleset 0.9.0).
+    r"|(?i:\baccording to\b(?!\s+(?:(?:a|an|the|some|many|most|several|numerous|various|"
     r"recent|new|leading|other|independent|top)\s+){0,3}"
-    r"(?:experts?|stud(?:y|ies)|research(?:ers?)?|scientists?|sources?)\b)")
+    r"(?:experts?|stud(?:y|ies)|research(?:ers?)?|scientists?|sources?)\b))")
 
 # The writer's own evidence: a figure, table or supplementary reference, or a
 # test statistic.
