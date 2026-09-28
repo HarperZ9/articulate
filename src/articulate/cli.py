@@ -397,11 +397,77 @@ def _cmd_score(args):
     return 0
 
 
+def _read_edit_file(path):
+    with open(path, "rb") as fh:
+        data = fh.read()
+    reason = binary_reason(data, name=path)
+    if reason:
+        raise ValueError(f"cannot edit binary input ({reason})")
+    return _decode(data)
+
+
+def _cmd_edit(args):
+    from . import editing, host_edit
+    try:
+        text = _read_edit_file(args.file)
+        if args.cmd == "submit":
+            result = host_edit.edit_submit(
+                text, _read_edit_file(args.rewrite), args.plan,
+                scores=json.loads(args.scores) if args.scores else None,
+                model=args.model)
+        else:
+            options = {"mode": args.mode,
+                       "profile": None if args.mode else _profile_name(args.file, text, args.profile),
+                       "is_html": args.is_html or args.file.lower().endswith((".html", ".htm")),
+                       "is_tex": args.is_tex or args.file.lower().endswith(".tex")}
+            if args.cmd == "plan":
+                result = host_edit.edit_plan(text, goal=args.goal, **options)
+            else:
+                result = editing.run_edit(text, goal=args.cmd, backend=args.backend,
+                                          bar=args.bar, passes=args.passes,
+                                          timeout=args.timeout, **options)
+        if not result.get("ok", False):
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 2
+        # Host plans need another step; they are JSON even without --json.
+        if getattr(args, "out", None) and "text" in result and "plan_id" not in result:
+            with open(args.out, "w", encoding="utf-8", newline="") as fh:
+                fh.write(result["text"])
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    except (OSError, ValueError) as exc:
+        print(f"[articulate] {exc}", file=sys.stderr)
+        return 2
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(prog="articulate",
                                  description="Local writing-quality and AI-tell detection.")
     sub = ap.add_subparsers(dest="cmd")
+    for cmd in ("plan", "submit", "judge", "fix", "polish"):
+        p = sub.add_parser(cmd)
+        p.add_argument("file", help="original text file")
+        if cmd == "submit":
+            p.add_argument("rewrite", help="host rewrite or assessment file")
+            p.add_argument("--plan", required=True, help="plan_id returned by plan")
+            p.add_argument("--scores", help="JSON with before and after quality scores")
+            p.add_argument("--model", help="caller-supplied host model name")
+        else:
+            p.add_argument("--profile")
+            p.add_argument("--mode")
+            p.add_argument("--is-html", action="store_true")
+            p.add_argument("--is-tex", action="store_true")
+            if cmd == "plan":
+                p.add_argument("--goal", choices=("fix", "polish", "judge"), default="fix")
+            else:
+                p.add_argument("--backend", choices=("auto", "host", "sampling", "anthropic",
+                                                     "claude-cli", "openai", "ollama", "none"))
+                p.add_argument("--bar", type=int, default=4)
+                p.add_argument("--passes", type=int, default=3)
+                p.add_argument("--timeout", type=float, default=600)
+        p.add_argument("--out", help="write accepted text to this file")
+        p.add_argument("--json", action="store_true", help="emit result JSON (the editor default)")
     for cmd in ("check", "score", "receipt"):
         p = sub.add_parser(cmd)
         p.add_argument("files", nargs="*")
@@ -437,6 +503,8 @@ def main(argv=None):
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
     args = ap.parse_args(argv)
+    if args.cmd in ("plan", "submit", "judge", "fix", "polish"):
+        return _cmd_edit(args)
     if args.cmd == "check":
         return _cmd_check(args)
     if args.cmd == "score":
