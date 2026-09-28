@@ -8,6 +8,12 @@ JSON-RPC entry point a host uses, with each of those actions made to fail. The
 tool set comes from the listing's own hints, so a new tool marked local is held
 to the same rules the moment it is listed.
 
+Each guard also records the attempt, because a tool body that catches every
+exception would turn a blocked write into an ordinary error result. The hosted
+tools run under the same guards with the local-only switch on, which is where a
+user lands who lists them in the plugin: they must refuse before writing the
+text anywhere.
+
 Each guard has a control below that trips it on purpose, so a clean run is a
 finding about the tools and not a guard that never fires.
 """
@@ -23,12 +29,14 @@ import sys
 import pytest
 
 import articulate
-from articulate import local_mcp
+from articulate import local_mcp, mcp_server
 
 PKG = pathlib.Path(articulate.__file__).resolve().parent
 MARKER = "Zebracorn quartermaster 7319 leveraged a cutting-edge synergy."
 
 PLUGIN_ENV = {"ARTICULATE_MCP_TOOLS": "local", "ARTICULATE_LOCAL_ONLY": "1"}
+# Every blocked attempt, recorded before the guard raises.
+ESCAPES = []
 
 
 class Escaped(AssertionError):
@@ -37,6 +45,7 @@ class Escaped(AssertionError):
 
 def _refuse(what):
     def refuse(*args, **kwargs):
+        ESCAPES.append(f"{what}: {args[:2]!r}")
         raise Escaped(f"a local tool tried to {what}: {args[:2]!r}")
     return refuse
 
@@ -49,6 +58,7 @@ def _package_read_only(real):
             path = pathlib.Path(os.fsdecode(file)).resolve()
             if PKG in path.parents and not set(mode) & set("wax+"):
                 return real(file, mode, *args, **kwargs)
+        ESCAPES.append(f"open {file!r} in mode {mode!r}")
         raise Escaped(f"a local tool tried to open {file!r} in mode {mode!r}")
     return opener
 
@@ -57,6 +67,7 @@ def _package_read_only(real):
 def sealed(monkeypatch, tmp_path):
     """No socket, no process, no file outside the package, and an empty working
     folder to show that nothing landed in it."""
+    ESCAPES.clear()
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(socket, "socket", _refuse("open a socket"))
     monkeypatch.setattr(socket, "create_connection", _refuse("open a connection"))
@@ -105,7 +116,33 @@ def test_every_local_tool_runs_sealed(monkeypatch, sealed, environ):
         result = _call(tool)
         assert not result.get("isError"), (tool["name"], result)
         json.loads(result["content"][0]["text"])
+    assert ESCAPES == []
     assert list(sealed.iterdir()) == [], "a local tool wrote into the working folder"
+
+
+@pytest.mark.parametrize("name", sorted(local_mcp.NEEDS_BACKEND))
+def test_a_listed_hosted_tool_under_the_switch_touches_nothing(monkeypatch, sealed, name):
+    """ARTICULATE_MCP_TOOLS=all with ARTICULATE_LOCAL_ONLY=1: the call is refused
+    before the tool body runs, so the text reaches no temporary file."""
+    monkeypatch.setenv("ARTICULATE_MCP_TOOLS", "all")
+    monkeypatch.setenv("ARTICULATE_LOCAL_ONLY", "1")
+    result = local_mcp.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                               "params": {"name": name, "arguments": {"text": MARKER}}})
+    result = result["result"]
+    assert result["isError"] is True
+    assert "local-only" in json.loads(result["content"][0]["text"])["note"]
+    assert ESCAPES == []
+    assert list(sealed.iterdir()) == []
+
+
+@pytest.mark.parametrize("body", ["do_judge", "do_fix", "do_polish"])
+def test_a_hosted_tool_body_under_the_switch_touches_nothing(monkeypatch, sealed, body):
+    """The tool bodies the fastmcp server calls directly: with the switch on they
+    return the local-only note and write nothing, the text included."""
+    monkeypatch.setenv("ARTICULATE_LOCAL_ONLY", "1")
+    result = getattr(mcp_server, body)(MARKER)
+    assert result["ok"] is False and "local-only" in result["note"], result
+    assert ESCAPES == []
 
 
 def _strings(value, depth=0):
@@ -147,9 +184,20 @@ def test_the_plugin_tool_set_lists_only_local_tools():
 ], ids=["socket", "connect", "process", "open-write", "path-write", "read-user-file",
         "os-open"])
 def test_each_guard_trips(sealed, attempt):
-    """Control: every escape the sealed fixture claims to block is blocked."""
+    """Control: every escape the sealed fixture claims to block is blocked and
+    recorded."""
     with pytest.raises(Escaped):
         attempt(sealed)
+    assert len(ESCAPES) == 1
+
+
+def test_a_swallowed_escape_is_still_recorded(sealed):
+    """Control: a body that catches the guard's error still fails the record."""
+    try:
+        open(sealed / "leak.txt", "w")
+    except Exception:  # noqa: BLE001 - the shape of a tool body's catch-all
+        pass
+    assert ESCAPES
 
 
 def test_the_text_scan_finds_a_planted_copy(monkeypatch):

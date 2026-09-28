@@ -27,7 +27,8 @@ TOOLS = {
               "default), each with its rule, tier, line and span and whether it blocks "
               "under the default profile, and a count of LOW advisories; per-rule "
               "counts and the gate (ok or blocked) with the count of blocking findings "
-              "cover every finding. Also returns density with an interval at "
+              "cover every finding; the findings listed stop at about 30,000 "
+              "characters. Also returns density with an interval at "
               "250 words or more, and passive-voice and adverb rates. The `clean` field "
               "is deprecated and leaves in package 0.7.0. " + DOES_NOT_PROVE),
     "score": ("Per-rule counts, density per 1,000 words with an exact interval (shown "

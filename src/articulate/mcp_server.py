@@ -15,8 +15,8 @@ zero-dependency server (local_mcp) reads.
 Run:  python -m articulate.mcp_server   (needs the [mcp] extra; stdio)
 stdout carries the MCP protocol; all logging goes to stderr.
 """
+import json
 import os
-import tempfile
 
 from . import detector as core
 from . import editor
@@ -39,31 +39,28 @@ def _failure_note(err):
     return _LOCAL_ONLY_NOTE if isinstance(err, LocalOnly) else _BACKEND_NOTE
 
 
-def _scan_text(text):
-    """Write text to a temp file and run the deterministic detector on it."""
-    fd, path = tempfile.mkstemp(suffix=".md", text=True)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            fh.write(text)
-        return core.scan(path)
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
-
-
 def _mech_summary(text):
-    fd, path = tempfile.mkstemp(suffix=".md", text=True)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as fh:
-            fh.write(text)
-        return editor.mechanical(path)          # (clean, summary_string)
-    finally:
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
+    """(clean, summary) of the detector's findings, built in memory: the text is
+    never written to a temporary file, so a refused or failed hosted call leaves
+    no copy of it on disk."""
+    return editor.mechanical_text(text)
+
+
+# A tool result past about 10,000 tokens draws a host warning. The span records
+# stop at this many characters of compact JSON, which keeps a check result near
+# 30,000 characters whatever max_hits asks for.
+HITS_BUDGET = 30_000
+
+
+def _within_budget(hits, budget=HITS_BUDGET):
+    """The longest prefix of hits whose compact JSON fits in budget characters."""
+    kept, used = [], 0
+    for hit in hits:
+        used += len(json.dumps(hit, separators=(",", ":"), ensure_ascii=False)) + 1
+        if used > budget:
+            break
+        kept.append(hit)
+    return kept
 
 
 # --------------------------------------------------------------------------- #
@@ -73,22 +70,25 @@ def _mech_summary(text):
 def do_check(text, max_hits=None):
     """Named prose patterns with span records. Local, no network.
 
-    max_hits caps the span records returned, so a long document's result fits a
-    host's output limit; the gate, the counts and rule_counts still cover every
-    finding, and hits_omitted says how many records were left out.
+    max_hits caps the span records returned, and the records also stop at
+    HITS_BUDGET characters, so a long document's result fits a host's output
+    limit; the gate, the counts and rule_counts still cover every finding, and
+    hits_omitted says how many records were left out. With max_hits None every
+    record returns, for callers that read the result in process.
     """
     if max_hits is not None and (type(max_hits) is not int or max_hits < 0):
         raise ValueError("max_hits must be a whole number of 0 or more")
     r = core.check_text(text, house_notes=False)
     hits = sorted(r["high"] + r["medium"], key=lambda h: h["start"])
-    omitted = 0 if max_hits is None else max(0, len(hits) - max_hits)
+    shown = hits if max_hits is None else _within_budget(hits[:max_hits])
+    omitted = len(hits) - len(shown)
     out = {
         "gate": r["gate"],
         "findings": r["findings"],
         "blocking": r["blocking"],
         # Deprecated: no HIGH or MEDIUM finding. Kept until package 0.7.0.
         "clean": r["clean"],
-        "hits": hits[:len(hits) - omitted],
+        "hits": shown,
         "advisory_count": len(r["low"]),
         "rule_counts": r["rule_counts"],
         "density": r["density"],

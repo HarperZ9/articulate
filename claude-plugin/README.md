@@ -12,8 +12,9 @@ nowhere; Claude still reads the text as part of your conversation.
 - `check` returns each HIGH and MEDIUM finding with its rule, tier, line, span
   and reason, a count of LOW advisories (`advisory_count`), and a gate (`ok` or
   `blocked`) under the default profile with the count of blocking findings. A
-  long document returns the first 50 span records by default; the gate and the
-  per-rule counts always cover every finding.
+  long document returns the first 50 span records by default and never more
+  than about 30,000 characters of them; the gate and the per-rule counts always
+  cover every finding.
 - `score` returns per-rule counts, density per 1,000 words with an interval at
   250 words or more, and the passive-voice and adverb rates.
 - `articulate.status` reports the server version, and `articulate.doctor`

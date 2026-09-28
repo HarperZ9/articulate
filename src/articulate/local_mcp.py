@@ -27,7 +27,9 @@ import sys
 
 from . import __version__
 from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score
+from .mcp_server import _failure_note
 from .tool_text import TOOLS as TOOL_TEXT
+from .local_only import LocalOnly, refuse_if_local_only
 from .local_only import local_only as _local_only_switch
 from .tool_meta import TOOLS_VAR, tool_set
 from .tool_meta import annotations as _annotations
@@ -45,8 +47,10 @@ _IS_TEX = {"is_tex": {"type": "boolean", "default": False,
 
 _MAX_HITS = {"max_hits": {"type": "integer", "default": 50, "minimum": 0,
                           "maximum": 1000,
-                          "description": ("the most findings to return in hits; the gate "
-                                          "and rule_counts always cover every finding")}}
+                          "description": ("the most findings to return in hits, which "
+                                          "also stop at about 30,000 characters; the "
+                                          "gate and rule_counts always cover every "
+                                          "finding")}}
 
 _SCHEMAS = {
     "check": {"type": "object", "required": ["text"],
@@ -138,6 +142,10 @@ def _call(params: dict) -> dict:
                 "isError": True}
     if name in ("articulate.status", "articulate.doctor"):
         return _tool_result(_identity(name == "articulate.doctor"))
+    if name in NEEDS_BACKEND:
+        refused = _refused_by_switch()
+        if refused is not None:
+            return refused
     try:
         if name == "check":
             result = do_check(_text_arg(args), _max_hits(args))
@@ -161,6 +169,18 @@ def _call(params: dict) -> dict:
                              "text": "[error] %s: %s" % (type(exc).__name__, exc)}],
                 "isError": True}
     return _tool_result(result)
+
+
+def _refused_by_switch():
+    """The result for a hosted tool under the local-only switch, or None.
+
+    Checked before the tool body runs, so no body can write the text anywhere
+    first, whatever it does before its model call."""
+    try:
+        refuse_if_local_only()
+    except LocalOnly as exc:
+        return _tool_result({"ok": False, "error": str(exc), "note": _failure_note(exc)})
+    return None
 
 
 def _max_hits(args: dict) -> int:
@@ -231,12 +251,9 @@ def handle(req):
     return _err(rid, -32601, "method not found: %s" % (method,))
 
 
-# Sibling lane servers are split on what they call this function. Measured across
-# the installed distributions on 2026-09-22: chorus, gather, mneme and
-# accountable-surface expose handle_request; plexus, canon and relay expose
-# handle. Nothing dispatches across packages by either name, so neither is a
-# contract and this alias is a convenience, not a requirement. Both point at one
-# function, so there is no second code path to keep in step.
+# Some MCP servers name their request handler handle_request and others name it
+# handle. Both names point at one function here, so there is no second code path
+# to keep in step.
 handle_request = handle
 
 
@@ -255,6 +272,28 @@ def _utf8(stream, **options):
     return stream
 
 
+def _respond(line: str):
+    """The response to one request line, or None for a notification.
+
+    A line the parser cannot read, deep nesting included, is a parse error. A
+    failure while handling a request is an internal error, logged to stderr. The
+    server answers either one and keeps serving.
+    """
+    try:
+        req = json.loads(line)
+    except (ValueError, RecursionError):
+        return _err(None, -32700, "parse error")
+    try:
+        return handle(req)
+    except Exception as exc:          # one failed request must not stop the server
+        sys.stderr.write("articulate-mcp: internal error: %s: %s\n"
+                         % (type(exc).__name__, exc))
+        if not isinstance(req, dict) or "id" not in req:
+            return None
+        rid = req["id"] if _valid_request_id(req["id"]) else None
+        return _err(rid, -32603, "internal error (%s)" % type(exc).__name__)
+
+
 def serve(stdin=None, stdout=None) -> int:
     stdin = stdin if stdin is not None else _utf8(sys.stdin, errors="replace")
     stdout = stdout if stdout is not None else _utf8(sys.stdout, newline="\n")
@@ -262,13 +301,7 @@ def serve(stdin=None, stdout=None) -> int:
         line = line.strip()
         if not line:
             continue
-        try:
-            req = json.loads(line)
-        except ValueError:
-            stdout.write(json.dumps(_err(None, -32700, "parse error")) + "\n")
-            stdout.flush()
-            continue
-        resp = handle(req)
+        resp = _respond(line)
         if resp is not None:
             stdout.write(json.dumps(resp) + "\n")
             stdout.flush()

@@ -7,6 +7,7 @@ if the listing were wrong. These tests pin both, and the protocol details a host
 depends on: ping, a failed call marked as an error, a check result that stays
 inside a host's output cap, and a doctor report a user can paste into an issue.
 """
+import io
 import json
 import re
 import subprocess
@@ -129,6 +130,19 @@ def test_a_long_check_fits_inside_the_host_output_cap():
     assert len(text) < 40_000, len(text)
 
 
+@pytest.mark.parametrize("max_hits", [100, 1000])
+def test_a_check_at_any_allowed_max_hits_fits_inside_the_host_output_cap(max_hits):
+    text = _call("check", {"text": LONG, "max_hits": max_hits})["content"][0]["text"]
+    payload = json.loads(text)
+    full = mcp_server.do_check(LONG)
+    assert len(text) < 40_000, len(text)
+    shown = len(payload["hits"])
+    assert shown >= 50, "the budget cut below the default"
+    assert payload["hits"] == full["hits"][:shown]
+    assert payload["hits_omitted"] == len(full["hits"]) - shown
+    assert payload["rule_counts"] == full["rule_counts"]
+
+
 def test_max_hits_zero_returns_the_counts_only():
     payload = _payload(_call("check", {"text": LONG, "max_hits": 0}))
     assert payload["hits"] == []
@@ -193,3 +207,46 @@ def test_doctor_says_whether_the_backend_cli_is_found_when_hosted_tools_list(mon
     assert doctor["tool_set"] == "all"
     assert doctor["hidden"] == []
     assert type(doctor["backend_cli_found"]) is bool
+
+
+def test_a_listed_hosted_tool_under_the_switch_never_reaches_its_body(monkeypatch):
+    """With the local-only switch on, the stdio server refuses a hosted tool before
+    its body runs, whatever the body does first."""
+    monkeypatch.setenv(local_mcp.TOOLS_VAR, "all")
+    monkeypatch.setenv("ARTICULATE_LOCAL_ONLY", "1")
+    reached = []
+    for name in sorted(HOSTED):
+        monkeypatch.setattr(local_mcp, "do_" + name, lambda *a, **k: reached.append(a))
+        result = _call(name, {"text": "A short passage."})
+        assert result["isError"] is True and "local-only" in _payload(result)["note"]
+    assert reached == []
+
+
+def _serve(lines):
+    out = io.StringIO()
+    assert local_mcp.serve(io.StringIO("".join(line + "\n" for line in lines)), out) == 0
+    return [json.loads(line) for line in out.getvalue().splitlines() if line.strip()]
+
+
+PING = json.dumps({"jsonrpc": "2.0", "id": 2, "method": "ping"})
+
+
+def test_a_deeply_nested_request_is_a_parse_error_and_the_server_keeps_serving():
+    deep = ('{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": '
+            '"check", "arguments": {"text": "x", "extra": ' + "[" * 10_000
+            + "]" * 10_000 + "}}}")
+    answers = _serve([deep, PING])
+    assert answers[0]["error"]["code"] == -32700, answers[0]
+    assert answers[-1] == {"jsonrpc": "2.0", "id": 2, "result": {}}
+
+
+def test_an_unexpected_failure_is_an_internal_error_and_the_server_keeps_serving(
+        monkeypatch):
+    def boom(*args, **kwargs):
+        raise RuntimeError("planted failure")
+    monkeypatch.setattr(local_mcp, "listed_tools", boom)
+    answers = _serve([json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/list"}),
+                      PING])
+    assert answers[0]["id"] == 1 and answers[0]["error"]["code"] == -32603, answers[0]
+    assert "planted failure" not in json.dumps(answers[0])
+    assert answers[-1] == {"jsonrpc": "2.0", "id": 2, "result": {}}

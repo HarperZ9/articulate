@@ -26,9 +26,16 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   hidden tool called by name returns an error. The error names the variable only
   when the local-only switch is off, since the plugin sets both. Any value other
   than empty or `all` counts as `local`.
-- **`check` returns up to `max_hits` span records**, 50 by default, so a long
-  document's result fits a host's output limit. The gate and `rule_counts` still
-  cover every finding, and `hits_omitted` says how many records were left out.
+- **`check` returns up to `max_hits` span records**, 50 by default, and stops
+  at about 30,000 characters of them at any `max_hits`, so a long document's
+  result fits a host's output limit. The gate and `rule_counts` still cover every
+  finding, and `hits_omitted` says how many records were left out.
+- **The stdio server keeps serving after a bad request.** A request nested too
+  deep to parse is a parse error, and a failure while handling a request is an
+  internal error logged to stderr; before, either one stopped the server.
+- **Under the local-only switch, a hosted tool is refused before its body
+  runs**, and `judge` and `fix` build their findings summary in memory, so the
+  text no longer passes through a temporary file first.
 - **The plugin build copies only the files git tracks**, so an untracked or
   ignored file such as a `.env` never ships, and its checks refuse a file named
   or shaped like a credential. A release build, the default, also refuses a
