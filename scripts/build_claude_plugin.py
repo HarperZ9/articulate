@@ -166,11 +166,14 @@ def release_problems(repo=REPO):
                         + (", ".join(changed[:10]) or "git status failed")
                         + (f" and {len(changed) - 10} more" if len(changed) > 10 else ""))
     tag = "v" + (rules.bundled_version(repo) or "")
-    if _git(repo, "rev-parse", "-q", "--verify", f"refs/tags/{tag}").returncode == 0:
-        if _git(repo, "diff", "--quiet", tag, "--", "src/articulate").returncode != 0:
-            problems.append(f"src/articulate differs from the {tag} release, so a plugin "
-                            f"built here must not ship as {tag[1:]}; release the next "
-                            "package version first")
+    if _git(repo, "rev-parse", "-q", "--verify",
+            f"refs/tags/{tag}^{{commit}}").returncode != 0:
+        problems.append(f"the {tag} release tag is unavailable; fetch that tag before "
+                        "a release build, or pass --dev for a local test build")
+    elif _git(repo, "diff", "--quiet", tag, "--", "src/articulate").returncode != 0:
+        problems.append(f"src/articulate differs from the {tag} release, so a plugin "
+                        f"built here must not ship as {tag[1:]}; release the next "
+                        "package version first")
     return problems
 
 

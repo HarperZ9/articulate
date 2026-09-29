@@ -125,7 +125,9 @@ Without `--dev` the build is a release build. Before it writes anything, it
 refuses untracked or changed files in the folders it copies, and it refuses
 package code that differs from the release its version names (the tag
 `v<version>`), because Claude Code keeps a user on a plugin until the version
-string changes. It prints the source commit it built from.
+string changes. The version tag must be present locally and resolve to a commit;
+fetch that tag before a release build. Use `--dev` only for a local test build.
+It prints the source commit it built from.
 
 The smoke script starts the built server with the command and arguments in
 `.mcp.json` and prints one line for each check, so it is the quick test on a new

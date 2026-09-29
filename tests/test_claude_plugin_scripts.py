@@ -83,6 +83,7 @@ def test_untracked_and_ignored_files_do_not_ship(repo, tmp_path):
 
 
 def test_a_release_build_names_untracked_and_changed_files(repo):
+    _git(repo, "tag", "v" + rules.bundled_version(repo))
     assert build.release_problems(repo) == []
     (repo / "claude-plugin" / "scratch-notes.md").write_text("draft\n", encoding="utf-8")
     with open(repo / "src" / "articulate" / "mcp_server.py", "a", encoding="utf-8") as fh:
@@ -90,6 +91,19 @@ def test_a_release_build_names_untracked_and_changed_files(repo):
     problems = " ".join(build.release_problems(repo))
     assert "claude-plugin/scratch-notes.md" in problems
     assert "src/articulate/mcp_server.py" in problems
+
+
+def test_a_release_build_refuses_a_missing_version_tag(repo, monkeypatch, tmp_path,
+                                                     capsys):
+    tag = "v" + rules.bundled_version(repo)
+    assert not _git(repo, "tag", "--list", tag).strip()
+    monkeypatch.setattr(build, "REPO", repo)
+    out = tmp_path / "out"
+    assert build.main([str(out)]) == 1
+    assert not out.exists(), "a missing release tag must stop before writing"
+    diagnostic = capsys.readouterr().out
+    assert tag in diagnostic and "fetch" in diagnostic
+    assert "--dev" in diagnostic
 
 
 def test_a_release_build_refuses_code_that_differs_from_its_version_tag(repo):
