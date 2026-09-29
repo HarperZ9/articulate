@@ -6,6 +6,7 @@ can supply generated text. Tool implementations are shared with FastMCP.
 """
 from __future__ import annotations
 
+import io
 import json
 import sys
 import queue
@@ -15,6 +16,8 @@ from collections import deque
 
 from . import __version__
 from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score, do_edit_plan, do_edit_submit
+from .tool_meta import TOOLS_VAR, tool_set, offline, annotations
+from .tool_text import description
 
 PROTOCOL = "2025-06-18"
 
@@ -43,25 +46,19 @@ _EDIT_OPTIONS = {'is_html': {'type': 'boolean',
  'profile': {'type': 'string'}}
 
 TOOLS = [{'name': 'check',
-  'description': 'Detect AI and prose tells in text. Runs fully local with no network call. '
-                 'Returns each finding with its line, tier (HIGH/MEDIUM), category and snippet, a '
-                 'clean/flagged device gate, a 0-100 machine-texture score, and cadence stats.',
+  'description': description('check', {}),
   'inputSchema': {'type': 'object',
                   'required': ['text'],
                   'properties': {'text': {'type': 'string',
                                           'description': 'the passage to read'}}}},
  {'name': 'score',
-  'description': 'Return the graded 0-100 machine-texture score plus passive-voice and adverb '
-                 'rates and cadence flags for a passage. Local, no network.',
+  'description': description('score', {}),
   'inputSchema': {'type': 'object',
                   'required': ['text'],
                   'properties': {'text': {'type': 'string',
                                           'description': 'the passage to read'}}}},
  {'name': 'judge',
-  'description': 'Assess or edit prose using negotiated sampling, otherwise return a host plan; '
-                 'explicit hosted backends send text off the machine and backend none is '
-                 'deterministic. When a plan is returned, follow its instructions and call '
-                 'edit_submit with the original text, rewrite or assessment, and plan_id.',
+  'description': description('judge', {}),
   'inputSchema': {'type': 'object',
                   'required': ['text'],
                   'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
@@ -82,10 +79,7 @@ TOOLS = [{'name': 'check',
                                  'mode': {'type': 'string'},
                                  'profile': {'type': 'string'}}}},
  {'name': 'fix',
-  'description': 'Assess or edit prose using negotiated sampling, otherwise return a host plan; '
-                 'explicit hosted backends send text off the machine and backend none is '
-                 'deterministic. When a plan is returned, follow its instructions and call '
-                 'edit_submit with the original text, rewrite or assessment, and plan_id.',
+  'description': description('fix', {}),
   'inputSchema': {'type': 'object',
                   'required': ['text'],
                   'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
@@ -106,10 +100,7 @@ TOOLS = [{'name': 'check',
                                  'mode': {'type': 'string'},
                                  'profile': {'type': 'string'}}}},
  {'name': 'polish',
-  'description': 'Assess or edit prose using negotiated sampling, otherwise return a host plan; '
-                 'explicit hosted backends send text off the machine and backend none is '
-                 'deterministic. When a plan is returned, follow its instructions and call '
-                 'edit_submit with the original text, rewrite or assessment, and plan_id.',
+  'description': description('polish', {}),
   'inputSchema': {'type': 'object',
                   'required': ['text'],
                   'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
@@ -141,9 +132,7 @@ TOOLS = [{'name': 'check',
                                  'mode': {'type': 'string'},
                                  'profile': {'type': 'string'}}}},
  {'name': 'edit_plan',
-  'description': 'Prepare local findings, protected spans and exact instructions for the calling '
-                 'model without a second account. Follow the instructions using masked_text and '
-                 'call edit_submit with the original text, rewrite or assessment, and plan_id.',
+  'description': description('edit_plan', {}),
   'inputSchema': {'type': 'object',
                   'required': ['text'],
                   'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
@@ -158,9 +147,7 @@ TOOLS = [{'name': 'check',
                                              'description': 'treat the input as HTML and preserve '
                                                             'its markup'}}}},
  {'name': 'edit_submit',
-  'description': 'Submit the original text and a host rewrite or assessment using the plan_id from '
-                 'edit_plan. Articulate restores masks, guards protected spans, checks the result '
-                 'and returns accepted text with a host receipt.',
+  'description': description('edit_submit', {}),
   'inputSchema': {'type': 'object',
                   'required': ['text', 'rewrite', 'plan_id'],
                   'properties': {'text': {'type': 'string', 'description': 'the passage to read'},
@@ -169,13 +156,22 @@ TOOLS = [{'name': 'check',
                                  'scores': {'type': 'object'},
                                  'model': {'type': 'string'}}}},
  {'name': 'articulate.status',
-  'description': 'Liveness and identity of the articulate MCP server (name, version, protocol). '
-                 'Network-free health probe.',
+  'description': description('articulate.status', {}),
   'inputSchema': {'type': 'object', 'properties': {}}},
  {'name': 'articulate.doctor',
-  'description': 'Local readiness and tool identity; distinguishes local tools, optional editor '
-                 "backends and this session's sampling capability.",
+  'description': description('articulate.doctor', {}),
   'inputSchema': {'type': 'object', 'properties': {}}}]
+
+
+TOOLS[0]["inputSchema"]["properties"]["max_hits"] = {
+    "type": "integer", "default": 50, "minimum": 0, "maximum": 1000,
+    "description": "Maximum span records; full-text verdict and scores are unchanged."}
+
+
+def listed_tools(environ=None):
+    return [dict(tool, description=description(tool["name"], environ),
+                 title=annotations(tool["name"], environ)["title"],
+                 annotations=annotations(tool["name"], environ)) for tool in TOOLS]
 
 
 def _ok(rid, result):
@@ -194,12 +190,18 @@ def _identity(include_detail: bool, session=None) -> dict:
     info = {"ok": True, "server": "articulate", "version": __version__,
             "protocol": PROTOCOL}
     if include_detail:
-        info["tools"] = [t["name"] for t in TOOLS]
+        info["tools"] = [t["name"] for t in listed_tools()]
         info["local_only"] = list(LOCAL_ONLY)
         info["needs_llm_backend"] = list(NEEDS_BACKEND)
         info["optional_llm_backend"] = ["judge", "fix", "polish"]
         info["sampling_advertised"] = bool(session and session.sampling_advertised)
-        info["editor_default"] = "sampling" if info["sampling_advertised"] else "host"
+        info["editor_default"] = "sampling" if info["sampling_advertised"] and not offline() else "host"
+        info["tool_set"] = tool_set()
+        info["hidden"] = []
+        info["python"] = "%d.%d.%d" % sys.version_info[:3]
+        from .backends import local_only
+        info["local_only_switch"] = local_only()
+        info["offline_editors"] = offline()
     return info
 
 
@@ -218,10 +220,10 @@ def _call(params: dict, session=None) -> dict:
                 "isError": True}
     if name in ("articulate.status", "articulate.doctor"):
         info = _identity(name == "articulate.doctor", session)
-        return {"content": [{"type": "text", "text": json.dumps(info, indent=2)}]}
+        return _tool_result(info)
     try:
         if name == "check":
-            result = do_check(_text_arg(args))
+            result = do_check(_text_arg(args), _max_hits(args))
         elif name == "score":
             result = do_score(_text_arg(args))
         elif name in ("judge", "fix", "polish"):
@@ -247,7 +249,23 @@ def _call(params: dict, session=None) -> dict:
         return {"content": [{"type": "text",
                              "text": "[error] %s: %s" % (type(exc).__name__, exc)}],
                 "isError": True}
-    return {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]}
+    return _tool_result(result)
+
+
+def _max_hits(args):
+    value = args.get("max_hits")
+    if value is None:
+        return 50
+    if type(value) is not int or not 0 <= value <= 1000:
+        raise ValueError("'max_hits' must be a whole number from 0 to 1000")
+    return value
+
+
+def _tool_result(result):
+    out = {"content": [{"type": "text", "text": json.dumps(result, separators=(",", ":"), ensure_ascii=False)}]}
+    if result.get("ok") is False:
+        out["isError"] = True
+    return out
 
 
 def handle(req, session=None):
@@ -278,8 +296,10 @@ def handle(req, session=None):
             session.initialized = True
         return _ok(rid, {"protocolVersion": PROTOCOL, "capabilities": {"tools": {}},
                          "serverInfo": {"name": "articulate", "version": __version__}})
+    if method == "ping":
+        return _ok(rid, {})
     if method == "tools/list":
-        return _ok(rid, {"tools": TOOLS})
+        return _ok(rid, {"tools": listed_tools()})
     if method == "tools/call":
         params = req["params"] if "params" in req else {}
         if not isinstance(params, dict):
@@ -320,7 +340,7 @@ class Session:
                     continue
                 try:
                     self.incoming.put(json.loads(line))
-                except ValueError:
+                except (ValueError, RecursionError):
                     self.incoming.put(_ParseError())
         finally:
             self.incoming.put(_EndOfInput())
@@ -371,9 +391,18 @@ class _EndOfInput:
     pass
 
 
+def _utf8(stream, **options):
+    try:
+        stream.reconfigure(encoding="utf-8", **options)
+    except (AttributeError, ValueError, io.UnsupportedOperation) as exc:
+        sys.stderr.write("articulate-mcp: could not switch %s to UTF-8 (%s); non-ASCII text may be misread\n"
+                         % (getattr(stream, "name", "a stream"), exc))
+    return stream
+
+
 def serve(stdin=None, stdout=None, *, sampling_timeout=60) -> int:
-    session = Session(stdin if stdin is not None else sys.stdin,
-                      stdout if stdout is not None else sys.stdout, sampling_timeout)
+    session = Session(stdin if stdin is not None else _utf8(sys.stdin, errors="replace"),
+                      stdout if stdout is not None else _utf8(sys.stdout, newline="\n"), sampling_timeout)
     reader = threading.Thread(target=session.read, daemon=True)
     reader.start()
     while session.pending or not session.closed:
@@ -387,7 +416,14 @@ def serve(stdin=None, stdout=None, *, sampling_timeout=60) -> int:
         # A late sampling response is not a new JSON-RPC request.
         if isinstance(req, dict) and "method" not in req and ("result" in req or "error" in req):
             continue
-        resp = handle(req, session)
+        try:
+            resp = handle(req, session)
+        except Exception as exc:
+            sys.stderr.write("articulate-mcp: internal error (%s)\n" % type(exc).__name__)
+            if not isinstance(req, dict) or "id" not in req:
+                continue
+            rid = req["id"] if _valid_request_id(req["id"]) else None
+            resp = _err(rid, -32603, "internal error (%s)" % type(exc).__name__)
         if resp is not None:
             session.send(resp)
     return 0

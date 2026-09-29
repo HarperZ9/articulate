@@ -5,24 +5,46 @@ connected caller's model only when sampling was advertised, otherwise it
 returns a host plan. Explicit hosted backends can send text off this machine.
 """
 import asyncio
+import json
 from typing import Optional
 
 from . import detector as core
+from .tool_meta import fastmcp_options, offline
+from .tool_text import description
 
 
-def do_check(text):
+HITS_BUDGET = 30_000
+
+
+def _within_budget(hits, budget=HITS_BUDGET):
+    kept, used = [], 0
+    for hit in hits:
+        used += len(json.dumps(hit, separators=(",", ":"), ensure_ascii=False)) + 1
+        if used > budget:
+            break
+        kept.append(hit)
+    return kept
+
+
+def do_check(text, max_hits=None):
     """Detect prose/AI tells with span records. Local, no network."""
+    if max_hits is not None and (type(max_hits) is not int or not 0 <= max_hits <= 1000):
+        raise ValueError("max_hits must be a whole number from 0 to 1000")
     r = core.check_text(text)
     hits = sorted(r["high"] + r["medium"], key=lambda h: h["start"])
-    return {
+    shown = hits if max_hits is None else _within_budget(hits[:max_hits])
+    out = {
         "clean": r["clean"],
         "verdict": "clean" if r["clean"] else "flagged",
         "texture_score": r["texture_score"],
         "elevated": r["elevated"],
-        "hits": hits,
+        "hits": shown,
         "advisory_count": len(r["low"]),
         "cadence": r["cadence"],
     }
+    if len(shown) < len(hits):
+        out["hits_omitted"] = len(hits) - len(shown)
+    return out
 
 
 def do_score(text):
@@ -42,6 +64,20 @@ def do_score(text):
 
 
 def _edit(text, goal, **options):
+    if offline():
+        backend = options.get("backend")
+        if backend not in (None, "auto", "host", "none"):
+            return {"ok": False, "error": "%s backend %r is not available in local-only mode" % (goal, backend),
+                    "note": "This local-only server allows host plans and backend none only."}
+        from .host_edit import edit_plan, deterministic_edit
+        bar, passes = options.get("bar", 4), options.get("passes", 3)
+        if not 1 <= bar <= 5 or passes < 1:
+            raise ValueError("bar must be 1-5 and passes must be positive")
+        settings = {key: options[key] for key in ("mode", "profile", "is_html", "is_tex") if key in options}
+        result = (deterministic_edit if backend == "none" else edit_plan)(text, goal=goal, **settings)
+        if goal == "polish":
+            result.update(scores=None, quality_met=False)
+        return result
     from .editing import run_edit
     return run_edit(text, goal, context="mcp", **options)
 
@@ -109,17 +145,17 @@ def build_server():
     from fastmcp import FastMCP, Context
     mcp = FastMCP("articulate")
 
-    @mcp.tool
-    def check(text: str) -> dict:
+    @mcp.tool(description=description("check"), **fastmcp_options("check"))
+    def check(text: str, max_hits: int = 50) -> dict:
         """Detect prose tells and return findings with cadence stats. Local, no network."""
-        return do_check(text)
+        return do_check(text, max_hits)
 
-    @mcp.tool
+    @mcp.tool(description=description("score"), **fastmcp_options("score"))
     def score(text: str) -> dict:
         """Return machine-texture and structural rates. Local, no network."""
         return do_score(text)
 
-    @mcp.tool
+    @mcp.tool(description=description("judge"), **fastmcp_options("judge"))
     async def judge(text: str, ctx: Context, backend: Optional[str] = None,
                     mode: Optional[str] = None, profile: Optional[str] = None,
                     is_html: bool = False, is_tex: bool = False) -> dict:
@@ -128,7 +164,7 @@ def build_server():
         return await _fast_edit(ctx, text, "judge", backend=backend, mode=mode,
                                 profile=profile, is_html=is_html, is_tex=is_tex)
 
-    @mcp.tool
+    @mcp.tool(description=description("fix"), **fastmcp_options("fix"))
     async def fix(text: str, ctx: Context, is_html: bool = False,
                   backend: Optional[str] = None, mode: Optional[str] = None,
                   profile: Optional[str] = None, is_tex: bool = False) -> dict:
@@ -137,7 +173,7 @@ def build_server():
         return await _fast_edit(ctx, text, "fix", backend=backend, mode=mode,
                                 profile=profile, is_html=is_html, is_tex=is_tex)
 
-    @mcp.tool
+    @mcp.tool(description=description("polish"), **fastmcp_options("polish"))
     async def polish(text: str, ctx: Context, bar: int = 4, passes: int = 3,
                      is_html: bool = False, backend: Optional[str] = None,
                      mode: Optional[str] = None, profile: Optional[str] = None,
@@ -148,14 +184,14 @@ def build_server():
                                 profile=profile, is_html=is_html, is_tex=is_tex,
                                 bar=bar, passes=passes)
 
-    @mcp.tool
+    @mcp.tool(description=description("edit_plan"), **fastmcp_options("edit_plan"))
     def edit_plan(text: str, mode: Optional[str] = None, profile: Optional[str] = None,
                   goal: str = "fix", is_html: bool = False, is_tex: bool = False) -> dict:
         """Prepare local findings, protected spans and exact instructions for the calling model without a second account.
         Follow the instructions using masked_text and call edit_submit with the original text, rewrite or assessment, and plan_id."""
         return do_edit_plan(text, mode, profile, goal, is_html, is_tex)
 
-    @mcp.tool
+    @mcp.tool(description=description("edit_submit"), **fastmcp_options("edit_submit"))
     def edit_submit(text: str, rewrite: str, plan_id: str,
                     scores: Optional[dict] = None, model: Optional[str] = None) -> dict:
         """Submit the original text and a host rewrite or assessment using the plan_id from edit_plan.

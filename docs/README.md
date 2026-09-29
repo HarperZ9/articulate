@@ -26,3 +26,5 @@ Articulate does detection and writing quality. It is not an evasion tool, it nev
 disguises machine authorship, and a receipt attests that a named ruleset ran and
 re-derives, never that a result is correct or that a document meets a regulation.
 The full statement is in [Boundaries](boundaries.md).
+
+- [Claude plugin](claude-plugin.md): local checks and host editing in Claude Code.
