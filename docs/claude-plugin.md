@@ -12,9 +12,9 @@ covers install, example prompts, the privacy policy and troubleshooting: see
 
 ## Install
 
-This plugin is an unpublished development build on the 0.5.1 release line. It
-bundles the released package plus plugin server changes. Use a local build
-while that work is under review.
+This plugin targets the 0.5.2 package on the maintenance release line. It bundles
+the package source. Build from the matching package tag for release use; use
+`--dev` for a local test build before that tag exists.
 
 The plugin needs Python 3.9 or later, runnable as `python3`, and nothing else:
 it carries its own copy of the package source, which uses only the standard
@@ -118,8 +118,8 @@ fields, a single server variable, a README of at least 40 words with a Privacy
 Policy section that matches `PRIVACY.md`, and the skill front matter. It exits 1
 and lists each problem when a check fails.
 
-Use `--dev` for this 0.5.1 plugin branch: its server changes are newer than the
-package tag. Do not publish this development build as a package release.
+Use `--dev` when testing changes before their package tag exists. Do not publish
+a development build as a package release.
 
 Without `--dev` the build is a release build. Before it writes anything, it
 refuses untracked or changed files in the folders it copies, and it refuses

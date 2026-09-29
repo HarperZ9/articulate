@@ -1,7 +1,7 @@
 {
   "name": "articulate-writing",
   "displayName": "Articulate Writing",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Checks prose on your computer for named writing patterns and shows where each one occurs and what it costs a reader. The checker sends the text nowhere; Claude reads the text as part of your conversation.",
   "author": {
     "name": "Zain Dana Harper",
