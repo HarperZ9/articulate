@@ -177,6 +177,11 @@ See the [backend configuration reference](docs/cli.md#backend-configuration).
 
 ## Privacy
 
+The unreleased branch also provides an explicit local Python API for
+[comparing a proposed rewrite](docs/comparison.md). It reports selected surface
+changes and their offsets. A preserved verdict does not establish semantic
+equivalence, and the report contains source text.
+
 The checks, receipts, process record and desk never touch the network. Each
 editor call follows its selected backend. Other commands stay local:
 
