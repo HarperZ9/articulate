@@ -164,7 +164,7 @@ screenplay, poetry), the editor injection boundary, per-span mixed-authorship
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.5.1 is prepared for release as `articulate-writing`; the
+one package. Version 0.5.2 is prepared for release as `articulate-writing`; the
 [changelog](CHANGELOG.md) records what each release added. A local-model editor
 backend is included. A labeled non-native corpus for a fairness check remains
 on the roadmap for this release line.

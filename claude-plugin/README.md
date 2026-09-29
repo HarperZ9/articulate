@@ -41,8 +41,7 @@ nowhere; Claude still reads the text as part of your conversation.
 
 ## Install
 
-This 0.5.1 plugin is a development build from the release line plus plugin
-server changes. It has not been published. Build it from the repository as
+This plugin targets package version 0.5.2. Build from its matching package tag as
 [the build guide](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md)
 describes, then use the local build folder:
 

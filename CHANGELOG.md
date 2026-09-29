@@ -4,6 +4,24 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.5.2
+
+Local-only MCP sessions can use the calling model through editor aliases.
+Detector rules and protected-span matching remain unchanged from 0.5.1.
+
+- `fix`, `judge` and `polish` return a host plan for default, auto and host
+  selection in local-only mode. Deterministic editing remains available;
+  explicit sampling and network backends are refused before resolution.
+- The local plugin supplies nine tools with titles and safety annotations,
+  UTF-8 stdio handling, capped findings and host-edit workflow skills.
+- Plugin release builds require the package version tag to exist locally and
+  resolve to a commit before checking source parity. Missing tags stop the build
+  before output is written; `--dev` remains an explicit local test path.
+
+The checker makes no network call in this local mode. The calling host still
+processes the conversation under its own data policy. A protected-span check
+does not prove semantic equivalence or factual correctness.
+
 ## 0.5.1
 
 The editor can use the calling model, a configured endpoint or deterministic
