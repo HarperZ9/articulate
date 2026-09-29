@@ -6,6 +6,11 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## 0.6.0 (unreleased)
 
+An explicit Python comparison API reports selected surface changes between
+an original and a rewrite. It preserves the default editor and detector behavior.
+The report includes source text, offsets and its limits; a preserved verdict
+does not establish semantic equivalence. See [the API guide](docs/comparison.md).
+
 The editor backend work from the 0.5.1 patch line is carried forward here,
 including host plans, endpoint selection, deterministic edits and the meaning
 guard. This version also contains the ruleset changes below; the patch's
