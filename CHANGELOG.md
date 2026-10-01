@@ -21,7 +21,9 @@ rules stay the published v0.5.2 rules; this release changes no finding.
   `${CLAUDE_PLUGIN_ROOT}` in the command text before it starts `cmd.exe /C`,
   so the command works under cmd.exe, Windows PowerShell and pwsh, including
   from a folder whose path has a space. Tests pin this, with a control that
-  the unreplaced text fails.
+  the unreplaced text fails. On Windows the hook needs Codex 0.145.0 or newer:
+  earlier Codex escapes the quotes in the command and the hook does not run,
+  though the edit still goes ahead.
 - Tests pin two privacy and input controls on this line: any value of
   `ARTICULATE_LOCAL_ONLY` other than an explicit off value turns local-only on,
   and an empty file argument exits 2 with "no such file".

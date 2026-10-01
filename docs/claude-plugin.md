@@ -133,6 +133,14 @@ Windows PowerShell and pwsh, from a folder whose path has a space. The hook need
 a `python3` on PATH that is Python 3.9 or newer, as the MCP server does. No live
 Codex session has fired the hook end to end.
 
+On Windows the hook needs Codex 0.145.0 or newer. Codex before 0.145.0 (including
+the 0.144 patch line) escapes the quotes in the command as `\"` when it starts
+`cmd.exe`, so Python receives a file name that contains quote marks and the hook
+does not run, with or without a space in the path. The edit still goes ahead,
+because the hook is advisory. Codex fixed the launch in openai/codex #33926. Run
+`codex --version` to check; the CLI on PATH and the one inside the Codex app can
+differ.
+
 ## Tool titles and hints
 
 Tools declare titles and all four MCP behavior hints. In the plugin environment,

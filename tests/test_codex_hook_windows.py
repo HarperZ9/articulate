@@ -1,10 +1,15 @@
 """The plugin's hook command, run the way Codex runs it on Windows.
 
-Codex (codex-rs/hooks/src/engine/discovery.rs, tags rust-v0.144.6 to
-rust-v0.159.3) replaces ${PLUGIN_ROOT}, ${CLAUDE_PLUGIN_ROOT}, ${PLUGIN_DATA}
-and ${CLAUDE_PLUGIN_DATA} in a plugin hook's command text before it starts a
-shell, and sets the same names in the environment. command_runner.rs then runs
-%COMSPEC% /C "<command>", which is cmd.exe unless COMSPEC names another shell.
+Codex (codex-rs/hooks/src/engine/discovery.rs, read at tags rust-v0.144.6,
+rust-v0.159.2 and rust-v0.159.3) replaces ${PLUGIN_ROOT}, ${CLAUDE_PLUGIN_ROOT},
+${PLUGIN_DATA} and ${CLAUDE_PLUGIN_DATA} in a plugin hook's command text before
+it starts a shell, and sets the same names in the environment. From rust-v0.145.0
+(openai/codex #33926, "Fix quoted hook commands on Windows") command_runner.rs
+runs %COMSPEC% /C "<command>" as a raw argument, which is cmd.exe unless COMSPEC
+names another shell. Before that, including the rust-v0.144 patch line, it passed
+the command through normal argument quoting, which escapes each inner quote as
+\". A limit test below pins that the shipped command does not run under that
+older launch, so the documented minimum of Codex 0.145.0 stays true.
 So the shell never sees ${CLAUDE_PLUGIN_ROOT}, and PowerShell's reading of that
 text as a PowerShell variable does not apply.
 
@@ -117,3 +122,15 @@ def test_control_the_unreplaced_command_fails_under_cmd_and_powershell(plugin):
     shells = _shells(_command())
     for name, argv in shells.items():
         assert _context(argv, env) is None, name
+
+
+@windows_only
+def test_limit_codex_before_0_145_escapes_the_quotes_and_the_hook_does_not_run(plugin):
+    # rust-v0.144.6: Command::new(COMSPEC).arg("/C").arg(command). Rust quotes that
+    # argument with the same rules as subprocess.list2cmdline. docs/claude-plugin.md
+    # names Codex 0.145.0 as the Windows minimum because of this.
+    root, env = plugin
+    comspec = os.environ.get("COMSPEC", "cmd.exe")
+    argv = subprocess.list2cmdline([comspec, "/C", _replace(_command(), env)])
+    assert '\\"' in argv
+    assert _context(argv, env) is None
