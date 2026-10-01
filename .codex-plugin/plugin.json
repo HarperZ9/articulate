@@ -5,6 +5,7 @@
   },
   "description": "Checks prose locally and verifies host-model edits against protected spans. The checker makes no network calls; the calling model reads the text in the conversation.",
   "homepage": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md",
+  "hooks": "./hooks/hooks.json",
   "interface": {
     "capabilities": [],
     "category": "Productivity",
@@ -33,5 +34,5 @@
   "name": "articulate-writing",
   "repository": "https://github.com/HarperZ9/articulate",
   "skills": "./skills/",
-  "version": "0.6.0"
+  "version": "0.7.0"
 }

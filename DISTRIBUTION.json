@@ -1,9 +1,9 @@
 {
-  "asset_name": "articulate-writing-0.6.0-plugin.zip",
-  "asset_sha256": "30d6c4d730df5064b5eb2687d2a2650e5ea24d5cecf5ccd43185419e658e64ca",
-  "asset_url": "https://github.com/HarperZ9/articulate/releases/download/v0.6.0/articulate-writing-0.6.0-plugin.zip",
+  "asset_name": "articulate-writing-0.7.0-plugin.zip",
+  "asset_sha256": "c5db5167e588062708331c1710bfa2ef1e25398ef7446bd9fe28467813b61eb9",
+  "asset_url": "https://github.com/HarperZ9/articulate/releases/download/v0.7.0/articulate-writing-0.7.0-plugin.zip",
   "checksum_asset": "plugin-SHA256SUMS.txt",
-  "checksum_sha256": "32e04e06f715f72e48ce7bee4e42c048f6d7666d8e8237539f324291232e2b93",
+  "checksum_sha256": "d8c7a94efc6a44cb61bdd81b8db60e64ed27acc2daeb5ad5389005c3b3ffd166",
   "does_not_prove": [
     "marketplace approval",
     "model quality",
@@ -11,27 +11,30 @@
     "runtime availability on user devices"
   ],
   "edition": "source-runtime-required",
-  "native_download_url": "https://github.com/HarperZ9/articulate/releases/download/v0.6.0/articulate-writing-0.6.0-win-x64.mcpb",
+  "native_download_url": "https://github.com/HarperZ9/articulate/releases/download/v0.7.0/articulate-writing-0.7.0-win-x64.mcpb",
   "original_payload_sha256": {
     ".claude-plugin/marketplace.json": "a738f18464356c6fce4b20b25f781af0f4d3f34144605d0b96449293e5724535",
-    ".claude-plugin/plugin.json": "1b315a2ccaf7517f9e644b0d894dd21f1659cab412b5d51e8cdca1bb81f385a2",
+    ".claude-plugin/plugin.json": "f6589048e926eb20aab354067a03a3ca850219ce37477050bde8a14729733789",
     ".codex-mcp.json": "2cd05c9380c6062f8bff05a72d72862a10888c0c6f7a70b480ee2873903638e7",
-    ".codex-plugin/plugin.json": "4f5ffca3c617e263deda30ce377c8eabd191573f777b173c8f17ff9c46d2e808",
+    ".codex-plugin/plugin.json": "3daa313ec841950849c6572d496614cbba2e2fb1aee84df8bc504b9f677a5eba",
     ".gitignore": "17209032873f4a770bbaac33173c1884e9934138565527cb3a5d6013f6b4e664",
     ".mcp.json": "06c07be112b3cb6d970bb0d4312bcde20c7d171f3f650cd909a34332a4290cbe",
     "LICENSE": "5d4abfef8a42cb0b1762662ae9745b01cd729991e60c2fee83d6ea8ee752cb6d",
-    "PRIVACY.md": "8b99b1c2615a4b85a7175d754419ae8d21797b0ca93a829435469283cb01f434",
-    "README.md": "8f1572f07f1150f4f2b656931eb995f2a398f7a594a6d059b5256a0079fd7bd5",
+    "PRIVACY.md": "f64a3d4a8bec429c7669c6fe153205a3fbb883c1b9dca5c4da00775befc3d7c8",
+    "README.md": "1672e4d78f85d7182d25ce2728d5bf75a98304a1246ef875f1f55d6174828a06",
     "SECURITY.md": "a8bc6fd8225e82ff7277653d0903657ce19394d9c8a6458f8ced0b1d68ababc4",
+    "hooks/hooks.json": "5ce79920d083890bedc658bc2edbef9ae3c4cdfbc1a6e8f6e4de860ea5754280",
     "mcp.json": "e6b93052ca26d8a96270bb104c4f0bf804d75dd9b9e0af734f9a7a85ec77a4b1",
-    "plugin.json": "fa07a2801e9bdfa5b0ab41176b5570640b0ade2199a892fcc2d76aa7d1dbbb6b",
+    "plugin.json": "ad6b888cf115c7773e090d07c196b1891ce6bf2a5c89b4090c152daf78e9a23b",
+    "server/edit_hook.py": "683a65bef3d432dc89050cd8b15db169cc18c760e186964d612de5e3b3e644dd",
     "server/serve.py": "13da3f0dcd310991281c0263955e96a20901978a3b44a565f4d903de9424aea3",
     "skills/prose-edit/SKILL.md": "7c8da74f00aa5a9a0b59f598551f381def42d33953f3500b82933a802a0e67b7",
     "skills/prose-review/SKILL.md": "b5048d428af0392462e2debbac19becb031eb8fcdf6d6977cf7c3067befcb929",
-    "src/articulate/__init__.py": "b6a04be9d4b30591af827c0ca24f8c6fb5191559a8c3221e9713209356a98102",
+    "src/articulate/__init__.py": "e5a16c6f4b9151dd1c6610d708291576a53a0b192e12935256dcf05d214e2201",
     "src/articulate/backends.py": "fa06acd6c79e4d1f3d1267ca23f8f1a63f8e7e2f4f33378650da6297ddbe699a",
     "src/articulate/claude_cli.py": "46505c1f69f4c751b31d90c72f09625e62a1b95de98eada6bdfbf04295f8761f",
     "src/articulate/detector.py": "f1d971612212afdc5377e47f55db19f3326092531ae9adb5027f28711c3d8a10",
+    "src/articulate/edit_hook.py": "b38b4020486f0047c9b2a795ff9d8f420ec429b3a37d4e53cdbf21c4b32b6600",
     "src/articulate/editing.py": "1dba82e6ccbf0ba01ff70bdc2d102a78e267392790f5293d88f3b83e73eef707",
     "src/articulate/finders.py": "1aba166839cac0de141b7d53b39472c070614cfe9baa26695f518ed7d324330c",
     "src/articulate/genres.py": "63e1e9c481e808999249b5957241a1731fa11ccd59493a2b1cf2ceaa9faf10bc",
@@ -53,22 +56,22 @@
   },
   "packaging_changes": {
     ".codex-plugin/plugin.json": {
-      "distribution_sha256": "08fcf83e4ceda6eec224d003713c702a38f9fb6e0e9de3ff9f2b439fa797f529",
-      "original_sha256": "4f5ffca3c617e263deda30ce377c8eabd191573f777b173c8f17ff9c46d2e808"
+      "distribution_sha256": "095755d7cc79983bb7a356fb78d7d32319a9d83d597101688c72f8205c39d70d",
+      "original_sha256": "3daa313ec841950849c6572d496614cbba2e2fb1aee84df8bc504b9f677a5eba"
     },
     "README.md": {
-      "distribution_sha256": "5c4d1a91ad79ebedc2b06c1f5f0977269ebea6025a62d6a42b3e3d5dd8e0f7f8",
-      "original_sha256": "8f1572f07f1150f4f2b656931eb995f2a398f7a594a6d059b5256a0079fd7bd5"
+      "distribution_sha256": "2dea4f89dfa378377829f6dc46d7a141fa47740f2473d66d9e446249c307f867",
+      "original_sha256": "1672e4d78f85d7182d25ce2728d5bf75a98304a1246ef875f1f55d6174828a06"
     },
     "plugin.json": {
-      "distribution_sha256": "ba300580f655ffb8547854ebec49d0d92eb4cddba4728af016e4705d40b2c5c5",
-      "original_sha256": "fa07a2801e9bdfa5b0ab41176b5570640b0ade2199a892fcc2d76aa7d1dbbb6b"
+      "distribution_sha256": "899f4ac9172d5d4a1b86af5a6b1e20d989ed9ff7c7f5f735527265d9aaaa4716",
+      "original_sha256": "ad6b888cf115c7773e090d07c196b1891ce6bf2a5c89b4090c152daf78e9a23b"
     }
   },
   "product": "articulate",
-  "release_url": "https://github.com/HarperZ9/articulate/releases/tag/v0.6.0",
+  "release_url": "https://github.com/HarperZ9/articulate/releases/tag/v0.7.0",
   "runtime_requirement": "Python 3.9 or later, available as `python3`",
   "schema": "marketplace-source-distribution/v1",
-  "source_release_commit": "36f7e9f1f027f400b4839ec7394d64823ed1ac1d",
-  "version": "0.6.0"
+  "source_release_commit": "97524196ca840d9294fcbde801c6dcd56853f8db",
+  "version": "0.7.0"
 }

@@ -1,0 +1,17 @@
+{
+  "description": "Advisory Articulate check after the model writes or edits a prose file. It names possible meaning changes and style findings and never blocks the edit.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S -B -X utf8 \"${CLAUDE_PLUGIN_ROOT}/server/edit_hook.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,12 +1,13 @@
 # Privacy Policy
 
-Last updated: 2026-09-30. This policy covers the Articulate Writing plugin for
+Last updated: 2026-10-01. This policy covers the Articulate Writing plugin for
 local Claude Code and Codex hosts. It is also published at
 https://github.com/HarperZ9/articulate/blob/release/0.5.x/claude-plugin/PRIVACY.md.
 
 **Data collected.** The plugin reads only the text the calling host passes to
-one of its tools. It does not read your files, conversation history or saved
-memory. It collects no account details, usage statistics or telemetry.
+one of its tools, and the edit event the host passes to its hook after the
+model writes or edits a file. It does not open your files or read conversation
+history or saved memory. It collects no account details, usage statistics or telemetry.
 
 **Use and storage.** The plugin checks text and prepares or validates host edits
 in memory on your computer, then returns the result to the host. It writes no
