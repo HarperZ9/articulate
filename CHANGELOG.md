@@ -13,6 +13,7 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   only the hook event, opens no file or connection, starts no program and never
   blocks the edit. `ARTICULATE_EDIT_HOOK=off` turns it off. The package adds an
   `articulate-edit-hook` command for other hosts that run command hooks.
+  Each finding is cut to 240 characters and the whole answer to 6,000.
 
 ## 0.6.0
 

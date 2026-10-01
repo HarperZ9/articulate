@@ -122,7 +122,10 @@ from the installed package. After `pip install articulate-writing`, point a
 Limits: the comparison is lexical. It does not catch a changed file path
 outside code formatting, an added intensifier or two swapped subjects. It can
 read a capitalized word that opens a sentence as a name, and it names changes
-the user asked for. The Codex Windows hook command has not been tested.
+the user asked for. Each finding is cut to 240 characters and the whole answer
+to 6,000, with a count of what was left out, so a large edit does not copy its
+changed code blocks into the model's context. The Codex Windows hook command has
+not been tested.
 
 ## Tool titles and hints
 
