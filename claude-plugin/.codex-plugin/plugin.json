@@ -19,6 +19,7 @@
   ],
   "skills": "./skills/",
   "mcpServers": "./.codex-mcp.json",
+  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Articulate Writing",
     "shortDescription": "Check prose and verify edits locally.",

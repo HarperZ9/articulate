@@ -25,6 +25,15 @@ POLICY_TOPICS = ("Data collected", "Use and storage", "Third-party sharing", "Re
                  "Contact")
 LICENSE_ID = "FSL-1.1-MIT"
 SERVER_FILE = "${CLAUDE_PLUGIN_ROOT}/server/serve.py"
+HOOK_FILE = "${CLAUDE_PLUGIN_ROOT}/server/edit_hook.py"
+HOOKS_FILE = "./hooks/hooks.json"
+# The one hook the plugin declares: advisory, after a file write or edit, with
+# the same isolated interpreter flags as the server. Exact comparison rejects a
+# second hook, another event, a blocking PreToolUse entry or a changed command.
+EXPECTED_HOOKS = {"PostToolUse": [{
+    "matcher": "Write|Edit|MultiEdit|apply_patch",
+    "hooks": [{"type": "command", "timeout": 15,
+               "command": 'python3 -I -S -B -X utf8 "%s"' % HOOK_FILE}]}]}
 PUBLIC_TEXT = (".md", ".json")
 EM_DASH = "—"
 LOCAL_PATH = re.compile(r"\b[A-Za-z]:[\\/]|/Users/|/home/[a-z]")
@@ -136,7 +145,8 @@ def check_portable(root):
     if not isinstance(interface, dict) or not interface.get("displayName"):
         problems.append("plugin.json: OpenAI interface is missing")
     expected_codex = {**identity, "skills": "./skills/",
-                      "mcpServers": "./.codex-mcp.json", "interface": interface}
+                      "mcpServers": "./.codex-mcp.json", "hooks": HOOKS_FILE,
+                      "interface": interface}
     if codex != expected_codex:
         problems.append(".codex-plugin/plugin.json: identity or OpenAI settings drift")
     # Derive both launch forms from the preserved Claude configuration. Exact
@@ -157,6 +167,21 @@ def check_portable(root):
                      "args": expected_server["args"][:-1] + ["server/serve.py"]}
     if codex_mcp != {"mcpServers": {"articulate": compat_server}}:
         problems.append(".codex-mcp.json: compatibility launch differs from the local-only profile")
+    return problems
+
+
+def check_hooks(root):
+    """The plugin's hooks file declares exactly the advisory edit-time check."""
+    problems = []
+    cfg = _json(root, "hooks/hooks.json", problems)
+    if cfg is None:
+        return problems
+    if not isinstance(cfg.get("description"), str) or not cfg["description"].strip():
+        problems.append("hooks/hooks.json: description is missing")
+    if cfg.get("hooks") != EXPECTED_HOOKS or set(cfg) - {"description", "hooks"}:
+        problems.append("hooks/hooks.json: differs from the single advisory PostToolUse check")
+    if not (root / "server" / "edit_hook.py").is_file():
+        problems.append("server/edit_hook.py is missing")
     return problems
 
 
@@ -324,7 +349,8 @@ def check_bundle(root):
         contained_entries(root)
     except (ValueError, OSError) as exc:
         return [str(exc)]
-    problems = check_files(root) + check_manifest(root) + check_server(root) + check_portable(root)
+    problems = (check_files(root) + check_manifest(root) + check_server(root)
+                + check_portable(root) + check_hooks(root))
     if (root / "README.md").is_file() and (root / "PRIVACY.md").is_file():
         problems += check_docs(root)
     else:

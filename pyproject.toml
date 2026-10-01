@@ -32,6 +32,9 @@ articulate-lsp = "articulate.lsp_server:serve"
 # an MCP host can launch it straight from `pip install articulate-writing`. The
 # fastmcp server stays available under the [mcp] extra as articulate.mcp_server.
 articulate-mcp = "articulate.local_mcp:main"
+# The advisory PostToolUse check for agent harnesses (Claude Code, Codex and any
+# client that runs a command hook with the same event shape). Standard library only.
+articulate-edit-hook = "articulate.edit_hook:main"
 
 [project.urls]
 Homepage = "https://github.com/HarperZ9/articulate"

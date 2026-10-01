@@ -95,6 +95,38 @@ LOW advisory count and cadence fields, with the plugin's bounded hit output.
 `score` returns the 0.5.1 heuristic score and structural rates. Neither exposes
 the unreleased density or fairness outputs.
 
+## Edit-time hook
+
+The plugin declares one hook in `hooks/hooks.json`. Claude Code reads that file
+from the plugin root, and the Codex manifest points at it with its `hooks`
+entry. After a `Write`, `Edit`, `MultiEdit` or Codex `apply_patch` call, the
+host runs `server/edit_hook.py` with the same isolated Python flags as the
+server and passes the event on standard input.
+
+For a prose file, the hook compares the text before and after each edit when the
+event carries both, and checks the new text for style findings. It answers with
+`hookSpecificOutput.additionalContext`, which the host shows to the model on its
+next step. It prints nothing for other files, for a clean edit, or for an event
+it cannot read; a read failure goes to standard error. It always exits 0, so it
+never blocks an edit. A Claude Code `Write` and a Codex added file carry no
+before text, so they get the style check only.
+
+The hook does not open the edited file. It reads the event, which already holds
+the text the model wrote. Codex skips plugin hooks until you review and trust
+them. Set `ARTICULATE_EDIT_HOOK=off` to turn the hook off in either host.
+
+A host that runs command hooks with the same event shape can also run the hook
+from the installed package. After `pip install articulate-writing`, point a
+`PostToolUse` command hook at `articulate-edit-hook`.
+
+Limits: the comparison is lexical. It does not catch a changed file path
+outside code formatting, an added intensifier or two swapped subjects. It can
+read a capitalized word that opens a sentence as a name, and it names changes
+the user asked for. Each finding is cut to 240 characters and the whole answer
+to 6,000, with a count of what was left out, so a large edit does not copy its
+changed code blocks into the model's context. The Codex Windows hook command has
+not been tested.
+
 ## Tool titles and hints
 
 Tools declare titles and all four MCP behavior hints. In the plugin environment,

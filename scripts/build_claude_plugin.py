@@ -17,8 +17,8 @@ What lands in OUT_DIR, taken from the files git tracks:
     LICENSE
 
 An untracked or git-ignored file in those folders, such as a .env, never ships.
-The modules the server can import are every module reachable from local_mcp and
-the package __init__ through any import statement, one inside a function
+The modules the server can import are every module reachable from local_mcp,
+edit_hook and the package __init__ through any import statement, one inside a function
 included; the command line, the LSP server and the other tools stay out.
 
 A release build, the default, first checks the source: no untracked or changed
@@ -50,8 +50,9 @@ SOURCES = (("claude-plugin", ""), ("src/articulate", "src/articulate"))
 SKIP_DIRS = {"__pycache__"}
 SKIP_SUFFIXES = {".pyc", ".pyo", ".pyd"}
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
-# serve.py runs articulate.local_mcp, and importing it runs the package __init__.
-ENTRY = ("__init__", "local_mcp")
+# serve.py runs articulate.local_mcp, edit_hook.py runs articulate.edit_hook, and
+# importing either runs the package __init__.
+ENTRY = ("__init__", "local_mcp", "edit_hook")
 
 
 def _git(repo, *args):
