@@ -37,7 +37,7 @@ def test_corpus_needs_two_files_unless_single(tmp_path, capsys):
 def test_voice_learn_show_list_compare_delete(tmp_path, capsys):
     samples = _write(tmp_path, [{"name": n, "text": t} for n, _, t in VARIED])
     store = str(tmp_path / "store")
-    assert cli.main(["voice", "learn", *samples, "--name", "mine", "--dir", store]) == 0
+    assert cli.main(["voice", "learn", *samples, "--name", "mine", "--mine", "--dir", store]) == 0
     capsys.readouterr()
     assert cli.main(["voice", "show", "mine", "--dir", store]) == 0
     shown = capsys.readouterr().out
@@ -45,7 +45,7 @@ def test_voice_learn_show_list_compare_delete(tmp_path, capsys):
     assert cli.main(["voice", "list", "--dir", store]) == 0
     assert "mine" in capsys.readouterr().out
     draft = _write(tmp_path, templated_docs()[:1])[0]
-    assert cli.main(["voice", "compare", draft, "--name", "mine", "--dir", store]) == 0
+    assert cli.main(["voice", "compare", draft, "--name", "mine", "--mine", "--dir", store]) == 0
     assert "first_person_per_1k" in capsys.readouterr().out
     assert cli.main(["voice", "delete", "mine", "--dir", store]) == 0
     assert "mine.json" in capsys.readouterr().out

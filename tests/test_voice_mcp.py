@@ -50,8 +50,10 @@ def test_interview_and_restructure_tools():
 
 
 def test_voice_compare_reads_a_stored_profile(monkeypatch, tmp_path):
-    from articulate import voice, voice_store
-    voice_store.save(voice.build_profile([t for _, _, t in VARIED]), "mine", tmp_path)
+    from articulate import voice, voice_identity, voice_store
+    voice_identity.ensure_identity(tmp_path)
+    voice_store.save(voice_identity.bind(voice.build_profile([t for _, _, t in VARIED]), tmp_path),
+                     "mine", tmp_path)
     monkeypatch.setenv("ARTICULATE_VOICE_DIR", str(tmp_path))
     out = _payload(_call("voice_compare", {"text": SCAFFOLD_ESSAY, "voice_name": "mine"}))
     assert out["schema"] == "articulate/voice-compare/v1" and out["features"]

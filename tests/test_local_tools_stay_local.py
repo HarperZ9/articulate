@@ -58,15 +58,23 @@ def _voice_store():
     return voice_store.store_dir().resolve()
 
 
+def _house_config():
+    """The house-voice settings folder, which house_brief and house_transform
+    read (never write) to learn whether the user turned the voice off or tuned it."""
+    from articulate import house_settings
+    return house_settings.config_dir().resolve()
+
+
 def _package_read_only(real):
     """open() limited to reading the package's own files, which is how Python
-    loads a module imported inside a function, and to reading the voice store."""
-    store = _voice_store()
+    loads a module imported inside a function, the voice store and the house
+    settings folder."""
+    store, config = _voice_store(), _house_config()
 
     def opener(file, mode="r", *args, **kwargs):
         if isinstance(file, (str, bytes, os.PathLike)):
             path = pathlib.Path(os.fsdecode(file)).resolve()
-            readable = PKG in path.parents or store in path.parents
+            readable = PKG in path.parents or store in path.parents or config in path.parents
             if readable and not set(mode) & set("wax+"):
                 return real(file, mode, *args, **kwargs)
         ESCAPES.append(f"open {file!r} in mode {mode!r}")
@@ -77,11 +85,15 @@ def _package_read_only(real):
 @pytest.fixture
 def voice_dir(monkeypatch, tmp_path_factory):
     """A saved profile for voice_compare, written before the seal goes on."""
-    from articulate import voice, voice_store
+    from articulate import voice, voice_identity, voice_store
     folder = tmp_path_factory.mktemp("voice")
-    voice_store.save(voice.build_profile([MARKER + " The rain came in March and we left."]),
-                     "sealed", folder)
+    voice_identity.ensure_identity(folder)
+    profile = voice.build_profile([MARKER + " The rain came in March and we left."])
+    voice_store.save(voice_identity.bind(profile, folder), "sealed", folder)
     monkeypatch.setenv("ARTICULATE_VOICE_DIR", str(folder))
+    config = tmp_path_factory.mktemp("config")
+    (config / "house.json").write_text('{"mode": "default"}', encoding="utf-8")
+    monkeypatch.setenv("ARTICULATE_CONFIG_DIR", str(config))
     return folder
 
 
@@ -125,8 +137,10 @@ def _arguments(tool):
         args["documents"] = [{"name": "a.md", "text": MARKER}, {"name": "b.md", "text": MARKER}]
     if tool["name"] == "title_workshop":
         args["titles"] = [MARKER, MARKER]
-    if tool["name"] == "voice_compare":
+    if tool["name"] in ("voice_compare", "voice_apply_plan"):
         args["voice_name"] = "sealed"
+    if tool["name"] == "voice_apply_plan":
+        args["authored_by_user"] = True
     return args
 
 
@@ -212,9 +226,10 @@ def test_the_plugin_tool_set_lists_only_local_tools():
     lambda tmp: os.open(str(tmp / "leak.txt"), os.O_WRONLY | os.O_CREAT),
     lambda tmp: open(_voice_store() / "leak.json", "w"),
     lambda tmp: (_voice_store() / "sealed.json").write_text("{}"),
+    lambda tmp: open(_house_config() / "house.json", "w"),
 ], ids=["socket", "connect", "process", "open-write", "path-write", "path-write-bytes",
         "path-open", "path-read-user-file", "read-user-file", "os-open",
-        "voice-store-write", "voice-store-overwrite"])
+        "voice-store-write", "voice-store-overwrite", "house-config-write"])
 def test_each_guard_trips(sealed, attempt):
     """Control: every escape the sealed fixture claims to block is blocked and
     recorded."""
@@ -244,4 +259,11 @@ def test_the_voice_store_is_readable_under_the_seal(sealed, voice_dir):
     no escape, so the write controls above are about the mode and not the path."""
     with open(voice_dir / "sealed.json", encoding="utf-8") as fh:
         assert json.load(fh)["schema"] == "articulate/voice-profile/v1"
+    assert ESCAPES == []
+
+
+def test_the_house_settings_are_readable_under_the_seal(sealed):
+    """Control for the second allowance: reading the settings file records no escape."""
+    with open(_house_config() / "house.json", encoding="utf-8") as fh:
+        assert json.load(fh)["mode"] == "default"
     assert ESCAPES == []

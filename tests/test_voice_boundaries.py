@@ -18,7 +18,8 @@ from voice_fixtures import SCAFFOLD_ESSAY, VARIED, templated_docs
 PKG = pathlib.Path(articulate.__file__).resolve().parent
 NEW = ["corpus_features", "corpus", "titles", "voice", "voice_store", "wordlists",
        "interview", "restructure", "authorship", "corpus_receipt", "cli_corpus",
-       "voice_tools"]
+       "voice_tools", "voice_identity", "voice_apply", "house", "house_spec",
+       "house_settings", "house_tools", "house_hook", "cli_house"]
 BANNED_IMPORTS = {"socket", "subprocess", "urllib", "http", "requests", "httpx", "ssl",
                   "asyncio", "multiprocessing", "ftplib", "smtplib", "anthropic", "openai",
                   "backends", "claude_cli", "editor", "editing"}
@@ -63,7 +64,7 @@ SCORE_KEYS = {"score", "humanness", "human_score", "ai_probability", "ai_score",
 
 
 def _reports():
-    from articulate import corpus, interview, restructure, titles, voice
+    from articulate import corpus, house, interview, restructure, titles, voice
     profile = voice.build_profile([t for _, _, t in VARIED])
     return {
         "corpus": corpus.analyze_corpus(templated_docs()),
@@ -71,6 +72,7 @@ def _reports():
         "interview": interview.questions(SCAFFOLD_ESSAY),
         "restructure": restructure.propose(SCAFFOLD_ESSAY),
         "voice": voice.compare(SCAFFOLD_ESSAY, profile),
+        "house": house.transform(SCAFFOLD_ESSAY)["receipt"],
     }
 
 

@@ -110,7 +110,8 @@ def test_status_and_doctor_answer_without_a_backend():
     # working detector, and doctor says which tools that covers.
     assert doctor["local_only"] == ["check", "score", "edit_plan", "edit_submit",
                                     "corpus_check", "title_workshop", "interview",
-                                    "restructure_plan", "voice_compare"]
+                                    "restructure_plan", "voice_compare", "voice_apply_plan",
+                                    "house_brief", "house_transform"]
     assert doctor["needs_llm_backend"] == []
     assert set(doctor["optional_llm_backend"]) == {"judge", "fix", "polish"}
     assert doctor["sampling_advertised"] is False
