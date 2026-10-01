@@ -12,7 +12,7 @@ covers install, example prompts, the privacy policy and troubleshooting: see
 
 ## Install
 
-This source plugin targets the 0.6.0 package on the retained-detector release line. It bundles
+This source plugin targets the 0.7.0 package on the retained-detector release line. It bundles
 the package source. Build from the matching package tag for release use; use
 `--dev` for a local test build before that tag exists.
 
@@ -124,8 +124,14 @@ outside code formatting, an added intensifier or two swapped subjects. It can
 read a capitalized word that opens a sentence as a name, and it names changes
 the user asked for. Each finding is cut to 240 characters and the whole answer
 to 6,000, with a count of what was left out, so a large edit does not copy its
-changed code blocks into the model's context. The Codex Windows hook command has
-not been tested.
+changed code blocks into the model's context.
+
+On Windows, Codex replaces `${CLAUDE_PLUGIN_ROOT}` in the hook command with the
+plugin folder before it starts `cmd.exe /C`, so the shell never reads that name.
+`tests/test_codex_hook_windows.py` runs the command that way under cmd.exe,
+Windows PowerShell and pwsh, from a folder whose path has a space. The hook needs
+a `python3` on PATH that is Python 3.9 or newer, as the MCP server does. No live
+Codex session has fired the hook end to end.
 
 ## Tool titles and hints
 

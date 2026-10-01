@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "articulate-writing",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Checks prose locally and verifies host-model edits against protected spans. The checker makes no network calls; the calling model reads the text in the conversation.",
   "author": {
     "name": "Zain Dana Harper",

@@ -4,7 +4,10 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.7.0
+
+The source plugin checks prose at edit time in Claude Code and Codex. Detector
+rules stay the published v0.5.2 rules; this release changes no finding.
 
 - The source plugin adds an advisory edit-time hook for Claude Code and Codex.
   After the model writes or edits a prose file, the hook names numbers, links,
@@ -14,6 +17,20 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   blocks the edit. `ARTICULATE_EDIT_HOOK=off` turns it off. The package adds an
   `articulate-edit-hook` command for other hosts that run command hooks.
   Each finding is cut to 240 characters and the whole answer to 6,000.
+- The hook command was run the way Codex runs it on Windows. Codex replaces
+  `${CLAUDE_PLUGIN_ROOT}` in the command text before it starts `cmd.exe /C`,
+  so the command works under cmd.exe, Windows PowerShell and pwsh, including
+  from a folder whose path has a space. Tests pin this, with a control that
+  the unreplaced text fails.
+- Tests pin two privacy and input controls on this line: any value of
+  `ARTICULATE_LOCAL_ONLY` other than an explicit off value turns local-only on,
+  and an empty file argument exits 2 with "no such file".
+
+The hook names 16 of 19 critical changes and stays quiet on 7 of 8 ordinary
+edits in the pre-registered synthetic set. It misses a changed file path, an
+added intensifier and swapped subjects. No live Claude Code or Codex session
+fired the hook end to end before release, and the tests do not show that a
+model acts on the advice.
 
 ## 0.6.0
 
