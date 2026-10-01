@@ -82,6 +82,10 @@ def hardened(instructions):
         return instructions.rstrip()
     return instructions.rstrip() + "\n\n" + CONTENT_BOUNDARY
 
+AUTHOR_RULE = ("Never add a personal experience, memory, place, date or feeling the source "
+               "does not contain. Where the author's own perspective would help, leave "
+               "[author: ...] with a short question and list it.")
+
 QUALITIES = ("concreteness", "commitment", "economy", "rhythm", "restatable")
 
 
@@ -96,7 +100,8 @@ def rewrite_instructions(mech, quality_notes=None, is_html=False, standard_delta
                     'code span, citation, link target and placeholder exactly once, in the same order '
                     'and paragraph. Keep paragraph boundaries; never merge or split paragraphs.' + html +
                     '\nEvery sentence should earn its place. Prefer strong verbs, real actors and '
-                    'varied rhythm. Never invent facts to make thin source material concrete.\n\n' +
+                    'varied rhythm. Never invent facts to make thin source material concrete.\n' +
+                    AUTHOR_RULE + '\n\n' +
                     _detector_block(mech) + notes +
                     '\n\nOutput ONLY the rewritten text. No commentary or surrounding code fences.')
 

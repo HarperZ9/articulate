@@ -87,7 +87,7 @@ def test_report_carries_no_score_and_says_no_detector_was_consulted():
     report = _corpus().analyze_corpus(templated_docs())
     assert report["ai_detector_consulted"] is False
     assert not {"score", "humanness", "human_score", "ai_probability"} & set(report)
-    assert "does not" in report["does_not_prove"]
+    assert "do not show" in report["does_not_prove"]
 
 
 def test_single_document_mode_runs_structural_checks():

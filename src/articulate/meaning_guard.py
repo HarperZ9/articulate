@@ -3,11 +3,17 @@
 Paragraph boundaries and ordered protected spans must survive. If alignment is
 ambiguous the whole document is retained; otherwise only affected paragraphs
 are retained. No model or network is used here.
+
+Two checks guard the author. A line that discloses AI assistance is a protected
+span of kind disclosure, so a rewrite cannot drop or reword it. A rewrite
+paragraph that gains a first-person sentence with no source in the original
+paragraph or in author-supplied text is retained with reason added-first-person.
 """
 import hashlib
 import re
 
 from . import meaning
+from .authorship import disclosure_spans, novel_first_person, strip_supplied
 
 
 _MATH = re.compile(
@@ -46,6 +52,8 @@ def protected_spans(text, is_html=False, is_tex=False):
     patterns = _PATTERNS + ([('html', _HTML)] if is_html else [])
     spans = [{'kind': kind, 'start': m.start(), 'end': m.end(), 'text': m.group()}
              for kind, pattern in patterns for m in pattern.finditer(text)]
+    spans += [{'kind': 'disclosure', 'start': a, 'end': b, 'text': text[a:b]}
+              for a, b in disclosure_spans(text)]
     return sorted(spans, key=lambda s: (s['start'], s['end'], s['kind']))
 
 
@@ -81,8 +89,9 @@ def _claim_paragraphs(parts, is_html, is_tex):
     return result
 
 
-def guard_rewrite(original, rewrite, is_html=False, is_tex=False):
-    """Retain paragraphs with changed protected spans or lexical claim features."""
+def guard_rewrite(original, rewrite, is_html=False, is_tex=False, author_text=None):
+    """Retain paragraphs with changed protected spans, lexical claim features, or a
+    first-person sentence that neither the original nor the author supplied."""
     if original == rewrite:
         return {'text': original, 'refused': []}
     if original.strip() and not rewrite.strip():
@@ -90,12 +99,15 @@ def guard_rewrite(original, rewrite, is_html=False, is_tex=False):
     old, new = _PARAGRAPH.split(original), _PARAGRAPH.split(rewrite)
     if len(old) != len(new):
         return {'text': original, 'refused': [_refusal(None, ['paragraph alignment changed'])]}
+    # Sentences the author supplied verbatim carry their own spans and claims;
+    # they are checked against the author's text, not against the original.
+    checked = [strip_supplied(part, author_text, original) for part in new]
     old_prose = _claim_paragraphs(old, is_html, is_tex)
-    new_prose = _claim_paragraphs(new, is_html, is_tex)
+    new_prose = _claim_paragraphs(checked, is_html, is_tex)
     refused = []
     for i in range(0, len(old), 2):
         before = _signature(old[i], is_html, is_tex)
-        after = _signature(new[i], is_html, is_tex)
+        after = _signature(checked[i], is_html, is_tex)
         reasons = [kind + ' protected spans changed' for kind in sorted(set(before) | set(after))
                    if before.get(kind, []) != after.get(kind, [])]
         report = meaning.compare(old_prose[i], new_prose[i], tex=is_tex)
@@ -104,12 +116,14 @@ def guard_rewrite(original, rewrite, is_html=False, is_tex=False):
         # The comparison report contains source prose. Only kinds leave this
         # boundary; retain the older ordered guards for exact protected spans.
         reasons.extend(kind + ' claim features changed' for kind in sorted(changed))
+        if novel_first_person(old[i], new[i], author_text):
+            reasons.append('added-first-person')
         if reasons:
-            new[i] = old[i]
+            new[i] = checked[i] = old[i]
             refused.append(_refusal(i // 2, reasons))
     # A multiline span might cross a paragraph boundary. Recheck the full result.
     candidate = ''.join(new)
-    if _signature(original, is_html, is_tex) != _signature(candidate, is_html, is_tex):
+    if _signature(original, is_html, is_tex) != _signature(''.join(checked), is_html, is_tex):
         return {'text': original, 'refused': refused + [_refusal(None, ['cross-paragraph protected spans changed'])]}
     return {'text': candidate, 'refused': refused}
 
@@ -137,13 +151,13 @@ def mask_text(text, is_html=False, is_tex=False):
     return ''.join(chunks), selected
 
 
-def restore_masks(original, rewrite, is_html=False, is_tex=False):
+def restore_masks(original, rewrite, is_html=False, is_tex=False, author_text=None):
     """Require each mask once, in its original paragraph and order, before restoring."""
     if 'ARTICULATE_' not in rewrite:
-        return guard_rewrite(original, rewrite, is_html, is_tex)
+        return guard_rewrite(original, rewrite, is_html, is_tex, author_text)
     masked, masks = mask_text(original, is_html, is_tex)
     if not masks:
-        return guard_rewrite(original, rewrite, is_html, is_tex)
+        return guard_rewrite(original, rewrite, is_html, is_tex, author_text)
     old, new = _PARAGRAPH.split(masked), _PARAGRAPH.split(rewrite)
     if len(old) != len(new):
         return {'text': original, 'refused': [_refusal(None, ['mask paragraph alignment changed'])]}
@@ -155,6 +169,6 @@ def restore_masks(original, rewrite, is_html=False, is_tex=False):
     restored = ''.join(new)
     for s in masks:
         restored = restored.replace(s['token'], s['text'])
-    checked = guard_rewrite(original, restored, is_html, is_tex)
+    checked = guard_rewrite(original, restored, is_html, is_tex, author_text)
     checked['refused'] = refused + checked['refused']
     return checked

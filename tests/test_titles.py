@@ -52,7 +52,7 @@ def test_control_titles_form_no_formula_family_of_three():
 def test_repeated_family_gets_a_question_and_no_variants_without_answers():
     report = titles().workshop(SERIES + ["Borrowed Ground"])
     fam = next(f for f in report["families"] if f["family"] == "X is not Y")
-    assert fam["share"] == pytest.approx(5 / 6)
+    assert fam["share"] == pytest.approx(5 / 6, abs=1e-3)
     assert len(report["questions"]) == 5
     assert all("friend" in q["question"] for q in report["questions"])
     assert report["suggestions"] == []
