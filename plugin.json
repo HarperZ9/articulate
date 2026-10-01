@@ -1,0 +1,40 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "author": {
+    "name": "Zain Dana Harper",
+    "url": "https://github.com/HarperZ9"
+  },
+  "description": "Checks prose locally and verifies host-model edits against protected spans. The checker makes no network calls; the calling model reads the text in the conversation.",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "capabilities": [],
+        "category": "Productivity",
+        "defaultPrompt": [
+          "Review this prose with Articulate.",
+          "Edit this text and preserve its facts."
+        ],
+        "developerName": "Zain Dana Harper",
+        "displayName": "Articulate Writing",
+        "longDescription": "Checks prose locally and verifies host-model edits against protected spans. The checker makes no network calls; the calling model reads the text in the conversation.",
+        "privacyPolicyURL": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/claude-plugin/PRIVACY.md",
+        "shortDescription": "Check prose and preserve facts",
+        "supportURL": "https://github.com/HarperZ9/articulate/issues",
+        "websiteURL": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md"
+      }
+    }
+  },
+  "homepage": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md",
+  "keywords": [
+    "writing",
+    "prose",
+    "linter",
+    "editing",
+    "documentation",
+    "style"
+  ],
+  "license": "FSL-1.1-MIT",
+  "name": "articulate-writing",
+  "repository": "https://github.com/HarperZ9/articulate",
+  "version": "0.6.0"
+}

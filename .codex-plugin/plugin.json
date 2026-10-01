@@ -1,0 +1,37 @@
+{
+  "author": {
+    "name": "Zain Dana Harper",
+    "url": "https://github.com/HarperZ9"
+  },
+  "description": "Checks prose locally and verifies host-model edits against protected spans. The checker makes no network calls; the calling model reads the text in the conversation.",
+  "homepage": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md",
+  "interface": {
+    "capabilities": [],
+    "category": "Productivity",
+    "defaultPrompt": [
+      "Review this prose with Articulate.",
+      "Edit this text and preserve its facts."
+    ],
+    "developerName": "Zain Dana Harper",
+    "displayName": "Articulate Writing",
+    "longDescription": "Checks prose locally and verifies host-model edits against protected spans. The checker makes no network calls; the calling model reads the text in the conversation.",
+    "privacyPolicyURL": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/claude-plugin/PRIVACY.md",
+    "shortDescription": "Check prose and preserve facts",
+    "supportURL": "https://github.com/HarperZ9/articulate/issues",
+    "websiteURL": "https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md"
+  },
+  "keywords": [
+    "writing",
+    "prose",
+    "linter",
+    "editing",
+    "documentation",
+    "style"
+  ],
+  "license": "FSL-1.1-MIT",
+  "mcpServers": "./.codex-mcp.json",
+  "name": "articulate-writing",
+  "repository": "https://github.com/HarperZ9/articulate",
+  "skills": "./skills/",
+  "version": "0.6.0"
+}
