@@ -41,16 +41,27 @@ QUOTED = ("The brochure promised “By leveraging cutting-edge technology, we "
 ACCENTED = "Our résumé service is cutting-edge."
 
 
-def launch_spec(plugin_dir, command=None, drop=(), extra_env=None):
-    """The argv and env Claude Code would use for the plugin's one server."""
-    cfg = json.loads((plugin_dir / ".mcp.json").read_text(encoding="utf-8"))
+def launch_spec(plugin_dir, command=None, drop=(), extra_env=None, host="claude"):
+    """Resolve this bundle's declared launch; this does not run a host client."""
+    config = {"claude": ".mcp.json", "portable": "mcp.json",
+              "codex": ".codex-mcp.json"}[host]
+    cfg = json.loads((plugin_dir / config).read_text(encoding="utf-8"))
     (entry,) = cfg["mcpServers"].values()
     root = plugin_dir.as_posix()
-    args = [a.replace("${CLAUDE_PLUGIN_ROOT}", root) for a in entry["args"]]
+    variable = "${PLUGIN_ROOT}" if host == "portable" else "${CLAUDE_PLUGIN_ROOT}"
+    args = [a.replace(variable, root) for a in entry["args"]]
+    if host == "codex":
+        # The compatibility host resolves cwd='.' to the plugin root. Use the
+        # equivalent absolute script path so the runner need not change cwd.
+        if entry.get("cwd") != "." or args[-1] != "server/serve.py":
+            raise ValueError("unexpected Codex compatibility launch")
+        args[-1] = (plugin_dir / args[-1]).as_posix()
     for flag in drop:
         at = args.index(flag)
         del args[at:at + (2 if flag == "-X" else 1)]
     env = dict(os.environ, CLAUDE_PLUGIN_ROOT=root, **entry.get("env", {}))
+    if host == "portable":
+        env["PLUGIN_ROOT"] = root
     env.update(extra_env or {})
     if command is None:
         command = find_program(entry["command"], avoid=[Path.cwd(), plugin_dir])
@@ -191,11 +202,11 @@ def evaluate(answers, code, version):
     ]
 
 
-def smoke(plugin_dir, command=None, drop=(), extra_env=None, transcript=None):
+def smoke(plugin_dir, command=None, drop=(), extra_env=None, transcript=None, host="claude"):
     plugin_dir = Path(plugin_dir).resolve()
     version = json.loads((plugin_dir / ".claude-plugin" / "plugin.json")
                          .read_text(encoding="utf-8"))["version"]
-    argv, env = launch_spec(plugin_dir, command, drop, extra_env)
+    argv, env = launch_spec(plugin_dir, command, drop, extra_env, host=host)
     answers, code, stderr = exchange(argv, env, transcript=transcript)
     results = evaluate(answers, code, version)
     caches = [p.relative_to(plugin_dir).as_posix() for p in plugin_dir.rglob("__pycache__")]
@@ -209,9 +220,11 @@ def main(argv=None):
     parser.add_argument("plugin_dir")
     parser.add_argument("--command", help="interpreter to start in place of the declared one")
     parser.add_argument("--transcript", help="write the synthetic request/response transcript as JSON")
+    parser.add_argument("--host", choices=("claude", "portable", "codex"), default="claude",
+                        help="launch configuration to exercise (default: claude)")
     args = parser.parse_args(argv)
     transcript = []
-    results, stderr = smoke(args.plugin_dir, args.command, transcript=transcript)
+    results, stderr = smoke(args.plugin_dir, args.command, transcript=transcript, host=args.host)
     if args.transcript:
         Path(args.transcript).write_text(json.dumps(transcript, indent=2, ensure_ascii=False) + "\n",
                                          encoding="utf-8")

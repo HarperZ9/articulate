@@ -1,8 +1,8 @@
 {
   "name": "articulate-writing",
   "displayName": "Articulate Writing",
-  "version": "0.5.2",
-  "description": "Checks prose on your computer for named writing patterns and shows where each one occurs and what it costs a reader. The checker sends the text nowhere; Claude reads the text as part of your conversation.",
+  "version": "0.6.0",
+  "description": "Checks prose locally and verifies host-model edits against protected spans. The checker makes no network calls; the calling model reads the text in the conversation.",
   "author": {
     "name": "Zain Dana Harper",
     "url": "https://github.com/HarperZ9"

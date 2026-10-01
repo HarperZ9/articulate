@@ -208,7 +208,7 @@ BREAKS = {
                                    "name: prose-review", "name: review-prose"),
                    "equal the folder"),
     "skill-tool": (lambda p: _edit(p / "skills" / "prose-review" / "SKILL.md",
-                                   "allowed-tools: ", "allowed-tools: Bash, "),
+                                   "name: prose-review", "name: prose-review\nallowed-tools: Bash"),
                    "allowed tool Bash"),
     "secret-name": (lambda p: (p / ".env").write_text("TOKEN=1\n"), "credential"),
     "secret-text": (lambda p: (p / "server" / "notes.txt").write_text(
@@ -246,13 +246,14 @@ def test_plugin_docs_name_no_origin(path):
     assert not SURFACE_CLAIM.search(text), SURFACE_CLAIM.search(text).group(0)
 
 
-def test_the_skill_allows_only_local_tools_the_plugin_lists():
-    allowed = {t.strip() for t in rules.skill_front_matter(
-        SKILL.read_text(encoding="utf-8"))["allowed-tools"].split(",")}
-    listed = {callable_name(t["name"]): t for t in local_mcp.listed_tools(PLUGIN_ENV)}
-    assert allowed <= set(listed), allowed - set(listed)
-    assert all(listed[a]["annotations"]["readOnlyHint"] for a in allowed)
-    assert {"check", "score"} <= {listed[a]["name"] for a in allowed}
+def test_the_skill_uses_available_local_tools_without_a_host_specific_allowlist():
+    text = SKILL.read_text(encoding="utf-8")
+    assert "allowed-tools" not in rules.skill_front_matter(text)
+    assert "mcp__plugin_" not in text
+    listed = {t["name"]: t for t in local_mcp.listed_tools(PLUGIN_ENV)}
+    for name in ("check", "score"):
+        assert f"`{name}`" in text
+        assert listed[name]["annotations"]["readOnlyHint"]
 
 
 def test_every_callable_tool_name_fits_in_64_characters():

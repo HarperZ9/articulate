@@ -43,15 +43,20 @@ def _payload(result):
 
 
 def test_the_server_imports_without_fastmcp():
-    """The defect this module exists to fix.
-
-    Asserting the import succeeded is not enough on a machine where fastmcp
-    happens to be installed, so this also checks that importing the module did
-    not pull fastmcp in.
-    """
-    assert "fastmcp" not in sys.modules, (
-        "importing articulate.local_mcp pulled in fastmcp; the whole point is "
-        "that the stdio server runs from a bare install")
+    """Import with installed packages disabled, independent of test order."""
+    code = (
+        "import sys; sys.path.insert(0, sys.argv[1]); "
+        "import articulate.local_mcp; "
+        "assert 'fastmcp' not in sys.modules"
+    )
+    result = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", code, str(_SRC.parent)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, (
+        "the local MCP server must import with only the standard library: "
+        + result.stderr
+    )
 
 
 def test_initialize_reports_identity_and_protocol():

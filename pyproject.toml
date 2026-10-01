@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.5.2"
+version = "0.6.0"
 description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -22,6 +22,7 @@ dependencies = []  # the core detector is standard-library only
 
 [project.optional-dependencies]
 mcp = ["fastmcp>=3"]      # the MCP server surface
+hosted = ["fastmcp>=3.2.4,<4", "pydantic>=2.12,<3", "uvicorn>=0.30,<1"]  # opt-in authenticated HTTP
 dev = ["pytest>=7"]
 
 [project.scripts]

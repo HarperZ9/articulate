@@ -4,6 +4,36 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.6.0
+
+Articulate can ship as local Windows x64 tools with its Python runtime included.
+The connected client supplies the model and rewritten text. Articulate includes
+no model, requires no publisher-hosted service and adds no model account.
+
+- Native ZIP and binary MCPB packages expose the local check and host-edit
+  workflow. They reject launch arguments and external editor backends, even
+  when inherited settings request them. Source plugins for Claude Code, Codex
+  and portable MCP hosts remain separate and require installed Python.
+- Rewrite guards check numeric bounds, modal force, scope and negation alongside
+  protected spans. Code, math, quotes and HTML are masked before paragraph
+  comparison. Refused edits retain the original text and return a receipt.
+- Release builds retain the published v0.5.2 detector source and ruleset
+  fingerprint. This release does not adopt the scanner changes withheld on
+  the development branch. Retention establishes neither fairness nor quality.
+- The shared release workflow builds and checks native and source-plugin
+  packages before publication. Native release mode requires clean source,
+  matching package versions and an exact version tag. Development mode stays
+  explicit and labels its archives accordingly.
+- An optional authenticated HTTP transport supports user-operated connections.
+  It is off by default, adds no model and provides no publisher-hosted backend.
+  Network access requires the user's own endpoint and permission configuration.
+
+Local binary checks cover tool discovery, host edits, changed-number refusal
+and backend refusal with Python absent from PATH. Client installation,
+marketplace acceptance, clean-device compatibility and signing remain separate
+qualification work. Guards can miss meaning changes and refuse valid paraphrases;
+acceptance does not prove semantic equivalence or factual correctness.
+
 ## 0.5.2
 
 Local-only MCP sessions can use the calling model through editor aliases.

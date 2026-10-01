@@ -49,6 +49,16 @@ say what a verdict and a receipt mean and what they never claim.
 
 ## Use
 
+Articulate includes no model. A connected client can call `edit_plan`, write the
+rewrite with its selected model, and submit it through `edit_submit`. The model
+account and conversation policy belong to that client. Local checks and host
+edits require no publisher-hosted service or separate model API key.
+
+Version 0.6.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
+with a Python runtime included. The [source plugin](docs/claude-plugin.md) remains
+available for local Claude Code, Codex and portable MCP hosts with installed
+Python. Native client installation and marketplace acceptance remain unverified.
+
 ```bash
 # lint (exit 1 when blocked under the file's profile)
 python -m articulate.cli check path/to/doc.md --gate
@@ -164,7 +174,9 @@ screenplay, poetry), the editor injection boundary, per-span mixed-authorship
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.5.2 is prepared for release as `articulate-writing`; the
-[changelog](CHANGELOG.md) records what each release added. A local-model editor
-backend is included. A labeled non-native corpus for a fairness check remains
-on the roadmap for this release line.
+one package. Version 0.6.0 is prepared for release as `articulate-writing`; the
+[changelog](CHANGELOG.md) records what each release added. Optional adapters can
+use a model you supply; no model is bundled. This release retains the published
+v0.5.2 detector rules and fingerprint while extending packaging and rewrite
+guards. It excludes withheld development-branch scanner changes. Retention does
+not establish fairness, and accepted rewrites can still change meaning.
