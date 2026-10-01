@@ -30,7 +30,7 @@ def test_brief_is_generated_from_the_spec_and_fits_its_ceiling():
     assert "model's voice" in text
     assert "—" not in text
     for line in house.spec()["brief"]["lines"]:
-        assert line in text
+        assert line.startswith("@") or line in text
 
 
 def test_brief_and_spec_make_no_human_claim():

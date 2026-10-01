@@ -183,7 +183,10 @@ def _flat(text):
 
 
 def _span_multiset(text):
-    return sorted((s["kind"], s["text"]) for s in protected_spans(text))
+    """Protected spans found block by block, so a quote mark left open in one
+    paragraph cannot make a span that depends on the blank lines between blocks."""
+    return sorted((s["kind"], s["text"]) for block in _BLOCK_SPLIT.split(text) if block.strip()
+                  for s in protected_spans(block))
 
 
 def _anchor_reasons(body, entries, dupes):

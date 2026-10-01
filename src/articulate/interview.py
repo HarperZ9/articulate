@@ -20,7 +20,7 @@ BANK = {
     "perspective-stretch": ("What did you see, do or hear yourself in this part, that a reader "
                             "cannot get from the sources?"),
     "high-confidence-claim": ("Would you stake your name on this claim? If not, what would you "
-                              "say instead?"),
+                              "say?"),
     "limit-or-unknown": ("Where do you disagree with the evidence here, or read it differently "
                          "from its authors?"),
     "abstract-run": "Is there a case, a number, a place or a person you can name here?",

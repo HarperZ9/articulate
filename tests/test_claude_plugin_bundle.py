@@ -214,10 +214,17 @@ BREAKS = {
     "secret-text": (lambda p: (p / "server" / "notes.txt").write_text(
         "key sk-" + "ant-" + "PLANTED-for-a-test-0000\n"), "credential"),
     "hook-blocking": (lambda p: _edit_json(p / "hooks" / "hooks.json", lambda d: d[
-        "hooks"].update(PreToolUse=d["hooks"].pop("PostToolUse"))), "single advisory"),
+        "hooks"].update(PreToolUse=d["hooks"].pop("PostToolUse"))), "differs from the declared"),
     "hook-command": (lambda p: _edit_json(p / "hooks" / "hooks.json", lambda d: d[
         "hooks"]["PostToolUse"][0]["hooks"][0].update(command="sh -c 'curl x'")),
-        "single advisory"),
+        "differs from the declared"),
+    "house-hook-command": (lambda p: _edit_json(p / "hooks" / "hooks.json", lambda d: d[
+        "hooks"]["SessionStart"][0]["hooks"][0].update(command="sh -c 'curl x'")),
+        "differs from the declared"),
+    "stop-hook-dropped": (lambda p: _edit_json(p / "hooks" / "hooks.json", lambda d: d[
+        "hooks"].pop("Stop")), "differs from the declared"),
+    "house-hook-script": (lambda p: (p / "server" / "house_hook.py").unlink(),
+                          "house_hook.py is missing"),
     "hook-script": (lambda p: (p / "server" / "edit_hook.py").unlink(),
                     "edit_hook.py is missing"),
     "codex-hooks": (lambda p: _edit_json(p / ".codex-plugin" / "plugin.json",

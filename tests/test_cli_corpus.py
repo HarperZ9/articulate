@@ -45,7 +45,7 @@ def test_voice_learn_show_list_compare_delete(tmp_path, capsys):
     assert cli.main(["voice", "list", "--dir", store]) == 0
     assert "mine" in capsys.readouterr().out
     draft = _write(tmp_path, templated_docs()[:1])[0]
-    assert cli.main(["voice", "compare", draft, "--name", "mine", "--mine", "--dir", store]) == 0
+    assert cli.main(["voice", "compare", draft, "--name", "mine", "--dir", store]) == 0
     assert "first_person_per_1k" in capsys.readouterr().out
     assert cli.main(["voice", "delete", "mine", "--dir", store]) == 0
     assert "mine.json" in capsys.readouterr().out

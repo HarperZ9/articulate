@@ -26,14 +26,21 @@ POLICY_TOPICS = ("Data collected", "Use and storage", "Third-party sharing", "Re
 LICENSE_ID = "FSL-1.1-MIT"
 SERVER_FILE = "${CLAUDE_PLUGIN_ROOT}/server/serve.py"
 HOOK_FILE = "${CLAUDE_PLUGIN_ROOT}/server/edit_hook.py"
+HOUSE_HOOK_FILE = "${CLAUDE_PLUGIN_ROOT}/server/house_hook.py"
 HOOKS_FILE = "./hooks/hooks.json"
-# The one hook the plugin declares: advisory, after a file write or edit, with
-# the same isolated interpreter flags as the server. Exact comparison rejects a
-# second hook, another event, a blocking PreToolUse entry or a changed command.
-EXPECTED_HOOKS = {"PostToolUse": [{
-    "matcher": "Write|Edit|MultiEdit|apply_patch",
-    "hooks": [{"type": "command", "timeout": 15,
-               "command": 'python3 -I -S -B -X utf8 "%s"' % HOOK_FILE}]}]}
+# The hooks the plugin declares, all with the same isolated interpreter flags as
+# the server: the house-voice brief at session start, the advisory check after a
+# file write or edit, and the house-voice Stop check, which does nothing unless
+# the user chose mode revise. Exact comparison rejects another hook, another
+# event, a blocking PreToolUse entry or a changed command.
+_HOUSE = 'python3 -I -S -B -X utf8 "%s"' % HOUSE_HOOK_FILE
+EXPECTED_HOOKS = {
+    "SessionStart": [{"matcher": "startup|resume|clear|compact",
+                      "hooks": [{"type": "command", "timeout": 10, "command": _HOUSE}]}],
+    "PostToolUse": [{"matcher": "Write|Edit|MultiEdit|apply_patch",
+                     "hooks": [{"type": "command", "timeout": 15,
+                                "command": 'python3 -I -S -B -X utf8 "%s"' % HOOK_FILE}]}],
+    "Stop": [{"hooks": [{"type": "command", "timeout": 15, "command": _HOUSE}]}]}
 PUBLIC_TEXT = (".md", ".json")
 EM_DASH = "—"
 LOCAL_PATH = re.compile(r"\b[A-Za-z]:[\\/]|/Users/|/home/[a-z]")
@@ -171,7 +178,7 @@ def check_portable(root):
 
 
 def check_hooks(root):
-    """The plugin's hooks file declares exactly the advisory edit-time check."""
+    """The plugin's hooks file declares exactly the house-voice and edit-time hooks."""
     problems = []
     cfg = _json(root, "hooks/hooks.json", problems)
     if cfg is None:
@@ -179,9 +186,11 @@ def check_hooks(root):
     if not isinstance(cfg.get("description"), str) or not cfg["description"].strip():
         problems.append("hooks/hooks.json: description is missing")
     if cfg.get("hooks") != EXPECTED_HOOKS or set(cfg) - {"description", "hooks"}:
-        problems.append("hooks/hooks.json: differs from the single advisory PostToolUse check")
-    if not (root / "server" / "edit_hook.py").is_file():
-        problems.append("server/edit_hook.py is missing")
+        problems.append("hooks/hooks.json: differs from the declared SessionStart, advisory "
+                        "PostToolUse and Stop hooks")
+    for script in ("edit_hook.py", "house_hook.py"):
+        if not (root / "server" / script).is_file():
+            problems.append(f"server/{script} is missing")
     return problems
 
 

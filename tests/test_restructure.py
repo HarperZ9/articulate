@@ -100,3 +100,12 @@ def test_diff_is_unified_and_input_is_never_written(tmp_path):
     assert out["diff"].startswith("--- ")
     assert out["schema"] == "articulate/restructure/v1"
     assert out["input_sha256"].startswith("sha256:")
+
+
+def test_an_open_quote_across_paragraphs_does_not_refuse_an_untouched_text():
+    # Regression from a real essay: a quote mark opened in one paragraph and
+    # closed several paragraphs later, with three blank lines in between.
+    text = ('# Notes\n\nShe said "the vote would wait.\n\n\n\nIt did not. The board met '
+            'in 2021.\n\nThe minutes" ran to 14 pages.\n')
+    assert rs().verify_relocation(text, text)["ok"]
+

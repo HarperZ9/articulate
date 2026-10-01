@@ -15,7 +15,10 @@ not an evasion tool.
 Full docs are in [`docs/`](docs/): [getting started](docs/getting-started.md), a
 thorough [walkthrough](docs/walkthrough.md), the [feature reference](docs/features.md),
 the [CLI reference](docs/cli.md), and the [boundaries](docs/boundaries.md) that
-say what a verdict and a receipt mean and what they never claim.
+say what a verdict and a receipt mean and what they never claim. The
+[house voice](docs/house-voice.md) spec and the guide to
+[series review and your own voice](docs/series-and-voice.md) cover the 0.8.0
+voice features.
 
 ## What it does
 
@@ -47,6 +50,18 @@ say what a verdict and a receipt mean and what they never claim.
   detector score. Use the calling model, a configured backend, or mechanical
   fixes with no model. Every result names its backend and any failed attempts.
 
+- **Give the model a voice.** The house voice is a published, versioned voice
+  for AI models: answer first, numbers with denominators, "I" only for what the
+  model did in the session, and no claim to a human life. It is on by default
+  where Articulate is attached to model output, and `articulate house off`
+  turns it off.
+- **Build your own voice.** `articulate voice learn --mine` builds a profile from
+  your own writing, on your computer. Compare drafts with it, run the
+  authorship interview, and, when you ask, shape your own draft toward it.
+- **Review a series.** `articulate corpus` reads several documents together and
+  names repeated title formulas, shared scaffolds, even rhythm and missing
+  perspective, with locations and no replacement prose.
+
 ## Use
 
 Articulate includes no model. A connected client can call `edit_plan`, write the
@@ -54,7 +69,7 @@ rewrite with its selected model, and submit it through `edit_submit`. The model
 account and conversation policy belong to that client. Local checks and host
 edits require no publisher-hosted service or separate model API key.
 
-Version 0.7.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
+Version 0.8.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
 with a Python runtime included. The [source plugin](docs/claude-plugin.md) remains
 available for local Claude Code, Codex and portable MCP hosts with installed
 Python. Native client installation and marketplace acceptance remain unverified.
@@ -158,7 +173,10 @@ substring and the exact offsets, keeping only which rule fired, its tier and
 category, and the line. A team can retain and replay a record without storing the
 sensitive source. Content-free is not zero-leakage: which rules fired and the line
 remain, which for a closed-vocabulary rule narrows the flagged word to that rule's
-small public candidate set. The `hash` mode keeps a sha256 for an equality check
+small public candidate set. A personal voice profile is built only from files
+you name, holds aggregates and no sample sentence, and stays in your local voice
+store until `articulate voice delete --all`. The house-voice brief that enters a
+model's context is the same published text for everyone. The `hash` mode keeps a sha256 for an equality check
 against a known string, so it is dictionary-reversible for those closed-vocabulary
 rules; use `drop` when the flagged word must stay secret. An auto-filled `reviewer`
 (from `$GITHUB_ACTOR`) records CI attribution, and a named human sign-off needs an
@@ -174,7 +192,7 @@ screenplay, poetry), the editor injection boundary, per-span mixed-authorship
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.7.0 is prepared for release as `articulate-writing`; the
+one package. Version 0.8.0 is prepared for release as `articulate-writing`; the
 [changelog](CHANGELOG.md) records what each release added. Optional adapters can
 use a model you supply; no model is bundled. This release retains the published
 v0.5.2 detector rules and fingerprint while extending packaging and rewrite

@@ -1,17 +1,31 @@
 """Command-line verbs for series review and the author's voice.
 
-corpus, voice (learn, show, compare, delete, list, path), interview,
+corpus, voice (in cli_voice), interview,
 restructure and titles. Nothing here writes a file except to a path the author
 names with --out, --receipt or --answers-out, and voice learn, which saves a
 profile in the voice store. No verb edits an input file in place.
 """
+import importlib
 import json
 import sys
 
-from . import corpus, corpus_features, corpus_receipt, interview, restructure, titles
-from . import voice, voice_store
 from .detector import binary_reason
-from .voice_text import format_compare
+
+
+class _Lazy:
+    """A module loaded on first use, so `articulate house apply` and the other
+    verbs do not pay to import the series modules they never call."""
+
+    def __init__(self, name):
+        self._name = name
+
+    def __getattr__(self, attr):
+        return getattr(importlib.import_module("articulate." + self._name), attr)
+
+
+corpus, corpus_features, corpus_receipt = _Lazy("corpus"), _Lazy("corpus_features"), _Lazy("corpus_receipt")
+interview, restructure, titles = _Lazy("interview"), _Lazy("restructure"), _Lazy("titles")
+voice_identity, voice_store = _Lazy("voice_identity"), _Lazy("voice_store")
 
 _GENRES = ("essay", "op-ed", "letter", "memoir", "report", "docs", "other")
 
@@ -54,36 +68,6 @@ def cmd_corpus(args):
     return 0
 
 
-def cmd_voice(args):
-    action = args.voice_cmd
-    if action == "learn":
-        profile = voice.build_profile([_read(p) for p in args.samples],
-                                      vocabulary=not args.no_vocabulary)
-        path = voice_store.save(profile, args.name, args.dir)
-        print(f"Saved voice profile {args.name!r} to {path}")
-        print("\n".join(voice.describe(profile)))
-        return 0
-    if action == "show":
-        profile = voice_store.load(args.name, args.dir)
-        _emit(profile, args.json, "\n".join(voice.describe(profile)) +
-              f"\n\nStored at {voice_store.profile_path(args.name, args.dir)}")
-        return 0
-    if action == "compare":
-        profile = voice_store.load(args.name, args.dir)
-        for path in args.drafts:
-            report = voice.compare(_read(path), profile)
-            _emit(report, args.json, f"{path}\n{format_compare(report)}")
-        return 0
-    if action == "delete":
-        print(f"Deleted {voice_store.delete(args.name, args.dir)}")
-        return 0
-    if action == "list":
-        print("\n".join(voice_store.names(args.dir)) or "No voice profiles stored.")
-        return 0
-    print(voice_store.store_dir(args.dir))
-    return 0
-
-
 def _print_questions(qs):
     for q in qs:
         print(f"{q['id']} (lines {q['line_start']}-{q['line_end']}, {q['trigger']}): {q['question']}")
@@ -103,6 +87,8 @@ def cmd_interview(args):
         raise ValueError("interview needs a document, or --collect FILE")
     text = _read(args.doc)
     profile = voice_store.load(args.voice, args.dir) if args.voice else None
+    if profile is not None:
+        voice_identity.check_owner(profile, args.dir)
     report = interview.questions(text, voice_profile=profile)
     if args.out:
         _write(args.out, interview.mark(text, report["questions"]))
@@ -166,5 +152,8 @@ def _run(handler):
 
 def register(sub):
     from .cli_corpus_args import add_parsers
+    def cmd_voice(args):
+        from .cli_voice import cmd_voice as run
+        return run(args)
     add_parsers(sub, {"corpus": cmd_corpus, "voice": cmd_voice, "interview": cmd_interview,
                       "restructure": cmd_restructure, "titles": cmd_titles}, _run, _GENRES)

@@ -57,4 +57,4 @@ def test_the_plugin_hook_shims_load_only_their_own_modules():
                          ("edit_hook.py", "articulate.edit_hook")):
         text = (ROOT / "claude-plugin" / "server" / shim).read_text(encoding="utf-8")
         assert f"from {module} import main" in text
-        assert "voice" not in text
+        assert not any(name in text for name in PERSONAL)

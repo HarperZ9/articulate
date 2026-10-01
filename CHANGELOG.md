@@ -4,6 +4,67 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.8.0
+
+Two voice layers and series review. Articulate ships a house voice for the
+model in your client, on by default and openly a model's voice, and a personal
+voice that each user builds from their own writing on their own computer. No
+person's voice ships in the package. Detector rules stay the published v0.5.2
+rules (fingerprint `sha256:9f78a7484bb20f84`); this release changes no finding,
+and every 0.7.0 receipt still verifies.
+
+- House voice `house/1`. A published, versioned spec
+  ([docs/house-voice.md](docs/house-voice.md), machine form
+  `articulate/data/house_voice_v1.json`) written from reader-cost principles
+  and cited research. No person's writing served as its model, and no
+  AI-authorship detector was used to tune it. The brief a model reads is generated from the spec,
+  so the spec, the brief and a receipt's fingerprint cannot drift apart.
+- The plugin's new `SessionStart` hook hands the brief to the model at session
+  start and after a resume, clear or compaction. It reads the spec and the
+  settings file, imports none of the style rules and measured a 58 ms p95 on
+  Windows. A `Stop` hook ships declared and does nothing unless the user picks
+  mode `revise`, which asks for one revision when a finished reply claims a
+  human life or holds a HIGH style finding.
+- `house_transform` (MCP), `articulate house apply` (CLI pipe) and
+  `articulate.house.transform` (library) apply a closed list of exact edits to
+  model output: em dashes to commas, doubled spaces, and opener and closer
+  sentences with no content, such as a praise opener or an offer to help
+  further. An
+  exact-edit verifier and the meaning guard check every candidate. Everything
+  else is a located note, including `house/human-claim`. Receipts use
+  `articulate/house-receipt/v1` and replay with `articulate verify`.
+- Controls: `ARTICULATE_HOUSE_VOICE=off`, `articulate house off`, modes
+  `off | brief | default | revise`, and tuning keys `length`, `headings`,
+  `lists`, `first_person`, `limits` and `end_line`. The banned tics and the
+  identity rules are not tunable.
+- Personal voice. `articulate voice learn SAMPLES --name N --mine` builds a
+  profile from the files you name, only after `--mine` says they are yours. The
+  profile holds aggregates and no sample sentence, is bound to a local identity,
+  stays in your local voice store, and `voice show`, `export`, `import`,
+  `delete` and `delete --all` let you inspect, move and remove it.
+  `voice compare` and `voice apply` refuse a profile that belongs to another
+  owner.
+- `voice apply DRAFT --name N --authored-by-me` (MCP `voice_apply_plan` with
+  `authored_by_user: true`) plans an edit of your own draft toward your
+  measured habits. Plans move to `articulate/edit-plan/v2`, which binds the
+  profile name and hash and any author text; v1 plans still verify. A rewrite
+  that adds a first-person sentence with no source in the draft or your own
+  supplied words is refused paragraph by paragraph. Voice counts before and
+  after are reported and never decide acceptance.
+- Series review: `articulate corpus`, `titles`, `interview` and `restructure`,
+  and the MCP tools `corpus_check`, `title_workshop`, `interview` and
+  `restructure_plan`. Findings are report-only, with locations, a reader cost and
+  a direction, never replacement prose. The interview asks and never answers;
+  restructure keeps every sentence and citation byte for byte. Corpus receipts
+  use `articulate/corpus-receipt/v1`.
+- AI-assistance disclosures are a protected span kind. No rewrite, house edit
+  or restructure moves or rewords one.
+- New command `articulate-house-hook` for other hosts that run command hooks.
+- Codex: whether Codex runs `SessionStart` and `Stop` from a plugin is not
+  confirmed. Open Codex issues report that plugin-local hooks do not run and
+  that a root `plugin.json` disables them. `articulate house brief --agents`
+  prints the brief as an AGENTS.md section as a fallback.
+
 ## 0.7.0
 
 The source plugin checks prose at edit time in Claude Code and Codex. Detector

@@ -146,9 +146,11 @@ def _writes(mode, flags):
     return bool(flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_TRUNC))
 
 
-def violations(record, plugin):
-    """Every audited action outside what the plugin's README says the server does."""
-    roots = [_norm(plugin)] + [_norm(p) for p in record["prefixes"]]
+def violations(record, plugin, readable=()):
+    """Every audited action outside what the plugin's README says the server does.
+    readable adds folders the README says the server may read: the house-voice
+    settings folder. A write there is still a violation."""
+    roots = [_norm(plugin)] + [_norm(p) for p in record["prefixes"]] + [_norm(p) for p in readable]
     out = []
     for event, target, mode, flags in record["log"]:
         if event == "open":
@@ -173,8 +175,16 @@ def test_a_whole_session_touches_nothing_outside_the_plugin_and_python(plugin, t
     assert not any(a.get("error") for a in answers.values()), answers
     reads = [e for e in record["log"] if e[0] == "open"]
     assert any(_norm(plugin) in _norm(e[1]) for e in reads), "the hook saw no plugin read"
-    assert violations(record, plugin) == []
+    from articulate import house_settings
+    config = house_settings.config_dir()
+    assert any(_norm(config) in _norm(e[1]) for e in reads), "the house settings read was not seen"
+    assert violations(record, plugin, readable=[config]) == []
     assert list((tmp_path / "work").iterdir()) == []
+
+
+def test_a_write_in_the_readable_settings_folder_is_still_a_violation(tmp_path):
+    record = {"prefixes": [], "log": [["open", str(tmp_path / "house.json"), "w", 0]]}
+    assert violations(record, tmp_path / "plugin", readable=[tmp_path])
 
 
 @pytest.mark.parametrize("plant,expected", [("remove", "os.remove"),

@@ -75,7 +75,8 @@ def _settings(plan_id):
 def _v1_plan(text):
     h = host()
     settings = _settings(h.edit_plan(text)["plan_id"])
-    settings.pop("author_text_sha256")
+    for key in ("author_text_sha256", "voice_profile_sha256", "voice_name"):
+        settings.pop(key)
     settings["schema"] = "articulate/edit-plan/v1"
     return h._token(text, settings)
 

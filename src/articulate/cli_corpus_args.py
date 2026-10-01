@@ -14,11 +14,13 @@ def _corpus(sub, run, handler, genres):
 
 
 def _voice(sub, run, handler):
-    p = sub.add_parser("voice", help="learn, show, compare or delete your voice profile")
+    p = sub.add_parser("voice", help="your personal voice: learn, show, compare, apply, export, delete")
     vs = p.add_subparsers(dest="voice_cmd", required=True)
-    learn = vs.add_parser("learn", help="build a profile from samples you name")
+    learn = vs.add_parser("learn", help="build a profile from samples of your own writing")
     learn.add_argument("samples", nargs="+")
     learn.add_argument("--name", required=True)
+    learn.add_argument("--mine", action="store_true",
+                       help="say that these samples are your own writing (required)")
     learn.add_argument("--no-vocabulary", action="store_true",
                        help="leave the vocabulary field out of the profile")
     show = vs.add_parser("show", help="print every stored field in words")
@@ -28,8 +30,34 @@ def _voice(sub, run, handler):
     compare.add_argument("drafts", nargs="+")
     compare.add_argument("--name", required=True)
     compare.add_argument("--json", action="store_true")
-    delete = vs.add_parser("delete", help="remove a stored profile")
-    delete.add_argument("name")
+    apply = vs.add_parser("apply", help="plan an edit that shapes your own draft toward your voice")
+    apply.add_argument("draft")
+    apply.add_argument("--name", required=True)
+    apply.add_argument("--authored-by-me", action="store_true",
+                       help="say that the draft is your own writing (required)")
+    apply.add_argument("--author-text", help="a file of your own words the edit may add")
+    apply.add_argument("--out", help="write the plan JSON here")
+    apply.add_argument("--json", action="store_true")
+    submit = vs.add_parser("submit", help="check a rewrite against its voice plan")
+    submit.add_argument("draft")
+    submit.add_argument("rewrite")
+    submit.add_argument("--plan", required=True)
+    submit.add_argument("--author-text", help="the same author text the plan bound")
+    submit.add_argument("--out", help="write the accepted text here")
+    submit.add_argument("--json", action="store_true")
+    export = vs.add_parser("export", help="copy a profile to a file for your other computers")
+    export.add_argument("name")
+    export.add_argument("--out", required=True)
+    imp = vs.add_parser("import", help="add an exported profile to this computer's store")
+    imp.add_argument("file")
+    imp.add_argument("--adopt-identity", action="store_true",
+                     help="on a computer with no voice identity, take the export's owner")
+    delete = vs.add_parser("delete", help="remove a profile, or everything with --all")
+    delete.add_argument("name", nargs="?")
+    delete.add_argument("--all", action="store_true",
+                        help="remove every profile, the identity file and the store folder")
+    ident = vs.add_parser("identity", help="show or set the identity your profiles belong to")
+    ident.add_argument("--name", dest="display_name", help="a display name to store")
     vs.add_parser("list", help="list stored profiles")
     vs.add_parser("path", help="print the store folder")
     for parser in vs.choices.values():

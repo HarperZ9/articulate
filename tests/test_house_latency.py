@@ -5,14 +5,12 @@ on a shared CI runner from failing a build while still catching a regression
 of an order of magnitude."""
 import json
 import os
-import pathlib
 import subprocess
 import sys
 import time
 
 from articulate import bench, house
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
 CEILING = 5
 
 
@@ -40,13 +38,15 @@ def test_warm_transform_within_budget():
 
 
 def test_session_start_hook_cold_within_budget(tmp_path):
-    env = dict(os.environ, ARTICULATE_CONFIG_DIR=str(tmp_path), PYTHONPATH=str(ROOT / "src"))
+    from articulate import bench_house
+    shim = bench_house.shim_bundle(tmp_path / "plugin")
+    env = dict(os.environ, ARTICULATE_CONFIG_DIR=str(tmp_path / "cfg"))
     env.pop("ARTICULATE_HOUSE_VOICE", None)
     event = json.dumps({"hook_event_name": "SessionStart", "source": "startup"}).encode()
     times = []
     for _ in range(5):
         t0 = time.perf_counter()
-        run = subprocess.run([sys.executable, "-B", "-X", "utf8", "-m", "articulate.house_hook"],
+        run = subprocess.run([sys.executable, "-I", "-S", "-B", "-X", "utf8", str(shim)],
                              input=event, capture_output=True, env=env, timeout=30)
         times.append((time.perf_counter() - t0) * 1000)
         assert run.returncode == 0 and b"additionalContext" in run.stdout

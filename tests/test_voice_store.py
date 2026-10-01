@@ -69,7 +69,7 @@ def test_learning_opens_no_socket_and_starts_no_process(monkeypatch, tmp_path):
     sample = tmp_path / "s.md"
     sample.write_text(VARIED[0][2], encoding="utf-8")
     from articulate import cli
-    assert cli.main(["voice", "learn", str(sample), "--name", "mine",
+    assert cli.main(["voice", "learn", str(sample), "--name", "mine", "--mine",
                      "--dir", str(tmp_path / "store")]) == 0
     assert (tmp_path / "store" / "mine.json").is_file()
 

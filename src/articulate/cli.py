@@ -265,6 +265,9 @@ def _cmd_verify(args):
     if isinstance(rec, dict) and str(rec.get("schema", "")).startswith("articulate/corpus-receipt/"):
         from . import cli_corpus
         return cli_corpus.verify(rec, [args.file] + args.more)
+    if isinstance(rec, dict) and rec.get("schema") == "articulate/house-receipt/v1":
+        from . import cli_house
+        return cli_house.verify(rec, args.file)
     text = _decode(data)
     verdict, detail = receipt.verify_receipt(rec, text)
     print(f"[articulate] {verdict}: {detail}")
@@ -513,8 +516,9 @@ def main(argv=None):
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
-    from . import cli_corpus
+    from . import cli_corpus, cli_house
     cli_corpus.register(sub)
+    cli_house.register(sub)
     args = ap.parse_args(argv)
     if getattr(args, "corpus_handler", None):
         return args.corpus_handler(args)

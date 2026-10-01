@@ -8,24 +8,24 @@ your editor with the commands below.
 
 ## Install
 
-Version 0.7.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
+Version 0.8.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
 packages include a Python runtime; see the [native package guide](native-local-package.md).
 They include no model. A connected client supplies rewritten text through
 `edit_plan` and `edit_submit`, using its own model account and permissions.
 
 The Python package and source plugin need Python 3.9 or newer and the standard
-library. The following commands select 0.7.0 after publication.
+library. The following commands select 0.8.0 after publication.
 
 From PyPI:
 
 ```bash
-pip install articulate-writing==0.7.0
+pip install articulate-writing==0.8.0
 ```
 
 From source:
 
 ```bash
-git clone --branch v0.7.0 https://github.com/HarperZ9/articulate
+git clone --branch v0.8.0 https://github.com/HarperZ9/articulate
 cd articulate
 pip install -e .
 ```
@@ -36,7 +36,7 @@ a bare install. The optional FastMCP surface, `python -m articulate.mcp_server`,
 uses the `mcp` extra:
 
 ```bash
-pip install "articulate-writing[mcp]==0.7.0"
+pip install "articulate-writing[mcp]==0.8.0"
 ```
 
 ## Your first check
@@ -165,6 +165,28 @@ The CLI also supports Anthropic, the Claude CLI and OpenAI-compatible endpoints.
 Automatic selection records unavailable backends and continues to a usable path,
 ending with deterministic editing. See the [backend configuration reference](cli.md#backend-configuration)
 for selection order, credentials and privacy.
+
+## The house voice and your own voice
+
+The house voice is on by default where Articulate is attached to model output.
+See what the model receives, and turn it off or tune it:
+
+```bash
+articulate house show
+articulate house off
+articulate house set length=terse
+```
+
+Pipe model output through it with `articulate house apply -`. To build a
+profile from your own writing and compare a draft with it:
+
+```bash
+articulate voice learn my-essays/*.md --name mine --mine
+articulate voice compare draft.md --name mine
+```
+
+The [house voice spec](house-voice.md) and
+[series review and your own voice](series-and-voice.md) cover both in full.
 
 ## Where to next
 

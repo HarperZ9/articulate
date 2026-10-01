@@ -107,9 +107,16 @@ def do_edit_plan(text, mode=None, profile=None, goal="fix", is_html=False, is_te
                      is_html=is_html, is_tex=is_tex)
 
 
-def do_edit_submit(text, rewrite, plan_id, scores=None, model=None):
-    from .host_edit import edit_submit
-    return edit_submit(text, rewrite, plan_id, scores=scores, model=model)
+def do_edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=None):
+    from .host_edit import edit_submit, plan_settings
+    origin = "host-supplied" if author_text is not None else None
+    if plan_settings(text, plan_id).get("voice_profile_sha256"):
+        # A voice apply plan: check the bound profile is unchanged and report its counts.
+        from .voice_apply import submit
+        return submit(text, rewrite, plan_id, scores=scores, model=model,
+                      author_text=author_text, author_text_origin=origin)
+    return edit_submit(text, rewrite, plan_id, scores=scores, model=model,
+                       author_text=author_text, author_text_origin=origin)
 
 
 async def _fast_edit(ctx, text, goal, **options):
@@ -192,12 +199,14 @@ def build_server():
         return do_edit_plan(text, mode, profile, goal, is_html, is_tex)
 
     @mcp.tool(description=description("edit_submit"), **fastmcp_options("edit_submit"))
-    def edit_submit(text: str, rewrite: str, plan_id: str,
-                    scores: Optional[dict] = None, model: Optional[str] = None) -> dict:
+    def edit_submit(text: str, rewrite: str, plan_id: str, scores: Optional[dict] = None,
+                    model: Optional[str] = None, author_text: Optional[str] = None) -> dict:
         """Submit the original text and a host rewrite or assessment using the plan_id from edit_plan.
         Articulate restores masks, guards protected spans, checks the result and returns accepted text with a host receipt."""
-        return do_edit_submit(text, rewrite, plan_id, scores, model)
+        return do_edit_submit(text, rewrite, plan_id, scores, model, author_text)
 
+    from .mcp_local_tools import register
+    register(mcp)
     return mcp
 
 

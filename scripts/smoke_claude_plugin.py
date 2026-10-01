@@ -8,7 +8,8 @@ Reads PLUGIN_DIR/.mcp.json, puts PLUGIN_DIR in place of ${CLAUDE_PLUGIN_ROOT},
 adds the declared env to this environment, starts the declared command, and
 exchanges initialize, tools/list, ping, UTF-8 checks, an explicit hosted-backend
 refusal, doctor, and a host edit plan followed by accepted and refused submissions,
-then runs the declared edit-time hook on a prose edit, a code edit and a malformed event. It prints one line per check
+then runs the declared edit-time hook on a prose edit, a code edit and a malformed event,
+and the house-voice hooks at session start and at the end of a reply. It prints one line per check
 and exits 1 when any check fails. --command replaces the interpreter, for a
 machine where the one to test has another name. Without it, the declared command
 is looked up on absolute PATH entries outside the working folder and the plugin
@@ -31,7 +32,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from find_program import find_program  # noqa: E402  (the path is set just above)
 
 LOCAL_TOOLS = {"check", "score", "edit_plan", "edit_submit", "judge", "fix",
-               "polish", "articulate.status", "articulate.doctor"}
+               "polish", "articulate.status", "articulate.doctor", "corpus_check",
+               "title_workshop", "interview", "restructure_plan", "voice_compare",
+               "voice_apply_plan", "house_brief", "house_transform"}
 ORIGINAL = "We leverage 42 samples. See [the report](https://example.org/report)."
 GOOD_REWRITE = "We use 42 samples. See [the report](https://example.org/report)."
 BAD_REWRITE = "We use 43 samples."
@@ -237,13 +240,51 @@ def hook_checks(plugin_dir, argv, env):
     ]
 
 
+def house_hook_checks(plugin_dir, argv, env):
+    """Fire the declared SessionStart and Stop hooks from the built bundle, with a
+    fresh settings folder so the user's own house settings do not change the result."""
+    import tempfile
+    cfg = json.loads((plugin_dir / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+    (entry,) = cfg["hooks"]["SessionStart"]
+    script = entry["hooks"][0]["command"].split('"')[1].replace(
+        "${CLAUDE_PLUGIN_ROOT}", plugin_dir.as_posix())
+    hook_argv = argv[:-1] + [script]
+    start = json.dumps({"hook_event_name": "SessionStart", "source": "startup"}).encode("utf-8")
+    stop = json.dumps({"hook_event_name": "Stop", "stop_hook_active": False,
+                       "last_assistant_message": "When I was a kid I read maps."}).encode("utf-8")
+    with tempfile.TemporaryDirectory() as folder:
+        def run(data, **extra):
+            e = dict(env, ARTICULATE_CONFIG_DIR=folder)
+            e.pop("ARTICULATE_HOUSE_VOICE", None)
+            e.update(extra)
+            done = subprocess.run(hook_argv, input=data, capture_output=True, env=e, timeout=60)
+            return done.returncode, done.stdout.decode("utf-8", "replace")
+        code, out = run(start)
+        off = run(start, ARTICULATE_HOUSE_VOICE="off")
+        quiet_stop = run(stop)
+        revise = run(stop, ARTICULATE_HOUSE_VOICE="revise")
+    try:
+        context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    except (ValueError, KeyError, TypeError):
+        context = ""
+    return [
+        ("SessionStart hook returns the house brief",
+         code == 0 and context.startswith("Articulate house voice, house/1."), context[:80] or out[:120]),
+        ("SessionStart hook is silent when the house voice is off", off == (0, ""), repr(off)),
+        ("Stop hook is silent outside mode revise", quiet_stop == (0, ""), repr(quiet_stop)),
+        ("Stop hook in mode revise asks for one revision of a human-life claim",
+         revise[0] == 0 and '"decision": "block"' in revise[1], revise[1][:120]),
+    ]
+
+
 def smoke(plugin_dir, command=None, drop=(), extra_env=None, transcript=None, host="claude"):
     plugin_dir = Path(plugin_dir).resolve()
     version = json.loads((plugin_dir / ".claude-plugin" / "plugin.json")
                          .read_text(encoding="utf-8"))["version"]
     argv, env = launch_spec(plugin_dir, command, drop, extra_env, host=host)
     answers, code, stderr = exchange(argv, env, transcript=transcript)
-    results = evaluate(answers, code, version) + hook_checks(plugin_dir, argv, env)
+    results = (evaluate(answers, code, version) + hook_checks(plugin_dir, argv, env)
+               + house_hook_checks(plugin_dir, argv, env))
     caches = [p.relative_to(plugin_dir).as_posix() for p in plugin_dir.rglob("__pycache__")]
     results.append(("no bytecode written in the plugin folder", not caches,
                     ", ".join(caches) or "none"))

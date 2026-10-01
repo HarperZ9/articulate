@@ -77,7 +77,7 @@ def _vocabulary(p):
 
 def _per_sample(p):
     return [f"per_sample: The same measures for each of your {len(p['per_sample'])} samples, "
-            "so a comparison can use your own range rather than one average."]
+            "so a comparison can use the spread across your samples."]
 
 
 def describe(profile):

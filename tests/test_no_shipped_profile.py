@@ -24,7 +24,8 @@ def _offending(name, data):
             value = json.loads(text)
         except ValueError:
             value = None
-        if isinstance(value, dict) and ("owner" in value or "per_sample" in value):
+        if isinstance(value, dict) and ("per_sample" in value or "attestation" in value
+                                        or "owner_id" in value):
             problems.append("profile-shaped json")
     return problems
 
@@ -33,7 +34,9 @@ def test_the_scan_catches_a_planted_profile():
     planted = json.dumps({"schema": "articulate/voice-profile/v1"}).encode()
     assert _offending("x/mine.json", planted)
     assert _offending("articulate/voice/identity.json", b"{}")
+    assert _offending("x/identity-copy.json", b'{"owner_id": "abc"}')
     assert not _offending("articulate/data/house_voice_v1.json", b'{"schema": "articulate/house-voice/v1"}')
+    assert not _offending(".claude-plugin/marketplace.json", b'{"owner": {"name": "x"}}')
 
 
 @pytest.fixture(scope="module")
@@ -70,4 +73,4 @@ def test_the_house_spec_says_no_person_was_modelled():
     spec = json.loads((ROOT / "src" / "articulate" / "data" / "house_voice_v1.json")
                       .read_text(encoding="utf-8"))
     assert spec["provenance"]["person_writing_used"] is False
-    assert "owner" not in spec and "per_sample" not in spec
+    assert not {"owner", "owner_id", "attestation", "per_sample"} & set(spec)

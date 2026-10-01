@@ -50,9 +50,10 @@ SOURCES = (("claude-plugin", ""), ("src/articulate", "src/articulate"))
 SKIP_DIRS = {"__pycache__"}
 SKIP_SUFFIXES = {".pyc", ".pyo", ".pyd"}
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
-# serve.py runs articulate.local_mcp, edit_hook.py runs articulate.edit_hook, and
-# importing either runs the package __init__.
-ENTRY = ("__init__", "local_mcp", "edit_hook")
+# serve.py runs articulate.local_mcp, edit_hook.py runs articulate.edit_hook,
+# house_hook.py runs articulate.house_hook, and the package __init__ is shipped
+# for the server and the edit hook.
+ENTRY = ("__init__", "local_mcp", "edit_hook", "house_hook", "house")
 
 
 def _git(repo, *args):

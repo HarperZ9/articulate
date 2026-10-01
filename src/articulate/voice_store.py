@@ -15,6 +15,7 @@ import re
 import tempfile
 
 _NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
+RESERVED = frozenset({"identity"})  # identity.json holds the owner record
 
 
 def store_dir(directory=None, environ=None):
@@ -31,6 +32,8 @@ def store_dir(directory=None, environ=None):
 
 
 def profile_path(name, directory=None):
+    if isinstance(name, str) and name.lower() in RESERVED:
+        raise ValueError(f"{name!r} is reserved in the voice store; pick another name")
     if not isinstance(name, str) or not _NAME.fullmatch(name):
         raise ValueError("a voice name is 1 to 64 letters, digits, - or _, starting with a "
                          "letter or digit")
@@ -81,4 +84,5 @@ def names(directory=None):
     folder = store_dir(directory)
     if not folder.is_dir():
         return []
-    return sorted(p.stem for p in folder.glob("*.json") if _NAME.fullmatch(p.stem))
+    return sorted(p.stem for p in folder.glob("*.json")
+                  if _NAME.fullmatch(p.stem) and p.stem.lower() not in RESERVED)
