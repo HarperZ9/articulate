@@ -208,6 +208,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          # A CR byte passes coreutils 9 but fails sha256sum 8.32 and shasum.
+          if grep -l $'\r' plugin-artifacts/SHA256SUMS native-artifacts/SHA256SUMS; then echo 'checksum file has CR bytes'; exit 1; fi
           (cd plugin-artifacts && sha256sum --check SHA256SUMS)
           (cd native-artifacts && sha256sum --check SHA256SUMS)
           cp plugin-artifacts/SHA256SUMS plugin-artifacts/plugin-SHA256SUMS.txt

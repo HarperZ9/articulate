@@ -64,6 +64,17 @@ def manifest(version, mode='dev'):
     }
 
 
+def write_sums(target, paths):
+    """Write sha256sum lines for paths to target with LF endings on every OS.
+
+    Path.write_text turns each newline into CRLF on Windows. GNU sha256sum 8.32
+    and Perl shasum then read the file name with a trailing carriage return and
+    fail to open it, so the bytes are written directly.
+    """
+    lines = ''.join(f'{hashlib.sha256(Path(p).read_bytes()).hexdigest()}  {Path(p).name}\n' for p in paths)
+    Path(target).write_bytes(lines.encode('utf-8'))
+
+
 def archive(stage_dir, out_dir, version, *, mode='release', root=ROOT, release_ref=None):
     if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?', version):
         raise ValueError('invalid version')
@@ -105,8 +116,7 @@ def archive(stage_dir, out_dir, version, *, mode='release', root=ROOT, release_r
                 info.create_system = 3
                 info.external_attr = 0o100644 << 16
                 z.writestr(info, value)
-    (out / 'SHA256SUMS').write_text(''.join(
-        f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in targets), encoding='utf-8')
+    write_sums(out / 'SHA256SUMS', targets)
     return targets
 
 
