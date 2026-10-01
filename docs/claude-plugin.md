@@ -119,10 +119,10 @@ A host that runs command hooks with the same event shape can also run the hook
 from the installed package. After `pip install articulate-writing`, point a
 `PostToolUse` command hook at `articulate-edit-hook`.
 
-Limits: the comparison is lexical. It does not catch a changed month name, a
-changed file path outside code formatting, an added intensifier or two swapped
-subjects, and it can name a change the user asked for. The Codex Windows hook
-command has not been tested.
+Limits: the comparison is lexical. It does not catch a changed file path
+outside code formatting, an added intensifier or two swapped subjects. It can
+read a capitalized word that opens a sentence as a name, and it names changes
+the user asked for. The Codex Windows hook command has not been tested.
 
 ## Tool titles and hints
 
