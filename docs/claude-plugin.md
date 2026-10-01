@@ -1,10 +1,10 @@
-# Claude plugin
+# Claude Code, Codex and Claude Desktop packaging
 
-Articulate Writing is the Claude plugin form of Articulate. It gives Claude Code
+Articulate Writing is the local plugin form of Articulate. It gives Claude Code and Codex
 local checks, the `edit_plan`/`edit_submit` host-edit protocol, offline editor
 entrypoints, status and doctor tools. Its `prose-review` and `prose-edit` skills
 explain how to use those tools. The checker runs on your computer and sends the
-text nowhere; Claude reads the text as part of your conversation. The server has
+text nowhere; the calling model reads the text as part of your conversation. The server has
 automated Windows and Linux test coverage. The plugin's own README, which is
 also its listing text,
 covers install, example prompts, the privacy policy and troubleshooting: see
@@ -12,9 +12,14 @@ covers install, example prompts, the privacy policy and troubleshooting: see
 
 ## Install
 
-This plugin targets the 0.5.2 package on the maintenance release line. It bundles
+This source plugin targets the 0.6.0 package on the retained-detector release line. It bundles
 the package source. Build from the matching package tag for release use; use
 `--dev` for a local test build before that tag exists.
+
+The same release workflow prepares [Windows x64 native ZIP and MCPB packages](native-local-package.md)
+with their runtime included. Those packages use a binary entrypoint and do not
+require installed Python. The instructions below cover the separate source
+plugin. Both forms use the calling model for host edits and include no model.
 
 The plugin needs Python 3.9 or later, runnable as `python3`, and nothing else:
 it carries its own copy of the package source, which uses only the standard
@@ -164,3 +169,104 @@ with a required review.
 The plugin folder is the root of its own repository. Claude's directory holds a
 Python server in a plugin that sits in a subfolder of a larger repository for a
 reviewer, and a plugin at a repository root avoids that.
+
+## Portable packaging and Codex installation
+
+The bundle contains root `plugin.json` and `mcp.json` for Agent Plugins 1.0.0.
+The portable launch uses `type: "stdio"` and `${PLUGIN_ROOT}/server/serve.py`.
+The host expands that root in arguments before launch. `.mcp.json` retains the
+Claude launch with `${CLAUDE_PLUGIN_ROOT}`. The Codex compatibility manifest
+points to `.codex-mcp.json`, whose script path is relative to `cwd: "."`.
+
+OpenAI presentation lives in `extensions.com.openai.interface`. The compatibility
+manifest repeats it for older clients, and the bundle checker rejects drift.
+Root portable components stay canonical: an inline OpenAI extension replaces
+the compatibility settings; the two are not merged.
+
+For a repo marketplace, copy the built bundle to `plugins/articulate-writing`
+and add `.agents/plugins/marketplace.json` at that repository's root:
+
+```json
+{
+  "name": "articulate-local",
+  "interface": {"displayName": "Articulate Local"},
+  "plugins": [{
+    "name": "articulate-writing",
+    "source": {"source": "local", "path": "./plugins/articulate-writing"},
+    "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
+    "category": "Productivity"
+  }]
+}
+```
+
+Restart the desktop host and install from that marketplace. Confirm the
+Articulate server is connected and run a prose check and guarded edit in a new
+chat. The smoke runner below checks MCP behavior with the declared launch
+settings; it does not prove a fresh host install or directory acceptance.
+
+```bash
+python scripts/smoke_claude_plugin.py build/claude-plugin --host portable
+python scripts/smoke_claude_plugin.py build/claude-plugin --host codex
+python scripts/archive_claude_plugin.py build/claude-plugin build/plugin-artifacts
+```
+
+The archive command validates the bundle and writes a deterministic plugin ZIP
+and `SHA256SUMS`. Keep these artifacts separate from Python package uploads.
+Release builds still require matching package tags and committed source. A local
+marketplace install is separate from a public directory listing. The plugin
+adds no automatic message interception and needs no second model account.
+
+OpenAI public submission of a local MCP plugin needs a supported route through
+an OpenAI contact, or a separately designed remote HTTPS service. This release
+does not deploy such a service or establish ordinary web-chat availability.
+Client review, approved listing metadata and a fresh install check remain
+publication requirements.
+
+Packaging references checked 2026-09-30:
+[OpenAI plugin packaging](https://developers.openai.com/plugins/build/plugins),
+[Agent Plugins manifest schema](https://agent-plugins.org/schemas/1.0.0/plugin.schema.json),
+[MCP schema](https://agent-plugins.org/schemas/1.0.0/mcp.schema.json), and
+[portable variable expansion](https://agent-plugins.org/plugin-authors/mcp-servers).
+
+## Claude Desktop extension
+
+The archive builder can produce a native MCPB 0.3 extension from the checked
+plugin bundle. It copies the same server and package source, license and privacy
+documentation. It generates `manifest.json`; it does not add another runtime or
+include the Claude Code and Codex skills. The Desktop extension exposes the MCP
+tools, including `edit_plan` and `edit_submit`.
+
+```bash
+python scripts/archive_claude_plugin.py build/claude-plugin build/plugin-artifacts --format both
+```
+
+This writes `articulate-writing-<version>-plugin.zip`,
+`articulate-writing-<version>-desktop.mcpb` and one `SHA256SUMS` covering both.
+Use `--format mcpb` to build only the Desktop extension. The default remains the
+plugin ZIP. Archives have stable ordering, timestamps and permissions, with no
+outer directory. Validation rejects symbolic links, Windows reparse points and
+paths that resolve outside the bundle before reading bundle content. Keep the
+input directory stable during packaging; this check does not lock concurrent
+writers out.
+
+The Desktop extension requires an installed Python 3.9 or later interpreter.
+It does not bundle Python or promise installation without prerequisites. In
+Claude Desktop, open Settings > Extensions > Advanced settings > Install
+Extension, select the `.mcpb`, and select your installed Python executable when
+prompted. The required file picker has no default executable. The host passes
+that path as the command and expands `${__dirname}` in the script argument.
+The isolated Python flags and local-only environment settings match the plugin.
+
+Tests extract the MCPB into a path containing spaces, resolve the declared
+launch with the test interpreter, and check the tool surface, UTF-8 input,
+backend refusal and accepted/refused host edits. Schema validation and that
+launch smoke do not prove installation in Claude Desktop, an approved directory
+listing or macOS execution. A fresh Desktop install remains a release check.
+Development bundles retain the source version for testing and must not be
+published as new bytes of an existing release.
+
+The manifest follows the official
+[MCPB 0.3 schema](https://github.com/modelcontextprotocol/mcpb/blob/main/schemas/mcpb-manifest-v0.3.schema.json)
+and [manifest specification](https://github.com/modelcontextprotocol/mcpb/blob/main/MANIFEST.md).
+The install path follows Claude's
+[custom Desktop extension instructions](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop).

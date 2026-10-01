@@ -7,6 +7,8 @@ are retained. No model or network is used here.
 import hashlib
 import re
 
+from . import meaning
+
 
 _MATH = re.compile(
     r'\\begin\{(equation|align|gather|multline|eqnarray|split|theorem|lemma|proof|definition|proposition|corollary|claim)\*?\}.*?\\end\{\1\*?\}'
@@ -36,6 +38,7 @@ _PATTERNS = [
 ]
 _PARAGRAPH = re.compile(r'(\r?\n[ \t]*\r?\n(?:[ \t]*\r?\n)*)')
 _TOKEN = re.compile(r'\u2983ARTICULATE_[^\u2984]*\u2984')
+_CLAIM_KINDS = frozenset(('modal', 'scope', 'negation'))
 
 
 def protected_spans(text, is_html=False, is_tex=False):
@@ -57,8 +60,29 @@ def _refusal(index, reasons):
     return {'paragraph': index, 'reasons': reasons}
 
 
+def _claim_paragraphs(parts, is_html, is_tex):
+    """Blank opaque containers globally, then use original paragraph boundaries."""
+    # A closing fence in a later paragraph must not become a new opening fence
+    # that hides the prose following it. HTML, math and quotes need the same
+    # document context. Keep numbers visible for bounds such as "under 10".
+    text = ''.join(parts)
+    chars = list(text)
+    for span in protected_spans(text, is_html, is_tex):
+        if span['kind'] not in ('number', 'number-range', 'quantity'):
+            for i in range(span['start'], span['end']):
+                if chars[i] not in '\r\n':
+                    chars[i] = ' '
+    text = ''.join(chars)
+    # Newly blank lines must not introduce paragraph boundaries of their own.
+    result, offset = [], 0
+    for part in parts:
+        result.append(text[offset:offset + len(part)])
+        offset += len(part)
+    return result
+
+
 def guard_rewrite(original, rewrite, is_html=False, is_tex=False):
-    """Accept safe paragraphs, retaining originals wherever protected spans differ."""
+    """Retain paragraphs with changed protected spans or lexical claim features."""
     if original == rewrite:
         return {'text': original, 'refused': []}
     if original.strip() and not rewrite.strip():
@@ -66,12 +90,20 @@ def guard_rewrite(original, rewrite, is_html=False, is_tex=False):
     old, new = _PARAGRAPH.split(original), _PARAGRAPH.split(rewrite)
     if len(old) != len(new):
         return {'text': original, 'refused': [_refusal(None, ['paragraph alignment changed'])]}
+    old_prose = _claim_paragraphs(old, is_html, is_tex)
+    new_prose = _claim_paragraphs(new, is_html, is_tex)
     refused = []
     for i in range(0, len(old), 2):
         before = _signature(old[i], is_html, is_tex)
         after = _signature(new[i], is_html, is_tex)
         reasons = [kind + ' protected spans changed' for kind in sorted(set(before) | set(after))
                    if before.get(kind, []) != after.get(kind, [])]
+        report = meaning.compare(old_prose[i], new_prose[i], tex=is_tex)
+        changed = {item['kind'] for item in meaning.blocking(report)
+                   if item['kind'] in _CLAIM_KINDS}
+        # The comparison report contains source prose. Only kinds leave this
+        # boundary; retain the older ordered guards for exact protected spans.
+        reasons.extend(kind + ' claim features changed' for kind in sorted(changed))
         if reasons:
             new[i] = old[i]
             refused.append(_refusal(i // 2, reasons))

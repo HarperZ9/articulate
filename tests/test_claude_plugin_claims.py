@@ -197,7 +197,9 @@ def test_host_skill_uses_masked_protocol_and_reports_refusals():
     skill = (TEMPLATE / "skills" / "prose-edit" / "SKILL.md").read_text(encoding="utf-8")
     front = rules.skill_front_matter(skill)
     for name in ("edit_plan", "edit_submit"):
-        assert "__" + name in front["allowed-tools"]
+        assert f"`{name}`" in skill
+    assert "allowed-tools" not in front
+    assert "mcp__plugin_" not in skill
     for field in ("masked_text", "plan_id", "refused", "receipt.backend"):
         assert "`" + field + "`" in skill
     assert "exact original" in skill

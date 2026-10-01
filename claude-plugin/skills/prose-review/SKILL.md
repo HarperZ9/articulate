@@ -1,7 +1,6 @@
 ---
 name: prose-review
-description: Use when the user asks to review, proofread, lint or tighten prose such as documentation, a README, release notes, an essay, a commit message or a message draft, and wants each problem named with where it occurs and what it costs a reader. The Articulate checker runs on the user's computer when Claude Code has this plugin's server running; the checker sends the text nowhere, and Claude reads the text as part of the conversation.
-allowed-tools: mcp__plugin_articulate-writing_articulate__check, mcp__plugin_articulate-writing_articulate__score, mcp__plugin_articulate-writing_articulate__articulate_status, mcp__plugin_articulate-writing_articulate__articulate_doctor
+description: Use when the user asks to review, proofread, lint or tighten prose such as documentation, a README, release notes, an essay, a commit message or a message draft, and wants each problem named with where it occurs and what it costs a reader. The Articulate checker runs on the user's computer when the local host has this plugin's server running; the checker sends the text nowhere, and the calling model reads the text as part of the conversation.
 ---
 
 # Review prose with Articulate
@@ -9,6 +8,11 @@ allowed-tools: mcp__plugin_articulate-writing_articulate__check, mcp__plugin_art
 The Articulate Writing plugin runs a local checker through its `check` and `score`
 tools. Each finding names a writing pattern, the line and words where it occurs,
 and a `label` explaining the pattern.
+
+Use the Articulate tools exposed by the current host. Callable prefixes vary
+by client. Match tools
+by their Articulate server and short name, and use the host's actual callable
+name. Never invent a tool result when a tool is missing.
 
 ## Steps
 
@@ -44,13 +48,12 @@ and a `label` explaining the pattern.
 
 ## When the tools are missing
 
-The checks run as a program on the user's computer. Claude Code starts it when
-the plugin is enabled. Chat on claude.ai does not start local programs. When the
-`check` tool is not available, tell the user the checks need Claude Code with
-this plugin enabled, and do not produce findings in the checker's format
-yourself.
+The checks need a local host with this plugin enabled, such as Claude Code or
+Codex. Installing a skill in a web chat does not start the local checker. When
+`check` is unavailable, explain the missing local program and do not invent
+findings in the checker's format.
 
 When the plugin is enabled and the tools are still missing, the server did not
-start. Ask the user to open `/mcp` to see its status. The usual cause is a
+start. Check the host's MCP server status (`/mcp` in Claude Code). The usual cause is a
 missing `python3`, or a Python older than 3.9. The plugin README has a
 Troubleshooting section for each case.

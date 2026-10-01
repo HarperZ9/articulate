@@ -1,7 +1,6 @@
 ---
 name: prose-edit
-description: Use when the user asks to edit, rewrite, tighten or give an editorial pass to prose with Articulate. The calling model writes the rewrite between edit_plan and edit_submit; Articulate checks protected spans and returns a receipt. The plugin makes no network call; Claude already reads the text in the conversation.
-allowed-tools: mcp__plugin_articulate-writing_articulate__edit_plan, mcp__plugin_articulate-writing_articulate__edit_submit, mcp__plugin_articulate-writing_articulate__check, mcp__plugin_articulate-writing_articulate__score
+description: Use when the user asks to edit, rewrite, tighten or give an editorial pass to prose with Articulate. The calling model writes the rewrite between edit_plan and edit_submit; Articulate checks protected spans and returns a receipt. The plugin makes no network call; The calling model already reads the text in the conversation.
 ---
 
 # Edit prose with Articulate, as the host model
@@ -9,7 +8,12 @@ allowed-tools: mcp__plugin_articulate-writing_articulate__edit_plan, mcp__plugin
 Use the local host-edit protocol. You write the rewrite, and Articulate prepares
 instructions, restores protected masks, checks the candidate and returns a
 receipt. No second model account is needed. The plugin makes no network call;
-Claude already reads the text as part of the conversation.
+the calling model already reads the text as part of the conversation.
+
+Use the Articulate tools exposed by the current host. Callable prefixes vary
+by client. Match tools
+by their Articulate server and short name, and use the host's actual callable
+name. Never invent a tool result when a tool is missing.
 
 ## Steps
 

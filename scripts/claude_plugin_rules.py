@@ -12,6 +12,7 @@ Standard library only, so it runs wherever the build runs.
 """
 import json
 import re
+import stat
 import urllib.parse
 from pathlib import Path
 
@@ -112,6 +113,53 @@ def check_server(root):
     return problems
 
 
+def check_portable(root):
+    """Check our fixed local bundle profile, including compatibility parity.
+
+    This is deliberately narrower than general Agent Plugins schema validation.
+    Portable components are canonical; the Codex overlay is a fallback only.
+    """
+    problems = []
+    paths = ("plugin.json", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json",
+             "mcp.json", ".mcp.json", ".codex-mcp.json")
+    portable, claude, codex, mcp, legacy, codex_mcp = [
+        _json(root, path, problems) for path in paths]
+    if any(not isinstance(d, dict) for d in (portable, claude, codex, mcp, legacy, codex_mcp)):
+        return problems + ["portable plugin: manifests must be objects"]
+    identity = {k: v for k, v in claude.items() if k not in ("displayName", "metadata")}
+    extension = portable.get("extensions", {}).get("com.openai", {})
+    interface = extension.get("interface")
+    expected = {"$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+                **identity, "extensions": {"com.openai": {"interface": interface}}}
+    if portable != expected:
+        problems.append("plugin.json: portable identity or schema differs from the Claude manifest")
+    if not isinstance(interface, dict) or not interface.get("displayName"):
+        problems.append("plugin.json: OpenAI interface is missing")
+    expected_codex = {**identity, "skills": "./skills/",
+                      "mcpServers": "./.codex-mcp.json", "interface": interface}
+    if codex != expected_codex:
+        problems.append(".codex-plugin/plugin.json: identity or OpenAI settings drift")
+    # Derive both launch forms from the preserved Claude configuration. Exact
+    # comparison also rejects extra transports, environment settings and servers.
+    expected_server = {
+        "command": "python3",
+        "args": ["-I", "-S", "-B", "-X", "utf8", SERVER_FILE],
+        "env": {"ARTICULATE_MCP_TOOLS": "local", "ARTICULATE_LOCAL_ONLY": "1"},
+    }
+    if legacy != {"mcpServers": {"articulate": expected_server}}:
+        problems.append(".mcp.json: launch differs from the isolated local-only profile")
+    portable_server = {**expected_server, "type": "stdio",
+                       "args": expected_server["args"][:-1] + ["${PLUGIN_ROOT}/server/serve.py"]}
+    if mcp != {"$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+               "mcpServers": {"articulate": portable_server}}:
+        problems.append("mcp.json: portable stdio launch differs from the local-only profile")
+    compat_server = {**expected_server, "cwd": ".",
+                     "args": expected_server["args"][:-1] + ["server/serve.py"]}
+    if codex_mcp != {"mcpServers": {"articulate": compat_server}}:
+        problems.append(".codex-mcp.json: compatibility launch differs from the local-only profile")
+    return problems
+
+
 def _names_ok(rel):
     problems = []
     for part in rel.parts:
@@ -124,9 +172,41 @@ def _names_ok(rel):
     return problems
 
 
+def contained_entries(root):
+    """Walk without following links or Windows reparse points, before reads.
+
+    This rejects existing escape paths; callers must keep the input directory
+    stable during validation and packaging. It is not a concurrent-write lock.
+    """
+    root = Path(root)
+    entries, pending = [], [root]
+    boundary = root.resolve()
+    while pending:
+        path = pending.pop()
+        info = path.lstat()
+        label = path.relative_to(root) if path != root else Path(".")
+        if (stat.S_ISLNK(info.st_mode)
+                or getattr(info, "st_file_attributes", 0)
+                & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)):
+            raise ValueError(f"{label}: symbolic link or reparse entry is not allowed")
+        resolved = path.resolve()
+        if resolved != boundary and boundary not in resolved.parents:
+            raise ValueError(f"{label}: entry resolves outside the plugin")
+        if path != root:
+            entries.append(path)
+        if stat.S_ISDIR(info.st_mode):
+            pending.extend(p for p in path.iterdir() if p.name != ".git")
+        elif not stat.S_ISREG(info.st_mode):
+            raise ValueError(f"{label}: non-regular entry is not allowed")
+    return sorted(entries)
+
+
 def check_files(root):
     problems, seen = [], {}
-    files = [p for p in sorted(root.rglob("*")) if ".git" not in p.relative_to(root).parts]
+    try:
+        files = contained_entries(root)
+    except (ValueError, OSError) as exc:
+        return [str(exc)]
     for path in files:
         rel = path.relative_to(root)
         problems += _names_ok(rel)
@@ -134,8 +214,6 @@ def check_files(root):
         if key in seen:
             problems.append(f"{rel}: differs from {seen[key]} only by case")
         seen[key] = rel
-        if path.is_symlink():
-            problems.append(f"{rel}: symbolic link")
         if not path.is_file():
             continue
         data = path.read_bytes()
@@ -186,7 +264,7 @@ def check_docs(root):
     privacy = (root / "PRIVACY.md").read_text(encoding="utf-8")
     if privacy != "# Privacy Policy\n\n" + policy + "\n":
         problems.append("PRIVACY.md differs from the README's Privacy Policy section")
-    for path in sorted(root.rglob("*")):
+    for path in contained_entries(root):
         rel = path.relative_to(root)
         if path.suffix in PUBLIC_TEXT and rel.parts[0] != "src" and path.is_file():
             text = path.read_text(encoding="utf-8")
@@ -241,7 +319,12 @@ def check_skills(root, plugin_name):
 def check_bundle(root):
     """Every problem found in the built plugin folder at root."""
     root = Path(root)
-    problems = check_files(root) + check_manifest(root) + check_server(root)
+    # Check the entire tree before any manifest, documentation or source read.
+    try:
+        contained_entries(root)
+    except (ValueError, OSError) as exc:
+        return [str(exc)]
+    problems = check_files(root) + check_manifest(root) + check_server(root) + check_portable(root)
     if (root / "README.md").is_file() and (root / "PRIVACY.md").is_file():
         problems += check_docs(root)
     else:
