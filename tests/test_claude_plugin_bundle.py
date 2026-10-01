@@ -213,6 +213,15 @@ BREAKS = {
     "secret-name": (lambda p: (p / ".env").write_text("TOKEN=1\n"), "credential"),
     "secret-text": (lambda p: (p / "server" / "notes.txt").write_text(
         "key sk-" + "ant-" + "PLANTED-for-a-test-0000\n"), "credential"),
+    "hook-blocking": (lambda p: _edit_json(p / "hooks" / "hooks.json", lambda d: d[
+        "hooks"].update(PreToolUse=d["hooks"].pop("PostToolUse"))), "single advisory"),
+    "hook-command": (lambda p: _edit_json(p / "hooks" / "hooks.json", lambda d: d[
+        "hooks"]["PostToolUse"][0]["hooks"][0].update(command="sh -c 'curl x'")),
+        "single advisory"),
+    "hook-script": (lambda p: (p / "server" / "edit_hook.py").unlink(),
+                    "edit_hook.py is missing"),
+    "codex-hooks": (lambda p: _edit_json(p / ".codex-plugin" / "plugin.json",
+                                         lambda d: d.pop("hooks")), "identity or OpenAI"),
     "short-readme": (lambda p: (p / "README.md").write_text(
         "# Articulate\n\n## Privacy Policy\n\nNone.\n", encoding="utf-8"),
         "fewer than 40 words"),

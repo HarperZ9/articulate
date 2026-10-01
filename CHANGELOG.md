@@ -4,6 +4,16 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+- The source plugin adds an advisory edit-time hook for Claude Code and Codex.
+  After the model writes or edits a prose file, the hook names numbers, links,
+  quotes, citations, modals, scope words, negations and names that the edit
+  dropped, added or changed, and lists style findings in the new text. It reads
+  only the hook event, opens no file or connection, starts no program and never
+  blocks the edit. `ARTICULATE_EDIT_HOOK=off` turns it off. The package adds an
+  `articulate-edit-hook` command for other hosts that run command hooks.
+
 ## 0.6.0
 
 Articulate can ship as local Windows x64 tools with its Python runtime included.

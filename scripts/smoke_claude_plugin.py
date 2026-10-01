@@ -7,7 +7,8 @@ and check what it answers.
 Reads PLUGIN_DIR/.mcp.json, puts PLUGIN_DIR in place of ${CLAUDE_PLUGIN_ROOT},
 adds the declared env to this environment, starts the declared command, and
 exchanges initialize, tools/list, ping, UTF-8 checks, an explicit hosted-backend
-refusal, doctor, and a host edit plan followed by accepted and refused submissions. It prints one line per check
+refusal, doctor, and a host edit plan followed by accepted and refused submissions,
+then runs the declared edit-time hook on a prose edit, a code edit and a malformed event. It prints one line per check
 and exits 1 when any check fails. --command replaces the interpreter, for a
 machine where the one to test has another name. Without it, the declared command
 is looked up on absolute PATH entries outside the working folder and the plugin
@@ -202,13 +203,47 @@ def evaluate(answers, code, version):
     ]
 
 
+HOOK_EDIT = {"hook_event_name": "PostToolUse", "tool_name": "Edit", "tool_input": {
+    "file_path": "notes.md", "old_string": "It may cut latency in 12 tests.",
+    "new_string": "It cuts latency in 12 tests."}}
+HOOK_CODE = dict(HOOK_EDIT, tool_input=dict(HOOK_EDIT["tool_input"], file_path="app.py"))
+
+
+def hook_checks(plugin_dir, argv, env):
+    """Run the declared edit-time hook as the host does, with the server's interpreter."""
+    cfg = json.loads((plugin_dir / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+    (entry,) = cfg["hooks"]["PostToolUse"]
+    (hook,) = entry["hooks"]
+    script = hook["command"].split('"')[1].replace("${CLAUDE_PLUGIN_ROOT}", plugin_dir.as_posix())
+    hook_argv = argv[:-1] + [script]
+
+    def run(data):
+        done = subprocess.run(hook_argv, input=data, capture_output=True, env=env, timeout=60)
+        return done.returncode, done.stdout.decode("utf-8", "replace")
+
+    code, out = run(json.dumps(HOOK_EDIT).encode("utf-8"))
+    try:
+        context = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    except (ValueError, KeyError, TypeError):
+        context = ""
+    quiet = run(json.dumps(HOOK_CODE).encode("utf-8"))
+    garbage = run(b"not json")
+    return [
+        ("edit hook names a dropped modal in a prose edit",
+         code == 0 and "dropped modal 'may'" in context, context[:120] or out[:120]),
+        ("edit hook is quiet for a code file", quiet == (0, ""), repr(quiet)),
+        ("edit hook exits 0 with no output on a malformed event", garbage == (0, ""),
+         repr(garbage)),
+    ]
+
+
 def smoke(plugin_dir, command=None, drop=(), extra_env=None, transcript=None, host="claude"):
     plugin_dir = Path(plugin_dir).resolve()
     version = json.loads((plugin_dir / ".claude-plugin" / "plugin.json")
                          .read_text(encoding="utf-8"))["version"]
     argv, env = launch_spec(plugin_dir, command, drop, extra_env, host=host)
     answers, code, stderr = exchange(argv, env, transcript=transcript)
-    results = evaluate(answers, code, version)
+    results = evaluate(answers, code, version) + hook_checks(plugin_dir, argv, env)
     caches = [p.relative_to(plugin_dir).as_posix() for p in plugin_dir.rglob("__pycache__")]
     results.append(("no bytecode written in the plugin folder", not caches,
                     ", ".join(caches) or "none"))
