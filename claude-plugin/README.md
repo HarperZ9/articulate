@@ -49,7 +49,7 @@ nowhere; the calling model reads the text as part of your conversation.
 
 ## Install
 
-This plugin targets package version 0.6.0. Build from its matching package tag as
+This plugin targets package version 0.7.0. Build from its matching package tag as
 [the build guide](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md)
 describes, then use the local build folder:
 
