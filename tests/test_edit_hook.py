@@ -252,3 +252,26 @@ def test_the_codex_manifest_points_at_the_same_hooks_file(plugin):
     codex = json.loads((plugin / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
     assert codex["hooks"] == "./hooks/hooks.json"
     assert (plugin / codex["hooks"]).is_file()
+
+
+def test_a_changed_long_code_block_is_clipped_and_the_answer_is_bounded():
+    # A changed code block is named with its whole text. Without a limit, one
+    # large edit copied every changed block into the model's context.
+    block = "```\n" + "\n".join("step %d runs the build" % i for i in range(150)) + "\n```"
+    old = "\n\n".join("Section %d.\n\n%s" % (i, block.replace("step", "stage %d" % i))
+                      for i in range(20))
+    new = old.replace("runs", "starts")
+    assert 50_000 < len(old) <= edit_hook.MAX_TEXT_CHARS
+    code, out, _ = _run(_edit(old, new))
+    context = _context(out)
+    assert code == 0
+    assert "changed code" in context
+    assert "more characters" in context
+    assert len(context) <= (edit_hook.MAX_CONTEXT_CHARS + len(edit_hook.DOES_NOT_PROVE) + 100)
+    assert context.endswith(edit_hook.DOES_NOT_PROVE)
+
+
+def test_clip_keeps_short_notes_and_counts_what_it_cuts():
+    assert edit_hook.clip("short") == "short"
+    clipped = edit_hook.clip("x" * 300, limit=100)
+    assert clipped == "x" * 100 + "... (200 more characters)"

@@ -30,6 +30,11 @@ MAX_EVENT_BYTES = 4 * 1024 * 1024
 MAX_TEXT_CHARS = 200_000
 MAX_STYLE = 5
 MAX_PRESERVATION = 6
+# A changed code block or quote is named with its whole text, which can run to
+# the size of the edit. Each note and the whole answer are clipped so one edit
+# cannot flood the model's context with a copy of the file.
+MAX_NOTE_CHARS = 240
+MAX_CONTEXT_CHARS = 6000
 EVENT = "PostToolUse"
 _PATCH_FILE = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+?)\s*$")
 _PATCH_MOVE = re.compile(r"^\*\*\* Move to: (.+?)\s*$")
@@ -116,18 +121,25 @@ def changes_from_event(event):
             and (old is None or len(old) <= MAX_TEXT_CHARS)]
 
 
+def clip(text, limit=MAX_NOTE_CHARS):
+    """Text cut to limit characters, with the number of characters left out."""
+    if len(text) <= limit:
+        return text
+    return "%s... (%d more characters)" % (text[:limit], len(text) - limit)
+
+
 def preservation_notes(old, new, is_tex=False):
     if old is None or old == new:
         return []
     rows = meaning.blocking(meaning.compare(old, new, tex=is_tex))
-    return [meaning.describe_item(r) for r in rows[:MAX_PRESERVATION]] + (
+    return [clip(meaning.describe_item(r)) for r in rows[:MAX_PRESERVATION]] + (
         ["and %d more" % (len(rows) - MAX_PRESERVATION)] if len(rows) > MAX_PRESERVATION else [])
 
 
 def style_notes(new):
     result = detector.check_text(new)
     hits = sorted(result["high"] + result["medium"], key=lambda h: h["start"])
-    notes = ["L%d %s %r" % (h["line"], h["label"], h["match"]) for h in hits[:MAX_STYLE]]
+    notes = [clip("L%d %s %r" % (h["line"], h["label"], h["match"])) for h in hits[:MAX_STYLE]]
     if len(hits) > MAX_STYLE:
         notes.append("and %d more" % (len(hits) - MAX_STYLE))
     return notes
@@ -151,7 +163,11 @@ def review(event):
         blocks.append("\n".join(lines))
     if not blocks:
         return None
-    return "\n".join(blocks + [DOES_NOT_PROVE])
+    body = "\n".join(blocks)
+    if len(body) > MAX_CONTEXT_CHARS:
+        body = body[:MAX_CONTEXT_CHARS] + "\n... (%d more characters of findings left out)" % (
+            len(body) - MAX_CONTEXT_CHARS)
+    return body + "\n" + DOES_NOT_PROVE
 
 
 def respond(raw):
