@@ -12,6 +12,10 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   to `privacyPolicyUrl`. The portable and Codex manifests leave the listing
   fields out. The plugin rules accept complete PNG and JPEG files and check the
   icon size and the listing links. Package code is unchanged.
+- The plugin README's Privacy Policy, and PRIVACY.md with it, gains a section
+  that names the edit hook, the MCP server launch, network use, files written,
+  the bundled model backends that stay off, and each environment variable the
+  server and hook read.
 
 ## 0.7.0
 
