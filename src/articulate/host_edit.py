@@ -2,6 +2,13 @@
 
 The plan token binds content and settings, not caller identity or authority. It
 is an integrity checksum, not a signature; callers may generate their own plans.
+
+Plans use schema articulate/edit-plan/v2, which binds the hash of any text the
+author supplied (interview answers, for example) so the first-person guard can
+accept those sentences and nothing else, and the name and hash of a personal
+voice profile when the user asked voice apply to shape their own draft. Plans
+under v1 still verify. This module never reads a profile: the caller passes the
+profile's hash and its plain-sentence description.
 """
 import base64
 from collections import Counter
@@ -22,7 +29,31 @@ def _hash(text):
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 
-def _settings(mode, profile, goal, is_html, is_tex):
+PLAN_V1 = 'articulate/edit-plan/v1'
+PLAN_V2 = 'articulate/edit-plan/v2'
+_V1_KEYS = frozenset({'schema', 'mode', 'profile', 'goal', 'is_html', 'is_tex', 'ruleset'})
+_PLAN_KEYS = {PLAN_V1: _V1_KEYS,
+              PLAN_V2: _V1_KEYS | {'author_text_sha256', 'voice_profile_sha256', 'voice_name'}}
+
+
+def _author_hash(author_text):
+    if author_text is None:
+        return None
+    if not isinstance(author_text, str):
+        raise ValueError('author_text must be text')
+    return 'sha256:' + _hash(author_text)
+
+
+def _voice_fields(voice):
+    if voice is None:
+        return None, None
+    if not (isinstance(voice, dict) and isinstance(voice.get('name'), str)
+            and isinstance(voice.get('sha256'), str) and voice['sha256'].startswith('sha256:')):
+        raise ValueError('voice must name a profile and carry its sha256')
+    return voice['name'], voice['sha256']
+
+
+def _settings(mode, profile, goal, is_html, is_tex, author_text=None, voice=None):
     if goal not in ('fix', 'polish', 'judge'):
         raise ValueError('goal must be fix, polish or judge')
     if mode and profile is not None:
@@ -32,9 +63,12 @@ def _settings(mode, profile, goal, is_html, is_tex):
     if not isinstance(prof, dict):
         raise ValueError('profile must be a name or object')
     # Normalize tuples to JSON lists so the digest is stable across processes.
-    return json.loads(_canonical({'schema': 'articulate/edit-plan/v1', 'mode': mode,
+    return json.loads(_canonical({'schema': PLAN_V2, 'mode': mode,
                                  'profile': prof, 'goal': goal, 'is_html': bool(is_html),
-                                 'is_tex': bool(is_tex), 'ruleset': detector.ruleset_fingerprint()}))
+                                 'is_tex': bool(is_tex), 'ruleset': detector.ruleset_fingerprint(),
+                                 'author_text_sha256': _author_hash(author_text),
+                                 'voice_name': _voice_fields(voice)[0],
+                                 'voice_profile_sha256': _voice_fields(voice)[1]}))
 
 
 def _token(text, settings):
@@ -49,14 +83,13 @@ def _verify(text, plan_id):
             raise ValueError('invalid plan token')
         encoded, digest = plan_id.rsplit('.', 1)
         settings = json.loads(base64.b64decode(encoded + '=' * (-len(encoded) % 4), altchars=b'-_', validate=True))
-        if not isinstance(settings, dict) or settings.get('schema') != 'articulate/edit-plan/v1':
+        if not isinstance(settings, dict) or settings.get('schema') not in _PLAN_KEYS:
             raise ValueError('unknown plan schema')
         if not hmac.compare_digest(_token(text, settings), plan_id):
             raise ValueError('plan does not match original text or settings')
         if settings.get('ruleset') != detector.ruleset_fingerprint():
             raise ValueError('plan ruleset changed; request a new plan')
-        required = {'schema', 'mode', 'profile', 'goal', 'is_html', 'is_tex', 'ruleset'}
-        if set(settings) != required or settings['goal'] not in ('fix', 'polish', 'judge'):
+        if set(settings) != _PLAN_KEYS[settings['schema']] or settings['goal'] not in ('fix', 'polish', 'judge'):
             raise ValueError('invalid plan settings')
         if not isinstance(settings['profile'], dict) or any(type(settings[k]) is not bool for k in ('is_html', 'is_tex')):
             raise ValueError('invalid plan settings')
@@ -73,13 +106,21 @@ def _summary(findings):
     return '\n'.join('L{line} [{tier} {category}] {reason}: {snippet}'.format(**f) for f in findings) or 'No mechanical findings.'
 
 
-def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False):
-    settings = _settings(mode, profile, goal, is_html, is_tex)
+def plan_settings(text, plan_id):
+    """The settings a plan binds, after checking the plan matches the text."""
+    return _verify(text, plan_id)
+
+
+def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False,
+              author_text=None, voice=None):
+    settings = _settings(mode, profile, goal, is_html, is_tex, author_text, voice)
+    voice_notes = voice.get('notes') if voice else None
     before = detector.check_text(text, profile=settings['profile'])
     findings = _findings(before)
     delta = settings['profile'].get('editor', {}).get('standard_delta', '')
     instr = (prompts.judge_instructions(_summary(findings), delta) if goal == 'judge'
-             else prompts.rewrite_instructions(_summary(findings), is_html=is_html, standard_delta=delta))
+             else prompts.rewrite_instructions(_summary(findings), is_html=is_html, standard_delta=delta,
+                                               voice_notes=voice_notes))
     masked, masks = mask_text(text, is_html, is_tex)
     return {'ok': True, 'status': 'host_edit_required', 'backend': 'host', 'model': None, 'attempts': [],
             'goal': goal, 'profile': settings['profile'], 'mode': mode,
@@ -106,7 +147,8 @@ def _quality(scores):
     return 'regressed' if any(scores['after'][k] < scores['before'][k] for k in prompts.QUALITIES) else 'host_assessed_no_regression'
 
 
-def _result(original, accepted, settings, refused, backend, model, quality_status='unassessed', scores=None):
+def _result(original, accepted, settings, refused, backend, model, quality_status='unassessed', scores=None,
+            author_text_origin=None):
     before = detector.check_text(original, profile=settings['profile'])
     after = detector.check_text(accepted, profile=settings['profile'])
     bf, af = _findings(before), _findings(after)
@@ -118,6 +160,9 @@ def _result(original, accepted, settings, refused, backend, model, quality_statu
                'ruleset_version': settings['ruleset'], 'settings': settings,
                'gate_before': before['gate'], 'gate_after': after['gate'], 'rule_deltas': deltas,
                'quality_status': quality_status, 'scores': scores,
+               'author_text_sha256': settings.get('author_text_sha256'),
+               'voice_profile_sha256': settings.get('voice_profile_sha256'),
+               'author_text_origin': author_text_origin,
                'does_not_prove': 'A lexical guard and detector gate do not prove semantic equivalence, quality or factual correctness. Host scores are supplied assessments, not independent measurements.'}
     return {'ok': True, 'text': accepted, 'goal': settings['goal'], 'backend': backend, 'model': model,
             'attempts': [], 'gate_before': before['gate'], 'gate_after': after['gate'], 'gate': after['gate'],
@@ -126,15 +171,31 @@ def _result(original, accepted, settings, refused, backend, model, quality_statu
             'quality_status': quality_status, 'scores': scores}
 
 
-def edit_submit(text, rewrite, plan_id, scores=None, model=None):
+def _check_author_text(settings, author_text):
+    bound = settings.get('author_text_sha256')
+    if author_text is None and bound is None:
+        return
+    if bound is None:
+        raise ValueError('this plan binds no author text; request a plan with author_text')
+    if _author_hash(author_text) != bound:
+        raise ValueError('author text does not match the plan')
+
+
+def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=None,
+                author_text_origin=None):
     settings = _verify(text, plan_id)
+    if author_text_origin not in (None, 'cli-file', 'host-supplied'):
+        raise ValueError('author_text_origin must be cli-file or host-supplied')
+    if author_text is not None and author_text_origin is None:
+        author_text_origin = 'host-supplied'
     if not isinstance(rewrite, str):
         raise ValueError('rewrite must be text')
+    _check_author_text(settings, author_text)
     if settings['goal'] == 'judge':
-        out = _result(text, text, settings, [], 'host', model)
+        out = _result(text, text, settings, [], 'host', model, author_text_origin=author_text_origin)
         out['assessment'] = rewrite
         return out
-    guarded = restore_masks(text, rewrite, settings['is_html'], settings['is_tex'])
+    guarded = restore_masks(text, rewrite, settings['is_html'], settings['is_tex'], author_text)
     accepted, refused = guarded['text'], guarded['refused']
     quality = _quality(scores)
     if settings['goal'] == 'polish':
@@ -153,7 +214,8 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None):
             refused.append({'paragraph': None, 'reasons': reasons})
     if refused and quality == 'host_assessed_no_regression':
         quality = 'unassessed_after_guard'
-    return _result(text, accepted, settings, refused, 'host', model, quality, scores)
+    return _result(text, accepted, settings, refused, 'host', model, quality, scores,
+                   author_text_origin)
 
 
 def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False):

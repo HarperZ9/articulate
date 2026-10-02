@@ -50,9 +50,10 @@ SOURCES = (("claude-plugin", ""), ("src/articulate", "src/articulate"))
 SKIP_DIRS = {"__pycache__"}
 SKIP_SUFFIXES = {".pyc", ".pyo", ".pyd"}
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
-# serve.py runs articulate.local_mcp, edit_hook.py runs articulate.edit_hook, and
-# importing either runs the package __init__.
-ENTRY = ("__init__", "local_mcp", "edit_hook")
+# serve.py runs articulate.local_mcp, edit_hook.py runs articulate.edit_hook,
+# house_hook.py runs articulate.house_hook, and importing any of them runs the
+# package __init__.
+ENTRY = ("__init__", "local_mcp", "edit_hook", "house_hook", "house")
 # Modules the plugin never runs: mcp_server imports editing only when the tool
 # set is not local, and the plugin's .mcp.json always launches the local set.
 # editing pulls in backends and claude_cli, which read provider keys and start

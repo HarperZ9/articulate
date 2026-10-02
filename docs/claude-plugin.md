@@ -12,7 +12,7 @@ covers install, example prompts, the privacy policy and troubleshooting: see
 
 ## Install
 
-This source plugin targets the 0.7.0 package on the retained-detector release line. It bundles
+This source plugin targets the 0.8.0 package on the retained-detector release line. It bundles
 the package source. Build from the matching package tag for release use; use
 `--dev` for a local test build before that tag exists.
 
@@ -95,9 +95,46 @@ LOW advisory count and cadence fields, with the plugin's bounded hit output.
 `score` returns the 0.5.1 heuristic score and structural rates. Neither exposes
 the unreleased density or fairness outputs.
 
+## House-voice hooks
+
+`hooks/hooks.json` declares three hooks. Two run `server/house_hook.py` with the
+same isolated Python flags as the server.
+
+- `SessionStart`, on startup, resume, clear and compact: once the user turns the
+  house voice on (`ARTICULATE_HOUSE_VOICE=on`, or `articulate house on` with the
+  separate command line), the hook answers with
+  the house-voice brief as `hookSpecificOutput.additionalContext`, so the model
+  writes in the [house voice](house-voice.md) from its first reply and again
+  after a compaction. The brief names its version (`house/2`) and fingerprint.
+  This hook imports none of the style rules; the plugin shim loads the hook's
+  modules without running the package initializer. It measured a 72 ms p95 on
+  Windows.
+- `Stop`, after every reply: it prints nothing unless the user chose mode
+  `revise` (`ARTICULATE_HOUSE_VOICE=revise`, or
+  `articulate house set mode=revise`). Claude Code's Stop event holds the full
+  text of the last reply; the hook reads it only in that mode. When the reply claims a human life or has a HIGH style
+  finding, it asks the model for one revision and names each finding by line.
+  `stop_hook_active` stops a second request. It never opens the transcript.
+
+The house voice is off by default. `ARTICULATE_HOUSE_VOICE=off` or
+`articulate house off` keeps both hooks silent. The `articulate` command line
+comes with the PyPI package `articulate-writing`; the plugin does not install
+it. Every
+path exits 0. The hooks read the packaged spec and the house settings file and
+write nothing.
+
+Codex: the Codex manifest points at the same hooks file. Whether Codex runs
+plugin `SessionStart` and `Stop` hooks is not confirmed. Open Codex issues
+report that plugin-local hooks do not run (openai/codex #16430) and that a root
+`plugin.json` disables a plugin's hooks (openai/codex #39895); this plugin has a
+root `plugin.json`. If the brief does not arrive, run
+`articulate house brief --agents` and paste the result into AGENTS.md, or point
+a user-level Codex hook at `articulate-house-hook` after
+`pip install articulate-writing`.
+
 ## Edit-time hook
 
-The plugin declares one hook in `hooks/hooks.json`. Claude Code reads that file
+The plugin's third hook, also in `hooks/hooks.json`, is the edit-time check. Claude Code reads that file
 from the plugin root, and the Codex manifest points at it with its `hooks`
 entry. After a `Write`, `Edit`, `MultiEdit` or Codex `apply_patch` call, the
 host runs `server/edit_hook.py` with the same isolated Python flags as the

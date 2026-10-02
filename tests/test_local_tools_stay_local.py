@@ -51,13 +51,31 @@ def _refuse(what):
     return refuse
 
 
+def _voice_store():
+    """The one folder outside the package a local tool may read: the voice store,
+    where voice_compare reads a profile the author saved with the CLI."""
+    from articulate import voice_store
+    return voice_store.store_dir().resolve()
+
+
+def _house_config():
+    """The house-voice settings folder, which house_brief and house_transform
+    read (never write) to learn whether the user turned the voice off or tuned it."""
+    from articulate import house_settings
+    return house_settings.config_dir().resolve()
+
+
 def _package_read_only(real):
     """open() limited to reading the package's own files, which is how Python
-    loads a module imported inside a function."""
+    loads a module imported inside a function, the voice store and the house
+    settings folder."""
+    store, config = _voice_store(), _house_config()
+
     def opener(file, mode="r", *args, **kwargs):
         if isinstance(file, (str, bytes, os.PathLike)):
             path = pathlib.Path(os.fsdecode(file)).resolve()
-            if PKG in path.parents and not set(mode) & set("wax+"):
+            readable = PKG in path.parents or store in path.parents or config in path.parents
+            if readable and not set(mode) & set("wax+"):
                 return real(file, mode, *args, **kwargs)
         ESCAPES.append(f"open {file!r} in mode {mode!r}")
         raise Escaped(f"a local tool tried to open {file!r} in mode {mode!r}")
@@ -65,7 +83,22 @@ def _package_read_only(real):
 
 
 @pytest.fixture
-def sealed(monkeypatch, tmp_path):
+def voice_dir(monkeypatch, tmp_path_factory):
+    """A saved profile for voice_compare, written before the seal goes on."""
+    from articulate import voice, voice_identity, voice_store
+    folder = tmp_path_factory.mktemp("voice")
+    voice_identity.ensure_identity(folder)
+    profile = voice.build_profile([MARKER + " The rain came in March and we left."])
+    voice_store.save(voice_identity.bind(profile, folder), "sealed", folder)
+    monkeypatch.setenv("ARTICULATE_VOICE_DIR", str(folder))
+    config = tmp_path_factory.mktemp("config")
+    (config / "house.json").write_text('{"mode": "default"}', encoding="utf-8")
+    monkeypatch.setenv("ARTICULATE_CONFIG_DIR", str(config))
+    return folder
+
+
+@pytest.fixture
+def sealed(monkeypatch, tmp_path, voice_dir):
     """No socket, no process, no file outside the package, and an empty working
     folder to show that nothing landed in it."""
     ESCAPES.clear()
@@ -100,6 +133,14 @@ def _arguments(tool):
             if schema["properties"][name].get("type") == "string"}
     if tool["name"] == "edit_submit":
         args["plan_id"] = mcp_server.do_edit_plan(MARKER)["plan_id"]
+    if tool["name"] == "corpus_check":
+        args["documents"] = [{"name": "a.md", "text": MARKER}, {"name": "b.md", "text": MARKER}]
+    if tool["name"] == "title_workshop":
+        args["titles"] = [MARKER, MARKER]
+    if tool["name"] in ("voice_compare", "voice_apply_plan"):
+        args["voice_name"] = "sealed"
+    if tool["name"] == "voice_apply_plan":
+        args["authored_by_user"] = True
     return args
 
 
@@ -183,8 +224,12 @@ def test_the_plugin_tool_set_lists_only_local_tools():
     lambda tmp: pathlib.Path.home().joinpath("notes.md").read_text(),
     lambda tmp: open(pathlib.Path.home() / "notes.md"),
     lambda tmp: os.open(str(tmp / "leak.txt"), os.O_WRONLY | os.O_CREAT),
+    lambda tmp: open(_voice_store() / "leak.json", "w"),
+    lambda tmp: (_voice_store() / "sealed.json").write_text("{}"),
+    lambda tmp: open(_house_config() / "house.json", "w"),
 ], ids=["socket", "connect", "process", "open-write", "path-write", "path-write-bytes",
-        "path-open", "path-read-user-file", "read-user-file", "os-open"])
+        "path-open", "path-read-user-file", "read-user-file", "os-open",
+        "voice-store-write", "voice-store-overwrite", "house-config-write"])
 def test_each_guard_trips(sealed, attempt):
     """Control: every escape the sealed fixture claims to block is blocked and
     recorded."""
@@ -207,3 +252,18 @@ def test_the_text_scan_finds_a_planted_copy(monkeypatch):
     from articulate import tool_meta
     monkeypatch.setattr(tool_meta, "_PLANTED", {"kept": [MARKER]}, raising=False)
     assert any("Zebracorn" in s for s in _strings(vars(tool_meta)))
+
+
+def test_the_voice_store_is_readable_under_the_seal(sealed, voice_dir):
+    """Control for the one allowance: a read of a saved profile works and records
+    no escape, so the write controls above are about the mode and not the path."""
+    with open(voice_dir / "sealed.json", encoding="utf-8") as fh:
+        assert json.load(fh)["schema"] == "articulate/voice-profile/v1"
+    assert ESCAPES == []
+
+
+def test_the_house_settings_are_readable_under_the_seal(sealed):
+    """Control for the second allowance: reading the settings file records no escape."""
+    with open(_house_config() / "house.json", encoding="utf-8") as fh:
+        assert json.load(fh)["mode"] == "default"
+    assert ESCAPES == []

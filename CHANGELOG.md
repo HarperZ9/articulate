@@ -4,7 +4,103 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.8.0
+
+Two voice layers and series review. Articulate ships a house voice for the
+model in your client, opt-in and openly a model's voice, and a personal
+voice that each user builds from their own writing on their own computer. No
+person's voice ships in the package. Detector rules stay the published v0.5.2
+rules (fingerprint `sha256:9f78a7484bb20f84`); this release changes no finding,
+and every 0.7.0 receipt still verifies.
+
+- House voice `house/2`. A published, versioned spec
+  ([docs/house-voice.md](docs/house-voice.md), machine form
+  `articulate/data/house_voice_v2.json`) written from reader-cost principles
+  and cited research. No person's writing served as its model, and no
+  AI-authorship detector was used to tune it. The brief a model reads is generated from the spec,
+  so the spec, the brief and a receipt's fingerprint cannot drift apart.
+  `house/1` stays packaged with its own fingerprint, so its receipts still
+  verify; both versions share one edit list.
+- Why `house/2`. In a blinded evaluation on a local 7B model with no tools,
+  the `house/1` brief ("I read, I ran") led the model to claim checks it never
+  ran in 15 of 60 replies, against 0 of 60 without the brief. `house/2` uses
+  "I" only for actions the session's tool results show, never narrates a check
+  without one, ends with what the reader should check, puts completeness before
+  brevity, and on a request to write about the user's life or as the user uses
+  only facts they gave, marks each missing fact as a gap such as
+  `[your detail: when you started]` and asks for it. Re-measured on the same
+  model and 30 prompts: untaken-action claims 0 of 60 with `house/2` and 0 of
+  60 without it; median reply 133 words against 253.5 (86 with `house/1`); the
+  AI-assistance line kept in 4 of 4 replies against 3 of 4.
+- Off by default. The ship gate was: untaken-action claims no higher than with
+  the brief off (at most 1 of 60), and a blinded reader not significantly
+  worse. The shipped wording passed both. A blinded qwen2.5-coder 32B reader,
+  shown each pair in both orders, preferred the plain reply on 18 of 60 pairs
+  and the `house/2` reply on 9 (10 ties, 23 flipped with order; two-sided sign
+  test p = 0.12). The reader still leaned toward the plain replies, and the
+  shipped wording marked a gap in only 1 of 14 write-as-me replies. A variant
+  that moved the life line up and named what not to invent marked a gap in 12
+  of 14, but it failed the reader gate (21 to 8, p = 0.024) and put gap
+  questions into 8 of 58 ordinary replies, against 1 of 58; it does not ship.
+  Neither wording stopped this model from inventing life details (12 of 14
+  replies with the shipped wording, 10 of 14 without a brief). So the house
+  voice is opt-in: `ARTICULATE_HOUSE_VOICE=on` or `articulate house on`. An
+  explicit `house apply`, `house brief`, `house_transform` or `house_brief`
+  still applies it unless the user set a mode. Host models (Claude, Codex) and
+  human readers are unmeasured.
+- The plugin's new `SessionStart` hook hands the brief to the model at session
+  start and after a resume, clear or compaction. It reads the spec and the
+  settings file, imports none of the style rules and measured a 72 ms p95 on
+  Windows. It is silent until the user turns the house voice on. A `Stop` hook ships declared and does nothing unless the user picks
+  mode `revise`, which asks for one revision when a finished reply claims a
+  human life or holds a HIGH style finding.
+- `house_transform` (MCP), `articulate house apply` (CLI pipe) and
+  `articulate.house.transform` (library) apply a closed list of exact edits to
+  model output: em dashes that join two words to commas, doubled spaces, and
+  opener and closer sentences with no content, such as a praise opener or an
+  offer to help further. Dashes at a line edge, after a list marker or alone in
+  a table cell stay, and a reply made only of such sentences is kept whole. An
+  exact-edit verifier and the meaning guard check every candidate. Everything
+  else is a located note, including `house/human-claim`. Receipts use
+  `articulate/house-receipt/v1` and replay with `articulate verify`.
+- Controls: `ARTICULATE_HOUSE_VOICE=off`, `articulate house off`, modes
+  `off | brief | default | revise`, and tuning keys `length`, `headings`,
+  `lists`, `first_person`, `limits` and `end_line`. The banned tics and the
+  identity rules are not tunable.
+- Personal voice. `articulate voice learn SAMPLES --name N --mine` builds a
+  profile from the files you name, only after `--mine` says they are yours. The
+  profile holds aggregates and no sample sentence, is bound to a local identity,
+  stays in your local voice store, and `voice show`, `export`, `import`,
+  `delete` and `delete --all` let you inspect, move and remove it.
+  `voice compare` and `voice apply` refuse a profile that belongs to another
+  owner.
+- `voice apply DRAFT --name N --authored-by-me` (MCP `voice_apply_plan` with
+  `authored_by_user: true`) plans an edit of your own draft toward your
+  measured habits. Plans move to `articulate/edit-plan/v2`, which binds the
+  profile name and hash and any author text; v1 plans still verify. A rewrite
+  that adds a first-person sentence with no source in the draft or your own
+  supplied words is refused paragraph by paragraph. Voice counts before and
+  after are reported and never decide acceptance.
+- Series review: `articulate corpus`, `titles`, `interview` and `restructure`,
+  and the MCP tools `corpus_check`, `title_workshop`, `interview` and
+  `restructure_plan`. Findings are report-only, with locations, a reader cost and
+  a direction, never replacement prose. The interview asks and never answers;
+  restructure keeps every sentence and citation byte for byte. Corpus receipts
+  use `articulate/corpus-receipt/v1`.
+- AI-assistance disclosures are a protected span kind. No rewrite, house edit
+  or restructure moves or rewords one.
+- New command `articulate-house-hook` for other hosts that run command hooks.
+- `python -m articulate.bench house` reports a `python_start` row and a note
+  when the interpreter alone starts slowly. In a clean Windows virtual
+  environment every house budget holds (`house apply` cold, 2,000 words: 212 ms
+  p95, budget 250 ms); the earlier Windows miss came from a machine whose
+  site-packages runs about 120 `.pth` files at start-up.
+- Codex: whether Codex runs `SessionStart` and `Stop` from a plugin is not
+  confirmed. Open Codex issues report that plugin-local hooks do not run and
+  that a root `plugin.json` disables them. `articulate house brief --agents`
+  prints the brief as an AGENTS.md section as a fallback.
+
+Claude plugin directory listing (merged on `release/0.5.x` before 0.8.0):
 
 - The Claude plugin manifest carries the directory listing fields: a 1024 px
   icon, documentation, support, privacy and terms links, and the
@@ -16,7 +112,6 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   that names the edit hook, the MCP server launch, network use, files written,
   the bundled model backends that stay off, and each environment variable the
   server and hook read.
-
 - The Claude plugin folder now carries the package modules its MCP server and
   edit hook import, at `claude-plugin/src/articulate`, so a directory install
   that receives only that folder starts. `python scripts/sync_plugin_source.py`
@@ -25,7 +120,6 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   the hook command from the manifests. The privacy policy now says the hook
   ignores the session ID, transcript path and working folder in Claude Code's
   event.
-
 - The Claude plugin no longer carries `editing.py`, `backends.py` or
   `claude_cli.py`, the model-backend modules that read provider API keys. The
   plugin's local tools never import them; `mcp_server` answers plainly when a
