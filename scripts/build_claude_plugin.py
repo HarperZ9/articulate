@@ -111,6 +111,22 @@ def server_closure(package, files):
     return seen
 
 
+# The plugin folder carries its own copy of the package files the server and
+# hook import, so an install that receives only claude-plugin/ starts. A test
+# holds this copy equal to package_files(); scripts/sync_plugin_source.py
+# rewrites it. The build itself reads src/articulate, not this copy.
+VENDORED = Path("src")
+
+
+def package_files(repo=REPO):
+    """The src/articulate files the plugin carries: every module reachable from
+    ENTRY and every tracked file that is not Python source, relative to src/articulate."""
+    repo = Path(repo)
+    files = list(_tracked(repo, "src/articulate"))
+    keep = server_closure(repo / "src/articulate", [f.as_posix() for f in files])
+    return [f for f in files if f.suffix != ".py" or f.stem in keep]
+
+
 def managed_entries(repo=REPO):
     """The top-level names this script writes into OUT_DIR."""
     return sorted({rel.parts[0] for rel in _tracked(repo, "claude-plugin")}
@@ -141,10 +157,10 @@ def build(out, replace=False, repo=REPO):
     _prepare(out, replace, repo)
     written = []
     for folder, dest in SOURCES:
-        files = list(_tracked(repo, folder))
         if folder == "src/articulate":
-            keep = server_closure(repo / folder, [f.as_posix() for f in files])
-            files = [f for f in files if f.suffix != ".py" or f.stem in keep]
+            files = package_files(repo)
+        else:
+            files = [f for f in _tracked(repo, folder) if VENDORED not in f.parents]
         for rel in files:
             target = out / dest / rel
             target.parent.mkdir(parents=True, exist_ok=True)

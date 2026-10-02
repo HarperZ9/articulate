@@ -216,6 +216,14 @@ The plugin folder is the root of its own repository. Claude's directory holds a
 Python server in a plugin that sits in a subfolder of a larger repository for a
 reviewer, and a plugin at a repository root avoids that.
 
+The `claude-plugin/` folder in this repository also runs on its own: it carries
+the modules its server and edit hook import at `claude-plugin/src/articulate`.
+`python scripts/sync_plugin_source.py` regenerates that copy from
+`src/articulate` after a source change, and `--check` reports drift; a test
+fails when the copy differs. A directory submission of the subfolder works, and
+its Python server and hook are held for a reviewer as the paragraph above
+describes.
+
 ## Portable packaging and Codex installation
 
 The bundle contains root `plugin.json` and `mcp.json` for Agent Plugins 1.0.0.
