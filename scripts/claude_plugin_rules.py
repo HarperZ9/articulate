@@ -24,6 +24,14 @@ JUNK = {".ds_store", "thumbs.db", "desktop.ini", "__macosx"}
 POLICY_TOPICS = ("Data collected", "Use and storage", "Third-party sharing", "Retention",
                  "Contact")
 LICENSE_ID = "FSL-1.1-MIT"
+# The directory reads these from the Claude manifest only; Claude Code ignores them,
+# so they stay out of the portable and Codex manifests.
+LISTING_URLS = ("documentationUrl", "supportUrl", "privacyPolicyUrl", "termsOfServiceUrl")
+LISTING_KEYS = ("displayName", "metadata", "icon") + LISTING_URLS
+# Complete images the directory accepts as plugin files; exempt from the text and
+# 256 KiB rules. The icon must be a square PNG or JPEG of 512 to 2048 px under 2 MB.
+IMAGE_MAGIC = {".png": b"\x89PNG\r\n\x1a\n", ".jpg": b"\xff\xd8\xff", ".jpeg": b"\xff\xd8\xff"}
+ICON_MAX_BYTES = 2 * 1024 * 1024
 SERVER_FILE = "${CLAUDE_PLUGIN_ROOT}/server/serve.py"
 HOOK_FILE = "${CLAUDE_PLUGIN_ROOT}/server/edit_hook.py"
 HOOKS_FILE = "./hooks/hooks.json"
@@ -74,13 +82,37 @@ def check_manifest(root):
         problems.append("plugin.json: author.name is missing")
     if m.get("license") != LICENSE_ID:
         problems.append(f"plugin.json: license must be {LICENSE_ID}")
-    url = urllib.parse.urlparse(m.get("homepage", ""))
-    if url.scheme != "https" or not url.netloc:
-        problems.append("plugin.json: homepage must be an https URL")
+    for key in ("homepage",) + LISTING_URLS:
+        url = urllib.parse.urlparse(m.get(key) or "")
+        if url.scheme != "https" or not url.netloc:
+            problems.append(f"plugin.json: {key} must be an https URL")
+    problems += _check_icon(root, m.get("icon"))
     if m.get("version") != bundled_version(root):
         problems.append("plugin.json: version differs from the bundled package version")
     problems += _check_marketplace(root, m.get("name"))
     return problems
+
+
+def png_size(data):
+    """(width, height) of a PNG, or None when data is not a PNG."""
+    if data[:8] != IMAGE_MAGIC[".png"] or data[12:16] != b"IHDR":
+        return None
+    return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+
+
+def _check_icon(root, icon):
+    if not isinstance(icon, str) or not icon.startswith("./"):
+        return ["plugin.json: icon must be a ./ path to an image in the plugin"]
+    path = root / icon[2:]
+    if not path.is_file():
+        return [f"plugin.json: icon {icon} is missing"]
+    data = path.read_bytes()
+    size = png_size(data)
+    if size is None or size[0] != size[1] or not 512 <= size[0] <= 2048:
+        return ["plugin.json: icon must be a square PNG of 512 to 2048 px"]
+    if len(data) >= ICON_MAX_BYTES:
+        return ["plugin.json: icon must be under 2 MB"]
+    return []
 
 
 def _check_marketplace(root, plugin_name):
@@ -135,7 +167,7 @@ def check_portable(root):
         _json(root, path, problems) for path in paths]
     if any(not isinstance(d, dict) for d in (portable, claude, codex, mcp, legacy, codex_mcp)):
         return problems + ["portable plugin: manifests must be objects"]
-    identity = {k: v for k, v in claude.items() if k not in ("displayName", "metadata")}
+    identity = {k: v for k, v in claude.items() if k not in LISTING_KEYS}
     extension = portable.get("extensions", {}).get("com.openai", {})
     interface = extension.get("interface")
     expected = {"$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
@@ -242,6 +274,11 @@ def check_files(root):
         if not path.is_file():
             continue
         data = path.read_bytes()
+        magic = IMAGE_MAGIC.get(path.suffix.lower())
+        if magic is not None:
+            if not data.startswith(magic):
+                problems.append(f"{rel}: not a complete {path.suffix} image")
+            continue
         if len(data) >= MAX_BYTES:
             problems.append(f"{rel}: {len(data)} bytes, at or over 256 KiB")
         if b"\0" in data or not _utf8(data):

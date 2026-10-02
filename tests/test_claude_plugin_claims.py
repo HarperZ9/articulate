@@ -180,7 +180,7 @@ def test_a_link_to_a_missing_file_is_caught():
 
 
 def test_the_readme_gives_the_privacy_policy_address():
-    url = PLUGIN["metadata"]["privacyPolicy"]
+    url = PLUGIN["privacyPolicyUrl"]
     assert url.startswith("https://")
     assert url in rules.policy_section(README)
 

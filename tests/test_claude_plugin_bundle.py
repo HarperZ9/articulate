@@ -222,6 +222,18 @@ BREAKS = {
                     "edit_hook.py is missing"),
     "codex-hooks": (lambda p: _edit_json(p / ".codex-plugin" / "plugin.json",
                                          lambda d: d.pop("hooks")), "identity or OpenAI"),
+    "listing-url": (lambda p: _edit_json(p / ".claude-plugin" / "plugin.json",
+                                         lambda d: d.update(supportUrl="http://example.com")),
+                    "supportUrl must be an https URL"),
+    "icon-missing": (lambda p: (p / ".claude-plugin" / "icon.png").unlink(), "icon"),
+    "icon-not-square": (lambda p: (p / ".claude-plugin" / "icon.png").write_bytes(
+        b"\x89PNG\r\n\x1a\n" + bytes(4) + b"IHDR" + (1024).to_bytes(4, "big")
+        + (512).to_bytes(4, "big")), "square PNG"),
+    "image-truncated": (lambda p: (p / "server" / "art.png").write_bytes(b"not an image"),
+                        "not a complete .png image"),
+    "listing-in-portable": (lambda p: _edit_json(p / "plugin.json",
+                                                 lambda d: d.update(icon="./x.png")),
+                            "portable identity"),
     "short-readme": (lambda p: (p / "README.md").write_text(
         "# Articulate\n\n## Privacy Policy\n\nNone.\n", encoding="utf-8"),
         "fewer than 40 words"),
