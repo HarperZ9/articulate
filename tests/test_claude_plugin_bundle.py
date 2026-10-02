@@ -120,6 +120,9 @@ def test_every_bundled_module_imports_with_only_the_bundle_and_the_stdlib(plugin
 def test_every_tracked_template_file_lands_unchanged_and_nothing_else(plugin):
     expected = _tracked_files("claude-plugin")
     assert expected is not None, "the build reads the files git tracks, so this test does"
+    # claude-plugin/src is the vendored package copy; the build writes src/ from
+    # src/articulate, and test_claude_plugin_vendored holds the two equal.
+    expected = [rel for rel in expected if not rel.startswith("src/")]
     landed = sorted(p.relative_to(plugin).as_posix() for p in plugin.rglob("*")
                     if p.is_file() and p.relative_to(plugin).parts[0] != "src"
                     and p.relative_to(plugin).as_posix() != "LICENSE")
