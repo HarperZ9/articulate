@@ -99,7 +99,9 @@ def test_every_package_import_in_the_bundle_resolves_inside_it(plugin):
     modules = {p.stem for p in bundled.glob("*.py")}
     package = {p.stem for p in PKG.glob("*.py")}
     for path in sorted(bundled.glob("*.py")):
-        missing = (_package_imports(path) & package) - modules
+        # Hosted-only modules stay out on purpose; the import that names them
+        # sits behind a guard that answers without them.
+        missing = (_package_imports(path) & package) - modules - build.HOSTED_ONLY
         assert not missing, (path.name, sorted(missing))
 
 
@@ -120,6 +122,9 @@ def test_every_bundled_module_imports_with_only_the_bundle_and_the_stdlib(plugin
 def test_every_tracked_template_file_lands_unchanged_and_nothing_else(plugin):
     expected = _tracked_files("claude-plugin")
     assert expected is not None, "the build reads the files git tracks, so this test does"
+    # claude-plugin/src is the vendored package copy; the build writes src/ from
+    # src/articulate, and test_claude_plugin_vendored holds the two equal.
+    expected = [rel for rel in expected if not rel.startswith("src/")]
     landed = sorted(p.relative_to(plugin).as_posix() for p in plugin.rglob("*")
                     if p.is_file() and p.relative_to(plugin).parts[0] != "src"
                     and p.relative_to(plugin).as_posix() != "LICENSE")
@@ -229,6 +234,18 @@ BREAKS = {
                     "edit_hook.py is missing"),
     "codex-hooks": (lambda p: _edit_json(p / ".codex-plugin" / "plugin.json",
                                          lambda d: d.pop("hooks")), "identity or OpenAI"),
+    "listing-url": (lambda p: _edit_json(p / ".claude-plugin" / "plugin.json",
+                                         lambda d: d.update(supportUrl="http://example.com")),
+                    "supportUrl must be an https URL"),
+    "icon-missing": (lambda p: (p / ".claude-plugin" / "icon.png").unlink(), "icon"),
+    "icon-not-square": (lambda p: (p / ".claude-plugin" / "icon.png").write_bytes(
+        b"\x89PNG\r\n\x1a\n" + bytes(4) + b"IHDR" + (1024).to_bytes(4, "big")
+        + (512).to_bytes(4, "big")), "square PNG"),
+    "image-truncated": (lambda p: (p / "server" / "art.png").write_bytes(b"not an image"),
+                        "not a complete .png image"),
+    "listing-in-portable": (lambda p: _edit_json(p / "plugin.json",
+                                                 lambda d: d.update(icon="./x.png")),
+                            "portable identity"),
     "short-readme": (lambda p: (p / "README.md").write_text(
         "# Articulate\n\n## Privacy Policy\n\nNone.\n", encoding="utf-8"),
         "fewer than 40 words"),

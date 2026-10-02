@@ -8,24 +8,28 @@ commit messages and drafts. The checker runs on your computer and sends the text
 nowhere; the calling model reads the text as part of your conversation.
 
 It can also give the model in your client a voice of its own, the Articulate
-house voice, from the first reply of every session. It is opt-in: turn it on
-with `articulate house on` or `ARTICULATE_HOUSE_VOICE=on`. It is openly a model's voice:
-answer first, numbers with their denominators, "I" only for what it did in the
-session, no praise openers, no offers to help further, no em dashes. It never
-claims a human life. `ARTICULATE_HOUSE_VOICE=off` or `articulate house off`
-turns it off again. The published spec is
+house voice, from the first reply of every session. It is off until you turn
+it on: set `ARTICULATE_HOUSE_VOICE=on` in the environment Claude Code starts
+from. It is openly a model's voice: answer first, numbers with their
+denominators, "I" only for what it did in the session, no praise openers, no
+offers to help further, no em dashes. It never claims a human life.
+`ARTICULATE_HOUSE_VOICE=off`, or leaving the variable unset, keeps it off. The
+`articulate house on` and `articulate house off` commands do the same through a
+settings file; the `articulate` command line comes with the PyPI package
+`articulate-writing`, which this plugin does not install. The published spec is
 [docs/house-voice.md](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/house-voice.md).
 
 ## What you get
 
 - The house voice, once you turn it on. At session start (and after a resume,
-  clear or compaction) a hook hands the model the house-voice brief, about 1,400 characters, with
+  clear or compaction) a hook hands the model the house-voice brief, about 1,500 characters, with
   its version and fingerprint. `house_brief` returns the brief, and
   `house_transform` applies the house voice's closed list of exact edits to
   model output you pass it, with a meaning guard and a receipt. Mode `revise`
-  (`articulate house set mode=revise`) adds one revision request when a
-  finished reply claims a human life or breaks a banned rule; it costs a model
-  turn, so it is off by default.
+  (`ARTICULATE_HOUSE_VOICE=revise`, or `articulate house set mode=revise` with
+  the separate command line) adds a Stop hook check: after each reply, the hook
+  reads the reply's text and, when it claims a human life or breaks a banned
+  rule, asks for one revision. It costs a model turn, so it is off by default.
 - Series review: `corpus_check` reads several documents as one series and
   names repeated title formulas, shared phrases, paragraph scaffolds, even
   rhythm and missing perspective, with locations. `title_workshop`,
@@ -36,7 +40,8 @@ turns it off again. The published spec is
   voice profile you made on this computer with `articulate voice learn --mine`,
   and `voice_apply_plan` plans an edit of your own draft toward that voice,
   only when you say the draft is yours. No tool learns, exports or deletes a
-  profile; the command line does that.
+  profile. The separate `articulate` command line (PyPI package
+  `articulate-writing`, not installed by this plugin) does that.
 
 - `check` returns each HIGH and MEDIUM finding with its rule, tier, line, span
   and label, a count of LOW advisories (`advisory_count`), `clean` and `verdict`
@@ -78,14 +83,19 @@ turns it off again. The published spec is
 
 ## Install
 
-This plugin targets package version 0.8.0. Build from its matching package tag as
-[the build guide](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md)
-describes, then use the local build folder:
+Install Articulate Writing from the Claude plugin directory, or add this
+repository's `claude-plugin` folder as a marketplace. The folder carries its own
+copy of the checker, so there is nothing else to install:
 
 ```bash
-claude plugin marketplace add ./build/claude-plugin
+claude plugin marketplace add ./claude-plugin
 claude plugin install articulate-writing@articulate-writing
 ```
+
+Run the first command from a checkout of this repository on the
+`release/0.5.x` branch. To build a separate plugin repository for local
+development, follow
+[the build guide](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md).
 
 The same release also prepares Windows x64 native ZIP and binary MCPB packages
 with a Python runtime included. See the
@@ -116,7 +126,7 @@ process. This does not provide a checker in an ordinary web chat.
 
 | What | Detail |
 |:-|:-|
-| Processes | The server: `python3 -I -S -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. The hooks: the same command running `server/house_hook.py` at session start and at the end of each reply, and `server/edit_hook.py` after each file write or edit. Each exits when it has answered. All run the first `python3` on your PATH, which is a virtual environment's Python when you have one activated. |
+| Processes | The server: `python3 -I -S -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. The hooks: the same command running `server/house_hook.py` at session start and at the end of each reply (the end-of-reply event holds Claude's last reply, which the hook reads only in mode `revise`), and `server/edit_hook.py` after each file write or edit. Each exits when it has answered. All run the first `python3` on your PATH, which is a virtual environment's Python when you have one activated. |
 | Files | It loads its own source from the plugin folder and the Python standard library, and no installed package: `-S` skips every site-packages folder. It writes no file: no log, no cache, no bytecode. It reads two more things, and only reads them: the house-voice settings file (`house.json` in your Articulate config folder) when the house hooks and tools run, and, for `voice_compare`, `voice_apply_plan` and `interview` with a voice name, one profile and `identity.json` from your local voice store. The edit hook reads the edit from the event the host sends on standard input and does not open the edited file. |
 | Network | None. It opens no connection. |
 | Other programs | None. |
@@ -129,26 +139,43 @@ the plugin does not call another model.
 
 ## Privacy Policy
 
-Last updated: 2026-10-01. This policy covers the Articulate Writing plugin for
+Last updated: 2026-10-02. This policy covers the Articulate Writing plugin for
 local Claude Code and Codex hosts. It is also published at
 https://github.com/HarperZ9/articulate/blob/release/0.5.x/claude-plugin/PRIVACY.md.
 
-**Data collected.** The plugin reads the text the calling host passes to one of
-its tools, the events the host passes to its hooks (a session start, a file
-edit, and the end of a reply), its own house-voice spec, and your house-voice
-settings file. When you name a voice profile in `voice_compare`,
-`voice_apply_plan` or `interview`, it reads that one profile and the store's
-`identity.json` from the local voice store. It does not open your other files
-or read conversation history or saved memory. It collects no account details,
-usage statistics or telemetry.
+### What this plugin runs and handles
+
+**Hooks.** The plugin has three hooks. Each runs `python3 -I -S -B -X utf8` on a file in `${CLAUDE_PLUGIN_ROOT}/server/`, answers once on standard output and exits. No hook opens a network connection, starts a program or writes a file.
+
+- **SessionStart** runs `house_hook.py` when a session starts, resumes, is cleared or is compacted, for up to 10 seconds. When you have turned the house voice on, it adds the published house-voice brief to Claude's context. The brief comes from the spec packaged in the plugin and your tuning keys. It is the same text for everyone with the same keys and holds nothing about you. With the house voice off, which is the default, it prints nothing.
+- **Stop** runs `house_hook.py` after every reply Claude finishes, for up to 15 seconds. Claude Code's Stop event holds the full text of Claude's last reply. The Stop hook is opt-in: it reads that reply text only when you set the house voice to mode `revise` (for example `ARTICULATE_HOUSE_VOICE=revise`). In that mode, if the reply claims a human life or breaks a banned style rule, the hook returns a block decision that asks Claude to revise the reply once and names each finding by line. When Claude Code marks the event as already continued by a Stop hook, the hook says nothing, so it forces at most one revision per reply. In every other mode it ignores the reply text and prints nothing. It never blocks a tool call.
+- **PostToolUse** runs `edit_hook.py` after Claude writes or edits a file (Write, Edit, MultiEdit and apply_patch), for up to 15 seconds. The hook reads the edit event, which holds the file name and the text before and after the edit. For prose files (.md, .txt, .rst, .tex and similar) it returns advice about changed meaning and style to Claude. It opens no file and never blocks the edit.
+
+Claude Code's events also carry the session ID, the path of the conversation transcript and the working folder. The hooks ignore them and never open the transcript.
+
+**MCP server.** The plugin starts one local MCP server named `articulate` with `python3 -I -S -B -X utf8 ${CLAUDE_PLUGIN_ROOT}/server/serve.py`. `${CLAUDE_PLUGIN_ROOT}` is the folder where Claude Code installed the plugin. The launch sets two environment values: `ARTICULATE_MCP_TOOLS=local` and `ARTICULATE_LOCAL_ONLY=1`. The server talks to Claude Code over standard input and output only. Every tool is read-only.
+
+**Network.** With those two values, every tool runs on your computer. The server opens no network connection and sends nothing to the author or to any other service. Claude still reads the text as part of your conversation, and your Claude provider handles that conversation.
+
+**Code left out.** The Articulate command line tool also has optional model backends that read provider API keys and call a model provider, a local Ollama server or the `claude` program. This plugin does not include them: the folder carries only the modules its local tools and hooks import. If someone changes the plugin's launch values to ask for a model backend, the tool answers that this build does not include one.
+
+**Files it reads.** Its own folder. The house settings file `articulate/house.json` in `%APPDATA%` on Windows or `$XDG_CONFIG_HOME` (default `~/.config`) elsewhere, or in `ARTICULATE_CONFIG_DIR` when set. The hooks and the house tools read it. Only when you name a voice in `voice_compare`, `voice_apply_plan` or `interview`, that one profile and `identity.json` from the voice store in `%LOCALAPPDATA%rticulateoice` on Windows or `$XDG_DATA_HOME/articulate/voice` (default `~/.local/share/articulate/voice`) elsewhere, or in `ARTICULATE_VOICE_DIR` when set. No other file.
+
+**Files it writes.** None. Only the separate Articulate command line writes the settings file and the voice store, and this plugin does not include that command line. The `-B` flag keeps Python from writing bytecode into the plugin folder.
+
+**Environment variables and credentials.** The server reads `ARTICULATE_MCP_TOOLS` and `ARTICULATE_LOCAL_ONLY`, which the plugin sets itself. The hooks and tools read `ARTICULATE_HOUSE_VOICE` (`off`, `on`, `brief`, `default` or `revise`), the tuning keys `ARTICULATE_HOUSE_LENGTH`, `ARTICULATE_HOUSE_END_LINE`, `ARTICULATE_HOUSE_HEADINGS`, `ARTICULATE_HOUSE_LISTS`, `ARTICULATE_HOUSE_LIMITS` and `ARTICULATE_HOUSE_FIRST_PERSON`, `ARTICULATE_CONFIG_DIR` with `APPDATA` or `XDG_CONFIG_HOME`, and `ARTICULATE_VOICE_DIR` with `LOCALAPPDATA` or `XDG_DATA_HOME`. The edit hook reads `ARTICULATE_EDIT_HOOK`; set it to `off` to turn that hook off. Python reads your home folder location when a folder variable is unset. None of these is a credential, and the plugin reads no credential. The `-I` flag also makes Python ignore its own `PYTHON*` variables.
+
+**Data collected.** The plugin reads the text the calling host passes to one of its tools, the events the host passes to its hooks (a session start, a file edit, and the end of a reply, which holds Claude's last reply), its own house-voice spec, and your house-voice settings file. When you name a voice profile in `voice_compare`, `voice_apply_plan` or `interview`, it reads that one profile and the store's `identity.json` from the local voice store. It does not open your other files, the conversation transcript or saved memory. The Stop hook receives Claude's last reply in its event and reads it only in mode `revise`. It collects no account details, usage statistics or telemetry.
 
 **Use and storage.** The plugin checks text, applies the house voice and
 prepares or validates host edits in memory on your computer, then returns the
-result to the host. It writes no log, cache or copy of the text to disk. At
-session start it adds the house-voice brief to the model's context; the brief
-is the same published text for everyone and holds nothing about you. A voice
-profile is made only by the command line (`articulate voice learn --mine`)
-from files you name. It holds measured aggregates, never a sentence of your
+result to the host. It writes no log, cache or copy of the text to disk. When
+you turn the house voice on, it adds the house-voice brief to the model's
+context at session start; the brief is the same published text for everyone
+and holds nothing about you. A voice
+profile is made only by the separate Articulate command line
+(`articulate voice learn --mine`), which this plugin does not include, from
+files you name. It holds measured aggregates, never a sentence of your
 samples, stays on your computer, and `articulate voice delete --all` removes
 every profile, the identity file and the store folder. During
 `voice_apply_plan` the profile's plain-sentence description enters the host
@@ -205,8 +232,10 @@ are listed, with no file paths. Paste that report into an issue.
 - The house-voice brief is an instruction. Host models follow it unevenly, and
   no hook can rewrite a model's reply after the model writes it. The deterministic
   transform covers only its closed list.
-- Codex may not run plugin hooks. If the brief does not arrive in Codex, print
-  it with `articulate house brief --agents` and paste it into AGENTS.md.
+- Codex may not run plugin hooks. If the brief does not arrive in Codex, ask
+  for the `house_brief` tool's output and paste the brief into AGENTS.md. The
+  separate command line prints it ready for that file with
+  `articulate house brief --agents`.
 - The voice identity binding is a consent and provenance record. A local user
   who edits the JSON can defeat it, so it is not access control.
 

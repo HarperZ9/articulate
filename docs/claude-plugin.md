@@ -101,20 +101,25 @@ the unreleased density or fairness outputs.
 same isolated Python flags as the server.
 
 - `SessionStart`, on startup, resume, clear and compact: once the user turns the
-  house voice on (`articulate house on`), the hook answers with
+  house voice on (`ARTICULATE_HOUSE_VOICE=on`, or `articulate house on` with the
+  separate command line), the hook answers with
   the house-voice brief as `hookSpecificOutput.additionalContext`, so the model
   writes in the [house voice](house-voice.md) from its first reply and again
   after a compaction. The brief names its version (`house/2`) and fingerprint.
   This hook imports none of the style rules; the plugin shim loads the hook's
   modules without running the package initializer. It measured a 72 ms p95 on
   Windows.
-- `Stop`: it prints nothing unless the user chose mode `revise`
-  (`articulate house set mode=revise`). In that mode, when the event carries
-  the final reply and the reply claims a human life or has a HIGH style
+- `Stop`, after every reply: it prints nothing unless the user chose mode
+  `revise` (`ARTICULATE_HOUSE_VOICE=revise`, or
+  `articulate house set mode=revise`). Claude Code's Stop event holds the full
+  text of the last reply; the hook reads it only in that mode. When the reply claims a human life or has a HIGH style
   finding, it asks the model for one revision and names each finding by line.
   `stop_hook_active` stops a second request. It never opens the transcript.
 
-`ARTICULATE_HOUSE_VOICE=off` or `articulate house off` turns both off. Every
+The house voice is off by default. `ARTICULATE_HOUSE_VOICE=off` or
+`articulate house off` keeps both hooks silent. The `articulate` command line
+comes with the PyPI package `articulate-writing`; the plugin does not install
+it. Every
 path exits 0. The hooks read the packaged spec and the house settings file and
 write nothing.
 
@@ -247,6 +252,14 @@ with a required review.
 The plugin folder is the root of its own repository. Claude's directory holds a
 Python server in a plugin that sits in a subfolder of a larger repository for a
 reviewer, and a plugin at a repository root avoids that.
+
+The `claude-plugin/` folder in this repository also runs on its own: it carries
+the modules its server and edit hook import at `claude-plugin/src/articulate`.
+`python scripts/sync_plugin_source.py` regenerates that copy from
+`src/articulate` after a source change, and `--check` reports drift; a test
+fails when the copy differs. A directory submission of the subfolder works, and
+its Python server and hook are held for a reviewer as the paragraph above
+describes.
 
 ## Portable packaging and Codex installation
 

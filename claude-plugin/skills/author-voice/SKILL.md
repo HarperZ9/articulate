@@ -11,9 +11,11 @@ Articulate server and short name. Never invent a tool result when a tool is
 missing.
 
 The profile is built on the user's computer with
-`articulate voice learn FILES --name NAME --mine`. No tool here builds,
-exports or deletes a profile. If the user has none, tell them that command and
-stop.
+`articulate voice learn FILES --name NAME --mine`. That command comes with the
+separate Articulate command line (PyPI package `articulate-writing`), which
+this plugin does not install. No tool here builds, exports or deletes a
+profile. If the user has none, tell them that command, say where it comes from,
+and stop.
 
 ## Interview
 

@@ -168,7 +168,7 @@ same on every platform. The test machine misses the `house apply` budget because
 its interpreter spends about 150 ms on `.pth` files before any Articulate code
 runs; `-S` removes that and lands at 194 ms. The bench prints a `python_start`
 row and a note when the interpreter alone takes more than 50 ms, so a reader can
-tell that cost from Articulate's. The brief costs about 1,400 characters of
+tell that cost from Articulate's. The brief costs about 1,500 characters of
 context once per session start and after each compaction.
 
 ## Provenance

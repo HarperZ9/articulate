@@ -51,9 +51,14 @@ SKIP_DIRS = {"__pycache__"}
 SKIP_SUFFIXES = {".pyc", ".pyo", ".pyd"}
 SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
 # serve.py runs articulate.local_mcp, edit_hook.py runs articulate.edit_hook,
-# house_hook.py runs articulate.house_hook, and the package __init__ is shipped
-# for the server and the edit hook.
+# house_hook.py runs articulate.house_hook, and importing any of them runs the
+# package __init__.
 ENTRY = ("__init__", "local_mcp", "edit_hook", "house_hook", "house")
+# Modules the plugin never runs: mcp_server imports editing only when the tool
+# set is not local, and the plugin's .mcp.json always launches the local set.
+# editing pulls in backends and claude_cli, which read provider keys and start
+# the claude CLI, so the plugin carries none of the three.
+HOSTED_ONLY = frozenset(("editing",))
 
 
 def _git(repo, *args):
@@ -95,13 +100,14 @@ def _imported(source, known):
     return names & known
 
 
-def server_closure(package, files):
+def server_closure(package, files, skip=HOSTED_ONLY):
     """The names of the modules the server can import: every module reachable from
-    ENTRY through any import statement, one inside a function included."""
+    ENTRY through any import statement, one inside a function included, except
+    the modules in skip and whatever only they import."""
     sources = [f for f in files if f.endswith(".py")]
     if any("/" in f or "\\" in f for f in sources):
         raise SystemExit("the closure reads a flat package; teach it subpackages first")
-    known = {f[:-3] for f in sources}
+    known = {f[:-3] for f in sources} - set(skip)
     seen, todo = set(), [name for name in ENTRY if name in known]
     while todo:
         name = todo.pop()
@@ -110,6 +116,22 @@ def server_closure(package, files):
             text = (Path(package) / f"{name}.py").read_text(encoding="utf-8")
             todo.extend(_imported(text, known) - seen)
     return seen
+
+
+# The plugin folder carries its own copy of the package files the server and
+# hook import, so an install that receives only claude-plugin/ starts. A test
+# holds this copy equal to package_files(); scripts/sync_plugin_source.py
+# rewrites it. The build itself reads src/articulate, not this copy.
+VENDORED = Path("src")
+
+
+def package_files(repo=REPO):
+    """The src/articulate files the plugin carries: every module reachable from
+    ENTRY and every tracked file that is not Python source, relative to src/articulate."""
+    repo = Path(repo)
+    files = list(_tracked(repo, "src/articulate"))
+    keep = server_closure(repo / "src/articulate", [f.as_posix() for f in files])
+    return [f for f in files if f.suffix != ".py" or f.stem in keep]
 
 
 def managed_entries(repo=REPO):
@@ -142,10 +164,10 @@ def build(out, replace=False, repo=REPO):
     _prepare(out, replace, repo)
     written = []
     for folder, dest in SOURCES:
-        files = list(_tracked(repo, folder))
         if folder == "src/articulate":
-            keep = server_closure(repo / folder, [f.as_posix() for f in files])
-            files = [f for f in files if f.suffix != ".py" or f.stem in keep]
+            files = package_files(repo)
+        else:
+            files = [f for f in _tracked(repo, folder) if VENDORED not in f.parents]
         for rel in files:
             target = out / dest / rel
             target.parent.mkdir(parents=True, exist_ok=True)

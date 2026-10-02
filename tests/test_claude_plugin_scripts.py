@@ -189,5 +189,8 @@ def test_the_server_closure_follows_every_import_statement(tmp_path):
              "util.py": "helper = 1\n", "extra.py": "", "orphan.py": "import os\n"}
     for name, text in files.items():
         (package / name).write_text(text, encoding="utf-8")
-    found = build.server_closure(package, sorted(files))
+    found = build.server_closure(package, sorted(files), skip=())
     assert found == {"__init__", "version", "local_mcp", "cli", "util", "extra"}
+    # A skipped module stays out, and so does what only it imports.
+    assert build.server_closure(package, sorted(files), skip=("cli",)) == {
+        "__init__", "version", "local_mcp"}

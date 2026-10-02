@@ -96,6 +96,32 @@ and every 0.7.0 receipt still verifies.
   that a root `plugin.json` disables them. `articulate house brief --agents`
   prints the brief as an AGENTS.md section as a fallback.
 
+Claude plugin directory listing (merged on `release/0.5.x` before 0.8.0):
+
+- The Claude plugin manifest carries the directory listing fields: a 1024 px
+  icon, documentation, support, privacy and terms links, and the
+  harperz9.github.io page as homepage. The privacy link moves from `metadata`
+  to `privacyPolicyUrl`. The portable and Codex manifests leave the listing
+  fields out. The plugin rules accept complete PNG and JPEG files and check the
+  icon size and the listing links. Package code is unchanged.
+- The plugin README's Privacy Policy, and PRIVACY.md with it, gains a section
+  that names the edit hook, the MCP server launch, network use, files written,
+  the bundled model backends that stay off, and each environment variable the
+  server and hook read.
+- The Claude plugin folder now carries the package modules its MCP server and
+  edit hook import, at `claude-plugin/src/articulate`, so a directory install
+  that receives only that folder starts. `python scripts/sync_plugin_source.py`
+  regenerates the copy from `src/articulate`, and a test fails when the two
+  differ. Another test copies the folder alone and runs the server launch and
+  the hook command from the manifests. The privacy policy now says the hook
+  ignores the session ID, transcript path and working folder in Claude Code's
+  event.
+- The Claude plugin no longer carries `editing.py`, `backends.py` or
+  `claude_cli.py`, the model-backend modules that read provider API keys. The
+  plugin's local tools never import them; `mcp_server` answers plainly when a
+  model backend is asked for and the module is absent. The README install
+  section now installs the `claude-plugin` folder as it is.
+
 ## 0.7.0
 
 The source plugin checks prose at edit time in Claude Code and Codex. Detector
