@@ -455,6 +455,9 @@ def _cmd_edit(args):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["code"]:  # static checks on code changes; a separate package
+        from .code.cli import main as code_main
+        return code_main(argv[1:])
     ap = argparse.ArgumentParser(prog="articulate",
                                  description="Local writing-quality and AI-tell detection.")
     sub = ap.add_subparsers(dest="cmd")
@@ -523,6 +526,7 @@ def main(argv=None):
     cli_house.register(sub)
     cli_process.register(sub)
     cli_desk.register(sub)
+    sub.add_parser("code", help="static checks on code changes (articulate code test-diff -h)")
     args = ap.parse_args(argv)
     if getattr(args, "corpus_handler", None):
         return args.corpus_handler(args)
