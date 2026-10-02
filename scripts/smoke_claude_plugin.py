@@ -259,7 +259,8 @@ def house_hook_checks(plugin_dir, argv, env):
             e.update(extra)
             done = subprocess.run(hook_argv, input=data, capture_output=True, env=e, timeout=60)
             return done.returncode, done.stdout.decode("utf-8", "replace")
-        code, out = run(start)
+        default = run(start)
+        code, out = run(start, ARTICULATE_HOUSE_VOICE="on")
         off = run(start, ARTICULATE_HOUSE_VOICE="off")
         quiet_stop = run(stop)
         revise = run(stop, ARTICULATE_HOUSE_VOICE="revise")
@@ -268,8 +269,10 @@ def house_hook_checks(plugin_dir, argv, env):
     except (ValueError, KeyError, TypeError):
         context = ""
     return [
-        ("SessionStart hook returns the house brief",
-         code == 0 and context.startswith("Articulate house voice, house/1."), context[:80] or out[:120]),
+        ("SessionStart hook is silent by default (the house voice is opt-in)",
+         default == (0, ""), repr(default)),
+        ("SessionStart hook returns the house brief when turned on",
+         code == 0 and context.startswith("Articulate house voice, house/2."), context[:80] or out[:120]),
         ("SessionStart hook is silent when the house voice is off", off == (0, ""), repr(off)),
         ("Stop hook is silent outside mode revise", quiet_stop == (0, ""), repr(quiet_stop)),
         ("Stop hook in mode revise asks for one revision of a human-life claim",

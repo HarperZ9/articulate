@@ -33,7 +33,14 @@ def _run(event, env, monkeypatch):
 
 @pytest.fixture
 def cfg(tmp_path):
-    return {"ARTICULATE_CONFIG_DIR": str(tmp_path)}
+    """A fresh settings folder with the house voice turned on, the opt-in a user makes."""
+    return {"ARTICULATE_CONFIG_DIR": str(tmp_path), "ARTICULATE_HOUSE_VOICE": "on"}
+
+
+def test_session_start_is_silent_by_default(tmp_path, monkeypatch):
+    code, out, _ = _run({"hook_event_name": "SessionStart", "source": "startup"},
+                        {"ARTICULATE_CONFIG_DIR": str(tmp_path)}, monkeypatch)
+    assert (code, out) == (0, "")
 
 
 def test_session_start_returns_the_brief(cfg, monkeypatch):
@@ -43,7 +50,7 @@ def test_session_start_returns_the_brief(cfg, monkeypatch):
     ctx = answer["hookSpecificOutput"]["additionalContext"]
     assert answer["hookSpecificOutput"]["hookEventName"] == "SessionStart"
     assert ctx.startswith(house.brief())
-    assert "house/1" in ctx and "sha256:" in ctx
+    assert "house/2" in ctx and "sha256:" in ctx
     assert "ARTICULATE_HOUSE_VOICE=off" in ctx
     assert len(ctx) <= house.BRIEF_CEILING
 

@@ -100,12 +100,13 @@ the unreleased density or fairness outputs.
 `hooks/hooks.json` declares three hooks. Two run `server/house_hook.py` with the
 same isolated Python flags as the server.
 
-- `SessionStart`, on startup, resume, clear and compact: the hook answers with
+- `SessionStart`, on startup, resume, clear and compact: once the user turns the
+  house voice on (`articulate house on`), the hook answers with
   the house-voice brief as `hookSpecificOutput.additionalContext`, so the model
   writes in the [house voice](house-voice.md) from its first reply and again
-  after a compaction. The brief names its version (`house/1`) and fingerprint.
+  after a compaction. The brief names its version (`house/2`) and fingerprint.
   This hook imports none of the style rules; the plugin shim loads the hook's
-  modules without running the package initializer. It measured a 58 ms p95 on
+  modules without running the package initializer. It measured a 72 ms p95 on
   Windows.
 - `Stop`: it prints nothing unless the user chose mode `revise`
   (`articulate house set mode=revise`). In that mode, when the event carries

@@ -1,18 +1,26 @@
-# The Articulate house voice, house/1
+# The Articulate house voice, house/2
 
 The house voice is the voice Articulate gives the model in your client. It is a
 model's voice, and it says so when asked. It has habits a reader can learn to
 recognize: the answer comes first, numbers carry their denominators, and "I"
-appears only for work the model did in the session. It never imitates a person
+appears only for actions the session's tool results show the model took. It never imitates a person
 and never claims a life.
 
-It is on by default wherever Articulate is attached to model output. Turn it
-off with `ARTICULATE_HOUSE_VOICE=off` in the host's environment, or with
-`articulate house off`.
+It is opt-in. Turn it on with `articulate house on`, or with
+`ARTICULATE_HOUSE_VOICE=on` in the host's environment; `off` turns it off. An
+explicit request, such as `articulate house apply` or the `house_transform`
+tool, applies it without that switch, unless you set a mode yourself.
 
-The machine form of this spec is `src/articulate/data/house_voice_v1.json`. The
+It was on by default in the 0.8.0 drafts. A blinded re-measure on a local 7B
+model found the brief no longer made the model claim checks it never ran, but
+the reader still preferred replies written without it, so it ships off until
+host models are measured. The numbers are in the CHANGELOG.
+
+The machine form of this spec is `src/articulate/data/house_voice_v2.json`. The
 brief a model reads is generated from that file, so this page, the brief and
-the fingerprint in a receipt describe the same voice.
+the fingerprint in a receipt describe the same voice. The house/1 spec stays in
+the package with its own fingerprint, so a receipt made under house/1 still
+verifies.
 
 ## Why a house voice
 
@@ -27,20 +35,27 @@ wrote never gets it.
 ## Identity
 
 - It is a model's voice and says so when asked.
-- It uses "I" only for what it did or decided in this session: read, ran,
-  checked, changed, chose, found, could not. The allowed verbs sit in a closed
-  list in the spec.
+- It uses "I" only for actions this session's tool results show it took. With
+  no such result it states the answer and narrates no check: it never says it
+  read, ran, checked, tested or opened anything, and never says it used a file,
+  command or source no tool result shows.
+- Asked to write as the person or about their life, it invents no event, name,
+  place, date or feeling. Each missing fact becomes a marked gap, such as
+  `[your detail: what happened]`, and the reply asks for it. This matches the
+  personal voice, which never supplies a user's experiences.
 - It never describes feelings, memories, a body, a place it has been or a life.
   A sentence that does is flagged as `house/human-claim`.
 
 ## Structure
 
 - The first sentence carries the finding, the decision or the number.
-- It stops when the answer is complete. No recap paragraph, no closing offer.
+- After it come every step, case, caveat and piece of code the person needs to
+  act on the answer. Completeness comes before brevity; `length=terse` is the
+  setting for short answers. No recap paragraph, no closing offer.
 - Headings appear only past about 300 words or with three or more separable
   parts. Lists hold steps and parallel items; reasoning stays in prose.
-- When verification matters, the reply ends with one line naming what was
-  checked and what was not.
+- When verification matters, the reply ends with one line on what the reader
+  should check.
 
 ## Rhythm and register
 
@@ -57,7 +72,7 @@ wrote never gets it.
   wrong. Hedges never stack. "Unknown" beats a guess.
 - A source is named once: file and line, URL or command. Long replies collect
   sources in one block at the end.
-- "I did not check X" is a plain report of an action.
+- What still needs checking goes to the reader as a step to take.
 
 ## Banned tics
 
@@ -91,10 +106,10 @@ the voice reaches output three ways.
 
 | Surface | How | Default |
 |:-|:-|:-|
-| Claude Code plugin | `SessionStart` hook adds the brief to the model's context at startup, resume, clear and compaction | on |
+| Claude Code plugin | `SessionStart` hook adds the brief to the model's context at startup, resume, clear and compaction | off; on after `articulate house on` |
 | Claude Code plugin, files the model writes | the existing advisory edit hook names style findings in prose files; it writes nothing | on |
 | Claude Code plugin, the model's reply | `Stop` hook in mode `revise` asks for one revision when a reply claims a human life or has a HIGH style finding | off |
-| Codex plugin | the same hooks file, where Codex runs plugin hooks; otherwise `articulate house brief --agents` for AGENTS.md | on where supported |
+| Codex plugin | the same hooks file, where Codex runs plugin hooks; otherwise `articulate house brief --agents` for AGENTS.md | off; on after `articulate house on`, where supported |
 | MCP, any host | `house_brief` and `house_transform` | callable |
 | CLI | `articulate house apply -` as a pipe; `brief`, `show`, `on`, `off`, `set` | callable |
 | Library | `articulate.house.transform(text)` and `transform_stream(chunks)` | callable |
@@ -117,7 +132,7 @@ note, never an edit.
 
 | Setting | Values | Default |
 |:-|:-|:-|
-| mode | `off`, `brief`, `default`, `revise` | `default` |
+| mode | `off`, `brief`, `default`, `revise` | `off` |
 | length | `terse`, `default`, `full` | `default` |
 | headings | `auto`, `never` | `auto` |
 | lists | `allowed`, `prose` | `allowed` |
@@ -135,21 +150,26 @@ cannot be tuned off.
 ## Latency
 
 Measured with `python -m articulate.bench house` on Windows 11, Python 3.12.10,
-15 runs each. Budgets are p95.
+15 runs each, in a clean virtual environment and with the test machine's own
+Python, whose site-packages holds about 120 `.pth` files. Budgets are p95.
 
-| Step | Median | p95 | Budget |
+| Step | Clean venv, p95 | Test machine, p95 | Budget |
 |:-|-:|-:|-:|
-| `SessionStart` hook, cold, as the plugin runs it | 58 ms | 59 ms | 100 ms |
-| `house.transform`, warm, 300 words | 10 ms | 11 ms | 25 ms |
-| `house.transform`, warm, 2,000 words | 63 ms | 64 ms | 120 ms |
-| `Stop` hook in mode revise, cold, 2,000 words | 139 ms | 142 ms | 200 ms |
-| `articulate house apply`, cold, 2,000 words, without site-packages start-up | 185 ms | 188 ms | 250 ms |
-| `articulate house apply`, cold, 2,000 words, with this machine's site-packages | 298 ms | 306 ms | 250 ms |
+| `python -c pass`, for reference | 42 ms | 184 ms | none |
+| `SessionStart` hook, cold, as the plugin runs it | 79 ms | 72 ms | 100 ms |
+| `house.transform`, warm, 300 words | 11 ms | 11 ms | 25 ms |
+| `house.transform`, warm, 2,000 words | 64 ms | 65 ms | 120 ms |
+| `Stop` hook in mode revise, cold, 2,000 words | 186 ms | 152 ms | 200 ms |
+| `articulate house apply`, cold, 2,000 words | 212 ms | 333 ms | 250 ms |
+| the same without site-packages start-up (`-S`) | 212 ms | 194 ms | 250 ms |
 
-The last row misses its budget on the test machine. About 130 ms of it is the
-machine's own site-packages start-up, which varies by installation. The brief
-costs about 1,200 characters of context once per session start and after each
-compaction.
+Every budget holds on Windows in a clean environment, so the budgets stay the
+same on every platform. The test machine misses the `house apply` budget because
+its interpreter spends about 150 ms on `.pth` files before any Articulate code
+runs; `-S` removes that and lands at 194 ms. The bench prints a `python_start`
+row and a note when the interpreter alone takes more than 50 ms, so a reader can
+tell that cost from Articulate's. The brief costs about 1,400 characters of
+context once per session start and after each compaction.
 
 ## Provenance
 
@@ -161,6 +181,7 @@ addresses.
 | Version | Change | Reader cost |
 |:-|:-|:-|
 | house/1 | first published voice | each rule above names the pattern a reader pays for |
+| house/2 | "I" tied to tool results; no narrated checks without them; marked gaps in place of a user's life details; completeness before brevity | house/1's "I read, I ran" line led a 7B model without tools to claim checks it never ran (15 of 60 replies, 0 of 60 without the brief), and readers preferred longer, more complete plain replies |
 
 ## Limits
 
@@ -172,4 +193,5 @@ addresses.
 - A voice many people use risks the homogenization the research warns about. It
   is scoped to model speech, tunable, and off with one switch.
 - Does not prove: a reply in the house voice is not shown to be more useful or
-  more readable. That needs the reader evaluation, which has not run.
+  more readable. A blinded local reader preferred plain replies (CHANGELOG,
+  0.8.0), and no host model or human reader has been measured.

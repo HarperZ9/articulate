@@ -168,10 +168,11 @@ for selection order, credentials and privacy.
 
 ## The house voice and your own voice
 
-The house voice is on by default where Articulate is attached to model output.
-See what the model receives, and turn it off or tune it:
+The house voice is opt-in. Turn it on, see what the model receives, and turn it
+off or tune it:
 
 ```bash
+articulate house on
 articulate house show
 articulate house off
 articulate house set length=terse

@@ -41,7 +41,7 @@ def test_session_start_hook_cold_within_budget(tmp_path):
     from articulate import bench_house
     shim = bench_house.shim_bundle(tmp_path / "plugin")
     env = dict(os.environ, ARTICULATE_CONFIG_DIR=str(tmp_path / "cfg"))
-    env.pop("ARTICULATE_HOUSE_VOICE", None)
+    env["ARTICULATE_HOUSE_VOICE"] = "on"
     event = json.dumps({"hook_event_name": "SessionStart", "source": "startup"}).encode()
     times = []
     for _ in range(5):
@@ -56,3 +56,11 @@ def test_session_start_hook_cold_within_budget(tmp_path):
 def test_transform_reports_its_own_timing():
     rec = house.transform(bench.house_text(300))["receipt"]
     assert 0 <= rec["timing_ms"] < 60_000
+
+
+def test_start_up_note_names_a_slow_interpreter_and_stays_quiet_otherwise():
+    from articulate import bench_house
+    slow = {"python_start": {"median": 160.0}}
+    note = bench_house.start_up_note(slow)
+    assert note and "160 ms" in note and "apply_cold_2000_no_site" in note
+    assert bench_house.start_up_note({"python_start": {"median": 30.0}}) is None

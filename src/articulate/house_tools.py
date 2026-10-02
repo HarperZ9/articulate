@@ -30,7 +30,7 @@ def _settings(args):
         overrides = dict(overrides or {}, mode="off")
     elif "house" in args and not isinstance(args["house"], bool):
         raise ValueError("'house' must be true or false")
-    return house_settings.resolve(overrides=overrides)
+    return house_settings.for_request(overrides=overrides)
 
 
 def _brief(args):

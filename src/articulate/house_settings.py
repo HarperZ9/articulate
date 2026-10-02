@@ -3,8 +3,11 @@ file and the environment, in that order.
 
 Modes: off; brief (session-start brief only); default (brief plus the advisory
 file notes); revise (default plus one revision request when a reply breaks a
-banned rule or claims a human life). The house voice is on, in mode default,
-until the user turns it off.
+banned rule or claims a human life). The house voice is off until the user
+turns it on (DEFAULT_MODE). An explicit request, such as `articulate house
+apply` or the house_transform tool, is itself the opt-in: with no mode set by
+the user it runs in mode default (for_request). A mode the user set, off
+included, always wins.
 
 The settings file is <config>/articulate/house.json: %APPDATA% on Windows,
 $XDG_CONFIG_HOME (default ~/.config) elsewhere, or ARTICULATE_CONFIG_DIR when
@@ -23,6 +26,9 @@ import tempfile
 from .house_spec import default_tuning, spec
 
 MODES = ("off", "brief", "default", "revise")
+# Off by default since 0.8.0's re-measure: a blinded reader preferred replies
+# written without the brief (see CHANGELOG). The user turns it on.
+DEFAULT_MODE = "off"
 _OFF = ("off", "0", "false", "no", "none")
 _ON = ("on", "1", "true", "yes")
 TUNING = {key: tuple(entry["values"]) for key, entry in spec()["tuning"].items()}
@@ -101,7 +107,7 @@ def _split(overrides):
 def resolve(environ=None, overrides=None):
     """Active settings with the source of each value: default, file, env or call."""
     env = os.environ if environ is None else environ
-    result = {"mode": "default", "tuning": default_tuning(), "problems": []}
+    result = {"mode": DEFAULT_MODE, "tuning": default_tuning(), "problems": []}
     sources = {"mode": "default", **{k: "default" for k in TUNING}}
     stored, problem = _read_file(settings_path(env))
     if problem:
@@ -159,3 +165,13 @@ def save(settings, environ=None):
             os.unlink(tmp)
         raise
     return path
+
+
+def for_request(environ=None, overrides=None):
+    """Settings for an explicit request to apply the voice or show the brief.
+    The request is the opt-in, so a mode left at the built-in default becomes
+    mode default; a mode from the file, the environment or the call stays."""
+    result = resolve(environ, overrides)
+    if result["sources"]["mode"] == "default":
+        result["mode"], result["sources"]["mode"] = "default", "request"
+    return result

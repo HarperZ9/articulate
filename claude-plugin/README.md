@@ -7,18 +7,19 @@ label explaining each pattern. Use it on documentation, READMEs, release notes,
 commit messages and drafts. The checker runs on your computer and sends the text
 nowhere; the calling model reads the text as part of your conversation.
 
-It also gives the model in your client a voice of its own, the Articulate house
-voice, from the first reply of every session. It is openly a model's voice:
+It can also give the model in your client a voice of its own, the Articulate
+house voice, from the first reply of every session. It is opt-in: turn it on
+with `articulate house on` or `ARTICULATE_HOUSE_VOICE=on`. It is openly a model's voice:
 answer first, numbers with their denominators, "I" only for what it did in the
 session, no praise openers, no offers to help further, no em dashes. It never
 claims a human life. `ARTICULATE_HOUSE_VOICE=off` or `articulate house off`
-turns it off. The published spec is
+turns it off again. The published spec is
 [docs/house-voice.md](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/house-voice.md).
 
 ## What you get
 
-- The house voice. At session start (and after a resume, clear or compaction)
-  a hook hands the model the house-voice brief, about 1,200 characters, with
+- The house voice, once you turn it on. At session start (and after a resume,
+  clear or compaction) a hook hands the model the house-voice brief, about 1,400 characters, with
   its version and fingerprint. `house_brief` returns the brief, and
   `house_transform` applies the house voice's closed list of exact edits to
   model output you pass it, with a meaning guard and a receipt. Mode `revise`

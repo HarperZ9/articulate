@@ -16,7 +16,7 @@ from house_fixtures import (ACTION_REPLY, CONTENT_OFFER, DASH_REPLY, DISCLOSURE_
 def test_spec_is_versioned_and_states_its_provenance():
     spec = house.spec()
     assert spec["schema"] == "articulate/house-voice/v1"
-    assert spec["version"] == "house/1"
+    assert spec["version"] == "house/2"
     prov = spec["provenance"]
     assert prov["person_writing_used"] is False
     assert prov["detector_tuned"] is False
@@ -25,7 +25,7 @@ def test_spec_is_versioned_and_states_its_provenance():
 
 def test_brief_is_generated_from_the_spec_and_fits_its_ceiling():
     text = house.brief()
-    assert text.startswith("Articulate house voice, house/1.")
+    assert text.startswith("Articulate house voice, house/2.")
     assert len(text) <= house.BRIEF_CEILING == 1500
     assert "model's voice" in text
     assert "—" not in text
@@ -115,7 +115,7 @@ def test_receipt_shape_and_replay():
     out = house.transform(RESIDUE_REPLY)
     rec = out["receipt"]
     assert rec["schema"] == "articulate/house-receipt/v1"
-    assert rec["house_version"] == "house/1"
+    assert rec["house_version"] == "house/2"
     assert rec["ai_detector_consulted"] is False
     assert rec["house_fingerprint"].startswith("sha256:")
     assert "does_not_prove" in rec and rec["timing_ms"] >= 0

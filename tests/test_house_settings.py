@@ -7,11 +7,27 @@ import pytest
 from articulate import cli, house_settings
 
 
-def test_the_house_voice_is_on_by_default(tmp_path):
+def test_the_house_voice_is_off_by_default(tmp_path):
     s = house_settings.resolve(environ={"ARTICULATE_CONFIG_DIR": str(tmp_path)})
-    assert s["mode"] == "default"
+    assert house_settings.DEFAULT_MODE == "off"
+    assert s["mode"] == "off"
     assert s["sources"]["mode"] == "default"
     assert set(s["tuning"]) == set(house_settings.TUNING)
+
+
+def test_an_explicit_request_opts_in_unless_the_user_chose_a_mode(tmp_path):
+    env = {"ARTICULATE_CONFIG_DIR": str(tmp_path)}
+    s = house_settings.for_request(environ=env)
+    assert (s["mode"], s["sources"]["mode"]) == ("default", "request")
+    off = house_settings.for_request(environ=dict(env, ARTICULATE_HOUSE_VOICE="off"))
+    assert (off["mode"], off["sources"]["mode"]) == ("off", "env")
+    brief_only = house_settings.for_request(environ=env, overrides={"mode": "brief"})
+    assert brief_only["mode"] == "brief"
+
+
+def test_on_turns_it_on(tmp_path):
+    env = {"ARTICULATE_CONFIG_DIR": str(tmp_path), "ARTICULATE_HOUSE_VOICE": "on"}
+    assert house_settings.resolve(environ=env)["mode"] == "default"
 
 
 @pytest.mark.parametrize("value", ["off", "OFF", "0", "false", "no"])
@@ -59,7 +75,7 @@ def test_banned_tics_and_identity_are_not_tunable():
 def test_a_broken_settings_file_falls_back_to_defaults_with_a_note(tmp_path):
     (tmp_path / "house.json").write_text("{not json", encoding="utf-8")
     s = house_settings.resolve(environ={"ARTICULATE_CONFIG_DIR": str(tmp_path)})
-    assert s["mode"] == "default" and s["problems"]
+    assert s["mode"] == house_settings.DEFAULT_MODE and s["problems"]
 
 
 def test_show_prints_settings_sources_and_the_brief(tmp_path, monkeypatch, capsys):
@@ -67,7 +83,8 @@ def test_show_prints_settings_sources_and_the_brief(tmp_path, monkeypatch, capsy
     monkeypatch.delenv("ARTICULATE_HOUSE_VOICE", raising=False)
     assert cli.main(["house", "show"]) == 0
     out = capsys.readouterr().out
-    assert "mode: default (default)" in out and "Articulate house voice, house/1." in out
+    assert "mode: off (default)" in out
+    assert "The house voice is off; no brief is sent." in out
 
 
 def test_resolution_reads_and_never_writes(tmp_path, monkeypatch):

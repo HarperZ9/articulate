@@ -1,7 +1,8 @@
 """No personal voice ships. The built wheel and the plugin bundle carry no voice
 profile, no identity file, no export and no store folder.
 
-The house voice ships as its spec (house_voice_v1.json), which is written from
+The house voice ships as its specs (house_voice_v1.json and house_voice_v2.json),
+which are written from
 design principles and names no person's writing as its source."""
 import json
 import zipfile
@@ -50,7 +51,8 @@ def wheel(tmp_path_factory):
 def test_the_wheel_carries_no_profile(wheel):
     with zipfile.ZipFile(wheel) as zf:
         names = zf.namelist()
-        assert any(n.endswith("articulate/data/house_voice_v1.json") for n in names)
+        for spec in ("house_voice_v1.json", "house_voice_v2.json"):
+            assert any(n.endswith("articulate/data/" + spec) for n in names), spec
         bad = {n: _offending(n, zf.read(n)) for n in names}
     assert not {n: p for n, p in bad.items() if p}
 
@@ -60,6 +62,7 @@ def test_the_plugin_bundle_carries_no_profile(tmp_path):
     out = tmp_path / "bundle"
     written = build.build(out, repo=ROOT)
     assert "src/articulate/data/house_voice_v1.json" in written
+    assert "src/articulate/data/house_voice_v2.json" in written
     assert "server/house_hook.py" in written
     bad = {}
     for rel in written:
@@ -69,8 +72,8 @@ def test_the_plugin_bundle_carries_no_profile(tmp_path):
     assert not bad
 
 
-def test_the_house_spec_says_no_person_was_modelled():
-    spec = json.loads((ROOT / "src" / "articulate" / "data" / "house_voice_v1.json")
-                      .read_text(encoding="utf-8"))
+@pytest.mark.parametrize("name", ["house_voice_v1.json", "house_voice_v2.json"])
+def test_the_house_spec_says_no_person_was_modelled(name):
+    spec = json.loads((ROOT / "src" / "articulate" / "data" / name).read_text(encoding="utf-8"))
     assert spec["provenance"]["person_writing_used"] is False
     assert not {"owner", "owner_id", "attestation", "per_sample"} & set(spec)

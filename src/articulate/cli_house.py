@@ -40,7 +40,7 @@ def cmd_apply(args):
 
 
 def cmd_brief(args):
-    text = house.brief(house_settings.resolve())
+    text = house.brief(house_settings.for_request())
     if args.agents:
         print("## Articulate house voice\n\nWrite replies in this voice.\n\n" + text)
     else:

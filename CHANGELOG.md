@@ -7,22 +7,47 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 ## 0.8.0
 
 Two voice layers and series review. Articulate ships a house voice for the
-model in your client, on by default and openly a model's voice, and a personal
+model in your client, opt-in and openly a model's voice, and a personal
 voice that each user builds from their own writing on their own computer. No
 person's voice ships in the package. Detector rules stay the published v0.5.2
 rules (fingerprint `sha256:9f78a7484bb20f84`); this release changes no finding,
 and every 0.7.0 receipt still verifies.
 
-- House voice `house/1`. A published, versioned spec
+- House voice `house/2`. A published, versioned spec
   ([docs/house-voice.md](docs/house-voice.md), machine form
-  `articulate/data/house_voice_v1.json`) written from reader-cost principles
+  `articulate/data/house_voice_v2.json`) written from reader-cost principles
   and cited research. No person's writing served as its model, and no
   AI-authorship detector was used to tune it. The brief a model reads is generated from the spec,
   so the spec, the brief and a receipt's fingerprint cannot drift apart.
+  `house/1` stays packaged with its own fingerprint, so its receipts still
+  verify; both versions share one edit list.
+- Why `house/2`. In a blinded evaluation on a local 7B model with no tools,
+  the `house/1` brief ("I read, I ran") led the model to claim checks it never
+  ran in 15 of 60 replies, against 0 of 60 without the brief. `house/2` uses
+  "I" only for actions the session's tool results show, never narrates a check
+  without one, ends with what the reader should check, puts completeness before
+  brevity, and on a request to write as the user invents no life detail and
+  leaves a marked gap such as `[your detail: what happened]`. Re-measured on the
+  same model and 30 prompts: untaken-action claims 0 of 60 with `house/2`
+  and 0 of 60 without it; median reply 173.5 words against 253.5 (86 with
+  `house/1`); the AI-assistance line kept in 4 of 4 replies against 3 of 4.
+- Off by default. The ship gate was: untaken-action claims no higher than with
+  the brief off (at most 1 of 60), and a blinded reader not significantly
+  worse. The first gate passed. The second did not: a blinded
+  qwen2.5-coder 32B reader, shown each pair in both orders, preferred the plain
+  reply on 21 of 60 pairs and the `house/2` reply on 8 (10 ties, 21 flipped
+  with order; two-sided sign test p = 0.024). An earlier `house/2` wording
+  scored 18 to 9 (p = 0.12) but marked a gap in only 1 of 14 life requests,
+  against 12 of 14. Neither wording stopped this model from inventing life
+  details (11 of 14 replies with `house/2`, 10 of 14 without a brief). So the house voice is
+  opt-in: `articulate house on` or `ARTICULATE_HOUSE_VOICE=on`. An explicit
+  `house apply`, `house brief`, `house_transform` or `house_brief` still
+  applies it unless the user set a mode. Host models (Claude, Codex) and human
+  readers are unmeasured.
 - The plugin's new `SessionStart` hook hands the brief to the model at session
   start and after a resume, clear or compaction. It reads the spec and the
-  settings file, imports none of the style rules and measured a 58 ms p95 on
-  Windows. A `Stop` hook ships declared and does nothing unless the user picks
+  settings file, imports none of the style rules and measured a 72 ms p95 on
+  Windows. It is silent until the user turns the house voice on. A `Stop` hook ships declared and does nothing unless the user picks
   mode `revise`, which asks for one revision when a finished reply claims a
   human life or holds a HIGH style finding.
 - `house_transform` (MCP), `articulate house apply` (CLI pipe) and
@@ -61,6 +86,11 @@ and every 0.7.0 receipt still verifies.
 - AI-assistance disclosures are a protected span kind. No rewrite, house edit
   or restructure moves or rewords one.
 - New command `articulate-house-hook` for other hosts that run command hooks.
+- `python -m articulate.bench house` reports a `python_start` row and a note
+  when the interpreter alone starts slowly. In a clean Windows virtual
+  environment every house budget holds (`house apply` cold, 2,000 words: 212 ms
+  p95, budget 250 ms); the earlier Windows miss came from a machine whose
+  site-packages runs about 120 `.pth` files at start-up.
 - Codex: whether Codex runs `SessionStart` and `Stop` from a plugin is not
   confirmed. Open Codex issues report that plugin-local hooks do not run and
   that a root `plugin.json` disables them. `articulate house brief --agents`

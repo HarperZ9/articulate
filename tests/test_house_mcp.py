@@ -36,7 +36,7 @@ def test_tools_are_listed_read_only(environ):
 def test_house_brief_tool(monkeypatch, tmp_path):
     monkeypatch.setenv("ARTICULATE_CONFIG_DIR", str(tmp_path))
     out = _payload(_call("house_brief", {}))
-    assert out["brief"] == house.brief() and out["version"] == "house/1"
+    assert out["brief"] == house.brief() and out["version"] == "house/2"
     assert out["fingerprint"].startswith("sha256:")
 
 

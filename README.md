@@ -52,9 +52,8 @@ voice features.
 
 - **Give the model a voice.** The house voice is a published, versioned voice
   for AI models: answer first, numbers with denominators, "I" only for what the
-  model did in the session, and no claim to a human life. It is on by default
-  where Articulate is attached to model output, and `articulate house off`
-  turns it off.
+  model did in the session, and no claim to a human life. It is opt-in:
+  `articulate house on` turns it on, and `articulate house off` turns it off.
 - **Build your own voice.** `articulate voice learn --mine` builds a profile from
   your own writing, on your computer. Compare drafts with it, run the
   authorship interview, and, when you ask, shape your own draft toward it.

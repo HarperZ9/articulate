@@ -17,8 +17,8 @@ import re
 import time
 
 from . import detector, house_edits, house_settings
-from .house_spec import (BRIEF_CEILING, brief, default_tuning, fingerprint,  # noqa: F401
-                         session_context, spec)
+from .house_spec import (BRIEF_CEILING, CURRENT, brief, default_tuning,  # noqa: F401
+                         fingerprint, session_context, spec, versions)
 from .house_edits import verify_edits  # noqa: F401  (part of this module's interface)
 
 RECEIPT = "articulate/house-receipt/v1"
@@ -54,7 +54,8 @@ def style_notes(text, tiers=("high", "medium")):
 
 
 def _settings(settings):
-    return house_settings.resolve() if settings is None else settings
+    # A direct call is an explicit request, so it opts in (house_settings.for_request).
+    return house_settings.for_request() if settings is None else settings
 
 
 def _counts(notes):
@@ -153,18 +154,21 @@ def verify_receipt(receipt, text):
     """(Match | Drift | Unverifiable, detail) for a house receipt and its input."""
     if not isinstance(receipt, dict) or receipt.get("schema") != RECEIPT:
         return "Unverifiable", "not an articulate house receipt"
-    if receipt.get("house_version") != spec()["version"]:
+    version = receipt.get("house_version")
+    if version not in versions():
         return "Unverifiable", "receipt names %s; this install has %s" % (
-            receipt.get("house_version"), spec()["version"])
+            version, ", ".join(versions()))
     if receipt.get("input_sha256") != _sha(text):
         return "Drift", "the text differs from the input the receipt names"
     try:
         settings = house_settings.validate(receipt.get("settings", {}))
     except ValueError as exc:
         return "Unverifiable", "receipt settings: %s" % exc
-    settings = dict(settings, tuning=dict(default_tuning(), **settings["tuning"]))
-    if fingerprint(settings) != receipt.get("house_fingerprint"):
+    settings = dict(settings, tuning=dict(default_tuning(version), **settings["tuning"]))
+    if fingerprint(settings, version) != receipt.get("house_fingerprint"):
         return "Unverifiable", "the house spec or settings fingerprint differs"
+    # Every version shares one edit list (a test holds this), so the current
+    # transform re-derives the output of a receipt made under an older version.
     redo = transform(text, settings, notes=False)["receipt"]
     same = redo["output_sha256"] == receipt.get("output_sha256") and \
         [(e["rule"], e["start"], e["end"]) for e in redo["edits"]] == \
