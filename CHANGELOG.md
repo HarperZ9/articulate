@@ -17,6 +17,15 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   the bundled model backends that stay off, and each environment variable the
   server and hook read.
 
+- The Claude plugin folder now carries the package modules its MCP server and
+  edit hook import, at `claude-plugin/src/articulate`, so a directory install
+  that receives only that folder starts. `python scripts/sync_plugin_source.py`
+  regenerates the copy from `src/articulate`, and a test fails when the two
+  differ. Another test copies the folder alone and runs the server launch and
+  the hook command from the manifests. The privacy policy now says the hook
+  ignores the session ID, transcript path and working folder in Claude Code's
+  event.
+
 ## 0.7.0
 
 The source plugin checks prose at edit time in Claude Code and Codex. Detector
