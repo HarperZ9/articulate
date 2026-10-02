@@ -27,9 +27,10 @@ and every 0.7.0 receipt still verifies.
   human life or holds a HIGH style finding.
 - `house_transform` (MCP), `articulate house apply` (CLI pipe) and
   `articulate.house.transform` (library) apply a closed list of exact edits to
-  model output: em dashes to commas, doubled spaces, and opener and closer
-  sentences with no content, such as a praise opener or an offer to help
-  further. An
+  model output: em dashes that join two words to commas, doubled spaces, and
+  opener and closer sentences with no content, such as a praise opener or an
+  offer to help further. Dashes at a line edge, after a list marker or alone in
+  a table cell stay, and a reply made only of such sentences is kept whole. An
   exact-edit verifier and the meaning guard check every candidate. Everything
   else is a located note, including `house/human-claim`. Receipts use
   `articulate/house-receipt/v1` and replay with `articulate verify`.

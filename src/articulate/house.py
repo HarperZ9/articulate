@@ -96,6 +96,10 @@ def transform(text, settings=None, *, at_start=True, at_end=True, notes=True):
     candidate = house_edits.apply(text, edits)
     verdict = verify_edits(text, candidate, edits)
     refused = [] if verdict["ok"] else verdict["reasons"]
+    if not refused and at_start and at_end and text.strip() and not candidate.strip():
+        # A reply that is nothing but residue keeps its words: an empty reply
+        # tells the reader less than a stock sentence does.
+        refused = ["the edits would leave no text"]
     if refused:
         candidate, edits = text, []
     found = (human_claims(candidate) + style_notes(candidate)) if notes else []
@@ -122,7 +126,7 @@ def transform_stream(chunks, settings=None):
     """Yield transformed text as paragraphs complete. The last paragraph is
     held back until the stream ends, since only then is it known to be last."""
     settings = _settings(settings)
-    buf, started = "", False
+    buf, started, held = "", False, ""
     for chunk in chunks:
         buf += chunk
         cut = _boundary(buf)
@@ -131,12 +135,18 @@ def transform_stream(chunks, settings=None):
             out = transform(head, settings, at_start=not started, at_end=False, notes=False)["text"]
             if not started and not out.strip():
                 # Everything so far was opener residue: its paragraph break goes too.
-                buf = buf[house_edits._PARAGRAPH.match(buf).end():]
+                # The words are held, not dropped, in case nothing else follows.
+                sep = house_edits._PARAGRAPH.match(buf).end()
+                held, buf = held + head + buf[:sep], buf[sep:]
                 out = ""
             started = started or bool(out.strip())
             yield out
-    if buf:
-        yield transform(buf, settings, at_start=not started, at_end=True, notes=False)["text"]
+    if not started and (held or buf):
+        # Nothing but the last part remains: transform the whole reply at once, so
+        # a reply made only of residue is kept exactly as the whole transform keeps it.
+        yield transform(held + buf, settings, notes=False)["text"]
+    elif buf:
+        yield transform(buf, settings, at_start=False, at_end=True, notes=False)["text"]
 
 
 def verify_receipt(receipt, text):

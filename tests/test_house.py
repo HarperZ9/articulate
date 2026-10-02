@@ -170,3 +170,60 @@ def test_banned_tics_are_listed_and_each_maps_to_a_style_rule_or_house_check():
 def test_new_spec_text_uses_no_detector_language():
     raw = json.dumps(house.spec()).lower()
     assert not re.search(r"gptzero|originality|undetectable|humaniz|pass as human", raw)
+
+
+# Review findings (2026-10-01): a dash that is not between two words on one
+# line marks an attribution, a placeholder or a bullet. A comma there changes
+# what the reader sees, so the dash rule leaves it alone.
+@pytest.mark.parametrize("text", [
+    "A quote worth keeping.\n— Ada Lovelace",
+    "— Ada Lovelace",
+    "- — a bullet with a dash",
+    "| name | value |\n|---|---|\n| a | — |",
+    "Wait—\nthen go.",
+    "It ends with —",
+    "Before.\n\n—\n\nAfter.",
+    "> — quoted attribution",
+])
+def test_dash_at_a_line_edge_or_in_a_cell_is_left_alone(text):
+    out = house.transform(text)
+    assert out["text"] == text
+    assert [e for e in out["edits"] if e["rule"] == "dash"] == []
+
+
+def test_dash_between_two_words_still_becomes_a_comma():
+    out = house.transform("The cache — once warm — answers fast.")
+    assert out["text"] == "The cache, once warm, answers fast."
+    assert house.verify_edits("The cache — once warm — answers fast.", out["text"],
+                              out["edits"])["ok"]
+
+
+def test_verifier_refuses_a_dash_edit_at_a_line_start():
+    original = "— Ada Lovelace"
+    edit = {"rule": "dash", "start": 0, "end": 2, "new": ", "}
+    verdict = house.verify_edits(original, ", Ada Lovelace", [edit])
+    assert not verdict["ok"]
+
+
+@pytest.mark.parametrize("text", ["Great question!", "Hope this helps!"])
+def test_a_reply_made_only_of_residue_is_kept_whole(text):
+    out = house.transform(text)
+    assert out["text"] == text
+    assert out["refused"] == ["the edits would leave no text"]
+    chunks = [text[i:i + 4] for i in range(0, len(text), 4)]
+    assert "".join(house.transform_stream(chunks)) == text
+
+
+def test_stream_matches_whole_transform_on_residue_only_paragraphs():
+    text = "Great question!\n\nHope this helps!"
+    whole = house.transform(text)["text"]
+    assert whole.strip()
+    chunks = [text[i:i + 4] for i in range(0, len(text), 4)]
+    assert "".join(house.transform_stream(chunks)) == whole
+
+
+def test_stream_matches_whole_transform_when_an_opener_paragraph_leads():
+    text = "Great question!\n\nThe answer is four.\n\nHope this helps!"
+    chunks = [text[i:i + 3] for i in range(0, len(text), 3)]
+    assert "".join(house.transform_stream(chunks)) == house.transform(text)["text"] \
+        == "The answer is four."

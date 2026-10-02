@@ -102,11 +102,15 @@ the voice reaches output three ways.
 Where Articulate sits in the output path (MCP, CLI, library), the transform makes
 only exact edits from a closed list: em dash and spaced en dash to a comma,
 doubled internal spaces to one, and deletion of a whole sentence on the opener
-or closer list. Openers count only at the start of the first prose paragraph and
-closers only at the end of the last one. An exact-edit verifier then checks that
-the result is the input with those edits and nothing else, and the meaning guard
-checks the paragraphs left in place. A failed check returns the input
-unchanged and names the reason. Every other item in this spec is a located
+or closer list. A dash becomes a comma only when it joins two words on one
+line; at a line edge, after a list or quote marker, or alone in a table cell it
+stays, since there it marks an attribution, a bullet or an empty value. Openers
+count only at the start of the first prose paragraph and closers only at the end
+of the last one. An exact-edit verifier then checks that the result is the input
+with those edits and nothing else, and the meaning guard checks the paragraphs
+left in place. A failed check returns the input unchanged and names the reason.
+A reply made of nothing but opener or closer sentences is kept as written,
+since deleting all of it would leave the reader an empty reply. Every other item in this spec is a located
 note, never an edit.
 
 ## Controls

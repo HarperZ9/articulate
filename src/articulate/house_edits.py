@@ -3,7 +3,10 @@ that checks a candidate holds those edits and nothing else.
 
 Four rules, each exact:
 
-- dash: an em dash, or an en dash with a space on each side, becomes ", ";
+- dash: an em dash, or an en dash with a space on each side, becomes ", "
+  when it joins two words on one line. A dash that starts or ends a line, stands
+  alone in a table cell, or follows a list marker is left alone, since there it
+  marks an attribution, a placeholder or a bullet, and a comma would change it;
 - space: a run of two or more spaces or tabs between two words becomes one;
 - residue: a sentence on the closed opener or closer list is deleted. Openers
   count only at the start of the first prose paragraph, closers only at the
@@ -20,7 +23,10 @@ import re
 from .house_spec import spec
 from .meaning_guard import _PARAGRAPH, guard_rewrite, protected_spans
 
-DASH = re.compile(r"[ \t]*—[ \t]*|[ \t]+–[ \t]+")
+# A dash joins two words only when real text sits on both sides on the same
+# line: not a line edge, a table bar, a quote marker or a list marker.
+_LEFT, _RIGHT = r"(?<=[^\s|>*+\-])", r"(?=[^\s|])"
+DASH = re.compile(_LEFT + r"(?:[ \t]*—[ \t]*|[ \t]+–[ \t]+)" + _RIGHT)
 SPACE = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
 _SENTENCE = re.compile(r"[^.!?\n]+[.!?]+[\"'”’)]*")
 RULES = ("dash", "space", "residue", "residue-paragraph")
@@ -157,7 +163,9 @@ def _rule_ok(text, e, spans):
     old = text[e["start"]:e["end"]]
     rule, new = e.get("rule"), e.get("new")
     if rule == "dash":
-        return new == ", " and DASH.fullmatch(old) and not _overlaps(e["start"], e["end"], spans)
+        m = DASH.match(text, e["start"])
+        return (new == ", " and m is not None and m.end() == e["end"]
+                and not _overlaps(e["start"], e["end"], spans))
     if rule == "space":
         return new == " " and re.fullmatch(r"[ \t]{2,}", old) and not _overlaps(e["start"], e["end"], spans)
     if rule == "residue":
