@@ -442,6 +442,9 @@ def _cmd_edit(args):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["code"]:  # static checks on code changes; a separate package
+        from .code.cli import main as code_main
+        return code_main(argv[1:])
     ap = argparse.ArgumentParser(prog="articulate",
                                  description="Local writing-quality and AI-tell detection.")
     sub = ap.add_subparsers(dest="cmd")
@@ -502,6 +505,7 @@ def main(argv=None):
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
+    sub.add_parser("code", help="static checks on code changes (articulate code test-diff -h)")
     args = ap.parse_args(argv)
     if args.cmd in ("plan", "submit", "judge", "fix", "polish"):
         return _cmd_edit(args)
