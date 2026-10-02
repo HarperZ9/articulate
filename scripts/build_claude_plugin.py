@@ -53,6 +53,11 @@ SKIP_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
 # serve.py runs articulate.local_mcp, edit_hook.py runs articulate.edit_hook, and
 # importing either runs the package __init__.
 ENTRY = ("__init__", "local_mcp", "edit_hook")
+# Modules the plugin never runs: mcp_server imports editing only when the tool
+# set is not local, and the plugin's .mcp.json always launches the local set.
+# editing pulls in backends and claude_cli, which read provider keys and start
+# the claude CLI, so the plugin carries none of the three.
+HOSTED_ONLY = frozenset(("editing",))
 
 
 def _git(repo, *args):
@@ -94,13 +99,14 @@ def _imported(source, known):
     return names & known
 
 
-def server_closure(package, files):
+def server_closure(package, files, skip=HOSTED_ONLY):
     """The names of the modules the server can import: every module reachable from
-    ENTRY through any import statement, one inside a function included."""
+    ENTRY through any import statement, one inside a function included, except
+    the modules in skip and whatever only they import."""
     sources = [f for f in files if f.endswith(".py")]
     if any("/" in f or "\\" in f for f in sources):
         raise SystemExit("the closure reads a flat package; teach it subpackages first")
-    known = {f[:-3] for f in sources}
+    known = {f[:-3] for f in sources} - set(skip)
     seen, todo = set(), [name for name in ENTRY if name in known]
     while todo:
         name = todo.pop()

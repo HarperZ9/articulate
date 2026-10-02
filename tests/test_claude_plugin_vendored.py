@@ -82,3 +82,24 @@ def test_plugin_folder_alone_starts_server_and_hook(tmp_path):
 
 def test_plugin_folder_passes_the_bundle_rules():
     assert rules.check_files(TEMPLATE) == []
+
+
+def test_the_plugin_carries_no_model_backend_or_key_reading_code():
+    shipped = {p.name for p in sync.TARGET.glob("*.py")}
+    assert not {"editing.py", "backends.py", "claude_cli.py"} & shipped
+    for path in TEMPLATE.rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        for name in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "ARTICULATE_OPENAI_API_KEY"):
+            assert name not in text, (path, name)
+
+
+def test_a_hosted_tool_request_in_the_plugin_build_gets_a_plain_answer(tmp_path):
+    folder = _installed(tmp_path)
+    code = ("import sys, os; sys.path.insert(0, %r)\n"
+            "os.environ.pop('ARTICULATE_MCP_TOOLS', None); os.environ.pop('ARTICULATE_LOCAL_ONLY', None)\n"
+            "from articulate import mcp_server\n"
+            "print(mcp_server.do_fix('A short draft.')['error'])\n" % str(folder / "src"))
+    run = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", code], capture_output=True,
+                         text=True, timeout=60)
+    assert run.returncode == 0, run.stderr
+    assert "does not include" in run.stdout

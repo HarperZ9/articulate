@@ -26,6 +26,12 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   ignores the session ID, transcript path and working folder in Claude Code's
   event.
 
+- The Claude plugin no longer carries `editing.py`, `backends.py` or
+  `claude_cli.py`, the model-backend modules that read provider API keys. The
+  plugin's local tools never import them; `mcp_server` answers plainly when a
+  model backend is asked for and the module is absent. The README install
+  section now installs the `claude-plugin` folder as it is.
+
 ## 0.7.0
 
 The source plugin checks prose at edit time in Claude Code and Codex. Detector

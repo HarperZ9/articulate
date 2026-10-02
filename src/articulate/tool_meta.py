@@ -27,6 +27,12 @@ def tool_set(environ=None):
     return "all" if env.get(TOOLS_VAR, "").strip().lower() in ("", "all") else "local"
 
 
+def local_only_switch(environ=None):
+    """ARTICULATE_LOCAL_ONLY as a boolean, read the same way backends.local_only reads it."""
+    env = os.environ if environ is None else environ
+    return env.get("ARTICULATE_LOCAL_ONLY", "").strip().lower() not in ("", "0", "false", "no", "off")
+
+
 def offline(environ=None):
     env = os.environ if environ is None else environ
     switch = env.get("ARTICULATE_LOCAL_ONLY", "").strip().lower()
