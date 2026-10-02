@@ -4,6 +4,15 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+- The Claude plugin manifest carries the directory listing fields: a 1024 px
+  icon, documentation, support, privacy and terms links, and the
+  harperz9.github.io page as homepage. The privacy link moves from `metadata`
+  to `privacyPolicyUrl`. The portable and Codex manifests leave the listing
+  fields out. The plugin rules accept complete PNG and JPEG files and check the
+  icon size and the listing links. Package code is unchanged.
+
 ## 0.7.0
 
 The source plugin checks prose at edit time in Claude Code and Codex. Detector
