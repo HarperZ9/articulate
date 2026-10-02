@@ -26,24 +26,28 @@ and every 0.7.0 receipt still verifies.
   ran in 15 of 60 replies, against 0 of 60 without the brief. `house/2` uses
   "I" only for actions the session's tool results show, never narrates a check
   without one, ends with what the reader should check, puts completeness before
-  brevity, and on a request to write as the user invents no life detail and
-  leaves a marked gap such as `[your detail: what happened]`. Re-measured on the
-  same model and 30 prompts: untaken-action claims 0 of 60 with `house/2`
-  and 0 of 60 without it; median reply 173.5 words against 253.5 (86 with
-  `house/1`); the AI-assistance line kept in 4 of 4 replies against 3 of 4.
+  brevity, and on a request to write about the user's life or as the user uses
+  only facts they gave, marks each missing fact as a gap such as
+  `[your detail: when you started]` and asks for it. Re-measured on the same
+  model and 30 prompts: untaken-action claims 0 of 60 with `house/2` and 0 of
+  60 without it; median reply 133 words against 253.5 (86 with `house/1`); the
+  AI-assistance line kept in 4 of 4 replies against 3 of 4.
 - Off by default. The ship gate was: untaken-action claims no higher than with
   the brief off (at most 1 of 60), and a blinded reader not significantly
-  worse. The first gate passed. The second did not: a blinded
-  qwen2.5-coder 32B reader, shown each pair in both orders, preferred the plain
-  reply on 21 of 60 pairs and the `house/2` reply on 8 (10 ties, 21 flipped
-  with order; two-sided sign test p = 0.024). An earlier `house/2` wording
-  scored 18 to 9 (p = 0.12) but marked a gap in only 1 of 14 life requests,
-  against 12 of 14. Neither wording stopped this model from inventing life
-  details (11 of 14 replies with `house/2`, 10 of 14 without a brief). So the house voice is
-  opt-in: `articulate house on` or `ARTICULATE_HOUSE_VOICE=on`. An explicit
-  `house apply`, `house brief`, `house_transform` or `house_brief` still
-  applies it unless the user set a mode. Host models (Claude, Codex) and human
-  readers are unmeasured.
+  worse. The shipped wording passed both. A blinded qwen2.5-coder 32B reader,
+  shown each pair in both orders, preferred the plain reply on 18 of 60 pairs
+  and the `house/2` reply on 9 (10 ties, 23 flipped with order; two-sided sign
+  test p = 0.12). The reader still leaned toward the plain replies, and the
+  shipped wording marked a gap in only 1 of 14 write-as-me replies. A variant
+  that moved the life line up and named what not to invent marked a gap in 12
+  of 14, but it failed the reader gate (21 to 8, p = 0.024) and put gap
+  questions into 8 of 58 ordinary replies, against 1 of 58; it does not ship.
+  Neither wording stopped this model from inventing life details (12 of 14
+  replies with the shipped wording, 10 of 14 without a brief). So the house
+  voice is opt-in: `ARTICULATE_HOUSE_VOICE=on` or `articulate house on`. An
+  explicit `house apply`, `house brief`, `house_transform` or `house_brief`
+  still applies it unless the user set a mode. Host models (Claude, Codex) and
+  human readers are unmeasured.
 - The plugin's new `SessionStart` hook hands the brief to the model at session
   start and after a resume, clear or compaction. It reads the spec and the
   settings file, imports none of the style rules and measured a 72 ms p95 on

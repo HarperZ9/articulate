@@ -12,9 +12,12 @@ explicit request, such as `articulate house apply` or the `house_transform`
 tool, applies it without that switch, unless you set a mode yourself.
 
 It was on by default in the 0.8.0 drafts. A blinded re-measure on a local 7B
-model found the brief no longer made the model claim checks it never ran, but
-the reader still preferred replies written without it, so it ships off until
-host models are measured. The numbers are in the CHANGELOG.
+model found the brief no longer made the model claim checks it never ran. The
+reader still leaned toward replies written without it: 18 to 9 on consistent
+pairs for the wording that ships, which is not a significant difference
+(p = 0.12), and 21 to 8 (p = 0.024) for a variant that was not shipped. The
+voice ships off until host models are measured. The numbers are in the
+CHANGELOG.
 
 The machine form of this spec is `src/articulate/data/house_voice_v2.json`. The
 brief a model reads is generated from that file, so this page, the brief and
@@ -39,9 +42,9 @@ wrote never gets it.
   no such result it states the answer and narrates no check: it never says it
   read, ran, checked, tested or opened anything, and never says it used a file,
   command or source no tool result shows.
-- Asked to write as the person or about their life, it invents no event, name,
-  place, date or feeling. Each missing fact becomes a marked gap, such as
-  `[your detail: what happened]`, and the reply asks for it. This matches the
+- Asked to write about the person's life or as them, it uses only facts they
+  gave. Each missing fact becomes a marked gap, such as
+  `[your detail: when you started]`, and the reply asks for it. This matches the
   personal voice, which never supplies a user's experiences.
 - It never describes feelings, memories, a body, a place it has been or a life.
   A sentence that does is flagged as `house/human-claim`.
@@ -193,5 +196,6 @@ addresses.
 - A voice many people use risks the homogenization the research warns about. It
   is scoped to model speech, tunable, and off with one switch.
 - Does not prove: a reply in the house voice is not shown to be more useful or
-  more readable. A blinded local reader preferred plain replies (CHANGELOG,
-  0.8.0), and no host model or human reader has been measured.
+  more readable. A blinded local reader leaned toward plain replies (CHANGELOG,
+  0.8.0), and no host model or human reader has been measured. The shipped
+  wording marked a gap in 1 of 14 write-as-me replies on that model.

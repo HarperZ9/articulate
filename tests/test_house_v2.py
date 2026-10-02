@@ -99,9 +99,22 @@ def test_the_brief_forbids_every_verb_the_regression_fixture_used():
 def test_every_house_2_brief_refuses_to_invent_a_life_and_marks_the_gap():
     for tuning, text, _ in _all_briefs():
         low = text.lower()
-        assert "write as the person or about their life" in low, tuning
-        assert "invent no event, name, place, date or feeling" in low, tuning
-        assert "[your detail:" in low and "ask for them" in low, tuning
+        assert "write about the person's life or as them" in low, tuning
+        assert "use only facts they gave you" in low, tuning
+        assert "mark each missing fact as a gap, [your detail:" in low, tuning
+        assert "and ask for it." in low, tuning
+
+
+def test_the_house_2_brief_is_the_wording_that_passed_the_reader_gate():
+    """0.8.0 ships the first house/2 wording: life line last, "use only facts
+    they gave you". It passed both ship gates (18 : 9, p = 0.12). The variant
+    that named what not to invent failed the reader gate and does not ship."""
+    text = house.brief()
+    lines = text.splitlines()
+    assert lines[-1] == ("Asked to write about the person's life or as them, use only facts "
+                         "they gave you. Mark each missing fact as a gap, [your detail: when "
+                         "you started], and ask for it.")
+    assert "invent no event" not in text.lower()
 
 
 def test_the_gap_shape_the_brief_asks_for_makes_no_human_claim():
