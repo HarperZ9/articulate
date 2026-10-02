@@ -16,7 +16,7 @@ from collections import deque
 
 from . import __version__
 from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score, do_edit_plan, do_edit_submit
-from .tool_meta import TOOLS_VAR, tool_set, offline, annotations
+from .tool_meta import TOOLS_VAR, tool_set, offline, annotations, local_only_switch
 from .tool_text import description
 
 PROTOCOL = "2025-06-18"
@@ -199,8 +199,7 @@ def _identity(include_detail: bool, session=None) -> dict:
         info["tool_set"] = tool_set()
         info["hidden"] = []
         info["python"] = "%d.%d.%d" % sys.version_info[:3]
-        from .backends import local_only
-        info["local_only_switch"] = local_only()
+        info["local_only_switch"] = local_only_switch()
         info["offline_editors"] = offline()
     return info
 

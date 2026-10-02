@@ -99,7 +99,9 @@ def test_every_package_import_in_the_bundle_resolves_inside_it(plugin):
     modules = {p.stem for p in bundled.glob("*.py")}
     package = {p.stem for p in PKG.glob("*.py")}
     for path in sorted(bundled.glob("*.py")):
-        missing = (_package_imports(path) & package) - modules
+        # Hosted-only modules stay out on purpose; the import that names them
+        # sits behind a guard that answers without them.
+        missing = (_package_imports(path) & package) - modules - build.HOSTED_ONLY
         assert not missing, (path.name, sorted(missing))
 
 

@@ -78,7 +78,12 @@ def _edit(text, goal, **options):
         if goal == "polish":
             result.update(scores=None, quality_met=False)
         return result
-    from .editing import run_edit
+    try:
+        from .editing import run_edit
+    except ImportError:
+        # The Claude plugin carries only the local tools and leaves editing out.
+        return {"ok": False, "error": "%s needs a model backend, which this build does not include" % goal,
+                "note": "Use the local tool set: host plans and backend none."}
     return run_edit(text, goal, context="mcp", **options)
 
 
