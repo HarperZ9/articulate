@@ -249,7 +249,8 @@ def _call(params: dict, session=None) -> dict:
                     raise ValueError("'%s' is required and must be a string" % key)
             result = do_edit_submit(_text_arg(args), args["rewrite"], args["plan_id"],
                                     scores=args.get("scores"), model=args.get("model"),
-                                    author_text=args.get("author_text"))
+                                    author_text=args.get("author_text"),
+                                    **tool_options.given(name, args))
         elif name in _voice_tools.NAMES or name in _house_tools.NAMES:
             result = (_voice_tools if name in _voice_tools.NAMES else _house_tools).handle(name, args)
         else:

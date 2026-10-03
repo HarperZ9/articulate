@@ -5,8 +5,13 @@ code lives in one place and the core command line stays small.
 
   --allow-change KINDS  protected change kinds the edit may make (plan, fix,
                         polish). Each accepted change is reported.
+  --explain [json|text] a change report for an accepted edit (fix, polish,
+                        submit): json adds `changes` to the result, text prints
+                        a readable report instead of the JSON.
 """
-from . import edit_options
+import json
+
+from . import changes, edit_options
 
 
 def add_arguments(parser, cmd):
@@ -16,6 +21,11 @@ def add_arguments(parser, cmd):
             "--allow-change", default=None, metavar="KINDS",
             help="comma-separated protected change kinds the edit may make, reported in "
                  "allowed_changes: " + ", ".join(edit_options.ALLOWABLE))
+    if cmd in ("fix", "polish", "submit"):
+        parser.add_argument(
+            "--explain", nargs="?", const="json", choices=("json", "text"), default=None,
+            help="report each changed sentence and the findings it cleared: json adds "
+                 "`changes` to the result, text prints a readable report")
 
 
 def edit_kwargs(args):
@@ -23,3 +33,14 @@ def edit_kwargs(args):
     no option is set, so the call is the same as before these options existed."""
     allow = edit_options.parse_allow(getattr(args, "allow_change", None))
     return {"allow_change": allow} if allow else {}
+
+
+def render(args, result, original):
+    """The text to print for an edit result: the JSON, or the change report."""
+    mode = getattr(args, "explain", None)
+    report = changes.for_result(original, result) if mode else None
+    if report is not None and mode == "text":
+        return changes.format_report(report, getattr(args, "file", ""))
+    if report is not None:
+        result["changes"] = report
+    return json.dumps(result, ensure_ascii=False, indent=2)

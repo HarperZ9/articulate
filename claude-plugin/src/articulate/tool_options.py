@@ -2,7 +2,8 @@
 
 allow_change names the protected change kinds an edit may make. The accepted
 changes are reported in allowed_changes, and the edit plan binds the list, so a
-submit cannot widen it.
+submit cannot widen it. explain adds a change report (`changes`) to an accepted
+edit result.
 """
 from .edit_options import ALLOWABLE
 
@@ -12,9 +13,14 @@ ALLOW_CHANGE = {
                     "reported in allowed_changes. Disclosure, added first person, HTML and "
                     "math can never be allowed.")}
 
-OPTIONS = {"fix": {"allow_change": ALLOW_CHANGE},
-           "polish": {"allow_change": ALLOW_CHANGE},
-           "edit_plan": {"allow_change": ALLOW_CHANGE}}
+EXPLAIN = {"type": "boolean", "default": False,
+           "description": ("add `changes`: each changed sentence before and after, the local "
+                           "findings it cleared or kept, refused paragraphs and allowed changes")}
+
+OPTIONS = {"fix": {"allow_change": ALLOW_CHANGE, "explain": EXPLAIN},
+           "polish": {"allow_change": ALLOW_CHANGE, "explain": EXPLAIN},
+           "edit_plan": {"allow_change": ALLOW_CHANGE},
+           "edit_submit": {"explain": EXPLAIN}}
 
 
 def extend(tools):

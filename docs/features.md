@@ -126,6 +126,13 @@ silence. The plan binds the allowed kinds (plan schema
 plans still verify. Disclosure lines, an added first-person sentence, HTML and
 math can never be allowed.
 
+A change report (`--explain` on `fix`, `polish` and `submit`, or `explain` on
+the MCP `fix`, `polish` and `edit_submit` tools) pairs each changed sentence
+with its original and lists the findings it cleared, kept or added, the
+paragraphs the guard kept and why, and every allowed change. It shows what the
+checker saw in each sentence; it does not show why the editor made a change or
+that the meaning held.
+
 Without a reachable model, `none` makes conservative mechanical edits and
 reports what remains. It can replace clause dashes and remove safe filler or
 extra spaces; it leaves protected content alone. Its `judge` returns local

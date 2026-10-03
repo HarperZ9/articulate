@@ -447,7 +447,7 @@ def _cmd_edit(args):
                 fh.write(result["text"])
         from .cli_process import record_pass
         record_pass(args, result, text)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        print(cli_edit.render(args, result, text))
         return 0
     except (OSError, ValueError) as exc:
         print(f"[articulate] {exc}", file=sys.stderr)

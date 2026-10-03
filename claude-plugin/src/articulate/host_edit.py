@@ -109,6 +109,11 @@ def _verify(text, plan_id):
         raise ValueError('invalid plan token') from exc
 
 
+def check_under(text, profile):
+    """The local check behind every plan and edit result."""
+    return detector.check_text(text, profile=profile)
+
+
 def _findings(result):
     return [dict(f, reason=f['label']) for tier in ('high', 'medium', 'low') for f in result[tier]]
 
@@ -128,7 +133,7 @@ def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=F
                          allow_change, freeze_terms)
     freeze = edit_options.bound(settings)[1]
     voice_notes = voice.get('notes') if voice else None
-    before = detector.check_text(text, profile=settings['profile'])
+    before = check_under(text, settings['profile'])
     findings = _findings(before)
     delta = settings['profile'].get('editor', {}).get('standard_delta', '')
     instr = (prompts.judge_instructions(_summary(findings), delta) if goal == 'judge'
@@ -163,8 +168,8 @@ def _quality(scores):
 
 def _result(original, accepted, settings, refused, backend, model, quality_status='unassessed', scores=None,
             author_text_origin=None, allowed=None):
-    before = detector.check_text(original, profile=settings['profile'])
-    after = detector.check_text(accepted, profile=settings['profile'])
+    before = check_under(original, settings['profile'])
+    after = check_under(accepted, settings['profile'])
     bf, af = _findings(before), _findings(after)
     bc, ac = Counter(f['rule_id'] for f in bf), Counter(f['rule_id'] for f in af)
     deltas = [{'rule_id': rule, 'before': bc[rule], 'after': ac[rule], 'delta': ac[rule] - bc[rule]}
@@ -219,8 +224,8 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
     accepted, refused = guarded['text'], guarded['refused']
     quality = _quality(scores)
     if settings['goal'] == 'polish':
-        before = detector.check_text(text, profile=settings['profile'])
-        after = detector.check_text(accepted, profile=settings['profile'])
+        before = check_under(text, settings['profile'])
+        after = check_under(accepted, settings['profile'])
         reasons = []
         if quality == 'regressed':
             reasons.append('quality scores regressed')
@@ -262,7 +267,7 @@ def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False,
         chunks.append(transform(text[end:]))
         candidate = ''.join(chunks)
     checked = guard_rewrite(text, candidate, is_html, is_tex, allow=allow, freeze=freeze)
-    if goal == 'polish' and detector.check_text(text, profile=prof)['gate'] == 'ok' and detector.check_text(checked['text'], profile=prof)['gate'] != 'ok':
+    if goal == 'polish' and check_under(text, prof)['gate'] == 'ok' and check_under(checked['text'], prof)['gate'] != 'ok':
         checked = {'text': text, 'refused': [{'paragraph': None, 'reasons': ['detector gate regressed']}]}
     out = _result(text, checked['text'], settings, checked['refused'], 'none', None,
                   allowed=checked.get('allowed_changes'))

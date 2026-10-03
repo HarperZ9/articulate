@@ -216,6 +216,26 @@ of kinds that can be. The plan binds the allowed kinds, so `submit` cannot
 widen them. A plan with no allowed kinds and no frozen terms keeps the v2 plan
 schema and the same plan ID as before.
 
+### The change report
+
+```bash
+articulate fix FILE --backend none --explain          # adds "changes" to the JSON
+articulate polish FILE --explain text                  # prints a readable report
+articulate submit FILE REWRITE --plan PLAN_ID --explain
+```
+
+`--explain` on `fix`, `polish` and `submit` reports each changed sentence. It
+pairs the sentences of the original and the accepted text paragraph by
+paragraph. For each changed pair it gives the text before and after, the
+findings (rule id and label) on the old sentence that are gone, those that
+remain, and any the new sentence adds. It also lists each paragraph the guard
+kept, with its reasons, and each allowed change. `--explain` or
+`--explain json` adds this as `changes` to the result JSON; `--explain text`
+prints the report in place of the JSON. The MCP `fix`, `polish` and
+`edit_submit` tools take `explain: true` for the same report. The findings
+columns show what the checker saw, not why the editor changed a sentence, and
+the report carries a `does_not_prove` line saying so.
+
 ### Backend configuration
 
 Use `--backend` to select a backend for one call, or set `ARTICULATE_BACKEND`

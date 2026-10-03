@@ -26,6 +26,10 @@ One release line. `main` now carries everything released from `release/0.5.x`
   the editor receipt. The plan binds the list, so a submission cannot widen it.
   Disclosure lines, added first-person sentences, HTML and math can never be
   allowed. Plans that allow nothing keep their old schema and plan IDs.
+- `fix`, `polish` and `submit` take `--explain [json|text]`, and the MCP `fix`,
+  `polish` and `edit_submit` tools take `explain`, for a change report: each
+  changed sentence before and after, the findings it cleared, kept or added,
+  the paragraphs the guard kept and why, and each allowed change.
 
 ## 0.8.0
 

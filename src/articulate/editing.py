@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import re
 
-from . import backends, detector, host_edit, prompts
+from . import backends, host_edit, prompts
 
 
 def _scores(output):
@@ -119,7 +119,7 @@ accepts only complete five-score assessments with no individual regression.
             if quality is None:
                 note = "Quality scores unavailable; kept the best checked version."
                 break
-            current = detector.check_text(best, profile=resolved_profile)
+            current = host_edit.check_under(best, resolved_profile)
             low = {f["category"] for f in current["low"]}
             if (current["gate"] == "ok" and not (required & low)
                     and all(quality[k] >= bar for k in prompts.QUALITIES)):
@@ -157,7 +157,7 @@ accepts only complete five-score assessments with no individual regression.
             if score_info.backend in ("host", "none") or candidate_quality is None:
                 note = "Candidate scores unavailable; kept the best checked version."
                 break
-            candidate_local = detector.check_text(candidate_text, profile=resolved_profile)
+            candidate_local = host_edit.check_under(candidate_text, resolved_profile)
             candidate_low = {f["category"] for f in candidate_local["low"]}
             if (any(candidate_quality[k] < quality[k] for k in prompts.QUALITIES)
                     or candidate["gate_after"] != "ok"
@@ -179,7 +179,7 @@ accepts only complete five-score assessments with no individual regression.
             result["quality_status"] = "unassessed_after_guard"
             result["receipt"].update(scores=None, quality_status="unassessed_after_guard")
             note = "Final checks retained different text; quality scores are unavailable for that text."
-        local = detector.check_text(result["text"], profile=resolved_profile)
+        local = host_edit.check_under(result["text"], resolved_profile)
         result["scores"] = quality
         result["quality_met"] = bool(quality and result["gate_after"] == "ok"
                                      and not required.intersection(f["category"] for f in local["low"])
