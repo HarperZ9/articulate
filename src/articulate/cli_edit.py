@@ -5,13 +5,14 @@ code lives in one place and the core command line stays small.
 
   --allow-change KINDS  protected change kinds the edit may make (plan, fix,
                         polish). Each accepted change is reported.
+  --config PATH|none    the project config (plan, judge, fix, polish).
   --explain [json|text] a change report for an accepted edit (fix, polish,
                         submit): json adds `changes` to the result, text prints
                         a readable report instead of the JSON.
 """
 import json
 
-from . import changes, edit_options
+from . import changes, cli_config, edit_options
 
 
 def add_arguments(parser, cmd):
@@ -21,6 +22,8 @@ def add_arguments(parser, cmd):
             "--allow-change", default=None, metavar="KINDS",
             help="comma-separated protected change kinds the edit may make, reported in "
                  "allowed_changes: " + ", ".join(edit_options.ALLOWABLE))
+    if cmd in ("plan", "judge", "fix", "polish"):
+        cli_config.add_argument(parser)
     if cmd in ("fix", "polish", "submit"):
         parser.add_argument(
             "--explain", nargs="?", const="json", choices=("json", "text"), default=None,

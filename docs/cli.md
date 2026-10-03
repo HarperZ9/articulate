@@ -27,6 +27,17 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
   place.
 - `--content-free`: omit every verbatim substring and exact offset from the
   console, JSON, and SARIF output.
+- `--config PATH|none`: the project config. By default the nearest
+  `.articulate.json` above each file is read; for standard input the search
+  starts in the current directory. `none` turns discovery off. See
+  [Project config](features.md#project-config).
+
+A project config's terminology findings print with their rule id, for example
+`[HIGH terminology/banned/whitelist]`. The profile is chosen by `--mode`, then
+`--profile`, then an in-file `writing-profile:` tag, then a glob in the project
+config, then the file path, then the default. `score`, `receipt`, `plan`,
+`judge`, `fix` and `polish` take `--config` too. A malformed config exits 2 with
+the file and the reason.
 
 ## score
 
@@ -79,6 +90,20 @@ articulate audit [PATH ...] [--days N] [--reverify] [--gate] [--json]
   was screened, or could not be read. A sub-threshold or stale-ruleset
   `Unverifiable` is reported, and it does not fail the gate.
 - `--json`: the summary as JSON.
+
+## config
+
+Show which project config applies to a file, the profile it chooses and why,
+and what the config sets.
+
+```bash
+articulate config [PATH] [--config PATH|none] [--json]
+```
+
+The text form prints the config path, the profile and its source (for example
+`config glob 'notes/**'` or `path inference`), the banned, preferred and allowed
+terms, the freeze terms and the rule-pack options. `--json` prints the same
+fields as an object. A malformed config exits 2 with the file and the reason.
 
 ## modes
 
@@ -152,7 +177,10 @@ articulate polish FILE --backend ollama --json
 ```
 
 All three accept `--backend auto|host|sampling|anthropic|claude-cli|openai|ollama|none`,
-`--mode M`, `--profile P`, `--out OUT` and `--json`. Sampling requires an MCP
+`--mode M`, `--profile P`, `--config PATH|none`, `--out OUT` and `--json`. A
+project config's terminology and pack options travel in the edit plan, and its
+freeze terms are protected in every rewrite. `fix` and `polish` also take
+`--allow-change KINDS` and `--explain [json|text]`, described below. Sampling requires an MCP
 session that advertised sampling; a plain CLI cannot request the host's model
 through that transport. `host` returns a plan for a calling model to complete.
 Without a model, `none` makes conservative mechanical fixes and reports remaining
@@ -174,8 +202,10 @@ Use a calling agent's model without a separate model account:
 
 ```bash
 articulate plan FILE [--mode M] [--profile P] [--goal fix|polish|judge]
-                     [--is-html] [--is-tex]
+                     [--is-html] [--is-tex] [--allow-change KINDS]
+                     [--config PATH|none]
 articulate submit FILE REWRITE --plan PLAN_ID [--scores JSON] [--model NAME]
+                  [--explain [json|text]]
 ```
 
 `plan` writes JSON with the local findings, their reasons, the hardened model

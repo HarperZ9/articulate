@@ -19,7 +19,6 @@ import json
 import sys
 from urllib.parse import unquote, urlparse
 
-from . import domains
 from .checkext import check_text
 
 # LSP DiagnosticSeverity: 1 Error, 2 Warning, 3 Information, 4 Hint. A writing
@@ -75,10 +74,25 @@ def uri_to_path(uri):
     return path
 
 
-def build_diagnostics(text, uri, override=None):
-    prof = domains.resolve(path=uri_to_path(uri), text=text, override=override)
+def _config_for(path, config):
+    """(config or None, diagnostics). A broken config is reported on line 1 and
+    the document is checked without it."""
+    from . import project
+    try:
+        return project.for_path(path, config), []
+    except project.ConfigError as e:
+        return None, [{"range": {"start": {"line": 0, "character": 0},
+                                 "end": {"line": 0, "character": 0}},
+                       "severity": 1, "code": "config", "source": "articulate",
+                       "message": str(e)}]
+
+
+def build_diagnostics(text, uri, override=None, config=None):
+    from . import project
+    path = uri_to_path(uri)
+    cfg, diags = _config_for(path, config)
+    prof = project.resolve(path, text, profile=override, cfg=cfg)[1]
     r = check_text(text, profile=prof)
-    diags = []
     for f in r["high"] + r["medium"] + r["low"]:
         line0 = f["line"] - 1
         ch0 = f["col"] - 1

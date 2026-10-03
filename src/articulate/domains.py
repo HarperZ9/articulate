@@ -76,13 +76,3 @@ def load(name):
     """A writing mode (a name with a slash), domain profile or register profile."""
     return modes.load(name) if "/" in str(name) else load_profile(name)
 
-
-def resolve(path=None, text=None, override=None):
-    """profiles.resolve with domain profile names: an override, else an in-file
-    tag, else path inference, else the default."""
-    if override:
-        return load_profile(override)
-    tag = profiles.declared_profile(text) if text is not None else None
-    if tag:
-        return load_profile(tag)
-    return load_profile(profiles.profile_for(path) if path is not None else profiles.DEFAULT)

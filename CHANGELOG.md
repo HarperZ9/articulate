@@ -43,6 +43,17 @@ One release line. `main` now carries everything released from `release/0.5.x`
   Receipts under a domain profile record an `extension_fingerprint`, and a
   pack change makes them read Unverifiable. `python -m articulate.bench` also
   runs the new domain regression corpus.
+- A project config file, `.articulate.json`, found by walking up from each
+  file (nearest wins). It maps path globs to profiles, adds banned and
+  preferred terminology with their own rule ids, allows terms of art, freezes
+  terms that every rewrite must keep, and tunes rule-pack options. `check`,
+  `score`, `receipt`, `plan`, `judge`, `fix` and `polish` take
+  `--config PATH|none`, and `articulate config PATH` shows what applies to a
+  file and why. Terminology findings appear in check text, JSON, SARIF,
+  per-span verdicts, LSP diagnostics and receipts. Receipts embed the project
+  rules with their hash, so they replay anywhere; an edited payload reads
+  Unverifiable. A malformed config stops the command with exit 2, the file and
+  the reason. With no config file, output is unchanged.
 
 ## 0.8.0
 

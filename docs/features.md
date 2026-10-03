@@ -50,8 +50,9 @@ packs run after the detector, outside its published rules, so the v0.5.2
 detector and every register profile keep their findings. Pack findings gate,
 report and export like any other finding, and they never change the texture
 score. A rule whose judgment is a heuristic sits in the LOW tier and reports
-without blocking. Every numeric default is a pack option, and the source of
-each default is named below. All of these rules read English only.
+without blocking. Every numeric default is a pack option, set under `options`
+in the [project config](#project-config), and the source of each default is
+named below. All of these rules read English only.
 
 Choose one with `--profile NAME`, an in-file `writing-profile: NAME` tag, or a
 project config glob. Receipts record the domain profile name and an
@@ -202,6 +203,69 @@ not checked.
 categories it must produce. A clean sample must produce none and pass its gate.
 It shows the rules still do what they did, and nothing about recall or
 precision on real documents.
+
+## Project config
+
+A project sets its own rules in a `.articulate.json` file. Articulate finds it
+by walking up from each checked file's directory, and the nearest file wins; for
+standard input the search starts in the current directory. `--config PATH`
+names a file, and `--config none` turns discovery off. With no config file,
+every command's output is the same as before project configs existed. The
+format is JSON because the package supports Python 3.9, and a TOML parser
+joined the standard library only in 3.11.
+
+```json
+{
+  "version": 1,
+  "profiles": {"docs/api/**": "api-docs", "ui/*.txt": "ux-microcopy"},
+  "terminology": {
+    "banned": [{"term": "whitelist", "suggestion": "allowlist",
+                "reason": "inclusive language"}],
+    "preferred": [{"use": "sign in", "instead_of": ["log in", "login"]}],
+    "allowed": ["leverage"]
+  },
+  "freeze": ["Articulate"],
+  "options": {"plain-language": {"max_grade": 6}, "ux-microcopy": {"case": "title"}}
+}
+```
+
+- `profiles` maps a path glob, relative to the config file, to a register
+  profile, domain profile, genre, or mode. The first matching glob wins. It ranks
+  below `--profile`, `--mode`, and an in-file `writing-profile:` tag, and above
+  inference from the path.
+- `terminology` adds project rules to every check. A banned term fires as rule
+  `terminology/banned/<term>` (HIGH by default), and a replaced variant fires as
+  `terminology/preferred/<preferred form>` (MEDIUM by default). Each entry may set
+  its own `severity` and `match_case`, and the finding carries the reason and the
+  suggestion. Code spans, URLs, and fenced blocks are skipped. The rule ids show
+  in `check` text, `--json`, `--sarif` and `--spans`, in LSP diagnostics, and in
+  receipts. These rules run after the detector, like the domain rule packs, and
+  never change the texture score.
+- `allowed` terms join the profile's terms-of-art keep list. They clear the
+  vocabulary and register rules; a structural device such as antithesis still
+  fires on them.
+- `freeze` terms must survive every rewrite unchanged. The edit plan binds them
+  (plan schema `articulate/edit-plan/v3`) and the guard reads them as protected
+  spans of kind `term`.
+- `options` tunes a domain rule pack by name (`ux-microcopy`, `plain-language`,
+  `controlled-english`). An unknown pack, option, or value is an error.
+
+There is no `protect` key. Protected spans are always on in this release, and a
+config that names `protect` is rejected with a message saying so. Disclosure
+lines and the added-first-person guard can never be turned off.
+
+A malformed file stops the command with exit 2, the file name and the reason:
+invalid JSON, an unknown key, a bad type, an unknown profile, or a term that is
+both banned and allowed. It is never ignored in silence. The LSP server reports
+a broken config as a diagnostic on line 1 and checks the document without it.
+`articulate config PATH` prints which config applies to a file, the profile it
+chooses and why, the terminology rules, the freeze terms and the pack options.
+
+A receipt made under a config embeds the terminology and options as
+`project_rules` with their hash, so anyone can replay it with no access to the
+project. An edited rule set reads `Unverifiable`, and a consistently re-hashed
+edit that changes the findings reads `Drift`. A receipt made with no config has
+neither field.
 
 ## Writing modes
 

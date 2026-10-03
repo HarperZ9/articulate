@@ -29,8 +29,14 @@ against a known string; it is not confidentiality, because most rules draw from 
 public closed vocabulary a holder can enumerate and hash. Use "drop" when the flagged
 word must stay secret.
 
-A receipt under a domain profile (articulate.domains) also records
-`extension_fingerprint`, a hash of the rule packs that ran outside the detector.
+A receipt made under a project config (articulate.project) embeds the
+terminology and pack options as `project_rules` with their hash
+`project_rules_sha256`, so anyone can replay it with no access to the project.
+A payload that no longer matches its hash reads Unverifiable.
+
+A receipt under a domain profile (articulate.domains) or project rules also
+records `extension_fingerprint`, a hash of the rule packs and terminology rule
+format that ran outside the detector.
 Verify re-derives under the same packs, and reads Unverifiable when that hash
 no longer matches, so a pack change never shows as a silent mismatch. A receipt
 with no rule packs carries no such field and is unchanged.
@@ -42,7 +48,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
-from . import checkext, detector, domains, profiles, rules_ext
+from . import checkext, detector, domains, profiles, project, rules_ext
 
 SCHEMA = "articulate/receipt/v1"
 AUDIT_SCHEMA = "articulate/receipt/audit/v1"
@@ -113,7 +119,7 @@ def _block_receipt(text, prof) -> list:
 
 def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
                  redact: str = None, reviewer: str = None,
-                 created_at: str = None) -> dict:
+                 created_at: str = None, config=None) -> dict:
     """Build a receipt. `redact` None gives the full content-bearing receipt;
     "drop" or "hash" gives a content-free audit receipt (schema audit/v1) that keeps
     no verbatim document text. The per-span blocks are already content-free.
@@ -124,7 +130,8 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
     if redact not in (None, "drop", "hash"):
         raise ValueError(f"redact must be None, 'drop', or 'hash'; got {redact!r}")
     pname = profile_name or profiles.DEFAULT
-    prof = domains.load_profile(pname)
+    rules = project.rules_payload(config)
+    prof = project.apply_payload(domains.load_profile(pname), rules)
     r = checkext.check_text(text, profile=prof)
     content_free = redact in ("drop", "hash")
     rec = {
@@ -146,6 +153,9 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
     }
     if content_free:
         rec["redaction"] = redact
+    if rules:
+        rec["project_rules"] = rules
+        rec["project_rules_sha256"] = project.payload_sha256(rules)
     if rules_ext.active(prof):
         rec["extension_fingerprint"] = rules_ext.fingerprint()
     if per_span:
@@ -163,6 +173,20 @@ def _extension_problem(receipt, prof):
         return (f"rule packs changed ({recorded} -> {current}); "
                 f"cannot re-derive under different rule packs")
     return None
+
+
+def _replay_profile(receipt, prof):
+    """(profile with the embedded project rules applied, problem or None)."""
+    rules = receipt.get("project_rules")
+    if rules is not None:
+        if receipt.get("project_rules_sha256") != project.payload_sha256(rules):
+            return prof, "embedded project rules do not match their recorded hash"
+        try:
+            project.check_payload(rules)
+        except project.ConfigError as e:
+            return prof, f"embedded project rules are malformed: {e}"
+        prof = project.apply_payload(prof, rules)
+    return prof, _extension_problem(receipt, prof)
 
 
 def verify_receipt(receipt: dict, text: str):
@@ -191,7 +215,7 @@ def verify_receipt(receipt: dict, text: str):
         prof = domains.load_profile(pname)
     except profiles.ProfileError:
         return "Unverifiable", f"receipt names an unknown profile {pname!r}"
-    problem = _extension_problem(receipt, prof)
+    prof, problem = _replay_profile(receipt, prof)
     if problem:
         return "Unverifiable", problem
     r = checkext.check_text(text, profile=prof)

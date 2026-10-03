@@ -1,9 +1,17 @@
 """Rules that run after the v0.5.2 detector, outside its pinned ruleset.
 
-The detector reads every document with one frozen ruleset. Domain rule packs
-add deterministic rules for one kind of writing, switched on by a domain
-profile's `rule_packs` field (articulate.domains). They run in this layer, so
-the detector source and its ruleset fingerprint never change.
+The detector reads every document with one frozen ruleset. Two kinds of rules
+depend on where the document lives or what it is:
+
+  project terminology  banned and preferred terms from `.articulate.json`
+                       (articulate.terms), carried on the profile as
+                       `terminology`.
+  domain rule packs    deterministic rules for one kind of writing, switched on
+                       by a domain profile's `rule_packs` field
+                       (articulate.domains).
+
+They run in this layer, so the detector source and its ruleset fingerprint
+never change.
 
 `scan(text, lines, profile)` returns the extra findings by tier as detector
 span records; articulate.checkext adds them to a check result and recomputes
@@ -15,7 +23,7 @@ import hashlib
 import json
 import re
 
-from . import detector, invariants
+from . import detector, invariants, terms
 
 SEMVER = "1.0.0"
 # name -> module. A pack module exposes NAME, CATEGORIES, OPTIONS (defaults),
@@ -58,12 +66,16 @@ def prose_lines(lines):
 
 def active(profile):
     """True when the profile switches on any rule in this layer."""
-    return bool(profile and profile.get("rule_packs"))
+    return bool(profile and (profile.get("rule_packs") or profile.get("terminology")))
 
 
 def scan(text, lines, profile):
-    """Extra findings (high, medium, low) from the profile's rule packs."""
+    """Extra findings (high, medium, low) from project terminology and packs."""
     found = {"HIGH": [], "MEDIUM": [], "LOW": []}
+    term = profile.get("terminology")
+    if term:
+        for tier, items in terms.scan(prose_lines(lines), term, detector._mk).items():
+            found[tier].extend(items)
     options = profile.get("options") or {}
     for name in profile.get("rule_packs", ()):
         pack = PACKS[name]
@@ -102,7 +114,9 @@ _register()
 def fingerprint_parts():
     """The strings that pin this layer: packs, their defaults, domain profiles."""
     from . import domains
-    parts = ["RULES_EXT=" + SEMVER]
+    parts = ["RULES_EXT=" + SEMVER,
+             "TERMS=%r|%s" % (sorted((k, sorted(v)) for k, v in terms._KEYS.items()),
+                             sorted(terms.SEVERITIES))]
     for name in sorted(PACKS):
         parts.append("PACK|%s|%s" % (name, sorted(PACKS[name].OPTIONS.items())))
         parts.extend("PACK|%s|%s" % (name, p) for p in PACKS[name].fingerprint())
