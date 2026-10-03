@@ -19,8 +19,8 @@ import json
 import sys
 from urllib.parse import unquote, urlparse
 
-from . import profiles
-from .detector import check_text
+from . import domains
+from .checkext import check_text
 
 # LSP DiagnosticSeverity: 1 Error, 2 Warning, 3 Information, 4 Hint. A writing
 # tool should not raise Errors, so HIGH is a Warning, MEDIUM Information, LOW Hint.
@@ -76,7 +76,7 @@ def uri_to_path(uri):
 
 
 def build_diagnostics(text, uri, override=None):
-    prof = profiles.resolve(path=uri_to_path(uri), text=text, override=override)
+    prof = domains.resolve(path=uri_to_path(uri), text=text, override=override)
     r = check_text(text, profile=prof)
     diags = []
     for f in r["high"] + r["medium"] + r["low"]:

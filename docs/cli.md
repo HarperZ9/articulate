@@ -13,7 +13,10 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
                  [--sarif] [--verbose] [--spans] [--content-free]
 ```
 
-- `--profile P`: force a register profile.
+- `--profile P`: force a register profile or a domain profile
+  (`ux-microcopy`, `code-review`, `plain-language`, `controlled-english`,
+  `rfc-keywords`). A domain profile adds its rule pack's findings; see
+  [Domain profiles](features.md#domain-profiles).
 - `--mode M`: a writing mode, for example `memo/argue`. A mode wins over profile
   inference.
 - `--gate`: exit 1 when any file is blocked or cannot be screened, otherwise 0.

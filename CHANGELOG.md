@@ -30,6 +30,19 @@ One release line. `main` now carries everything released from `release/0.5.x`
   `polish` and `edit_submit` tools take `explain`, for a change report: each
   changed sentence before and after, the findings it cleared, kept or added,
   the paragraphs the guard kept and why, and each allowed change.
+- Five domain profiles add rule packs for one kind of writing:
+  `ux-microcopy` (UI string length, case, vague errors and link text),
+  `code-review` (condescension, absolutes and requests with no reason),
+  `plain-language` (reading grade, long sentences and wordy phrases),
+  `controlled-english` (sentence length, one instruction per sentence, idioms,
+  phrasal verbs and vague pronouns; no ASD-STE100 conformance is claimed) and
+  `rfc-keywords` (`normative-spec` plus RFC 2119 and RFC 8174 keyword checks).
+  Choose one with `--profile`, an in-file `writing-profile:` tag, the LSP
+  server or an edit plan. The packs run after the detector, so the detector
+  rules, every existing profile and every existing receipt are unchanged.
+  Receipts under a domain profile record an `extension_fingerprint`, and a
+  pack change makes them read Unverifiable. `python -m articulate.bench` also
+  runs the new domain regression corpus.
 
 ## 0.8.0
 

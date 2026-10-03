@@ -22,7 +22,7 @@ import hmac
 import json
 import re
 
-from . import detector, edit_options, modes, profiles, prompts
+from . import checkext, detector, domains, edit_options, modes, profiles, prompts
 from .meaning_guard import guard_rewrite, mask_text, protected_spans, restore_masks
 
 
@@ -66,7 +66,7 @@ def _settings(mode, profile, goal, is_html, is_tex, author_text=None, voice=None
         raise ValueError('goal must be fix, polish or judge')
     if mode and profile is not None:
         raise ValueError('choose mode or profile, not both')
-    prof = modes.load(mode) if mode else (profiles.load(profile) if isinstance(profile, str)
+    prof = modes.load(mode) if mode else (domains.load_profile(profile) if isinstance(profile, str)
                                          else profile if profile is not None else profiles.load(profiles.DEFAULT))
     if not isinstance(prof, dict):
         raise ValueError('profile must be a name or object')
@@ -110,8 +110,8 @@ def _verify(text, plan_id):
 
 
 def check_under(text, profile):
-    """The local check behind every plan and edit result."""
-    return detector.check_text(text, profile=profile)
+    """The local check behind every plan and edit result, rule packs included."""
+    return checkext.check_text(text, profile=profile)
 
 
 def _findings(result):

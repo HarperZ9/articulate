@@ -29,6 +29,12 @@ against a known string; it is not confidentiality, because most rules draw from 
 public closed vocabulary a holder can enumerate and hash. Use "drop" when the flagged
 word must stay secret.
 
+A receipt under a domain profile (articulate.domains) also records
+`extension_fingerprint`, a hash of the rule packs that ran outside the detector.
+Verify re-derives under the same packs, and reads Unverifiable when that hash
+no longer matches, so a pack change never shows as a silent mismatch. A receipt
+with no rule packs carries no such field and is unchanged.
+
 Standard library only; no network.
 """
 from __future__ import annotations
@@ -36,7 +42,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
-from . import detector, profiles
+from . import checkext, detector, domains, profiles, rules_ext
 
 SCHEMA = "articulate/receipt/v1"
 AUDIT_SCHEMA = "articulate/receipt/audit/v1"
@@ -93,7 +99,7 @@ def _block_receipt(text, prof) -> list:
     its line range, its own text hash, and its localized texture. This is what
     makes the receipt reportable per span, beyond the whole-document verdict."""
     out = []
-    for b in detector.analyze_blocks(text, profile=prof):
+    for b in checkext.analyze_blocks(text, profile=prof):
         out.append({
             "index": b["index"],
             "start_line": b["start_line"], "end_line": b["end_line"],
@@ -118,8 +124,8 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
     if redact not in (None, "drop", "hash"):
         raise ValueError(f"redact must be None, 'drop', or 'hash'; got {redact!r}")
     pname = profile_name or profiles.DEFAULT
-    prof = profiles.load(pname)
-    r = detector.check_text(text, profile=prof)
+    prof = domains.load_profile(pname)
+    r = checkext.check_text(text, profile=prof)
     content_free = redact in ("drop", "hash")
     rec = {
         "schema": AUDIT_SCHEMA if content_free else SCHEMA,
@@ -140,9 +146,23 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
     }
     if content_free:
         rec["redaction"] = redact
+    if rules_ext.active(prof):
+        rec["extension_fingerprint"] = rules_ext.fingerprint()
     if per_span:
         rec["blocks"] = _block_receipt(text, prof)
     return rec
+
+
+def _extension_problem(receipt, prof):
+    """Why the rule layer cannot be re-derived, or None when it can."""
+    recorded = receipt.get("extension_fingerprint")
+    if not rules_ext.active(prof):
+        return "receipt records rule packs its profile does not run" if recorded else None
+    current = rules_ext.fingerprint()
+    if recorded != current:
+        return (f"rule packs changed ({recorded} -> {current}); "
+                f"cannot re-derive under different rule packs")
+    return None
 
 
 def verify_receipt(receipt: dict, text: str):
@@ -168,10 +188,13 @@ def verify_receipt(receipt: dict, text: str):
         return "Unverifiable", "text does not match the receipt's text hash"
     pname = receipt.get("profile", profiles.DEFAULT)
     try:
-        prof = profiles.load(pname)
+        prof = domains.load_profile(pname)
     except profiles.ProfileError:
         return "Unverifiable", f"receipt names an unknown profile {pname!r}"
-    r = detector.check_text(text, profile=prof)
+    problem = _extension_problem(receipt, prof)
+    if problem:
+        return "Unverifiable", problem
+    r = checkext.check_text(text, profile=prof)
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.
     same = (_normalize(r, redaction) == receipt.get("findings")

@@ -14,8 +14,9 @@ import json
 import os
 import sys
 
-from . import modes, profiles, pysource, receipt
-from .detector import binary_reason, check_text, ruleset_fingerprint
+from . import domains, modes, profiles, pysource, receipt
+from .checkext import check_text
+from .detector import binary_reason, ruleset_fingerprint
 
 
 def _resolve(name, text, args):
@@ -23,7 +24,7 @@ def _resolve(name, text, args):
     if getattr(args, "mode", None):
         return args.mode, modes.load(args.mode)
     pname = _profile_name(name, text, args.profile)
-    return pname, profiles.load(pname)
+    return pname, domains.load_profile(pname)
 
 
 def _redact(r):
@@ -208,7 +209,7 @@ def _cmd_check(args):
         r = check_text(text, profile=prof)
         r["file"], r["profile"] = name, pname
         if getattr(args, "spans", False):
-            from .detector import analyze_blocks
+            from .checkext import analyze_blocks
             r["blocks"] = analyze_blocks(text, profile=prof)
         if getattr(args, "content_free", False):
             _redact(r)          # no export path carries a verbatim substring
