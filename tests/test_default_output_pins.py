@@ -1,0 +1,77 @@
+"""With no project config and no domain profile, command output is byte-identical
+to the release line before project rules, domain profiles, allow-change and the
+change report were added. The pins were computed from that release line
+(commit b9eaae6) on corpus/ai/blog-intro.md copied to an empty directory."""
+import contextlib
+import hashlib
+import io
+import json
+import os
+import shutil
+
+import pytest
+
+from articulate import cli, host_edit, receipt
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SAMPLE = os.path.join(ROOT, "corpus", "ai", "blog-intro.md")
+
+PINS = {
+    "check_json": (["check", "sample.md", "--json"],
+                   "992563714272db38dfa2d2654443d049c2d60f632bff3fc93323c360b2c83f9c"),
+    "check_spans_json": (["check", "sample.md", "--json", "--spans"],
+                         "3af53dfdde834b492d424b57c5c7e9d2d5237c4e589f1795c14a432889ceeced"),
+    "check_text": (["check", "sample.md", "--verbose"],
+                   "50ef2198e62d2d172351ad4b4815935d17a45269dbe6b99a3bfabb7507fea6c2"),
+    "score": (["score", "sample.md"],
+              "9e2e2f2a452c8b305e96925f9936db8c5c614c9b7b7703e5de92645c6ab9871c"),
+    "fix_none": (["fix", "sample.md", "--backend", "none"],
+                 "900c4c4208f6978ef33eee6d6bf333d4524f8df4681fda41f90331186be358f8"),
+    "plan": (["plan", "sample.md"],
+             "1be2cab1d1fb0f9e0bc767d0251948797bbd14357a83fa1e0e56962fdcab92b6"),
+}
+RECEIPT_CLI = "05a6137b8713b3b6dfbef88a8dce695a7f57cede46053999b12c8499cc7c9dfb"
+RECEIPT_LIB = "8859f89cacdf7c637a73c8e724c3b738d9de412e0ac63fee7f0b079d53160a24"
+PLAN_ID = "f924d6e7db3f3c4b3c23e38a31bf0c2ee15686ff2f7fdd849bea51c3b00fbc28"
+
+
+def _sha(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _run(argv):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = cli.main(argv)
+    return rc, buf.getvalue()
+
+
+@pytest.fixture
+def sample_dir(tmp_path, monkeypatch):
+    shutil.copy(SAMPLE, tmp_path / "sample.md")
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+@pytest.mark.parametrize("name", sorted(PINS))
+def test_command_output_is_unchanged(sample_dir, name):
+    argv, digest = PINS[name]
+    rc, out = _run(argv)
+    assert rc == 0
+    assert _sha(out) == digest, name
+
+
+def test_cli_receipt_is_unchanged(sample_dir):
+    rc, out = _run(["receipt", "sample.md", "--spans"])
+    rec = json.loads(out)
+    rec.pop("created_at")
+    assert rc == 0 and _sha(json.dumps(rec, sort_keys=True)) == RECEIPT_CLI
+    assert not {"project_rules", "extension_fingerprint"} & set(rec)
+
+
+def test_library_receipt_and_plan_id_are_unchanged(sample_dir):
+    text = open("sample.md", encoding="utf-8").read()
+    rec = receipt.make_receipt(text, None, per_span=True, created_at="2026-01-01T00:00:00+00:00")
+    assert _sha(json.dumps(rec, sort_keys=True)) == RECEIPT_LIB
+    assert receipt.verify_receipt(rec, text)[0] == "Match"
+    assert _sha(host_edit.edit_plan(text)["plan_id"]) == PLAN_ID

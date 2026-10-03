@@ -19,6 +19,13 @@ One release line. `main` now carries everything released from `release/0.5.x`
   The reworked detector, the fairness harness and `check --house-notes` that sat
   on `main` change findings, so they stay out of this line until a reviewed
   ruleset change. Their history stays reachable from `main`.
+- `fix`, `polish` and `plan` take `--allow-change KINDS`, and the MCP `fix`,
+  `polish` and `edit_plan` tools take `allow_change`, so an edit can update a
+  number, link, citation, quote or other named kind of protected content on
+  purpose. Each allowed change is listed in `allowed_changes` in the result and
+  the editor receipt. The plan binds the list, so a submission cannot widen it.
+  Disclosure lines, added first-person sentences, HTML and math can never be
+  allowed. Plans that allow nothing keep their old schema and plan IDs.
 
 ## 0.8.0
 

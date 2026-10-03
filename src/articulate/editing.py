@@ -39,7 +39,8 @@ def _strip_preamble(output):
 
 def run_edit(text, goal="fix", *, backend=None, mode=None, profile=None,
              is_html=False, is_tex=False, bar=4, passes=3, context="cli",
-             sampling=None, sampling_advertised=False, timeout=600):
+             sampling=None, sampling_advertised=False, timeout=600,
+             allow_change=None, freeze_terms=None):
     """Run an edit, offer a host plan, or return a guarded local fallback.
 
 Every accepted rewrite passes the same stateless submission protocol. Polish
@@ -50,6 +51,9 @@ accepts only complete five-score assessments with no individual regression.
     if not 1 <= bar <= 5 or passes < 1:
         raise ValueError("bar must be 1-5 and passes must be positive")
     options = dict(mode=mode, profile=profile, is_html=is_html, is_tex=is_tex)
+    if allow_change or freeze_terms:
+        # Bound in every plan this run makes, so each submit checks the same set.
+        options.update(allow_change=allow_change, freeze_terms=freeze_terms)
     plan = host_edit.edit_plan(text, goal=goal, **options)
     attempts, calls, refused = [], [], []
     resolved_profile = plan["profile"]

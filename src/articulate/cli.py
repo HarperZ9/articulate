@@ -418,7 +418,7 @@ def _author_text(args):
 
 
 def _cmd_edit(args):
-    from . import editing, host_edit
+    from . import cli_edit, editing, host_edit
     try:
         text = _read_edit_file(args.file)
         if args.cmd == "submit":
@@ -431,6 +431,7 @@ def _cmd_edit(args):
                        "profile": None if args.mode else _profile_name(args.file, text, args.profile),
                        "is_html": args.is_html or args.file.lower().endswith((".html", ".htm")),
                        "is_tex": args.is_tex or args.file.lower().endswith(".tex")}
+            options.update(cli_edit.edit_kwargs(args))
             if args.cmd == "plan":
                 result = host_edit.edit_plan(text, goal=args.goal, author_text=_author_text(args), **options)
             else:
@@ -479,6 +480,8 @@ def main(argv=None):
                 p.add_argument("--bar", type=int, default=4)
                 p.add_argument("--passes", type=int, default=3)
                 p.add_argument("--timeout", type=float, default=600)
+        from . import cli_edit
+        cli_edit.add_arguments(p, cmd)
         if cmd in ("plan", "submit"):
             p.add_argument("--author-text", help="a file of your own words the edit may add")
         p.add_argument("--out", help="write accepted text to this file")

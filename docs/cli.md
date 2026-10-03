@@ -195,6 +195,27 @@ and after, per-rule deltas and a host receipt. A matching plan ID binds inputs;
 it is not authentication or proof of semantic equivalence. A plan and its
 result can contain source text, so store them with the document's protections.
 
+### Allowing a protected change
+
+The guard keeps a paragraph whose protected content changed. When an edit
+needs to change a number or a link on purpose, name that kind:
+
+```bash
+articulate fix FILE --backend none --allow-change number,url
+articulate plan FILE --allow-change number
+```
+
+`--allow-change` takes a comma-separated list on `plan`, `fix` and `polish`.
+The kinds that can be allowed are `citation`, `code`, `link`, `modal`,
+`negation`, `number`, `number-range`, `quantity`, `quote`, `scope`, `term` and
+`url`. A change of an allowed kind is accepted and listed in `allowed_changes`
+(paragraph and kind) in the result and in the editor receipt. A change of any
+other kind still keeps the paragraph. Disclosure lines, an added first-person
+sentence, HTML and math can never be allowed; naming one exits 2 with the list
+of kinds that can be. The plan binds the allowed kinds, so `submit` cannot
+widen them. A plan with no allowed kinds and no frozen terms keeps the v2 plan
+schema and the same plan ID as before.
+
 ### Backend configuration
 
 Use `--backend` to select a backend for one call, or set `ARTICULATE_BACKEND`

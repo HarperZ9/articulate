@@ -18,7 +18,7 @@ from . import __version__
 from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score, do_edit_plan, do_edit_submit
 from .tool_meta import TOOLS_VAR, tool_set, offline, annotations, local_only_switch
 from .tool_text import description
-from . import house_tools as _house_tools, voice_tools as _voice_tools
+from . import house_tools as _house_tools, voice_tools as _voice_tools, tool_options
 
 PROTOCOL = "2025-06-18"
 
@@ -171,6 +171,7 @@ LOCAL_ONLY += _voice_tools.NAMES + _house_tools.NAMES
 TOOLS[0]["inputSchema"]["properties"]["max_hits"] = {
     "type": "integer", "default": 50, "minimum": 0, "maximum": 1000,
     "description": "Maximum span records; full-text verdict and scores are unchanged."}
+tool_options.extend(TOOLS)
 
 
 def listed_tools(environ=None):
@@ -236,10 +237,12 @@ def _call(params: dict, session=None) -> dict:
                 options.update(sampling=session.sample, sampling_advertised=session.sampling_advertised)
             if name == "polish":
                 options.update(bar=args.get("bar", 4), passes=args.get("passes", 3))
+            options.update(tool_options.given(name, args))
             result = {"judge": do_judge, "fix": do_fix, "polish": do_polish}[name](_text_arg(args), **options)
         elif name == "edit_plan":
             result = do_edit_plan(_text_arg(args), **{key: args[key] for key in
-                ("mode", "profile", "goal", "is_html", "is_tex") if key in args})
+                ("mode", "profile", "goal", "is_html", "is_tex") if key in args},
+                **tool_options.given(name, args))
         elif name == "edit_submit":
             for key in ("rewrite", "plan_id"):
                 if not isinstance(args.get(key), str):

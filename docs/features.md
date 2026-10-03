@@ -117,6 +117,15 @@ text. A refused span keeps its original wording and gets a reason. The guard
 applies to model and deterministic edits. Protected spans cannot establish
 semantic equivalence: a rewrite can retain every number and still change a claim.
 
+An edit can allow named kinds of protected change, such as a number it is meant
+to update (`--allow-change number`, or `allow_change` on the MCP `fix`,
+`polish` and `edit_plan` tools). An allowed change is reported in
+`allowed_changes` in the result and the editor receipt; it is never accepted in
+silence. The plan binds the allowed kinds (plan schema
+`articulate/edit-plan/v3`), so a submission cannot widen them, and v1 and v2
+plans still verify. Disclosure lines, an added first-person sentence, HTML and
+math can never be allowed.
+
 Without a reachable model, `none` makes conservative mechanical edits and
 reports what remains. It can replace clause dashes and remove safe filler or
 extra spaces; it leaves protected content alone. Its `judge` returns local

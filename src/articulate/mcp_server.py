@@ -6,7 +6,7 @@ returns a host plan. Explicit hosted backends can send text off this machine.
 """
 import asyncio
 import json
-from typing import Optional
+from typing import List, Optional
 
 from . import detector as core
 from .tool_meta import fastmcp_options, offline
@@ -73,7 +73,8 @@ def _edit(text, goal, **options):
         bar, passes = options.get("bar", 4), options.get("passes", 3)
         if not 1 <= bar <= 5 or passes < 1:
             raise ValueError("bar must be 1-5 and passes must be positive")
-        settings = {key: options[key] for key in ("mode", "profile", "is_html", "is_tex") if key in options}
+        settings = {key: options[key] for key in ("mode", "profile", "is_html", "is_tex", "allow_change")
+                    if key in options}
         result = (deterministic_edit if backend == "none" else edit_plan)(text, goal=goal, **settings)
         if goal == "polish":
             result.update(scores=None, quality_met=False)
@@ -94,22 +95,27 @@ def do_judge(text, backend=None, mode=None, profile=None, is_html=False,
 
 
 def do_fix(text, is_html=False, backend=None, mode=None, profile=None,
-           is_tex=False, **transport):
+           is_tex=False, allow_change=None, **transport):
+    if allow_change:
+        transport["allow_change"] = allow_change
     return _edit(text, "fix", backend=backend, mode=mode, profile=profile,
                  is_html=is_html, is_tex=is_tex, **transport)
 
 
 def do_polish(text, bar=4, passes=3, is_html=False, backend=None, mode=None,
-              profile=None, is_tex=False, **transport):
+              profile=None, is_tex=False, allow_change=None, **transport):
+    if allow_change:
+        transport["allow_change"] = allow_change
     return _edit(text, "polish", bar=bar, passes=passes, backend=backend,
                  mode=mode, profile=profile, is_html=is_html, is_tex=is_tex,
                  **transport)
 
 
-def do_edit_plan(text, mode=None, profile=None, goal="fix", is_html=False, is_tex=False):
+def do_edit_plan(text, mode=None, profile=None, goal="fix", is_html=False, is_tex=False,
+                 allow_change=None):
     from .host_edit import edit_plan
     return edit_plan(text, mode=mode, profile=profile, goal=goal,
-                     is_html=is_html, is_tex=is_tex)
+                     is_html=is_html, is_tex=is_tex, allow_change=allow_change)
 
 
 def do_edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=None):
@@ -122,6 +128,11 @@ def do_edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=
                       author_text=author_text, author_text_origin=origin)
     return edit_submit(text, rewrite, plan_id, scores=scores, model=model,
                        author_text=author_text, author_text_origin=origin)
+
+
+def _given(**options):
+    """Only the options a caller set, so an unset one changes nothing downstream."""
+    return {key: value for key, value in options.items() if value}
 
 
 async def _fast_edit(ctx, text, goal, **options):
@@ -179,29 +190,32 @@ def build_server():
     @mcp.tool(description=description("fix"), **fastmcp_options("fix"))
     async def fix(text: str, ctx: Context, is_html: bool = False,
                   backend: Optional[str] = None, mode: Optional[str] = None,
-                  profile: Optional[str] = None, is_tex: bool = False) -> dict:
+                  profile: Optional[str] = None, is_tex: bool = False,
+                  allow_change: Optional[List[str]] = None) -> dict:
         """Edit prose using negotiated sampling or return a host edit plan; explicit hosted backends send text off the machine.
         When a plan is returned, follow its instructions and call edit_submit with the original text, rewrite and plan_id."""
         return await _fast_edit(ctx, text, "fix", backend=backend, mode=mode,
-                                profile=profile, is_html=is_html, is_tex=is_tex)
+                                profile=profile, is_html=is_html, is_tex=is_tex,
+                                **_given(allow_change=allow_change))
 
     @mcp.tool(description=description("polish"), **fastmcp_options("polish"))
     async def polish(text: str, ctx: Context, bar: int = 4, passes: int = 3,
                      is_html: bool = False, backend: Optional[str] = None,
                      mode: Optional[str] = None, profile: Optional[str] = None,
-                     is_tex: bool = False) -> dict:
+                     is_tex: bool = False, allow_change: Optional[List[str]] = None) -> dict:
         """Polish prose with meaning and regression guards or return a host plan; explicit hosted backends send text off the machine.
         When a plan is returned, follow its instructions and call edit_submit with the original text, rewrite, plan_id and assessed scores."""
         return await _fast_edit(ctx, text, "polish", backend=backend, mode=mode,
                                 profile=profile, is_html=is_html, is_tex=is_tex,
-                                bar=bar, passes=passes)
+                                bar=bar, passes=passes, **_given(allow_change=allow_change))
 
     @mcp.tool(description=description("edit_plan"), **fastmcp_options("edit_plan"))
     def edit_plan(text: str, mode: Optional[str] = None, profile: Optional[str] = None,
-                  goal: str = "fix", is_html: bool = False, is_tex: bool = False) -> dict:
+                  goal: str = "fix", is_html: bool = False, is_tex: bool = False,
+                  allow_change: Optional[List[str]] = None) -> dict:
         """Prepare local findings, protected spans and exact instructions for the calling model without a second account.
         Follow the instructions using masked_text and call edit_submit with the original text, rewrite or assessment, and plan_id."""
-        return do_edit_plan(text, mode, profile, goal, is_html, is_tex)
+        return do_edit_plan(text, mode, profile, goal, is_html, is_tex, allow_change)
 
     @mcp.tool(description=description("edit_submit"), **fastmcp_options("edit_submit"))
     def edit_submit(text: str, rewrite: str, plan_id: str, scores: Optional[dict] = None,
