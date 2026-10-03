@@ -13,7 +13,11 @@ from native_windows_process import run_process
 
 SOURCE = 'The sample contains 14 records.'
 TOOLS = {'check', 'score', 'judge', 'fix', 'polish', 'edit_plan', 'edit_submit',
-         'articulate.status', 'articulate.doctor'}
+         'articulate.status', 'articulate.doctor', 'corpus_check', 'title_workshop',
+         'interview', 'restructure_plan', 'voice_compare', 'voice_apply_plan',
+         'house_brief', 'house_transform'}
+HOUSE_IN = 'Great question! The sample has 14 records—all checked.'
+HOUSE_OUT = 'The sample has 14 records, all checked.'
 
 
 def require(value, message):
@@ -118,7 +122,7 @@ def check(executable, version):
                 requests.append(call(len(requests), tool, {'text': SOURCE, 'backend': backend}))
         rows = run(exe, requests, env, home)
         validate_initialize(rows[1], version)
-        require({t['name'] for t in rows[2]['tools']} == TOOLS and len(rows[2]['tools']) == 9, 'wrong tools')
+        require({t['name'] for t in rows[2]['tools']} == TOOLS and len(rows[2]['tools']) == len(TOOLS), 'wrong tools')
         require(all(t['annotations']['openWorldHint'] is False for t in rows[2]['tools']), 'open-world tool')
         doctor = payload(rows[3])
         require(doctor['tool_set'] == 'local' and doctor['local_only_switch'] is True, 'widened environment')
@@ -132,15 +136,19 @@ def check(executable, version):
         second = run(exe, start() + [call(2, 'edit_submit', {'text': SOURCE,
             'rewrite': plan['masked_text'].replace('contains', 'has'), 'plan_id': plan['plan_id']}),
             call(3, 'edit_submit', {'text': SOURCE, 'rewrite': SOURCE.replace('14', '15'),
-                                  'plan_id': plan['plan_id']})], env, home)
+                                  'plan_id': plan['plan_id']}),
+            # Reads the packaged house voice spec, which the frozen binary must carry.
+            call(4, 'house_transform', {'text': HOUSE_IN})], env, home)
         validate_initialize(second[1], version)
         validate_submission(second[2], SOURCE.replace('contains', 'has'), False)
         validate_submission(second[3], SOURCE, True)
+        require(payload(second[4]).get('text') == HOUSE_OUT, 'house voice spec missing or edit wrong')
         code, stdout, stderr = run_process(exe, ['--backend=openai'], env, home, '')
         require(code == 2 and not stdout and stderr == 'articulate-local accepts no arguments\n',
                 'launch arguments accepted')
     return {'status': 'PASS', 'version': version, 'executable_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(),
             'local_tools': sorted(TOOLS), 'host_edit_roundtrip': True, 'changed_fact_refused': True,
+            'house_spec_bundled': True,
             'backend_refusals': 15, 'python_on_path': False, 'hostile_environment_overridden': True,
             'does_not_prove': ['global egress prevention', 'clean OS installation',
                                'marketplace acceptance', 'semantic equivalence']}

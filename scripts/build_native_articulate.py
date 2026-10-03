@@ -28,6 +28,8 @@ def build(output, *, mode='release', root=ROOT, release_ref=None):
         raise FileExistsError('build output must be a new directory')
     version = qualified['version']
     source = sorted((root / 'src/articulate').glob('*.py'))
+    # Package data the server reads at start-up, such as the house voice spec.
+    source += sorted((root / 'src/articulate/data').glob('*.json'))
     source += [Path(__file__), root / 'scripts/native_articulate_entry.py',
                root / 'scripts/archive_native_articulate.py', root / 'scripts/native_build_provenance.py',
                root / 'scripts/native_release_source.py', root / 'scripts/check_release_ruleset.py',
@@ -38,6 +40,7 @@ def build(output, *, mode='release', root=ROOT, release_ref=None):
     output.mkdir(parents=True)
     cmd = [sys.executable, '-m', 'PyInstaller', '--onefile', '--console', '--clean',
            '--name', 'articulate-local', '--paths', str(root / 'src'),
+           '--add-data', str(root / 'src/articulate/data') + os.pathsep + 'articulate/data',
            '--exclude-module', 'fastmcp', '--exclude-module', 'articulate.hosted_mcp',
            '--exclude-module', 'articulate.hosted_boundary',
            '--distpath', str(output / 'stage'), '--workpath', str(output / 'work'),
