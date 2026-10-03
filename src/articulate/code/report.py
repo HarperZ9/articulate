@@ -13,9 +13,10 @@ import json
 from collections import Counter
 from dataclasses import asdict, dataclass
 
-from .testdiff import compare_file, defined_symbols, is_test_path
+from .context import build_world, is_test_path
+from .testdiff import compare_file
 
-SCHEMA = "articulate.code.test-diff/v1"
+SCHEMA = "articulate.code.test-diff/v2"
 DOES_NOT_PROVE = (
     "A clean report does not show the tests are good. It shows this change did not "
     "weaken them in the forms this analyzer reads.",
@@ -24,6 +25,9 @@ DOES_NOT_PROVE = (
     "A declared finding carries a reason written by the change's author. The reason "
     "is shown, not verified.",
     "Splitting one test into several, each with fewer checks, is not detected.",
+    "An advisory row is a weakening the change may explain (it also edits source, "
+    "or a deleted test has a replacement). It is not counted as a finding and not "
+    "cleared either.",
     "Python only. Other languages are listed as unverifiable, never as clean.",
 )
 
@@ -62,10 +66,7 @@ def analyze(changes, declared=()) -> dict:
     changes = [c if isinstance(c, FileChange) else FileChange(c["path"], c.get("before"),
                                                               c.get("after"))
                for c in changes]
-    removed = set()
-    for change in changes:
-        if change.path.endswith(".py") and not is_test_path(change.path):
-            removed |= defined_symbols(change.before or "") - defined_symbols(change.after or "")
+    world = build_world(changes)
     ids = _declared_ids(declared)
     files, findings = [], []
     for change in sorted(changes, key=lambda c: c.path):
@@ -76,7 +77,7 @@ def analyze(changes, declared=()) -> dict:
                 files.append({"path": change.path, "status": "unverifiable",
                               "reason": "not a Python test file"})
             continue
-        result = compare_file(change.path, change.before, change.after, frozenset(removed))
+        result = compare_file(change.path, change.before, change.after, world=world)
         if result is None:
             files.append({"path": change.path, "status": "unverifiable",
                           "reason": "does not parse as Python"})
@@ -103,7 +104,8 @@ def analyze(changes, declared=()) -> dict:
         "findings": rows,
         "counts": {
             "finding": len(open_rows),
-            "declared": len(rows) - len(open_rows),
+            "declared": sum(1 for r in rows if r["tier"] == "declared"),
+            "advisory": sum(1 for r in rows if r["tier"] == "advisory"),
             "by_rule": dict(sorted(Counter(r["rule"] for r in open_rows).items())),
         },
         "does_not_prove": list(DOES_NOT_PROVE),
@@ -119,9 +121,10 @@ def _looks_like_test(path) -> bool:
 
 def render_text(report) -> str:
     lines = [f"articulate code test-diff: {report['status']} "
-             f"({report['counts']['finding']} findings, {report['counts']['declared']} declared)"]
+             f"({report['counts']['finding']} findings, {report['counts']['declared']} declared, "
+             f"{report['counts'].get('advisory', 0)} advisory)"]
     for row in report["findings"]:
-        mark = "" if row["tier"] == "finding" else " [declared]"
+        mark = "" if row["tier"] == "finding" else f" [{row['tier']}]"
         lines.append(f"{row['path']}:{row['line']}: {row['check']} {row['rule']}{mark}: "
                      f"{row['test']}: {row['detail']}")
     for item in report["files"]:

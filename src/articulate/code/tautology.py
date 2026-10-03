@@ -55,10 +55,48 @@ def _assignments(func) -> dict:
     return {k: v for k, v in out.items() if seen.get(k) == 1 and v is not None}
 
 
-def _resolve(node, assigned: dict, depth: int = 3):
-    if depth and isinstance(node, ast.Name) and node.id in assigned:
-        return _resolve(assigned[node.id], assigned, depth - 1)
+_MUTABLE = (ast.List, ast.Dict, ast.Set, ast.ListComp, ast.DictComp, ast.SetComp)
+_MUTABLE_CALLS = {"list", "dict", "set", "bytearray", "deque", "defaultdict", "Counter"}
+
+
+def _mutable(value) -> bool:
+    """A container the test can fill later (`calls = []`, then a fake appends)."""
+    if isinstance(value, _MUTABLE):
+        return True
+    return isinstance(value, ast.Call) and call_name(value.func) in _MUTABLE_CALLS
+
+
+def _resolve(node, assigned: dict, depth: int = 3, used=None):
+    if depth and isinstance(node, ast.Name) and node.id in assigned             and not _mutable(assigned[node.id]):
+        if used is not None:
+            used.append(assigned[node.id])
+        return _resolve(assigned[node.id], assigned, depth - 1, used)
     return node
+
+
+def _quiet_between(func, values, line) -> bool:
+    """No statement with a call runs between the first resolved assignment and
+    the check, apart from those assignments. `before = snap(); act();
+    assert snap() == before` is an unchanged-state check, not a tautology."""
+    if not values:
+        return True
+    first = min(v.lineno for v in values)
+    ids = {id(v) for v in values}
+    for node in ast.walk(func):
+        if not isinstance(node, ast.stmt) or not first <= node.lineno < line:
+            continue
+        if isinstance(node, (ast.Assign, ast.AnnAssign)) and id(node.value) in ids:
+            continue
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        if _has_call(node) and node.lineno >= first and not _encloses(node, line):
+            return False
+    return True
+
+
+def _encloses(node, line) -> bool:
+    end = getattr(node, "end_lineno", node.lineno)
+    return node.lineno < line <= end
 
 
 def _has_call(node) -> bool:
@@ -90,12 +128,13 @@ def _self_compare(func, assigned) -> list:
         if norm(left) == norm(right):
             out.append(("self-compare", line, "a value compared with itself"))
             continue
-        rl, rr = _resolve(left, assigned), _resolve(right, assigned)
+        used = []
+        rl, rr = _resolve(left, assigned, used=used), _resolve(right, assigned, used=used)
         if norm(rl) != norm(rr):
             continue
         if not _has_call(rl):
             out.append(("self-compare", line, "both sides resolve to the same constant"))
-        elif _direct_or_expected(left, right):
+        elif _direct_or_expected(left, right) and _quiet_between(func, used, line):
             out.append(("snapshot-self", line,
                         "the expected value is the code's own output, with no other oracle"))
     return out
@@ -139,7 +178,19 @@ def _mock_only(func, direct: set, mocks: set) -> list:
         if roots and roots <= mocks and (reads_value or roots - direct):
             out.append(("mock-only", node.lineno,
                         "the assertion checks only a mock the test configured"))
+        elif _compares_mock_call(node.test, direct):
+            out.append(("mock-only", node.lineno,
+                        "the compared value is what a mock the test configured returns"))
     return out
+
+
+def _compares_mock_call(test, direct: set) -> bool:
+    """`fake = Mock(return_value=X); assert fake(row) == X`: a side of the
+    comparison is a direct call of a mock this test made."""
+    if not isinstance(test, ast.Compare):
+        return False
+    return any(isinstance(side, ast.Call) and isinstance(side.func, ast.Name)
+               and side.func.id in direct for side in [test.left, *test.comparators])
 
 
 def tautologies(facts, helper_checks: dict) -> list:
