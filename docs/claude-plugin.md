@@ -12,7 +12,7 @@ covers install, example prompts, the privacy policy and troubleshooting: see
 
 ## Install
 
-This source plugin targets the 0.8.0 package on the retained-detector release line. It bundles
+This source plugin targets the 0.9.0 package on the retained-detector release line. It bundles
 the package source. Build from the matching package tag for release use; use
 `--dev` for a local test build before that tag exists.
 
