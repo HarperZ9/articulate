@@ -11,6 +11,7 @@ import shutil
 
 import pytest
 
+import articulate
 from articulate import cli, host_edit, receipt
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,6 +38,13 @@ PLAN_ID = "f924d6e7db3f3c4b3c23e38a31bf0c2ee15686ff2f7fdd849bea51c3b00fbc28"
 
 def _sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _at_pinned_version(rec):
+    # A receipt names the package version, which moves with every release. The
+    # pins were taken at 0.8.0, so compare everything else byte for byte.
+    assert rec["articulate_version"] == articulate.__version__
+    return dict(rec, articulate_version="0.8.0")
 
 
 def _run(argv):
@@ -67,13 +75,13 @@ def test_cli_receipt_is_unchanged(sample_dir):
     rc, out = _run(["receipt", "sample.md", "--spans"])
     rec = json.loads(out)
     rec.pop("created_at")
-    assert rc == 0 and _sha(json.dumps(rec, sort_keys=True)) == RECEIPT_CLI
+    assert rc == 0 and _sha(json.dumps(_at_pinned_version(rec), sort_keys=True)) == RECEIPT_CLI
     assert not {"project_rules", "extension_fingerprint"} & set(rec)
 
 
 def test_library_receipt_and_plan_id_are_unchanged(sample_dir):
     text = open("sample.md", encoding="utf-8").read()
     rec = receipt.make_receipt(text, None, per_span=True, created_at="2026-01-01T00:00:00+00:00")
-    assert _sha(json.dumps(rec, sort_keys=True)) == RECEIPT_LIB
+    assert _sha(json.dumps(_at_pinned_version(rec), sort_keys=True)) == RECEIPT_LIB
     assert receipt.verify_receipt(rec, text)[0] == "Match"
     assert _sha(host_edit.edit_plan(text)["plan_id"]) == PLAN_ID

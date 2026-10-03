@@ -4,7 +4,13 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.9.0
+
+The 0.8.0 release build stopped before PyPI, so 0.9.0 is the first PyPI release
+after 0.7.0 and carries everything listed under 0.8.0 as well. Detector rules
+stay the published v0.5.2 rules (fingerprint `sha256:9f78a7484bb20f84`), and
+with no project config and no domain profile, command output is byte-identical
+to 0.8.0.
 
 One release line. `main` now carries everything released from `release/0.5.x`
 (0.5.1 to 0.8.0), so every later release comes from `main`.
@@ -43,6 +49,9 @@ One release line. `main` now carries everything released from `release/0.5.x`
   Receipts under a domain profile record an `extension_fingerprint`, and a
   pack change makes them read Unverifiable. `python -m articulate.bench` also
   runs the new domain regression corpus.
+- The hosted MCP service accepts edit plans built under a domain profile.
+  It refused them before. A plan whose domain profile was altered is still
+  refused.
 - A project config file, `.articulate.json`, found by walking up from each
   file (nearest wins). It maps path globs to profiles, adds banned and
   preferred terminology with their own rule ids, allows terms of art, freezes
