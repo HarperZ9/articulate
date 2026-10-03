@@ -141,7 +141,17 @@ def main(argv):
           f"[~ = known ceiling, not a regression]")
     print("[bench] note: device-clean AI can pass Articulate yet fail a trained "
           "detector; those are the honest misses, marked ~ and gated as expected.")
-    return misses
+    return misses + _domain_misses(corpus)
+
+
+def _domain_misses(corpus):
+    """Mismatches in the domain rule-pack corpus under domains/, if present."""
+    from . import bench_domains
+    domains = os.path.join(corpus, "domains")
+    if not os.path.isfile(os.path.join(domains, "expect.json")):
+        return 0
+    print()
+    return bench_domains.main([domains])
 
 
 if __name__ == "__main__":

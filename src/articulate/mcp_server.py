@@ -6,7 +6,7 @@ returns a host plan. Explicit hosted backends can send text off this machine.
 """
 import asyncio
 import json
-from typing import Optional
+from typing import List, Optional
 
 from . import detector as core
 from .tool_meta import fastmcp_options, offline
@@ -73,7 +73,8 @@ def _edit(text, goal, **options):
         bar, passes = options.get("bar", 4), options.get("passes", 3)
         if not 1 <= bar <= 5 or passes < 1:
             raise ValueError("bar must be 1-5 and passes must be positive")
-        settings = {key: options[key] for key in ("mode", "profile", "is_html", "is_tex") if key in options}
+        settings = {key: options[key] for key in ("mode", "profile", "is_html", "is_tex", "allow_change")
+                    if key in options}
         result = (deterministic_edit if backend == "none" else edit_plan)(text, goal=goal, **settings)
         if goal == "polish":
             result.update(scores=None, quality_met=False)
@@ -93,26 +94,43 @@ def do_judge(text, backend=None, mode=None, profile=None, is_html=False,
                  is_html=is_html, is_tex=is_tex, **transport)
 
 
+def _explained(text, result, explain):
+    if explain:
+        from .changes import attach
+        attach(text, result)
+    return result
+
+
 def do_fix(text, is_html=False, backend=None, mode=None, profile=None,
-           is_tex=False, **transport):
-    return _edit(text, "fix", backend=backend, mode=mode, profile=profile,
-                 is_html=is_html, is_tex=is_tex, **transport)
+           is_tex=False, allow_change=None, explain=False, **transport):
+    if allow_change:
+        transport["allow_change"] = allow_change
+    return _explained(text, _edit(text, "fix", backend=backend, mode=mode, profile=profile,
+                                  is_html=is_html, is_tex=is_tex, **transport), explain)
 
 
 def do_polish(text, bar=4, passes=3, is_html=False, backend=None, mode=None,
-              profile=None, is_tex=False, **transport):
-    return _edit(text, "polish", bar=bar, passes=passes, backend=backend,
-                 mode=mode, profile=profile, is_html=is_html, is_tex=is_tex,
-                 **transport)
+              profile=None, is_tex=False, allow_change=None, explain=False, **transport):
+    if allow_change:
+        transport["allow_change"] = allow_change
+    return _explained(text, _edit(text, "polish", bar=bar, passes=passes, backend=backend,
+                                  mode=mode, profile=profile, is_html=is_html, is_tex=is_tex,
+                                  **transport), explain)
 
 
-def do_edit_plan(text, mode=None, profile=None, goal="fix", is_html=False, is_tex=False):
+def do_edit_plan(text, mode=None, profile=None, goal="fix", is_html=False, is_tex=False,
+                 allow_change=None):
     from .host_edit import edit_plan
     return edit_plan(text, mode=mode, profile=profile, goal=goal,
-                     is_html=is_html, is_tex=is_tex)
+                     is_html=is_html, is_tex=is_tex, allow_change=allow_change)
 
 
-def do_edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=None):
+def do_edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=None,
+                   explain=False):
+    return _explained(text, _submit(text, rewrite, plan_id, scores, model, author_text), explain)
+
+
+def _submit(text, rewrite, plan_id, scores, model, author_text):
     from .host_edit import edit_submit, plan_settings
     origin = "host-supplied" if author_text is not None else None
     if plan_settings(text, plan_id).get("voice_profile_sha256"):
@@ -124,7 +142,12 @@ def do_edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=
                        author_text=author_text, author_text_origin=origin)
 
 
-async def _fast_edit(ctx, text, goal, **options):
+def _given(**options):
+    """Only the options a caller set, so an unset one changes nothing downstream."""
+    return {key: value for key, value in options.items() if value}
+
+
+async def _fast_edit(ctx, text, goal, _explain=False, **options):
     """Bridge synchronous editing to the negotiated SDK session without an account."""
     from mcp.types import ClientCapabilities, SamplingCapability, SamplingMessage, TextContent
     loop = asyncio.get_running_loop()
@@ -149,8 +172,9 @@ async def _fast_edit(ctx, text, goal, **options):
         except Exception:
             raise RuntimeError("sampling request failed") from None
 
-    return await asyncio.to_thread(_edit, text, goal, sampling=sampling if advertised else None,
-                                   sampling_advertised=advertised, **options)
+    result = await asyncio.to_thread(_edit, text, goal, sampling=sampling if advertised else None,
+                                     sampling_advertised=advertised, **options)
+    return _explained(text, result, _explain)
 
 
 def build_server():
@@ -179,36 +203,42 @@ def build_server():
     @mcp.tool(description=description("fix"), **fastmcp_options("fix"))
     async def fix(text: str, ctx: Context, is_html: bool = False,
                   backend: Optional[str] = None, mode: Optional[str] = None,
-                  profile: Optional[str] = None, is_tex: bool = False) -> dict:
+                  profile: Optional[str] = None, is_tex: bool = False,
+                  allow_change: Optional[List[str]] = None, explain: bool = False) -> dict:
         """Edit prose using negotiated sampling or return a host edit plan; explicit hosted backends send text off the machine.
         When a plan is returned, follow its instructions and call edit_submit with the original text, rewrite and plan_id."""
         return await _fast_edit(ctx, text, "fix", backend=backend, mode=mode,
-                                profile=profile, is_html=is_html, is_tex=is_tex)
+                                profile=profile, is_html=is_html, is_tex=is_tex,
+                                **_given(allow_change=allow_change), _explain=explain)
 
     @mcp.tool(description=description("polish"), **fastmcp_options("polish"))
     async def polish(text: str, ctx: Context, bar: int = 4, passes: int = 3,
                      is_html: bool = False, backend: Optional[str] = None,
                      mode: Optional[str] = None, profile: Optional[str] = None,
-                     is_tex: bool = False) -> dict:
+                     is_tex: bool = False, allow_change: Optional[List[str]] = None,
+                     explain: bool = False) -> dict:
         """Polish prose with meaning and regression guards or return a host plan; explicit hosted backends send text off the machine.
         When a plan is returned, follow its instructions and call edit_submit with the original text, rewrite, plan_id and assessed scores."""
         return await _fast_edit(ctx, text, "polish", backend=backend, mode=mode,
                                 profile=profile, is_html=is_html, is_tex=is_tex,
-                                bar=bar, passes=passes)
+                                bar=bar, passes=passes, **_given(allow_change=allow_change),
+                                _explain=explain)
 
     @mcp.tool(description=description("edit_plan"), **fastmcp_options("edit_plan"))
     def edit_plan(text: str, mode: Optional[str] = None, profile: Optional[str] = None,
-                  goal: str = "fix", is_html: bool = False, is_tex: bool = False) -> dict:
+                  goal: str = "fix", is_html: bool = False, is_tex: bool = False,
+                  allow_change: Optional[List[str]] = None) -> dict:
         """Prepare local findings, protected spans and exact instructions for the calling model without a second account.
         Follow the instructions using masked_text and call edit_submit with the original text, rewrite or assessment, and plan_id."""
-        return do_edit_plan(text, mode, profile, goal, is_html, is_tex)
+        return do_edit_plan(text, mode, profile, goal, is_html, is_tex, allow_change)
 
     @mcp.tool(description=description("edit_submit"), **fastmcp_options("edit_submit"))
     def edit_submit(text: str, rewrite: str, plan_id: str, scores: Optional[dict] = None,
-                    model: Optional[str] = None, author_text: Optional[str] = None) -> dict:
+                    model: Optional[str] = None, author_text: Optional[str] = None,
+                    explain: bool = False) -> dict:
         """Submit the original text and a host rewrite or assessment using the plan_id from edit_plan.
         Articulate restores masks, guards protected spans, checks the result and returns accepted text with a host receipt."""
-        return do_edit_submit(text, rewrite, plan_id, scores, model, author_text)
+        return do_edit_submit(text, rewrite, plan_id, scores, model, author_text, explain)
 
     from .mcp_local_tools import register
     register(mcp)

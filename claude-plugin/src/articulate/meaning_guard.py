@@ -8,11 +8,18 @@ Two checks guard the author. A line that discloses AI assistance is a protected
 span of kind disclosure, so a rewrite cannot drop or reword it. A rewrite
 paragraph that gains a first-person sentence with no source in the original
 paragraph or in author-supplied text is retained with reason added-first-person.
+
+A caller may name change kinds it accepts (allow) and terms it freezes
+(freeze, protected spans of kind term). An allowed change is reported in
+allowed_changes, never accepted in silence. Disclosure, added-first-person,
+HTML and math changes cannot be allowed; articulate.edit_options validates the
+kinds before they reach this module.
 """
 import hashlib
 import re
 
 from . import meaning
+from .invariants import freeze_pattern
 from .authorship import disclosure_spans, novel_first_person, strip_supplied
 
 
@@ -47,9 +54,12 @@ _TOKEN = re.compile(r'\u2983ARTICULATE_[^\u2984]*\u2984')
 _CLAIM_KINDS = frozenset(('modal', 'scope', 'negation'))
 
 
-def protected_spans(text, is_html=False, is_tex=False):
-    """Return exact spans; overlaps are intentional (a citation can contain numbers)."""
+def protected_spans(text, is_html=False, is_tex=False, freeze=()):
+    """Return exact spans; overlaps are intentional (a citation can contain numbers).
+    Freeze terms, when given, are spans of kind term."""
     patterns = _PATTERNS + ([('html', _HTML)] if is_html else [])
+    term = freeze_pattern(freeze) if freeze else None
+    patterns = patterns + ([('term', term)] if term else [])
     spans = [{'kind': kind, 'start': m.start(), 'end': m.end(), 'text': m.group()}
              for kind, pattern in patterns for m in pattern.finditer(text)]
     spans += [{'kind': 'disclosure', 'start': a, 'end': b, 'text': text[a:b]}
@@ -57,10 +67,33 @@ def protected_spans(text, is_html=False, is_tex=False):
     return sorted(spans, key=lambda s: (s['start'], s['end'], s['kind']))
 
 
-def _signature(text, is_html=False, is_tex=False):
+def _signature(text, is_html=False, is_tex=False, freeze=(), allow=frozenset()):
+    """Ordered span texts by kind, leaving out the kinds the caller allows."""
     out = {}
-    for span in protected_spans(text, is_html, is_tex):
-        out.setdefault(span['kind'], []).append(span['text'])
+    for span in protected_spans(text, is_html, is_tex, freeze):
+        if span['kind'] not in allow:
+            out.setdefault(span['kind'], []).append(span['text'])
+    return out
+
+
+def _reason_kind(reason):
+    """The change kind a refusal reason names, or None for any other reason."""
+    for suffix in (' protected spans changed', ' claim features changed'):
+        if reason.endswith(suffix):
+            return reason[:-len(suffix)]
+    return None
+
+
+def _split_allowed(reasons, allow):
+    """(blocking reasons, allowed kinds). Any blocking reason retains the paragraph."""
+    blocking = [r for r in reasons if _reason_kind(r) not in allow]
+    return blocking, sorted({_reason_kind(r) for r in reasons if _reason_kind(r) in allow})
+
+
+def _outcome(text, refused, allow, allowed=()):
+    out = {'text': text, 'refused': refused}
+    if allow:
+        out['allowed_changes'] = list(allowed)
     return out
 
 
@@ -76,7 +109,7 @@ def _claim_paragraphs(parts, is_html, is_tex):
     text = ''.join(parts)
     chars = list(text)
     for span in protected_spans(text, is_html, is_tex):
-        if span['kind'] not in ('number', 'number-range', 'quantity'):
+        if span['kind'] not in ('number', 'number-range', 'quantity', 'term'):
             for i in range(span['start'], span['end']):
                 if chars[i] not in '\r\n':
                     chars[i] = ' '
@@ -89,25 +122,28 @@ def _claim_paragraphs(parts, is_html, is_tex):
     return result
 
 
-def guard_rewrite(original, rewrite, is_html=False, is_tex=False, author_text=None):
+def guard_rewrite(original, rewrite, is_html=False, is_tex=False, author_text=None,
+                  allow=frozenset(), freeze=()):
     """Retain paragraphs with changed protected spans, lexical claim features, or a
-    first-person sentence that neither the original nor the author supplied."""
+    first-person sentence that neither the original nor the author supplied. A
+    change of an allowed kind is accepted and listed in allowed_changes."""
+    allow = frozenset(allow)
     if original == rewrite:
-        return {'text': original, 'refused': []}
+        return _outcome(original, [], allow)
     if original.strip() and not rewrite.strip():
-        return {'text': original, 'refused': [_refusal(None, ['empty rewrite'])]}
+        return _outcome(original, [_refusal(None, ['empty rewrite'])], allow)
     old, new = _PARAGRAPH.split(original), _PARAGRAPH.split(rewrite)
     if len(old) != len(new):
-        return {'text': original, 'refused': [_refusal(None, ['paragraph alignment changed'])]}
+        return _outcome(original, [_refusal(None, ['paragraph alignment changed'])], allow)
     # Sentences the author supplied verbatim carry their own spans and claims;
     # they are checked against the author's text, not against the original.
     checked = [strip_supplied(part, author_text, original) for part in new]
     old_prose = _claim_paragraphs(old, is_html, is_tex)
     new_prose = _claim_paragraphs(checked, is_html, is_tex)
-    refused = []
+    refused, allowed = [], []
     for i in range(0, len(old), 2):
-        before = _signature(old[i], is_html, is_tex)
-        after = _signature(checked[i], is_html, is_tex)
+        before = _signature(old[i], is_html, is_tex, freeze)
+        after = _signature(checked[i], is_html, is_tex, freeze)
         reasons = [kind + ' protected spans changed' for kind in sorted(set(before) | set(after))
                    if before.get(kind, []) != after.get(kind, [])]
         report = meaning.compare(old_prose[i], new_prose[i], tex=is_tex)
@@ -118,14 +154,20 @@ def guard_rewrite(original, rewrite, is_html=False, is_tex=False, author_text=No
         reasons.extend(kind + ' claim features changed' for kind in sorted(changed))
         if novel_first_person(old[i], new[i], author_text):
             reasons.append('added-first-person')
-        if reasons:
+        blocking, kinds = _split_allowed(reasons, allow)
+        if blocking:
             new[i] = checked[i] = old[i]
             refused.append(_refusal(i // 2, reasons))
-    # A multiline span might cross a paragraph boundary. Recheck the full result.
+        else:
+            allowed.extend({'paragraph': i // 2, 'kind': kind} for kind in kinds)
+    # A multiline span might cross a paragraph boundary. Recheck the full result,
+    # ignoring only the kinds the caller allows.
     candidate = ''.join(new)
-    if _signature(original, is_html, is_tex) != _signature(''.join(checked), is_html, is_tex):
-        return {'text': original, 'refused': refused + [_refusal(None, ['cross-paragraph protected spans changed'])]}
-    return {'text': candidate, 'refused': refused}
+    if (_signature(original, is_html, is_tex, freeze, allow)
+            != _signature(''.join(checked), is_html, is_tex, freeze, allow)):
+        cross = _refusal(None, ['cross-paragraph protected spans changed'])
+        return _outcome(original, refused + [cross], allow)
+    return _outcome(candidate, refused, allow, allowed)
 
 
 def mask_text(text, is_html=False, is_tex=False):
@@ -151,16 +193,18 @@ def mask_text(text, is_html=False, is_tex=False):
     return ''.join(chunks), selected
 
 
-def restore_masks(original, rewrite, is_html=False, is_tex=False, author_text=None):
+def restore_masks(original, rewrite, is_html=False, is_tex=False, author_text=None,
+                  allow=frozenset(), freeze=()):
     """Require each mask once, in its original paragraph and order, before restoring."""
+    extra = {'allow': allow, 'freeze': freeze}
     if 'ARTICULATE_' not in rewrite:
-        return guard_rewrite(original, rewrite, is_html, is_tex, author_text)
+        return guard_rewrite(original, rewrite, is_html, is_tex, author_text, **extra)
     masked, masks = mask_text(original, is_html, is_tex)
     if not masks:
-        return guard_rewrite(original, rewrite, is_html, is_tex, author_text)
+        return guard_rewrite(original, rewrite, is_html, is_tex, author_text, **extra)
     old, new = _PARAGRAPH.split(masked), _PARAGRAPH.split(rewrite)
     if len(old) != len(new):
-        return {'text': original, 'refused': [_refusal(None, ['mask paragraph alignment changed'])]}
+        return _outcome(original, [_refusal(None, ['mask paragraph alignment changed'])], allow)
     refused = []
     for i in range(0, len(old), 2):
         if _TOKEN.findall(old[i]) != _TOKEN.findall(new[i]):
@@ -169,6 +213,6 @@ def restore_masks(original, rewrite, is_html=False, is_tex=False, author_text=No
     restored = ''.join(new)
     for s in masks:
         restored = restored.replace(s['token'], s['text'])
-    checked = guard_rewrite(original, restored, is_html, is_tex, author_text)
+    checked = guard_rewrite(original, restored, is_html, is_tex, author_text, **extra)
     checked['refused'] = refused + checked['refused']
     return checked

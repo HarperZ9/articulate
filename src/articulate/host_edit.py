@@ -9,6 +9,11 @@ accept those sentences and nothing else, and the name and hash of a personal
 voice profile when the user asked voice apply to shape their own draft. Plans
 under v1 still verify. This module never reads a profile: the caller passes the
 profile's hash and its plain-sentence description.
+
+A plan that names change kinds to allow, or terms to freeze, uses schema
+articulate/edit-plan/v3: the v2 keys plus sorted allow_change and freeze_terms
+lists. A submit reads them from the plan, so it cannot widen what the plan
+allowed. A plan with neither stays v2, so its plan id is unchanged.
 """
 import base64
 from collections import Counter
@@ -17,7 +22,7 @@ import hmac
 import json
 import re
 
-from . import detector, modes, profiles, prompts
+from . import checkext, detector, domains, edit_options, modes, profiles, prompts
 from .meaning_guard import guard_rewrite, mask_text, protected_spans, restore_masks
 
 
@@ -31,9 +36,11 @@ def _hash(text):
 
 PLAN_V1 = 'articulate/edit-plan/v1'
 PLAN_V2 = 'articulate/edit-plan/v2'
+PLAN_V3 = 'articulate/edit-plan/v3'
 _V1_KEYS = frozenset({'schema', 'mode', 'profile', 'goal', 'is_html', 'is_tex', 'ruleset'})
-_PLAN_KEYS = {PLAN_V1: _V1_KEYS,
-              PLAN_V2: _V1_KEYS | {'author_text_sha256', 'voice_profile_sha256', 'voice_name'}}
+_V2_KEYS = _V1_KEYS | {'author_text_sha256', 'voice_profile_sha256', 'voice_name'}
+_PLAN_KEYS = {PLAN_V1: _V1_KEYS, PLAN_V2: _V2_KEYS,
+              PLAN_V3: _V2_KEYS | {'allow_change', 'freeze_terms'}}
 
 
 def _author_hash(author_text):
@@ -53,22 +60,25 @@ def _voice_fields(voice):
     return voice['name'], voice['sha256']
 
 
-def _settings(mode, profile, goal, is_html, is_tex, author_text=None, voice=None):
+def _settings(mode, profile, goal, is_html, is_tex, author_text=None, voice=None,
+              allow_change=None, freeze_terms=None):
     if goal not in ('fix', 'polish', 'judge'):
         raise ValueError('goal must be fix, polish or judge')
     if mode and profile is not None:
         raise ValueError('choose mode or profile, not both')
-    prof = modes.load(mode) if mode else (profiles.load(profile) if isinstance(profile, str)
+    prof = modes.load(mode) if mode else (domains.load_profile(profile) if isinstance(profile, str)
                                          else profile if profile is not None else profiles.load(profiles.DEFAULT))
     if not isinstance(prof, dict):
         raise ValueError('profile must be a name or object')
+    settings = {'schema': PLAN_V2, 'mode': mode,
+                'profile': prof, 'goal': goal, 'is_html': bool(is_html),
+                'is_tex': bool(is_tex), 'ruleset': detector.ruleset_fingerprint(),
+                'author_text_sha256': _author_hash(author_text),
+                'voice_name': _voice_fields(voice)[0],
+                'voice_profile_sha256': _voice_fields(voice)[1]}
+    settings = edit_options.extend_settings(settings, allow_change, freeze_terms, PLAN_V3)
     # Normalize tuples to JSON lists so the digest is stable across processes.
-    return json.loads(_canonical({'schema': PLAN_V2, 'mode': mode,
-                                 'profile': prof, 'goal': goal, 'is_html': bool(is_html),
-                                 'is_tex': bool(is_tex), 'ruleset': detector.ruleset_fingerprint(),
-                                 'author_text_sha256': _author_hash(author_text),
-                                 'voice_name': _voice_fields(voice)[0],
-                                 'voice_profile_sha256': _voice_fields(voice)[1]}))
+    return json.loads(_canonical(settings))
 
 
 def _token(text, settings):
@@ -93,9 +103,15 @@ def _verify(text, plan_id):
             raise ValueError('invalid plan settings')
         if not isinstance(settings['profile'], dict) or any(type(settings[k]) is not bool for k in ('is_html', 'is_tex')):
             raise ValueError('invalid plan settings')
+        edit_options.bound(settings)
         return settings
     except (TypeError, KeyError, UnicodeError, json.JSONDecodeError) as exc:
         raise ValueError('invalid plan token') from exc
+
+
+def check_under(text, profile):
+    """The local check behind every plan and edit result, rule packs included."""
+    return checkext.check_text(text, profile=profile)
 
 
 def _findings(result):
@@ -112,21 +128,24 @@ def plan_settings(text, plan_id):
 
 
 def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False,
-              author_text=None, voice=None):
-    settings = _settings(mode, profile, goal, is_html, is_tex, author_text, voice)
+              author_text=None, voice=None, allow_change=None, freeze_terms=None):
+    settings = _settings(mode, profile, goal, is_html, is_tex, author_text, voice,
+                         allow_change, freeze_terms)
+    freeze = edit_options.bound(settings)[1]
     voice_notes = voice.get('notes') if voice else None
-    before = detector.check_text(text, profile=settings['profile'])
+    before = check_under(text, settings['profile'])
     findings = _findings(before)
     delta = settings['profile'].get('editor', {}).get('standard_delta', '')
     instr = (prompts.judge_instructions(_summary(findings), delta) if goal == 'judge'
              else prompts.rewrite_instructions(_summary(findings), is_html=is_html, standard_delta=delta,
                                                voice_notes=voice_notes))
+    instr += edit_options.instruction_note(settings)
     masked, masks = mask_text(text, is_html, is_tex)
     return {'ok': True, 'status': 'host_edit_required', 'backend': 'host', 'model': None, 'attempts': [],
             'goal': goal, 'profile': settings['profile'], 'mode': mode,
             'is_html': bool(is_html), 'is_tex': bool(is_tex), 'plan_id': _token(text, settings),
             'text': text, 'masked_text': masked, 'masks': masks, 'instructions': instr,
-            'protected_spans': protected_spans(text, is_html, is_tex),
+            'protected_spans': protected_spans(text, is_html, is_tex, freeze),
             'findings_before': findings, 'gate_before': before['gate'], 'gate': before['gate'],
             'instruction': 'Use these instructions and masked_text to produce a rewrite (or assessment for judge), then call edit_submit with the original text, result and plan_id.',
             'quality_instructions': prompts.quality_instructions() if goal == 'polish' else None,
@@ -148,9 +167,9 @@ def _quality(scores):
 
 
 def _result(original, accepted, settings, refused, backend, model, quality_status='unassessed', scores=None,
-            author_text_origin=None):
-    before = detector.check_text(original, profile=settings['profile'])
-    after = detector.check_text(accepted, profile=settings['profile'])
+            author_text_origin=None, allowed=None):
+    before = check_under(original, settings['profile'])
+    after = check_under(accepted, settings['profile'])
     bf, af = _findings(before), _findings(after)
     bc, ac = Counter(f['rule_id'] for f in bf), Counter(f['rule_id'] for f in af)
     deltas = [{'rule_id': rule, 'before': bc[rule], 'after': ac[rule], 'delta': ac[rule] - bc[rule]}
@@ -164,11 +183,15 @@ def _result(original, accepted, settings, refused, backend, model, quality_statu
                'voice_profile_sha256': settings.get('voice_profile_sha256'),
                'author_text_origin': author_text_origin,
                'does_not_prove': 'A lexical guard and detector gate do not prove semantic equivalence, quality or factual correctness. Host scores are supplied assessments, not independent measurements.'}
-    return {'ok': True, 'text': accepted, 'goal': settings['goal'], 'backend': backend, 'model': model,
-            'attempts': [], 'gate_before': before['gate'], 'gate_after': after['gate'], 'gate': after['gate'],
-            'findings_before': bf, 'findings_after': af, 'remaining_findings': af,
-            'rule_deltas': deltas, 'refused': refused, 'receipt': receipt,
-            'quality_status': quality_status, 'scores': scores}
+    out = {'ok': True, 'text': accepted, 'goal': settings['goal'], 'backend': backend, 'model': model,
+           'attempts': [], 'gate_before': before['gate'], 'gate_after': after['gate'], 'gate': after['gate'],
+           'findings_before': bf, 'findings_after': af, 'remaining_findings': af,
+           'rule_deltas': deltas, 'refused': refused, 'receipt': receipt,
+           'quality_status': quality_status, 'scores': scores}
+    if settings.get('allow_change'):
+        # Allowed changes are reported, in the result and the receipt, never silent.
+        out['allowed_changes'] = receipt['allowed_changes'] = list(allowed or [])
+    return out
 
 
 def _check_author_text(settings, author_text):
@@ -195,12 +218,14 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
         out = _result(text, text, settings, [], 'host', model, author_text_origin=author_text_origin)
         out['assessment'] = rewrite
         return out
-    guarded = restore_masks(text, rewrite, settings['is_html'], settings['is_tex'], author_text)
+    allow, freeze = edit_options.bound(settings)
+    guarded = restore_masks(text, rewrite, settings['is_html'], settings['is_tex'], author_text,
+                            allow=allow, freeze=freeze)
     accepted, refused = guarded['text'], guarded['refused']
     quality = _quality(scores)
     if settings['goal'] == 'polish':
-        before = detector.check_text(text, profile=settings['profile'])
-        after = detector.check_text(accepted, profile=settings['profile'])
+        before = check_under(text, settings['profile'])
+        after = check_under(accepted, settings['profile'])
         reasons = []
         if quality == 'regressed':
             reasons.append('quality scores regressed')
@@ -214,17 +239,21 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
             refused.append({'paragraph': None, 'reasons': reasons})
     if refused and quality == 'host_assessed_no_regression':
         quality = 'unassessed_after_guard'
+    allowed = guarded.get('allowed_changes', []) if accepted != text else []
     return _result(text, accepted, settings, refused, 'host', model, quality, scores,
-                   author_text_origin)
+                   author_text_origin, allowed)
 
 
-def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False):
-    settings = _settings(mode, profile, goal, is_html, is_tex)
+def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False,
+                       allow_change=None, freeze_terms=None):
+    settings = _settings(mode, profile, goal, is_html, is_tex,
+                         allow_change=allow_change, freeze_terms=freeze_terms)
+    allow, freeze = edit_options.bound(settings)
     candidate = text
     prof = settings['profile']
     if goal != 'judge' and prof.get('slop') != 'off' and prof.get('editor', {}).get('run_fix_by_default', True):
         # Transform only unprotected text. A final common guard also checks the result.
-        spans = sorted(protected_spans(text, is_html, is_tex), key=lambda s: (s['start'], -s['end']))
+        spans = sorted(protected_spans(text, is_html, is_tex, freeze), key=lambda s: (s['start'], -s['end']))
         chunks, end = [], 0
         def transform(prose):
             if prof.get('no_em_dash', True):
@@ -237,10 +266,11 @@ def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False,
                 end = span['end']
         chunks.append(transform(text[end:]))
         candidate = ''.join(chunks)
-    checked = guard_rewrite(text, candidate, is_html, is_tex)
-    if goal == 'polish' and detector.check_text(text, profile=prof)['gate'] == 'ok' and detector.check_text(checked['text'], profile=prof)['gate'] != 'ok':
+    checked = guard_rewrite(text, candidate, is_html, is_tex, allow=allow, freeze=freeze)
+    if goal == 'polish' and check_under(text, prof)['gate'] == 'ok' and check_under(checked['text'], prof)['gate'] != 'ok':
         checked = {'text': text, 'refused': [{'paragraph': None, 'reasons': ['detector gate regressed']}]}
-    out = _result(text, checked['text'], settings, checked['refused'], 'none', None)
+    out = _result(text, checked['text'], settings, checked['refused'], 'none', None,
+                  allowed=checked.get('allowed_changes'))
     out['instruction'] = 'For a model edit, use edit_plan/edit_submit or configure a reachable model backend.'
     if goal == 'judge':
         out['assessment'] = _summary(out['findings_before'])

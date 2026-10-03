@@ -71,7 +71,7 @@ def build_server(config):
     from fastmcp.server.auth.providers.jwt import JWTVerifier
     from pydantic import AnyHttpUrl, TypeAdapter, UrlConstraints
     from fastmcp.tools.function_tool import FunctionTool
-    from . import host_edit, mcp_server, modes, profiles, genres
+    from . import domains, host_edit, mcp_server, modes, profiles, genres
 
     class ExpiringJWTVerifier(JWTVerifier):
         async def verify_token(self, token):
@@ -148,7 +148,8 @@ def build_server(config):
         if settings['mode']:
             candidates = [modes.load(settings['mode'])]
         else:
-            candidates = [profiles.load(name) for name in list(profiles.PROFILES) + list(genres.GENRES)]
+            names = list(profiles.PROFILES) + list(genres.GENRES) + domains.names()
+            candidates = [domains.load_profile(name) for name in names]
         if not any(host_edit._canonical(settings['profile']) == host_edit._canonical(p) for p in candidates):
             raise ValueError('Only built-in profiles are supported')
         return host_edit.edit_submit(text, rewrite, plan_id, scores, model)

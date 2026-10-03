@@ -19,6 +19,41 @@ One release line. `main` now carries everything released from `release/0.5.x`
   The reworked detector, the fairness harness and `check --house-notes` that sat
   on `main` change findings, so they stay out of this line until a reviewed
   ruleset change. Their history stays reachable from `main`.
+- `fix`, `polish` and `plan` take `--allow-change KINDS`, and the MCP `fix`,
+  `polish` and `edit_plan` tools take `allow_change`, so an edit can update a
+  number, link, citation, quote or other named kind of protected content on
+  purpose. Each allowed change is listed in `allowed_changes` in the result and
+  the editor receipt. The plan binds the list, so a submission cannot widen it.
+  Disclosure lines, added first-person sentences, HTML and math can never be
+  allowed. Plans that allow nothing keep their old schema and plan IDs.
+- `fix`, `polish` and `submit` take `--explain [json|text]`, and the MCP `fix`,
+  `polish` and `edit_submit` tools take `explain`, for a change report: each
+  changed sentence before and after, the findings it cleared, kept or added,
+  the paragraphs the guard kept and why, and each allowed change.
+- Five domain profiles add rule packs for one kind of writing:
+  `ux-microcopy` (UI string length, case, vague errors and link text),
+  `code-review` (condescension, absolutes and requests with no reason),
+  `plain-language` (reading grade, long sentences and wordy phrases),
+  `controlled-english` (sentence length, one instruction per sentence, idioms,
+  phrasal verbs and vague pronouns; no ASD-STE100 conformance is claimed) and
+  `rfc-keywords` (`normative-spec` plus RFC 2119 and RFC 8174 keyword checks).
+  Choose one with `--profile`, an in-file `writing-profile:` tag, the LSP
+  server or an edit plan. The packs run after the detector, so the detector
+  rules, every existing profile and every existing receipt are unchanged.
+  Receipts under a domain profile record an `extension_fingerprint`, and a
+  pack change makes them read Unverifiable. `python -m articulate.bench` also
+  runs the new domain regression corpus.
+- A project config file, `.articulate.json`, found by walking up from each
+  file (nearest wins). It maps path globs to profiles, adds banned and
+  preferred terminology with their own rule ids, allows terms of art, freezes
+  terms that every rewrite must keep, and tunes rule-pack options. `check`,
+  `score`, `receipt`, `plan`, `judge`, `fix` and `polish` take
+  `--config PATH|none`, and `articulate config PATH` shows what applies to a
+  file and why. Terminology findings appear in check text, JSON, SARIF,
+  per-span verdicts, LSP diagnostics and receipts. Receipts embed the project
+  rules with their hash, so they replay anywhere; an edited payload reads
+  Unverifiable. A malformed config stops the command with exit 2, the file and
+  the reason. With no config file, output is unchanged.
 - The Windows x64 native package now carries the house voice spec. The 0.8.0
   release build stopped because the frozen server could not find that file at
   start-up, so 0.8.0 never reached PyPI. The release check now lists all 17

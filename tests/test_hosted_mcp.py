@@ -267,6 +267,32 @@ def test_forged_plan_cannot_supply_custom_settings(keys):
     assert 'arbitrary' not in json.dumps(result)
 
 
+@pytest.mark.parametrize('name', ['rfc-keywords', 'ux-microcopy', 'plain-language'])
+def test_domain_profile_plan_round_trips(keys, name):
+    text = 'The client MUST retry. The server should log 42 errors.'
+    with client(keys) as c:
+        auth = token(keys)
+        plan = data(call(c, auth, 'edit_plan', text=text, profile=name))
+        assert plan['status'] == 'host_edit_required'
+        result = data(call(c, auth, 'edit_submit', text=text, rewrite=text, plan_id=plan['plan_id']))
+    assert result.get('ok') is not False, result
+    assert result['text'] == text
+    assert result['receipt']['settings']['profile']['domain'] == name
+
+
+def test_altered_domain_profile_is_still_rejected(keys):
+    from articulate import domains
+    from articulate.host_edit import edit_plan
+    text = 'Preserve 42.'
+    prof = domains.load_profile('rfc-keywords')
+    prof['rule_packs'] = ()
+    plan = edit_plan(text, profile=prof)
+    with client(keys) as c:
+        result = data(call(c, token(keys), 'edit_submit', text=text, rewrite=text,
+                           plan_id=plan['plan_id']))
+    assert result['ok'] is False
+
+
 def test_results_are_not_cacheable(keys):
     with client(keys) as c:
         r = rpc(c, token(keys))

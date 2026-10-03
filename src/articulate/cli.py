@@ -14,16 +14,16 @@ import json
 import os
 import sys
 
-from . import modes, profiles, pysource, receipt
-from .detector import binary_reason, check_text, ruleset_fingerprint
+from . import cli_config, modes, profiles, pysource, receipt
+from .checkext import check_text
+from .detector import binary_reason, ruleset_fingerprint
 
 
 def _resolve(name, text, args):
-    """Return (label, profile_dict). A --mode wins over profile inference."""
-    if getattr(args, "mode", None):
-        return args.mode, modes.load(args.mode)
-    pname = _profile_name(name, text, args.profile)
-    return pname, profiles.load(pname)
+    """Return (label, profile_dict). A --mode wins over profile inference, and a
+    project config adds its profile globs and rules (articulate.cli_config)."""
+    from .cli_config import resolve
+    return resolve(name, text, args)
 
 
 def _redact(r):
@@ -182,11 +182,11 @@ def _print_check(name, pname, r, verbose):
                 f"{len(r['medium'])} medium ({r['gate']})")
     print(head + f"  texture {r['texture_score']}/100")
     for f in r["high"] + r["medium"]:
-        print(f"  L{f['line']} [{f['tier']} {f['category']}] "
+        print(f"  L{f['line']} [{f['tier']} {cli_config.shown(f)}] "
               f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
     if verbose and r["low"]:
         for f in r["low"]:
-            print(f"  L{f['line']} [LOW {f['category']}] "
+            print(f"  L{f['line']} [LOW {cli_config.shown(f)}] "
                   f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
 
 
@@ -208,7 +208,7 @@ def _cmd_check(args):
         r = check_text(text, profile=prof)
         r["file"], r["profile"] = name, pname
         if getattr(args, "spans", False):
-            from .detector import analyze_blocks
+            from .checkext import analyze_blocks
             r["blocks"] = analyze_blocks(text, profile=prof)
         if getattr(args, "content_free", False):
             _redact(r)          # no export path carries a verbatim substring
@@ -237,9 +237,9 @@ def _cmd_receipt(args):
         if reason:
             print(f"[articulate] {name}: cannot screen ({reason})", file=sys.stderr)
             continue
-        pname = _profile_name(name, text, args.profile)
-        rec = receipt.make_receipt(text, pname, per_span=getattr(args, "spans", False),
-                                   redact=redact, reviewer=reviewer)
+        rec = cli_config.make_receipt(name, text, args, redact=redact, reviewer=reviewer)
+        if rec is None:
+            return 2
         rec["file"] = name
         print(json.dumps(rec, ensure_ascii=False, indent=2))
     return 0
@@ -418,7 +418,7 @@ def _author_text(args):
 
 
 def _cmd_edit(args):
-    from . import editing, host_edit
+    from . import cli_edit, editing, host_edit
     try:
         text = _read_edit_file(args.file)
         if args.cmd == "submit":
@@ -427,10 +427,11 @@ def _cmd_edit(args):
                 scores=json.loads(args.scores) if args.scores else None,
                 model=args.model, author_text=_author_text(args))
         else:
-            options = {"mode": args.mode,
-                       "profile": None if args.mode else _profile_name(args.file, text, args.profile),
+            options = {**cli_config.edit_options(args, text, None if args.mode else
+                                                  _profile_name(args.file, text, args.profile)),
                        "is_html": args.is_html or args.file.lower().endswith((".html", ".htm")),
                        "is_tex": args.is_tex or args.file.lower().endswith(".tex")}
+            options.update(cli_edit.edit_kwargs(args))
             if args.cmd == "plan":
                 result = host_edit.edit_plan(text, goal=args.goal, author_text=_author_text(args), **options)
             else:
@@ -446,7 +447,7 @@ def _cmd_edit(args):
                 fh.write(result["text"])
         from .cli_process import record_pass
         record_pass(args, result, text)
-        print(json.dumps(result, ensure_ascii=False, indent=2))
+        print(cli_edit.render(args, result, text))
         return 0
     except (OSError, ValueError) as exc:
         print(f"[articulate] {exc}", file=sys.stderr)
@@ -479,6 +480,8 @@ def main(argv=None):
                 p.add_argument("--bar", type=int, default=4)
                 p.add_argument("--passes", type=int, default=3)
                 p.add_argument("--timeout", type=float, default=600)
+        from . import cli_edit
+        cli_edit.add_arguments(p, cmd)
         if cmd in ("plan", "submit"):
             p.add_argument("--author-text", help="a file of your own words the edit may add")
         p.add_argument("--out", help="write accepted text to this file")
@@ -489,6 +492,7 @@ def main(argv=None):
         p.add_argument("--profile", default=None, help="force a register profile")
         p.add_argument("--mode", default=None,
                        help="a writing mode (domain/articulation, e.g. memo/argue)")
+        cli_config.add_argument(p)
         if cmd == "check":
             p.add_argument("--json", action="store_true")
             p.add_argument("--sarif", action="store_true", help="emit SARIF 2.1.0")
@@ -523,6 +527,7 @@ def main(argv=None):
     cli_house.register(sub)
     cli_process.register(sub)
     cli_desk.register(sub)
+    cli_config.register(sub)
     args = ap.parse_args(argv)
     if getattr(args, "corpus_handler", None):
         return args.corpus_handler(args)
