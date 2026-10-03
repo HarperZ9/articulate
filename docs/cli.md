@@ -85,6 +85,59 @@ List the available writing modes.
 articulate modes
 ```
 
+## process
+
+Keep a local, opt-in record of your own process. See the
+[feature reference](features.md#the-process-record).
+
+```bash
+articulate process init DOC [--track] [--opt-in words,diff,time,snapshot]
+articulate process draft DOC
+articulate process note DOC (--text-file F | --label L) [--shareable]
+articulate process source DOC CITATION [--shareable]
+articulate process assist DOC --tool T --verb {generated,drafted,edited,translated}
+                          [--sections S,...] [--model M] [--version V]
+                          [--source-type CODE --languages SRC,TGT]
+articulate process input DOC --method M [--sections S,...]
+articulate process review DOC --role R --reviewed W --outcome O [--editorial] [--name N]
+articulate process anchor DOC [--commit ID | --token-sha256 H]
+articulate process continue DOC --reason R
+articulate process export DOC [--include F,...] [--reveal N[=FILE]] [--contributions F]
+articulate process verify (DOC | SUMMARY.json)
+```
+
+`export --include` names the fields a default export leaves out: `words`, `diff`,
+`time`, `labels`, `citations`, `review_names` and `input_method`. `continue` works
+only on a broken log. `verify` reads a file as a summary when its `schema` field
+says so, whatever its name; on a document it reports `intact` (exit 0),
+`broken` (exit 1) or `missing` (exit 3). A missing log is no record: "an absent or
+short record shows nothing about a writer". `verify`, `export` and `disclose`
+each print that limits line.
+
+## disclose
+
+Write a statement of tool use and contributor credit from the process log.
+
+```bash
+articulate disclose DOC [--template {general,pip}] [--contributions F]
+                    [--include input_method] [--claim SENTENCE]
+```
+
+It exits 2 and writes nothing when the log is missing or broken, or when the
+request would misstate the log.
+
+## desk
+
+Prepare the questions a reviewer should ask, inside the document and across the
+field.
+
+```bash
+articulate desk FILE [--venue {none,paper,course}] [--disclosure F] [--author] [--json]
+```
+
+An unknown `--venue` exits 2 with the list of venues. The JSON output carries a
+`does_not_prove` line.
+
 ## Editor commands
 
 The main CLI exposes model editing and deterministic fixes:

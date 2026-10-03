@@ -141,6 +141,63 @@ model call, so a directive embedded in the text (a line that says to ignore the
 standard or to reply approved) is edited as content and never obeyed. The rewrite
 optimizes writing quality, and it never tunes prose toward a lower detector score.
 
+## The process record
+
+`articulate process` keeps a local log of your own process in
+`.articulate/process/` beside the document, with a `.gitignore` of its own.
+Nothing records until you run a command.
+
+- A draft entry holds a salted commitment to the text, its sequence and the day.
+  Word counts, lines changed, times and snapshots are opt-in per log and stay out
+  of a default export.
+- Notes, sources, declared tool assistance (generated, drafted, edited,
+  translated), reviews by role, anchors to a git commit or a timestamp token, and
+  a continuation entry for a log that broke.
+- How you put words down (dictation, a screen reader, switch access, drafting in
+  another language) goes to a private file outside the log. No export or
+  statement includes it unless you name it, and no sequence number shows it.
+- `export` writes `<document>.process-summary.json`: two labelled document hashes,
+  the entry sequence, a C2PA-shaped actions list with IPTC digital source types,
+  your disclosure statement and the limits of what the summary shows. It carries
+  no entry hash, so nothing in it can be tested against a withheld field.
+  `--reveal N` attaches draft N's text and salt.
+- `verify` on a log reports `intact` (exit 0), `broken` (exit 1) or `missing`
+  (exit 3). A missing log is no record, and an absent or short record shows
+  nothing about a writer; `verify`, `export` and `disclose` each print that
+  limits line. On a summary (found by its schema) it checks the chain state the
+  summary records and each reveal.
+- `continue` starts a new log only after a broken one. The new first entry names
+  the last good entry and carries every recorded assistance entry forward.
+- `fix` and `polish` add their own assistance entry when the document has a log,
+  including when a later pass fails.
+- `--track` lets git see the log and still keeps salts, the diff cache, snapshots
+  and input methods out of it.
+
+## Disclosure statements
+
+`articulate disclose` writes a statement from the log: assistance with the task
+verb as recorded, and CRediT credit for people only. It refuses when the log is
+missing or broken. It refuses a claim that matches its list of no-tool phrases
+("No AI was used", "written without any AI tools") when the log records
+assistance; a paraphrase outside the list passes, so the Assistance section is
+the record. It refuses to leave out a recorded assistance entry. An author whose
+whole name is a product name ("Claude", "GPT-4o") is refused unless the entry
+says `"type": "person"`; a person who shares a word with a product, such as
+Claude Shannon or Ai Weiwei, is never refused. A `pip` template writes
+`Assisted-by:` commit-trailer lines and never a co-author trailer for a model.
+
+## The review desk
+
+`articulate desk` prepares the questions a reviewer should ask. Inside the
+document it asks about numbers with no source nearby, appeals to unnamed
+authority, sections or statements a venue asks for, and text that does not show
+to a reader: white or zero-size text, `display:none`, `visibility:hidden`, zero
+opacity, zero-width characters inside Latin text, bidirectional controls and
+Unicode tag characters, whose hidden sentence it spells out. Across the field it asks five fixed questions about what the work
+adds, and quotes only the authors' own claims beside them. It prints no score,
+no verdict, no ranking and no question count, and it never reads a process record.
+`--author` asks the same questions before submission.
+
 ## Re-derivable receipts
 
 A receipt records a detection result together with the exact text hash and a
@@ -195,8 +252,9 @@ English literals, so they simply do not fire on it.
 
 The same detection reaches you through several surfaces:
 
-- CLI: `check`, `score`, `receipt`, `verify`, `audit`, `modes`, `plan`, `submit`,
-  `judge`, `fix` and `polish`.
+- CLI: `check`, `score`, `receipt`, `verify`, `audit`, `modes`, `process`,
+  `disclose`, `desk`, `plan`, `submit`, `judge`, `fix` and `polish`, plus the
+  `house`, `voice`, `corpus`, `titles`, `interview` and `restructure` commands.
 - LSP server: inline squiggles in VS Code, JetBrains through LSP4IJ, and Neovim.
   It is standard-library only, with no dependency.
 - SARIF: `check --sarif` for GitHub code scanning, Azure DevOps, and reviewdog.

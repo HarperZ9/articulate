@@ -47,6 +47,7 @@ except (AttributeError, ValueError):
 
 from .claude_cli import ClaudeUnavailable  # noqa: F401  (re-exported for callers)
 from . import claude_cli
+from .process_events import log_pass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -186,6 +187,8 @@ def _execute_file(path, goal, out_path=None, passes=3, bar=4, mode=None, backend
         accepted = result["text"]
         with open(out_path, "w", encoding="utf-8") as fh:
             fh.write(accepted + ("\n" if accepted and not accepted.endswith("\n") else ""))
+        if accepted != text:
+            log_pass(path, goal, backend=result["backend"], model=result.get("model"))
         print(f"[{goal}] final -> {out_path}; gate: {result.get('gate_after')}")
         if result.get("refused"):
             print(f"[{goal}] kept protected content in {len(result['refused'])} refused span(s)")
@@ -323,6 +326,8 @@ def polish(path, out_path, passes, bar, mode=None, rewrite_fn=None, judge_fn=Non
         best, r, low_cats, q, sc = cand, cr, clow, cq, csc
         open(out_path, "w", encoding="utf-8").write(best + ("\n" if not best.endswith("\n") else ""))
 
+    if best != text:
+        log_pass(path, "polish")
     print(f"\n[polish] final -> {out_path}")
     print("[polish] gated on quality with a no-regression contract, never on a detector score.")
     return 0

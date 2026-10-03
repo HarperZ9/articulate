@@ -4,6 +4,22 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+One release line. `main` now carries everything released from `release/0.5.x`
+(0.5.1 to 0.8.0), so every later release comes from `main`.
+
+- The writing-process record, disclosure statements and the review desk come
+  over from `main`: `articulate process`, `articulate disclose` and
+  `articulate desk`. `fix` and `polish` add an assistance entry to a document's
+  process log when it has one. These commands add no detector rule and
+  change no finding.
+- Detector rules stay the published v0.5.2 rules (fingerprint
+  `sha256:9f78a7484bb20f84`), so every 0.7.0 and 0.8.0 receipt still verifies.
+  The reworked detector, the fairness harness and `check --house-notes` that sat
+  on `main` change findings, so they stay out of this line until a reviewed
+  ruleset change. Their history stays reachable from `main`.
+
 ## 0.8.0
 
 Two voice layers and series review. Articulate ships a house voice for the

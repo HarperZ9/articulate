@@ -444,6 +444,8 @@ def _cmd_edit(args):
         if getattr(args, "out", None) and "text" in result and "plan_id" not in result:
             with open(args.out, "w", encoding="utf-8", newline="") as fh:
                 fh.write(result["text"])
+        from .cli_process import record_pass
+        record_pass(args, result, text)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError) as exc:
@@ -516,9 +518,11 @@ def main(argv=None):
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
-    from . import cli_corpus, cli_house
+    from . import cli_corpus, cli_desk, cli_house, cli_process
     cli_corpus.register(sub)
     cli_house.register(sub)
+    cli_process.register(sub)
+    cli_desk.register(sub)
     args = ap.parse_args(argv)
     if getattr(args, "corpus_handler", None):
         return args.corpus_handler(args)
@@ -534,6 +538,12 @@ def main(argv=None):
         return _cmd_verify(args)
     if args.cmd == "audit":
         return _cmd_audit(args)
+    if args.cmd == "process":
+        return cli_process.cmd_process(args)
+    if args.cmd == "disclose":
+        return cli_process.cmd_disclose(args)
+    if args.cmd == "desk":
+        return cli_desk.cmd_desk(args)
     if args.cmd == "modes":
         for m in modes.names():
             print(m)
