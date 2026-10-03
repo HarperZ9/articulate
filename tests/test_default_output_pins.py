@@ -48,6 +48,8 @@ def _run(argv):
 
 @pytest.fixture
 def sample_dir(tmp_path, monkeypatch):
+    # The CLI fills a receipt's reviewer from GITHUB_ACTOR, which CI sets.
+    monkeypatch.delenv("GITHUB_ACTOR", raising=False)
     shutil.copy(SAMPLE, tmp_path / "sample.md")
     monkeypatch.chdir(tmp_path)
     return tmp_path
