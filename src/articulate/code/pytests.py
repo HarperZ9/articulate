@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import ast
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 from .strength import (BROAD_EXC, CHECKER_PREFIXES, MEDIUM_UNITTEST, MOCK_MEDIUM,
                        MOCK_STRONG, MOCK_WEAK, STRONG_UNITTEST, TOLERANCE_KW,
@@ -32,6 +33,7 @@ class Check:
     text: str          # normalized source of the checked expression
     line: int
     subject: str = ""  # left-hand side, used to pair a replacement
+    cond: str = ""     # the enclosing `if` tests, when the check is conditional
 
 
 @dataclass
@@ -49,6 +51,7 @@ class FuncFacts:
     mocks: set = field(default_factory=set)
     params: list = field(default_factory=list)
     patch_decorators: int = 0
+    param_cases: int = 1    # rows a literal @pytest.mark.parametrize expands to
 
 
 class _Walker(ast.NodeVisitor):
@@ -58,21 +61,34 @@ class _Walker(ast.NodeVisitor):
         self.facts, self.helpers = facts, helpers
         self.mocks: set = set()
         self.branch_depth = 0
+        self.conds: list = []
 
     def visit_If(self, node):
         self.visit(node.test)
         self.branch_depth += 1
+        self.conds.append(norm(node.test))
         for stmt in node.body + node.orelse:
             self.visit(stmt)
+        self.conds.pop()
         self.branch_depth -= 1
 
     def _add(self, kind, strength, text, node, subject=""):
-        self.facts.checks.append(Check(kind, strength, text, node.lineno, subject))
+        self.facts.checks.append(Check(kind, strength, text, node.lineno, subject,
+                                       " and ".join(self.conds)))
 
     def visit_Assert(self, node):
         subject = norm(node.test.left) if isinstance(node.test, ast.Compare) else norm(node.test)
         self._add("assert", compare_strength(node.test), norm(node.test), node, subject)
+        self._abs_bounds(node.test)
         self.generic_visit(node)
+
+    def _abs_bounds(self, test):
+        """`abs(a - b) < tol` is a tolerance too."""
+        for sub in ast.walk(test):
+            if isinstance(sub, ast.Compare) and len(sub.ops) == 1                     and isinstance(sub.ops[0], (ast.Lt, ast.LtE))                     and isinstance(sub.left, ast.Call) and call_name(sub.left.func) == "abs":
+                value = num(sub.comparators[0])
+                if value is not None:
+                    self.facts.tolerances.append(("abs", "bound", value, sub.lineno))
 
     def visit_Raise(self, node):
         if node.exc is not None and call_name(getattr(node.exc, "func", node.exc)) == "AssertionError":
@@ -98,12 +114,16 @@ class _Walker(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Try(self, node):
+        guards_checks = any(_is_check_stmt(sub) for stmt in node.body for sub in ast.walk(stmt))
         for handler in node.handlers:
-            broad = handler.type is None or any(n in BROAD_EXC for n in exc_names(handler.type))
+            names = exc_names(handler.type) if handler.type is not None else []
+            broad = handler.type is None or any(n in BROAD_EXC for n in names)
             quiet = all(isinstance(s, (ast.Pass, ast.Continue)) or
                         (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))
                         for s in handler.body)
-            if broad and quiet:
+            eats_assert = (broad or "AssertionError" in names) and guards_checks                 and not any(_is_check_stmt(sub) or isinstance(sub, ast.Raise)
+                            for stmt in handler.body for sub in ast.walk(stmt))
+            if (broad and quiet) or eats_assert:
                 self.facts.swallows.append(handler.lineno)
         self.generic_visit(node)
 
@@ -167,6 +187,16 @@ class _Walker(ast.NodeVisitor):
                 self.facts.tolerances.append(("approx", "rel", 1e-6, node.lineno))
 
 
+def _is_check_stmt(node) -> bool:
+    """An assert, or a call that fails the test (`self.assertX`, `pytest.fail`)."""
+    if isinstance(node, ast.Assert):
+        return True
+    if isinstance(node, ast.Call):
+        dname = dotted(node.func)
+        return dname.startswith("self.assert") or dname in ("pytest.fail", "self.fail")
+    return False
+
+
 def _markers(func) -> list:
     out = []
     for dec in func.decorator_list:
@@ -178,6 +208,15 @@ def _markers(func) -> list:
                 (name == "xfail" and isinstance(dec, ast.Call) and bool(dec.args))
             out.append((name, dec.lineno, conditional, norm(dec)))
     return out
+
+
+def _param_cases(func) -> int:
+    """Rows a test runs: the product of each literal parametrize list's length."""
+    total = 1
+    for dec in func.decorator_list:
+        if isinstance(dec, ast.Call) and call_name(dec.func) == "parametrize"                 and len(dec.args) >= 2 and isinstance(dec.args[1], (ast.List, ast.Tuple)):
+            total *= max(1, len(dec.args[1].elts))
+    return total
 
 
 def _collects(name: str, cls) -> bool:
@@ -212,6 +251,7 @@ def _facts_for(func, cls, helpers) -> FuncFacts:
     first = 1 if facts.params[:1] == ["self"] else 0
     facts.mocks = walker.mocks | set(facts.params[first:first + facts.patch_decorators])
     facts.body_dump = _body_dump(func)
+    facts.param_cases = _param_cases(func)
     return facts
 
 
@@ -224,8 +264,11 @@ class Inventory:
         return {k: v for k, v in self.functions.items() if v.collects}
 
 
+@lru_cache(maxsize=32)
 def inventory(source: str) -> "Inventory | None":
-    """Facts for every function in a test module. None when it does not parse."""
+    """Facts for every function in a test module. None when it does not parse.
+    Cached by source text: the change-set pass and the per-file pass read the
+    same files. Callers treat the result as read-only."""
     try:
         tree = ast.parse(source)
     except (SyntaxError, ValueError):
