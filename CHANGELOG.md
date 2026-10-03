@@ -54,6 +54,10 @@ One release line. `main` now carries everything released from `release/0.5.x`
   rules with their hash, so they replay anywhere; an edited payload reads
   Unverifiable. A malformed config stops the command with exit 2, the file and
   the reason. With no config file, output is unchanged.
+- The Windows x64 native package now carries the house voice spec. The 0.8.0
+  release build stopped because the frozen server could not find that file at
+  start-up, so 0.8.0 never reached PyPI. The release check now lists all 17
+  local tools and runs `house_transform` in the frozen binary.
 
 ## 0.8.0
 
