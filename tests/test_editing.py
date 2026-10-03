@@ -32,7 +32,7 @@ def _scores(value, **overrides):
 def test_no_backend_returns_local_result_with_receipt(monkeypatch, goal):
     from articulate import editing
     _script(monkeypatch, [("", _info("none", None))])
-    result = editing.run_edit("We really ship software.", goal, profile="house")
+    result = editing.run_edit("We really ship software.", goal)
     assert result["backend"] == "none"
     assert result["receipt"]["backend"] == "none"
     assert result["findings_before"]
@@ -94,7 +94,7 @@ def test_polish_does_not_claim_quality_when_scores_are_missing(monkeypatch):
 def test_polish_advisory_rejection_keeps_scores_for_actual_returned_text(monkeypatch):
     from articulate import editing, profiles
     profile = profiles.load("flavored")
-    profile["editor"] = {"require_fix": ["existential-opener"]}
+    profile["editor"] = {"require_fix": ["expletive-opener"]}
     _script(monkeypatch, [(_scores(2), _info()),
                          ("There is software to ship.", _info()),
                          (_scores(4), _info())])
@@ -160,7 +160,7 @@ def test_profile_name_and_html_masks_survive_final_submission(monkeypatch):
 def test_judge_retains_original_and_reports_assessment(monkeypatch):
     from articulate import editing
     calls = _script(monkeypatch, [("Name the actor.", _info())])
-    result = editing.run_edit("It was really built.", goal="judge", profile="house")
+    result = editing.run_edit("It was really built.", goal="judge")
     assert result["text"] == "It was really built."
     assert result["assessment"] == "Name the actor."
     assert result["findings_before"]

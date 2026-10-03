@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.6.0"
-description = "Local prose checks: named writing patterns, where they occur, and what each costs a reader. Register profiles, writing modes, content-free receipts, and an optional editor that runs through a hosted model."
+version = "0.8.0"
+description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "LicenseRef-FSL-1.1-MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Zain Dana Harper" }]
-keywords = ["writing", "linter", "prose", "plain-language", "editor", "quality", "receipt", "audit"]
+keywords = ["writing", "linter", "prose", "ai-detection", "editor", "quality", "receipt", "audit"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Text Processing :: Linguistic",
@@ -22,6 +22,7 @@ dependencies = []  # the core detector is standard-library only
 
 [project.optional-dependencies]
 mcp = ["fastmcp>=3"]      # the MCP server surface
+hosted = ["fastmcp>=3.2.4,<4", "pydantic>=2.12,<3", "uvicorn>=0.30,<1"]  # opt-in authenticated HTTP
 dev = ["pytest>=7"]
 
 [project.scripts]
@@ -31,6 +32,12 @@ articulate-lsp = "articulate.lsp_server:serve"
 # an MCP host can launch it straight from `pip install articulate-writing`. The
 # fastmcp server stays available under the [mcp] extra as articulate.mcp_server.
 articulate-mcp = "articulate.local_mcp:main"
+# The advisory PostToolUse check for agent harnesses (Claude Code, Codex and any
+# client that runs a command hook with the same event shape). Standard library only.
+articulate-edit-hook = "articulate.edit_hook:main"
+# The house-voice hook: the brief at SessionStart, and the optional revise-mode
+# Stop check. Standard library only.
+articulate-house-hook = "articulate.house_hook:main"
 
 [project.urls]
 Homepage = "https://github.com/HarperZ9/articulate"

@@ -2,8 +2,7 @@
 
 The command is `articulate`. With no file, a command reads standard input. A
 profile is chosen by an explicit flag, then an in-file `writing-profile:` tag,
-then the file path, then the default. The editor commands resolve it the same
-way.
+then the file path, then the default.
 
 ## check
 
@@ -11,48 +10,27 @@ Screen one or more files and report the findings.
 
 ```bash
 articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
-                 [--sarif] [--verbose] [--spans] [--content-free] [--house-notes]
+                 [--sarif] [--verbose] [--spans] [--content-free]
 ```
 
-- `--profile P`: force a profile. `house` and `house-essay` apply the house style;
-  no path selects them for you.
+- `--profile P`: force a register profile.
 - `--mode M`: a writing mode, for example `memo/argue`. A mode wins over profile
   inference.
 - `--gate`: exit 1 when any file is blocked or cannot be screened, otherwise 0.
-- `--json`: a machine-readable payload with the findings, whether each one
-  blocks and its `reason` and `reason_source`, `blocking` (the count of blocking
-  findings), per-rule counts, the gate, `findings` (`has_findings` when any HIGH
-  or MEDIUM finding exists), density (with `measures`, what it counts),
-  passive-voice and adverb rates and the `does_not_prove` line. Two keys are
-  deprecated and leave in package 0.7.0: `clean`, true when no HIGH or MEDIUM
-  finding exists, whose equal is `findings == "no_findings"`; and
-  `blocking_count`, the same number as `blocking`. `clean` does not say whether
-  the gate passed: a text with one MEDIUM finding under the default profile
-  reads `clean: false` and `gate: ok`. Read `gate` or `blocking` for the gate.
+- `--json`: a machine-readable payload with findings, cadence, and the verdict.
 - `--sarif`: SARIF 2.1.0 for GitHub code scanning, Azure DevOps, and reviewdog.
-  Each rule's help text carries its reader-cost reason and the does-not-prove
-  line, and each result records the profile.
-- `--verbose`: expand the LOW advisories to line numbers and print each
-  finding's reader-cost reason under it. A LOW finding that the profile promotes
-  to blocking always prints. Every console run ends with the does-not-prove line,
-  a passing gate included.
-- `--house-notes`: also report the house style's patterns as LOW notes marked
-  `house style` (SARIF: `house: true`). Without it no profile but `house` and
-  `house-essay` shows them.
-- `--spans`: per-paragraph counts by rule, in document order. No paragraph gets
-  a gate, a label or a score; see
-  [Boundaries](boundaries.md#no-output-is-an-authorship-finding).
+- `--verbose`: expand the LOW advisories to line numbers.
+- `--spans`: a per-paragraph verdict, so a mixed-authorship block is flagged in
+  place.
 - `--content-free`: omit every verbatim substring and exact offset from the
-  console, JSON, and SARIF output. The repeated-phrase and repeated-opener notes
-  are keyed by category, since their rule ids would name the phrase or opener.
+  console, JSON, and SARIF output.
 
 ## score
 
-Print the gate, the word count, density per 1,000 words with an exact interval
-(shown at 250 words or more) and per-rule counts.
+Print the graded texture score and the verdict, without the per-finding lines.
 
 ```bash
-articulate score [FILE ...] [--profile P] [--mode M] [--house-notes]
+articulate score [FILE ...] [--profile P] [--mode M]
 ```
 
 ## receipt
@@ -60,14 +38,11 @@ articulate score [FILE ...] [--profile P] [--mode M] [--house-notes]
 Emit a re-derivable receipt as JSON on standard output.
 
 ```bash
-articulate receipt [FILE ...] [--profile P] [--mode M] [--spans]
+articulate receipt [FILE ...] [--profile P] [--spans]
                    [--redact {none,drop,hash}] [--reviewer NAME]
 ```
 
-- `--mode M`: screen under a writing mode, as `check --mode` does. The receipt
-  records the mode in a `mode` field beside the mode's base profile, and `verify`
-  replays it under the same mode. A mode wins over `--profile`.
-- `--spans`: record the per-paragraph counts in the receipt.
+- `--spans`: record the per-paragraph verdicts in the receipt.
 - `--redact drop`: a content-free audit receipt with the matched substring and the
   offsets dropped.
 - `--redact hash`: as `drop`, keeping a hash of the match for an equality check
@@ -77,7 +52,7 @@ articulate receipt [FILE ...] [--profile P] [--mode M] [--spans]
 
 ## verify
 
-Replay a receipt against text.
+Replay a receipt against text and return the verdict.
 
 ```bash
 articulate verify RECEIPT FILE
@@ -98,8 +73,8 @@ articulate audit [PATH ...] [--days N] [--reverify] [--gate] [--json]
 - `--reverify`: replay each receipt against its source file, and report `Match`,
   `Drift`, `source-changed`, `source-missing`, or `source-unreadable`.
 - `--gate`: with `--reverify`, exit 1 when any source drifted, changed since it
-  was screened, or could not be read. A stale-ruleset `Unverifiable` is
-  reported, and it does not fail the gate.
+  was screened, or could not be read. A sub-threshold or stale-ruleset
+  `Unverifiable` is reported, and it does not fail the gate.
 - `--json`: the summary as JSON.
 
 ## modes
@@ -163,44 +138,6 @@ articulate desk FILE [--venue {none,paper,course}] [--disclosure F] [--author] [
 An unknown `--venue` exits 2 with the list of venues. The JSON output carries a
 `does_not_prove` line.
 
-## The fairness harness
-
-```bash
-python -m articulate.fairness MANIFEST [--root DIR] [--out RECEIPT] [--jobs N]
-python -m articulate.fairness --release-check DIR [--published FILE]
-```
-
-`--root` names the folder the corpus files sit in when they are not beside the
-manifest. `--jobs N` scans the documents in N processes and computes every
-statistic in one, so the receipt is byte-identical to a single-process run; a
-test pins this.
-
-The release check reads the published-ruleset record, `published-ruleset.json`
-beside `DIR` unless `--published` names another. A commit after each release
-updates that record; the release commit never edits it. When the current ruleset
-fingerprint equals the published one and the record names an earlier package
-version than the one being built, the check passes and prints
-`ruleset unchanged since X (FINGERPRINT); gates not re-run`. A record that names
-the version being built never skips the gates.
-
-Otherwise it reads `DIR/<fingerprint>*.json`, exactly one receipt per listed
-manifest; a second receipt from the same manifest fails the check. Each
-receipt's stored G1 and G2 flags must agree with its stored numbers (the raw G1
-gap is recomputed from its counts; stored G2 states, within-group gaps and
-layout counts are trusted), every gate recomputed from its rows must pass, and
-when `DIR/SHA256SUMS` exists each receipt must match its pin there
-(`sha256sum -c SHA256SUMS` checks the same thing). A changed ruleset also needs
-a receipt from a corpus pre-registered to confirm it: PERSUADE 2.0 confirms only
-`sha256:46e1485cd2c98caa`.
-
-A maintainer can let a changed ruleset publish while a gate fails by committing
-`DIR/<fingerprint>.override.json` with `ruleset_version`, `reason` and
-`decided_by`. The check accepts it only when no gate row fails in the new receipt
-that did not fail in the published ruleset's own receipt, a row that receipt
-lacked included; it prints that comparison, the reason and every failure. It
-refuses an override whose comparison base is not a sound receipt of the
-published ruleset itself, and an override never excuses a malformed receipt.
-
 ## Editor commands
 
 The main CLI exposes model editing and deterministic fixes:
@@ -212,9 +149,7 @@ articulate polish FILE --backend ollama --json
 ```
 
 All three accept `--backend auto|host|sampling|anthropic|claude-cli|openai|ollama|none`,
-`--mode M`, `--profile P`, `--out OUT` and `--json`. The legacy editor also
-accepts `--local-only` to enable the same restriction as the environment switch.
-Sampling requires an MCP
+`--mode M`, `--profile P`, `--out OUT` and `--json`. Sampling requires an MCP
 session that advertised sampling; a plain CLI cannot request the host's model
 through that transport. `host` returns a plan for a calling model to complete.
 Without a model, `none` makes conservative mechanical fixes and reports remaining
@@ -227,8 +162,7 @@ The legacy entry point remains available:
 python -m articulate.editor --judge FILE --backend auto
 python -m articulate.editor --fix FILE --backend none --out edited.md
 python -m articulate.editor --polish FILE --backend ollama --mode memo/argue
-python -m articulate.editor --review FILE     # --advise FILE is the same
-python -m articulate.editor --fix FILE --local-only --backend none
+python -m articulate.editor --review FILE
 ```
 
 ### plan and submit
@@ -298,12 +232,12 @@ it inspects installed models through `/api/tags`, preferring `qwen3:8b`,
 `qwen2.5:7b`, `llama3.2:3b`, then `gemma3:4b`, then the first installed model.
 It never pulls a model.
 
-Set `ARTICULATE_LOCAL_ONLY=1` to restrict editor backend selection to Ollama on a
-loopback address and `none`. Hosted backends, the `host` selection and sampling
-are refused before a connection. Direct `plan` and `submit` remain available:
-they perform local preparation and validation without a model or network call.
-The switch cannot control how a calling host uses the text or chooses its model.
-For deterministic editing alone, use `--backend none`.
+Set `ARTICULATE_LOCAL_ONLY=1` to permit only Ollama on a loopback address and
+`none`. The editor backend selector refuses hosted routes, host and sampling
+before a connection. Direct `plan` and `submit` calls perform local checks only;
+they do not control the calling host's handling of a document already in its
+conversation. For deterministic editing alone,
+use `--backend none`.
 
 For the Claude CLI, `ARTICULATE_CLAUDE_CLI` must be an absolute executable path;
 otherwise Articulate searches absolute PATH entries and skips the current
@@ -318,19 +252,53 @@ settings do not load. On Windows, `NoDefaultCurrentDirectoryInExePath=1` keeps
 the npm shim's `node` lookup on PATH. An older CLI that rejects these flags is
 reported as unavailable. This isolation does not make a hosted call local.
 
+## house
+
+```
+articulate house apply [FILE | -] [--json] [--receipt OUT]
+articulate house brief [--agents]
+articulate house show
+articulate house on | off
+articulate house set KEY=VALUE...
+```
+
+`apply` runs the house transform on model output and prints the result; notes
+go to standard error. `--receipt` writes an `articulate/house-receipt/v1`
+receipt that `articulate verify` replays. `brief --agents` prints the brief as an
+AGENTS.md section. `on`, `off` and `set` write the settings file and nothing
+else. Keys for `set`: `mode`, `length`, `headings`, `lists`, `first_person`,
+`limits`, `end_line`. See [the house voice](house-voice.md).
+
+## voice
+
+```
+articulate voice learn SAMPLES... --name N --mine [--no-vocabulary]
+articulate voice show N | list | path | identity [--name DISPLAY]
+articulate voice compare DRAFT... --name N
+articulate voice apply DRAFT --name N --authored-by-me [--author-text FILE] [--out FILE]
+articulate voice submit DRAFT REWRITE --plan ID [--author-text FILE] [--out FILE]
+articulate voice export N --out FILE
+articulate voice import FILE [--adopt-identity]
+articulate voice delete N | --all
+```
+
+Every verb takes `--dir` for the store folder. See
+[series review and your own voice](series-and-voice.md).
+
+## corpus, titles, interview, restructure
+
+```
+articulate corpus FILES... [--single] [--keep FILE] [--json] [--receipt OUT]
+articulate titles FILES... [--titles FILE] [--answers FILE]
+articulate interview DOC [--voice N] [--out FILE] | --collect FILE [--answers-out FILE]
+articulate restructure DOC [--out FILE] [--anchors footnote|link]
+```
+
+All four report or propose. None edits an input file in place.
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.
 - `verify`: 0 Match, 1 Drift, 2 Unverifiable.
 - `audit --reverify --gate`: 1 on a real integrity break, else 0.
-- `desk`: 0 whenever the run completes, 2 on unreadable or binary input.
-- `disclose`: 2 when the statement is refused.
-- `process verify`: 0 when intact, 1 when broken, 3 when missing.
-- `desk`: 2 on an unknown `--venue`.
-- `python -m articulate.editor`: 2 when the file is missing or cannot be read.
-  Local-only mode selects loopback Ollama or deterministic editing.
-- `python -m articulate.fairness --release-check`: 0 when the ruleset is
-  unchanged since the published one or every gate passes; 1 when a gate fails
-  and no accepted override names the current ruleset, or a receipt is missing
-  or malformed.
-- `articulate.bench`: the number of failed expectations, so 0 means every one held.
+- `articulate.bench`: the number of misclassified files, so 0 is a perfect run.

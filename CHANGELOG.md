@@ -4,248 +4,221 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## 0.6.0 (unreleased)
+## Unreleased
 
-An explicit Python comparison API reports selected surface changes between
-an original and a rewrite. It preserves the default editor and detector behavior.
-The report includes source text, offsets and its limits; a preserved verdict
-does not establish semantic equivalence. See [the API guide](docs/comparison.md).
+One release line. `main` now carries everything released from `release/0.5.x`
+(0.5.1 to 0.8.0), so every later release comes from `main`.
 
-The editor backend work from the 0.5.1 patch line is carried forward here,
-including host plans, endpoint selection, deterministic edits and the meaning
-guard. This version also contains the ruleset changes below; the patch's
-unchanged-ruleset check does not clear this version's fairness release gate.
+- The writing-process record, disclosure statements and the review desk come
+  over from `main`: `articulate process`, `articulate disclose` and
+  `articulate desk`. `fix` and `polish` add an assistance entry to a document's
+  process log when it has one. These commands add no detector rule and
+  change no finding.
+- Detector rules stay the published v0.5.2 rules (fingerprint
+  `sha256:9f78a7484bb20f84`), so every 0.7.0 and 0.8.0 receipt still verifies.
+  The reworked detector, the fairness harness and `check --house-notes` that sat
+  on `main` change findings, so they stay out of this line until a reviewed
+  ruleset change. Their history stays reachable from `main`.
 
-### Reader-cost rules, no origin claims, a writer-held process record
+## 0.8.0
 
-The release check blocks this ruleset. Ruleset `sha256:46e1485cd2c98caa` fails
-the pre-registered fairness gate on the held-out PERSUADE 2.0 corpus (G1, G2 and
-G4; `docs/fairness-confirmatory.md`), and a package release that changes the
-ruleset publishes only when that gate passes. The notes below describe the
-changes and the evidence as they stand.
+Two voice layers and series review. Articulate ships a house voice for the
+model in your client, opt-in and openly a model's voice, and a personal
+voice that each user builds from their own writing on their own computer. No
+person's voice ships in the package. Detector rules stay the published v0.5.2
+rules (fingerprint `sha256:9f78a7484bb20f84`); this release changes no finding,
+and every 0.7.0 receipt still verifies.
 
-A 2023 study (Liang et al., Patterns 100779) found that perplexity detectors
-flag plain, predictable English, common in second-language writing, as machine
-text. An audit of Articulate 0.4.1, whose rules 0.5.0 kept, on the study's
-released texts found its default profile blocked 38 of 91 learner exam texts
-against 21 of 70 US college essay windows and 31 of 145 student abstract
-windows, and one rule fired about 11 times as often per word on the learner
-texts. These changes answer that audit.
-The decisions behind them, with their reasons, are in
-`fairness/DECISIONS-PR9.md`.
+- House voice `house/2`. A published, versioned spec
+  ([docs/house-voice.md](docs/house-voice.md), machine form
+  `articulate/data/house_voice_v2.json`) written from reader-cost principles
+  and cited research. No person's writing served as its model, and no
+  AI-authorship detector was used to tune it. The brief a model reads is generated from the spec,
+  so the spec, the brief and a receipt's fingerprint cannot drift apart.
+  `house/1` stays packaged with its own fingerprint, so its receipts still
+  verify; both versions share one edit list.
+- Why `house/2`. In a blinded evaluation on a local 7B model with no tools,
+  the `house/1` brief ("I read, I ran") led the model to claim checks it never
+  ran in 15 of 60 replies, against 0 of 60 without the brief. `house/2` uses
+  "I" only for actions the session's tool results show, never narrates a check
+  without one, ends with what the reader should check, puts completeness before
+  brevity, and on a request to write about the user's life or as the user uses
+  only facts they gave, marks each missing fact as a gap such as
+  `[your detail: when you started]` and asks for it. Re-measured on the same
+  model and 30 prompts: untaken-action claims 0 of 60 with `house/2` and 0 of
+  60 without it; median reply 133 words against 253.5 (86 with `house/1`); the
+  AI-assistance line kept in 4 of 4 replies against 3 of 4.
+- Off by default. The ship gate was: untaken-action claims no higher than with
+  the brief off (at most 1 of 60), and a blinded reader not significantly
+  worse. The shipped wording passed both. A blinded qwen2.5-coder 32B reader,
+  shown each pair in both orders, preferred the plain reply on 18 of 60 pairs
+  and the `house/2` reply on 9 (10 ties, 23 flipped with order; two-sided sign
+  test p = 0.12). The reader still leaned toward the plain replies, and the
+  shipped wording marked a gap in only 1 of 14 write-as-me replies. A variant
+  that moved the life line up and named what not to invent marked a gap in 12
+  of 14, but it failed the reader gate (21 to 8, p = 0.024) and put gap
+  questions into 8 of 58 ordinary replies, against 1 of 58; it does not ship.
+  Neither wording stopped this model from inventing life details (12 of 14
+  replies with the shipped wording, 10 of 14 without a brief). So the house
+  voice is opt-in: `ARTICULATE_HOUSE_VOICE=on` or `articulate house on`. An
+  explicit `house apply`, `house brief`, `house_transform` or `house_brief`
+  still applies it unless the user set a mode. Host models (Claude, Codex) and
+  human readers are unmeasured.
+- The plugin's new `SessionStart` hook hands the brief to the model at session
+  start and after a resume, clear or compaction. It reads the spec and the
+  settings file, imports none of the style rules and measured a 72 ms p95 on
+  Windows. It is silent until the user turns the house voice on. A `Stop` hook ships declared and does nothing unless the user picks
+  mode `revise`, which asks for one revision when a finished reply claims a
+  human life or holds a HIGH style finding.
+- `house_transform` (MCP), `articulate house apply` (CLI pipe) and
+  `articulate.house.transform` (library) apply a closed list of exact edits to
+  model output: em dashes that join two words to commas, doubled spaces, and
+  opener and closer sentences with no content, such as a praise opener or an
+  offer to help further. Dashes at a line edge, after a list marker or alone in
+  a table cell stay, and a reply made only of such sentences is kept whole. An
+  exact-edit verifier and the meaning guard check every candidate. Everything
+  else is a located note, including `house/human-claim`. Receipts use
+  `articulate/house-receipt/v1` and replay with `articulate verify`.
+- Controls: `ARTICULATE_HOUSE_VOICE=off`, `articulate house off`, modes
+  `off | brief | default | revise`, and tuning keys `length`, `headings`,
+  `lists`, `first_person`, `limits` and `end_line`. The banned tics and the
+  identity rules are not tunable.
+- Personal voice. `articulate voice learn SAMPLES --name N --mine` builds a
+  profile from the files you name, only after `--mine` says they are yours. The
+  profile holds aggregates and no sample sentence, is bound to a local identity,
+  stays in your local voice store, and `voice show`, `export`, `import`,
+  `delete` and `delete --all` let you inspect, move and remove it.
+  `voice compare` and `voice apply` refuse a profile that belongs to another
+  owner.
+- `voice apply DRAFT --name N --authored-by-me` (MCP `voice_apply_plan` with
+  `authored_by_user: true`) plans an edit of your own draft toward your
+  measured habits. Plans move to `articulate/edit-plan/v2`, which binds the
+  profile name and hash and any author text; v1 plans still verify. A rewrite
+  that adds a first-person sentence with no source in the draft or your own
+  supplied words is refused paragraph by paragraph. Voice counts before and
+  after are reported and never decide acceptance.
+- Series review: `articulate corpus`, `titles`, `interview` and `restructure`,
+  and the MCP tools `corpus_check`, `title_workshop`, `interview` and
+  `restructure_plan`. Findings are report-only, with locations, a reader cost and
+  a direction, never replacement prose. The interview asks and never answers;
+  restructure keeps every sentence and citation byte for byte. Corpus receipts
+  use `articulate/corpus-receipt/v1`.
+- AI-assistance disclosures are a protected span kind. No rewrite, house edit
+  or restructure moves or rewords one.
+- New command `articulate-house-hook` for other hosts that run command hooks.
+- `python -m articulate.bench house` reports a `python_start` row and a note
+  when the interpreter alone starts slowly. In a clean Windows virtual
+  environment every house budget holds (`house apply` cold, 2,000 words: 212 ms
+  p95, budget 250 ms); the earlier Windows miss came from a machine whose
+  site-packages runs about 120 `.pth` files at start-up.
+- Codex: whether Codex runs `SessionStart` and `Stop` from a plugin is not
+  confirmed. Open Codex issues report that plugin-local hooks do not run and
+  that a root `plugin.json` disables them. `articulate house brief --agents`
+  prints the brief as an AGENTS.md section as a fallback.
 
-What you gain:
+Claude plugin directory listing (merged on `release/0.5.x` before 0.8.0):
 
-- **Reasons you can check.** Every rule that can block outside the house style
-  carries a one-sentence reader cost and a published source. `check --verbose`
-  prints it, and JSON and SARIF carry it. No reason rests on how often a model
-  uses a pattern. No reader other than the maintainer has checked these reasons
-  yet.
-- **House style on request.** One writer's style (the em dash, the contrast
-  devices, intensifiers, stock transitions and similar patterns) blocks only
-  under the `house` and `house-essay` profiles, and shows elsewhere only with
-  `--house-notes`.
-- **Fewer blocks on plain and scholarly English.** Under the default profile
-  only an interface token, a first-person claim to be an AI or a language model,
-  and a hidden character inside Latin text can block. The phrasing rules skip
-  quoted text, and an appeal to studies accepts every common citation style.
-- **A local-only switch.** `ARTICULATE_LOCAL_ONLY=1` or `--local-only` refuses
-  every hosted backend before any subprocess starts. Editor selection can
-  continue with loopback Ollama or deterministic editing. Any value other than an
-  explicit off value counts as on.
-- **Content-free outputs that carry no word of the text.** `check
-  --content-free` and `receipt --redact` key the two notes whose rule ids quoted
-  the text by category.
-- **A process record you hold.** `articulate process` keeps an opt-in local log
-  of your drafts as salted commitments, `articulate disclose` writes a statement
-  of tool use from it, and `articulate desk` lists a reviewer's questions with
-  no score.
-- **Fairness measured in the open.** `python -m articulate.fairness` measures
-  every profile a writer can land on over a hash-checked corpus and writes a
-  content-free receipt. Its release check blocks a ruleset whose
-  pre-registered gates fail.
+- The Claude plugin manifest carries the directory listing fields: a 1024 px
+  icon, documentation, support, privacy and terms links, and the
+  harperz9.github.io page as homepage. The privacy link moves from `metadata`
+  to `privacyPolicyUrl`. The portable and Codex manifests leave the listing
+  fields out. The plugin rules accept complete PNG and JPEG files and check the
+  icon size and the listing links. Package code is unchanged.
+- The plugin README's Privacy Policy, and PRIVACY.md with it, gains a section
+  that names the edit hook, the MCP server launch, network use, files written,
+  the bundled model backends that stay off, and each environment variable the
+  server and hook read.
+- The Claude plugin folder now carries the package modules its MCP server and
+  edit hook import, at `claude-plugin/src/articulate`, so a directory install
+  that receives only that folder starts. `python scripts/sync_plugin_source.py`
+  regenerates the copy from `src/articulate`, and a test fails when the two
+  differ. Another test copies the folder alone and runs the server launch and
+  the hook command from the manifests. The privacy policy now says the hook
+  ignores the session ID, transcript path and working folder in Claude Code's
+  event.
+- The Claude plugin no longer carries `editing.py`, `backends.py` or
+  `claude_cli.py`, the model-backend modules that read provider API keys. The
+  plugin's local tools never import them; `mcp_server` answers plainly when a
+  model backend is asked for and the module is absent. The README install
+  section now installs the `claude-plugin` folder as it is.
 
-Breaking for callers:
+## 0.7.0
 
-- `check_text` and `check --json`: `verdict`, `sufficient`, `texture_score` and
-  `elevated` are removed, and `slop` is now `gate_level`. The cadence record no
-  longer carries `cv` or `uniform`; the library returns them with
-  `cadence_detail=True`. New keys: `blocking`, `findings` (`has_findings` or
-  `no_findings`), `counts`, `words`, `rule_counts`, `density`, `house` and
-  `does_not_prove`, and on each finding `gates`, `house`, `reason`,
-  `reason_source` and `end_line`.
-- `clean` and `blocking_count` are deprecated and leave in package 0.7.0. The
-  equal of `clean` is `findings == "no_findings"`; `blocking` carries the
-  number `blocking_count` did, and `gate` is the pass-or-block signal.
-- Outside a house profile, `check_text` reports house-style findings at LOW with
-  `house: true`, where 0.5.0 reported the em dash and similar patterns as HIGH
-  or MEDIUM. Pass `house_notes=False` to leave them out.
-- MCP `check`: `verdict`, `texture_score` and `elevated` are removed, `clean`
-  stays until package 0.7.0, and `gate`, `findings`, `blocking`, `rule_counts`,
-  `density` and `does_not_prove` are new. MCP `score`: `texture_score`,
-  `elevated`, `hard_hits`, `advisories` and `uniform_cadence` are removed; it
-  returns `gate`, `words`, `rule_counts`, `density`, `passive_rate`,
-  `adverb_rate` and `does_not_prove`.
-- Seven category ids are renamed, which changes SARIF rule ids:
-  `assistant-residue` to `chat-interface-text`, `assistant-closer` to
-  `closing-boilerplate`, `email-tell` to `email-stock-phrase`, `blog-tell` to
-  `blog-stock-phrase`, `fiction-slop-lexicon` to `fiction-stock-phrase`,
-  `register-word` to `inflated-word` and `filler-intensifier` to `intensifier`.
-  The old ids and the profile field `slop` are read until package 0.7.0.
-- The old `essay` profile is now `house-essay`; the new `essay` is strict
-  without the house style. `essays/`, `blog/` and `writing/` paths resolve to
-  `essay`, and a `.tex` file to `research` (`proof` under `proofs/`).
-- Receipts are schema v2 and the ruleset fingerprint changed, so a 0.5.0 receipt
-  replays to `Unverifiable` with the reason.
-- The editor's model-input block is named `CHECKER FINDINGS`.
+The source plugin checks prose at edit time in Claude Code and Codex. Detector
+rules stay the published v0.5.2 rules; this release changes no finding.
 
-Evidence and its limits:
+- The source plugin adds an advisory edit-time hook for Claude Code and Codex.
+  After the model writes or edits a prose file, the hook names numbers, links,
+  quotes, citations, modals, scope words, negations and names that the edit
+  dropped, added or changed, and lists style findings in the new text. It reads
+  only the hook event, opens no file or connection, starts no program and never
+  blocks the edit. `ARTICULATE_EDIT_HOOK=off` turns it off. The package adds an
+  `articulate-edit-hook` command for other hosts that run command hooks.
+  Each finding is cut to 240 characters and the whole answer to 6,000.
+- The hook command was run the way Codex runs it on Windows. Codex replaces
+  `${CLAUDE_PLUGIN_ROOT}` in the command text before it starts `cmd.exe /C`,
+  so the command works under cmd.exe, Windows PowerShell and pwsh, including
+  from a folder whose path has a space. Tests pin this, with a control that
+  the unreplaced text fails. On Windows the hook needs Codex 0.145.0 or newer:
+  earlier Codex escapes the quotes in the command and the hook does not run,
+  though the edit still goes ahead.
+- Tests pin two privacy and input controls on this line: any value of
+  `ARTICULATE_LOCAL_ONLY` other than an explicit off value turns local-only on,
+  and an empty file argument exits 2 with "no such file".
 
-- Liang et al. corpus, which the rules were tuned on, so every result here is
-  exploratory: the default profile blocks none of the 306 human texts, `essay`
-  blocks 1 of 91 learner texts, 0 of 70 college windows and 4 of 145 abstract
-  windows, and all 266 gate rows pass (`docs/fairness-audit.md`).
-- PERSUADE 2.0, pre-registered and timestamped before the run: 88 of 152 gate
-  rows pass. Under the 12 strict profiles, 6.0% of 1,330 learner essays and
-  14.0% of 13,467 other essays are blocked, a gap of -8.0 points [-9.3, -6.5]
-  (-3.8 within score bands). G2 fails under 17 profiles, with nine rules, all
-  toward the other essays. G4 fails under 35 of 38 profiles: 31 to 504 essays
-  per profile change findings or word counts when rewrapped to one sentence per
-  line. The default profile blocks none of the 14,797 essays.
-- Power: against the 70 college windows a gap must reach about 8.4 points to be
-  detected 80% of the time; on PERSUADE 2.0 about 3.0 points under the strict
-  profiles.
-- Not covered: adult academic writers grouped by first language, dictated text,
-  disabled writers as a group, World Englishes, and editor behavior by group
-  (G6, not run).
+The hook names 16 of 19 critical changes and stays quiet on 7 of 8 ordinary
+edits in the pre-registered synthetic set. It misses a changed file path, an
+added intensifier and swapped subjects. No live Claude Code or Codex session
+fired the hook end to end before release, and the tests do not show that a
+model acts on the advice.
 
-Known defects. Each is recorded as a strict expected-failure test. Fixing any
-of them changes the ruleset, which now needs a corpus pre-registered for it, so
-the fixes wait for that:
+## 0.6.0
 
-- A mention of `\begin{quote}` in inline code, a comment or a code fence hides
-  the rest of the file from the phrasing rules.
-- An inch mark, a backtick typed as an apostrophe or an autocorrected quote
-  before a year blanks the writer's prose up to the next mark. Guillemets and
-  other languages' quotation marks, csquotes `\enquote` and a LaTeX quotation
-  with an apostrophe inside are not blanked.
-- A cite key or a URL does not anchor "state of the art". A citation marker
-  right after the closing period does not anchor an appeal to studies. A count
-  in parentheses such as "(1600 patients)", or "according to researchers",
-  still reads as a citation.
-- The sentence splitter joins a sentence that ends in "no" or "Ed" to the next.
-- Nine masking and splitting patterns are outside the ruleset fingerprint.
+Articulate can ship as local Windows x64 tools with its Python runtime included.
+The connected client supplies the model and rewritten text. Articulate includes
+no model, requires no publisher-hosted service and adds no model account.
 
-Rules and scanning:
+- Native ZIP and binary MCPB packages expose the local check and host-edit
+  workflow. They reject launch arguments and external editor backends, even
+  when inherited settings request them. Source plugins for Claude Code, Codex
+  and portable MCP hosts remain separate and require installed Python.
+- Rewrite guards check numeric bounds, modal force, scope and negation alongside
+  protected spans. Code, math, quotes and HTML are masked before paragraph
+  comparison. Refused edits retain the original text and return a receipt.
+- Release builds retain the published v0.5.2 detector source and ruleset
+  fingerprint. This release does not adopt the scanner changes withheld on
+  the development branch. Retention establishes neither fairness nor quality.
+- The shared release workflow builds and checks native and source-plugin
+  packages before publication. Native release mode requires clean source,
+  matching package versions and an exact version tag. Development mode stays
+  explicit and labels its archives accordingly.
+- An optional authenticated HTTP transport supports user-operated connections.
+  It is off by default, adds no model and provides no publisher-hosted backend.
+  Network access requires the user's own endpoint and permission configuration.
 
-- The house pack holds one writer's style: the em dash in every form, the
-  contrast devices, the intensifiers, corporate verbs, register word lists and
-  jargon, ordinal enumeration, stock transitions, closers, cadence beats, curly
-  quotation marks, a bare "There is" opener, and stock email, blog and marketing
-  phrases. No path rule resolves to a house profile.
-- A valediction such as "Yours truly" is never an intensifier. A bare spoken
-  affirmation reports only, and so does a reply opener that hands over a
-  deliverable (`reply-opener`, LOW), which `essay` and the house profiles
-  promote to blocking. Self-description needs the first person beside "AI" or
-  "language model". A zero-width space blocks only inside Latin text. A Markdown
-  table delimiter row is never an em dash.
-- New LOW notes that never block by themselves: `padded-purpose` ("in order
-  to"), `unanchored-claim` ("state of the art" in a sentence with no number,
-  year or citation), `expletive-opener` ("It is important to", "It is worth
-  noting that"), `announcement` ("In this essay, we will explore") and
-  `padded-preposition` ("with respect to", silent in its math sense). "It should
-  be noted that" stays MEDIUM, and "In this essay, I argue" raises nothing.
-- Quotations are the source's words. The phrasing rules blank direct quotations
-  in double or curly quotes, LaTeX ``...'', Markdown block quotes and LaTeX
-  `quote` and `quotation` environments. The self-description rule also skips
-  tables, transcript turns, `verbatim` and `\texttt{}` or `\verb` spans. An
-  interface token and a hidden character block everywhere, quotes included.
-- `unsupported-authority` stays MEDIUM and reads a citation marker anywhere in
-  its sentence: superscripts, `(12)` and `[12]`, MLA, footnotes, Pandoc keys,
-  LaTeX `\cite`, alpha keys, author and year, legal citations, links and
-  "according to" a named source. "Our data show" beside a figure, table or test
-  statistic is the writer's own evidence. A year counts only in citation
-  position, so "in 1200 patients" does not silence it. Its reason names both
-  repairs.
-- Paragraphs are read as logical lines with an offset map. Every match counts,
-  line-start rules run at every sentence start, and findings gain `end_line`.
-  "et al.", "e.g.", "ref.", "p.", "v." and "U.S." do not end a sentence. A line
-  that ends in a hyphen after a letter joins the next with no space.
-- Cadence flags need 12 sentences and 200 words and never block. The adverb
-  rate leaves out the intensifiers. A C2PA text manifest is blanked before any
-  rule runs.
-- The ruleset fingerprint covers the scanner's constants, the house pack, the
-  reasons and a `SCAN_ALGO` counter (now 6). A golden test pins every finding
-  over `corpus/` to it, and its writer refuses a new digest under the same
-  fingerprint.
-- `corpus/control/ptacek-tweets.txt` is removed: no licence for redistribution
-  was recorded. Two paragraphs of National Weather Service prose, a public-domain
-  work of the United States federal government, replace it.
+Local binary checks cover tool discovery, host edits, changed-number refusal
+and backend refusal with Python absent from PATH. Client installation,
+marketplace acceptance, clean-device compatibility and signing remain separate
+qualification work. Guards can miss meaning changes and refuse valid paraphrases;
+acceptance does not prove semantic equivalence or factual correctness.
 
-Outputs:
+## 0.5.2
 
-- Results carry `findings`, `words`, per-rule counts, density per 1,000 words
-  with an exact interval at 250 words or more, and `gates` on each finding. The
-  gate is the only pass-or-block signal, and every `check` run prints the
-  does-not-prove line.
-- Every machine-readable output carries `does_not_prove`. SARIF puts it, with
-  the rule's reason, in each rule's help text and records the profile on each
-  result.
-- `--spans` reports per-paragraph counts by rule, with no per-paragraph gate or
-  label.
-- `articulate receipt --mode M` screens under the mode and records it, and
-  `verify` replays under it. An unknown `--mode` or `--profile` exits 2.
-- Every command has a help line, and the command map in `--help` and the README
-  lists which commands send text and which stay local.
+Local-only MCP sessions can use the calling model through editor aliases.
+Detector rules and protected-span matching remain unchanged from 0.5.1.
 
-Editor:
+- `fix`, `judge` and `polish` return a host plan for default, auto and host
+  selection in local-only mode. Deterministic editing remains available;
+  explicit sampling and network backends are refused before resolution.
+- The local plugin supplies nine tools with titles and safety annotations,
+  UTF-8 stdio handling, capped findings and host-edit workflow skills.
+- Plugin release builds require the package version tag to exist locally and
+  resolve to a commit before checking source parity. Missing tags stop the build
+  before output is written; `--dev` remains an explicit local test path.
 
-- Every instruction targets the intended reader and asks the model to keep the
-  writer's variety of English. No template names an outside score, a
-  sentence-length target or a vocabulary level, and the house writing standard
-  reaches the model only under a house profile.
-- `editor.accept()` is the whole acceptance rule for the CLI and MCP `polish`.
-  `fix` and `polish` take `--profile` and re-check under the chosen mode.
-- On a `.tex` file both `fix` and `polish` mask every math span before each
-  model call and refuse a rewrite that drops, repeats or invents one.
-- The judge and scorer notes pass through a filter that removes guesses about a
-  text's origin. MCP `judge`, `fix` and `polish` carry `does_not_prove`, and a
-  local-only refusal says so in its note.
-- The editor command line prints that the full text leaves the machine before
-  each hosted run. `--advise` is `--review` under a name that cannot be read as
-  peer review.
-
-Process record, disclosure and desk:
-
-- `articulate process`: salted commitments with order and day by default, opt-in
-  word counts, times and snapshots, private input methods, reveals a reader can
-  check, and a C2PA-shaped summary with no entry hash. `verify` reports
-  `intact` (exit 0), `broken` (1) or `missing` (3).
-- `articulate disclose`: assistance with the recorded task verb and CRediT
-  credit for people only, with the NISO role names. It refuses a broken or
-  missing log, a claim that matches its list of no-tool phrases while the log
-  records assistance, and an author whose whole name is a product name.
-- `articulate desk`: questions about numbers with no source nearby, unnamed
-  authority, sections a venue asks for and text a reader cannot see, and five
-  fixed questions across the field. It prints no score, verdict or ranking.
-
-Fairness harness and release check:
-
-- `python -m articulate.fairness MANIFEST` runs every bound profile over a
-  hash-checked corpus manifest and writes a content-free receipt with the gates
-  G1 to G8 (`fairness/PREREG.md`). `--jobs N` scans in N processes and writes
-  the same receipt, byte for byte. The manifests for the Liang et al., PERSUADE
-  2.0 and ELLIPSE corpora are committed; the texts are not.
-- `--release-check` gates only a release that changes the ruleset. It skips the
-  gates only when `fairness/published-ruleset.json` names an earlier package,
-  and a commit after each release updates that record. A changed ruleset needs
-  exactly one receipt per listed manifest, each matching its pin in
-  `fairness/receipts/SHA256SUMS`, with flags that agree with its numbers and
-  gates that pass, and a confirmatory receipt pre-registered for it. An override
-  is accepted only when no gate row fails that did not fail in the published
-  ruleset's own receipt.
-- A receipt of the first draft of these rules is kept, with the report-only rows
-  whose keys quoted words of the corpus removed.
+The checker makes no network call in this local mode. The calling host still
+processes the conversation under its own data policy. A protected-span check
+does not prove semantic equivalence or factual correctness.
 
 ## 0.5.1
 

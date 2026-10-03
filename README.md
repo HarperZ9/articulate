@@ -1,159 +1,142 @@
 # Articulate
 
-![Articulate: local prose checks, named and located. Lines of prose bow around a verified core, one span is marked as drift, and the replay lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
+![Articulate: a local writing-quality and AI-tell detection and editing tool. Lines of prose bow around a verified core, one span is marked as drift, and the verdict lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
 
-Local prose checks: named writing patterns, where they occur, and what each
-costs a reader. The checks run on your machine with no network call and the
-standard library only. The editor rewrites for your reader through the calling
-model, a configured backend or conservative mechanical fixes with no model.
-Every result identifies its backend and any failed attempts.
-
-No Articulate output shows who or what wrote a text, and no finding is a basis
-for an accusation. Read [the boundaries](docs/boundaries.md#no-output-is-an-authorship-finding)
-before you rely on any output.
-
-## What it does
-
-- **Check.** Each finding names a rule, its span and its tier. A rule that can
-  block a writer carries a one-sentence reader-cost reason with a published
-  source; no reader other than the maintainer has yet checked those reasons.
-  The gate says `ok` or `blocked` under the profile in use, and that is the only
-  pass-or-block signal. `score` reports per-rule counts and density per 1,000
-  words with an exact interval, shown at 250 words or more. A file under an
-  `essays/`, `blog/` or `writing/` folder checks under the strict `essay`
-  profile, and a `.tex` file under `research`; everything else under the
-  default.
-- **Measure fairness in the open.** One writer's house style (the em dash,
-  contrast devices, intensifiers, stock transitions and similar patterns) blocks
-  only under the `house` or `house-essay` profile, which you choose, and no other
-  profile shows it unless you ask with `--house-notes`. On the Liang et al.
-  corpus the default profile blocks none of 306 human texts, the strict `essay`
-  profile blocks 5 of them, and every release gate passes; the rules were tuned
-  on that corpus, so that pass is exploratory. On the held-out corpus, 14,797
-  school essays from PERSUADE 2.0, the default profile again blocks none, and
-  the pre-registered release gate fails: the strict profiles block 14.0% of the
-  essays by writers not recorded as English learners and 6.0% of the learner
-  essays, and some essays change findings when rewrapped. Only the profiles a
-  default, a path or a mode can assign were measured; one you choose only by
-  flag (`procedure`, `api-docs`, `error-message`, `social`, `chat`,
-  `journalism`, and the three fiction genres) was not. The
-  [fairness audit](docs/fairness-audit.md) and the
-  [confirmatory run](docs/fairness-confirmatory.md) have the numbers with
-  intervals.
-- **Adapt by register, mode and genre.** Profiles (procedure, commit, research,
-  readme, essay, narrative and more) set which findings block. Writing modes
-  such as `memo/argue` and genres such as `memoir`, `screenplay` and `poetry`
-  read each kind of writing by its own convention.
-- **Edit for the reader.** `judge` reads judgment-level failures. `fix` checks
-  protected spans and re-checks each accepted rewrite. `polish` keeps a pass
-  only when no quality score falls, the gate does not go from ok to blocked and
-  no note the mode requires
-  opens. No instruction names an outside score, a sentence-length target or a
-  vocabulary level.
-- **Keep your own process record.** `articulate process` keeps a local,
-  opt-in log of your drafts as salted commitments, with order and day only by
-  default, and exports a process summary you control. `articulate disclose`
-  writes a statement of tool use from it.
-- **Prepare a reviewer's questions.** `articulate desk` lists the questions a
-  reviewer should ask, inside the document and across the field, with no score,
-  verdict or ranking.
-- **Replay a screening.** A receipt pins the text hash and the ruleset
-  fingerprint, so anyone can re-derive the same findings.
-
-## Use
-
-```bash
-# check (exit 1 when blocked under the file's profile)
-python -m articulate.cli check path/to/doc.md --gate
-python -m articulate.cli check essay.md --profile house-essay --verbose
-echo "some prose" | python -m articulate.cli score
-
-# receipt: a re-derivable screening (Match / Drift / Unverifiable)
-python -m articulate.cli receipt doc.md --profile research > doc.receipt.json
-python -m articulate.cli verify doc.receipt.json doc.md   # exit 0/1/2
-python -m articulate.cli receipt doc.md --redact drop > receipts/doc.json   # content-free
-python -m articulate.cli audit receipts/ --reverify --gate
-
-# SARIF for CI; each rule's help text carries its reason and the does-not-prove line
-python -m articulate.cli check docs/*.md --sarif > articulate.sarif
-
-# your process record, and a statement of tool use from it
-python -m articulate.cli process init essay.md
-python -m articulate.cli process draft essay.md
-python -m articulate.cli process export essay.md --reveal 2
-python -m articulate.cli disclose essay.md --contributions contributions.json
-
-# a reviewer's questions
-python -m articulate.cli desk paper.md --venue paper
-
-# the fairness harness on a corpus manifest you hold
-python -m articulate.fairness manifest.json --out receipt.json
-
-# editor, LSP server, benchmark, MCP servers
-python -m articulate.editor --polish draft.md --mode memo/explain
-python -m articulate.lsp_server
-python -m articulate.bench
-articulate-mcp
-```
+A local writing-quality and AI-tell detection and editing tool. It flags the
+prose devices and machine-writing tells that make text read as generated, scores
+how machine-textured a passage is, and (with an LLM backend) rewrites prose to a
+plain, skilled standard. The core runs standard-library-only with no network
+call. Detection quality and writing quality are the goals; a detector score is a
+benchmark and a byproduct, never something the tool optimizes toward, and it is
+not an evasion tool.
 
 ## Documentation
 
-[Getting started](docs/getting-started.md), a [walkthrough](docs/walkthrough.md),
-the [feature reference](docs/features.md), the [CLI reference](docs/cli.md), the
-[fairness audit](docs/fairness-audit.md), the
-[confirmatory run](docs/fairness-confirmatory.md) and the
-[boundaries](docs/boundaries.md).
+Full docs are in [`docs/`](docs/): [getting started](docs/getting-started.md), a
+thorough [walkthrough](docs/walkthrough.md), the [feature reference](docs/features.md),
+the [CLI reference](docs/cli.md), and the [boundaries](docs/boundaries.md) that
+say what a verdict and a receipt mean and what they never claim. The
+[house voice](docs/house-voice.md) spec and the guide to
+[series review and your own voice](docs/series-and-voice.md) cover the 0.8.0
+voice features.
 
-## Scientific and mathematical writing
+## What it does
 
-`academic/prove` and `science-writing/explain` target technical exposition. A
-`.tex` file checks under `research`, which blocks only the HIGH tier; add
-`% writing-profile: essay` in the first ten lines for the strict gate. "With
-respect to" is a LOW note that never blocks under any profile. It stays silent
-after a derivative, gradient, partial, integral, Jacobian, convex, continuous,
-measurable, differentiable, integrable or invariant, and before a Greek letter, a
-subscripted symbol (`w_i`), a math span (`$`, `\(`, `\[`) or a single-letter
-variable other than "a". The proof mode does not rewrite by default, because a wrong change to a
-quantifier order or an inequality direction changes a theorem. On a `.tex` file
-`fix` and `polish` mask every math span before each model call and splice each
-span back byte for byte; a rewrite that drops or repeats a masked span is
-refused. An ok gate or a `Match` receipt says nothing about whether a theorem is
-true.
+- **Detect.** Flags banned rhetorical devices (antithesis including keyword-free
+  parallel-negation contrast pairs, corrective negation, rule-of-three, em-dashes,
+  filler intensifiers, corporate verbs), current frontier-model register,
+  marketing, and email/blog tells, and Williams/Orwell signals (expletive openers,
+  nominalization density, passive voice, adverb density, cadence uniformity,
+  opener repetition). Emits a graded 0-100 texture score and a clean/flagged gate.
+- **Adapt by register.** A profile system (procedure, commit, research, readme,
+  essay, narrative, and more) sets which findings block. Fiction gates nothing;
+  procedures and essays gate strictly. Profiles resolve from `--profile`, an
+  in-file `writing-profile:` tag, or the file path.
+- **Choose a mode or a genre.** A writing mode crosses a domain register with an
+  articulation need, such as `memo/argue` or `technical-docs/explain`. The genre
+  axis reads narrative and expressive prose by its own convention: `literary-fiction`,
+  `genre-fiction`, `ya-fiction`, `memoir`, `screenplay`, `poetry`. Under a fiction
+  genre, quoted speech is masked out of the device passes so a character's line is
+  never scored as the author's prose; the craft devices report but never block; and
+  a report-only lexicon flags generation artifacts such as the somatic cliche or the
+  "could not help but" reflexive. Screenplay classifies Fountain roles first, so only
+  action lines face the device gate. Poetry reads by the line and drops the
+  craft-device categories from its report. Run `articulate modes` to list them.
+- **Edit.** `judge` reads the judgment-level failures a regex cannot see
+  (confident emptiness, vague abstraction, hedging with no position, weak verbs).
+  `fix` rewrites to the standard, self-checked against the detector. `polish`
+  loops until five qualities (concreteness, commitment, economy, rhythm, a
+  restatable fact per paragraph) clear a bar. Gated on writing quality, never a
+  detector score. Use the calling model, a configured backend, or mechanical
+  fixes with no model. Every result names its backend and any failed attempts.
 
-## Quotations and citations
+- **Give the model a voice.** The house voice is a published, versioned voice
+  for AI models: answer first, numbers with denominators, "I" only for what the
+  model did in the session, and no claim to a human life. It is opt-in:
+  `articulate house on` turns it on, and `articulate house off` turns it off.
+- **Build your own voice.** `articulate voice learn --mine` builds a profile from
+  your own writing, on your computer. Compare drafts with it, run the
+  authorship interview, and, when you ask, shape your own draft toward it.
+- **Review a series.** `articulate corpus` reads several documents together and
+  names repeated title formulas, shared scaffolds, even rhythm and missing
+  perspective, with locations and no replacement prose.
 
-Quoted text is the source's words, so the phrasing rules skip it: direct
-quotations in double or curly quotes, LaTeX ``...'', Markdown block quotes and
-LaTeX `quote` and `quotation` environments. The rule on a line where the speaker
-calls itself software also skips tables, transcript turns ("User:" at a line
-start), `verbatim` and `\texttt{}` or `\verb` spans, so a reflection that pastes
-a tool's reply, as many courses ask, does not block. An interface markup token
-and a hidden character block everywhere, quotes included. A quotation mark
-exempts only what it encloses, scare quotes too.
+## Use
 
-An appeal to unnamed studies reports unless its sentence carries a citation
-marker in any common style: a superscript or a number after the period (AMA,
-Vancouver), `(12)` or `[12]`, `(Jones 118)` (MLA), a footnote `[^5]`, a Pandoc
-key `[@key]`, LaTeX `\cite`, an alpha key `[Smi20]`, an author and year, a legal
-citation (`998 F.3d 101`, `[2021] UKSC 5`), a link or "according to" a named
-source. "Our data show" counts as your own evidence beside a figure, table or
-test statistic. A count such as "in 1200 patients" is not a citation.
+Articulate includes no model. A connected client can call `edit_plan`, write the
+rewrite with its selected model, and submit it through `edit_submit`. The model
+account and conversation policy belong to that client. Local checks and host
+edits require no publisher-hosted service or separate model API key.
 
-## Keeping a term of art
+Version 0.8.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
+with a Python runtime included. The [source plugin](docs/claude-plugin.md) remains
+available for local Claude Code, Codex and portable MCP hosts with installed
+Python. Native client installation and marketplace acceptance remain unverified.
 
-A line such as `writing-allow: substrate, load-bearing` (inside an HTML comment,
-a `%` comment or YAML front matter works) in the first 15 lines keeps those
-terms. A finding whose matched text contains an allowed term, as a substring and
-in any case, is dropped for the whole file. The list reaches every rule except
-the contrast and cadence devices, the em dash and emoji, the HIGH tier included:
-`writing-allow: language model` clears "As an AI language model, I cannot
-browse the web", and `writing-allow: cite` clears an interface token such as
-`[oaicite:0]`. The match is by substring, so allowing `revolutionary` also
-clears "a revolutionary product" in the same file; choose the narrowest term
-that works. The line sits in a comment that a rendered page does not show, so a
-CI owner should review `writing-allow:` lines in a diff.
+```bash
+# lint (exit 1 when blocked under the file's profile)
+python -m articulate.cli check path/to/doc.md --gate
+python -m articulate.cli check essay.md --profile essay --verbose
+echo "some prose" | python -m articulate.cli score
 
-## Editing from a host or the command line
+# library
+python -c "import articulate; print(articulate.check_text('...', profile=articulate.profiles.load('research'))['gate'])"
+
+# receipt: a re-derivable verdict (Match / Drift / Unverifiable)
+python -m articulate.cli receipt doc.md --profile research > doc.receipt.json
+python -m articulate.cli verify doc.receipt.json doc.md   # replay; exit 0/1/2
+
+# content-free audit receipt: replayable, but stores no verbatim text (drop or hash
+# the matched substring). For a team that must retain a record without the source.
+python -m articulate.cli receipt doc.md --redact drop --reviewer alice > receipts/doc.json
+python -m articulate.cli check doc.md --content-free --sarif > doc.sarif  # no substrings
+
+# audit: query committed receipts locally (no server), and re-verify they still hold
+python -m articulate.cli audit receipts/                 # recorded verdicts, blocked rules
+python -m articulate.cli audit receipts/ --reverify --gate   # exit 1 if a source drifted
+
+# SARIF for CI (GitHub Code Scanning, Azure, reviewdog)
+python -m articulate.cli check src/**/*.md --sarif > articulate.sarif
+
+# LSP server (inline squiggles in VS Code, JetBrains via LSP4IJ, Neovim). Stdlib
+# only, no dependency. Point your editor's LSP client at:
+python -m articulate.lsp_server
+
+# benchmark (regression-gated corpus) and MCP server
+python -m articulate.bench
+python -m articulate.mcp_server
+```
+
+### Editor setup
+
+The LSP server speaks standard LSP over stdio, so any LSP client can drive it.
+A minimal Neovim registration:
+
+```lua
+vim.lsp.start({ name = "articulate", cmd = { "python", "-m", "articulate.lsp_server" },
+  filetypes = { "markdown", "text", "tex" } })
+```
+
+For VS Code, a thin client that launches the same command as a `LanguageClient`
+is all that is needed; no server code lives in the extension.
+
+### Scientific and mathematical writing
+
+`academic/prove` and `science-writing/explain` target hard technical exposition:
+stating the idea before the formalism, keeping a roadmap, defining each symbol
+once. The proof mode does not rewrite by default, because a wrong change to a
+quantifier order or an inequality direction changes a theorem; it routes to
+`--judge`, and `--fix` is opt-in. On a `.tex` file the editor masks every math
+span before a rewrite and splices it back byte for byte, so a formula is never
+altered.
+
+The boundary is fixed and load-bearing: a clean gate, a low texture score, or a
+Match receipt means the prose was screened under a named ruleset. It says nothing
+about whether the theorem is true. A clearly written proof can still be false, and
+Articulate never checks the mathematics. Correctness comes from referees and proof
+assistants (Lean, Coq, Isabelle), never from this tool.
+
+### Editing from a host or the command line
 
 In an MCP host, `fix`, `judge` and `polish` use sampling only when the client
 advertises it. Otherwise they return an edit plan for the calling model.
@@ -177,50 +160,40 @@ See the [backend configuration reference](docs/cli.md#backend-configuration).
 
 ## Privacy
 
-The unreleased branch also provides an explicit local Python API for
-[comparing a proposed rewrite](docs/comparison.md). It reports selected surface
-changes and their offsets. A preserved verdict does not establish semantic
-equivalence, and the report contains source text.
-
-The checks, receipts, process record and desk never touch the network. Each
-editor call follows its selected backend. Other commands stay local:
-
-| Command | Where the text goes |
-|:-|:-|
-| `articulate check`, `score`, `receipt`, `verify`, `audit`, `modes` | Nowhere: local |
-| `articulate process`, `disclose`, `desk`, the LSP server | Nowhere: local |
-| `python -m articulate.fairness`, `python -m articulate.bench` | Nowhere: local |
-| The `check` and `score` tools of both MCP servers | Nowhere: local |
-| Editor commands with `--backend none` | Nowhere: deterministic edits stay local |
-| Editor commands with `--backend ollama` | Configured Ollama server; loopback by default |
-| Editor commands with `--backend anthropic` or `claude-cli` | The backend's provider |
-| Editor commands with `--backend openai` | Configured OpenAI-compatible endpoint |
-| Host plans and MCP sampling | The calling host and its selected model |
-
-Set `ARTICULATE_LOCAL_ONLY=1`, or pass `--local-only` to `python -m
-articulate.editor`, to allow only loopback Ollama and deterministic editing.
-Other editor backends are refused before a connection. Any value other than an
-empty one, `0`, `false`, `no` or `off` turns the switch on. Plans and edit results
-contain source text. Host editing and sampling follow the host's privacy policy;
-local-only mode does not control a document already in its conversation.
-Under a brief that allows only spelling and
-grammar help, use the local commands: `judge` and `review` give structural
-advice, which such a brief may exclude. Do not run the hosted commands on a
-manuscript or grant application under review, on health records, or on unfiled
-patent material. A content-free receipt drops the matched text and
-exact offsets; which rule fired and the line remain. The process log lives in
-`.articulate/process/` beside your document with a `.gitignore` of its own. A
-default export carries no salt; `--reveal N` exports draft N's salt with its
-text, and nothing else.
+The detector and `--backend none` never call a model or the network. Anthropic
+and the Claude CLI send text to their provider; an OpenAI-compatible endpoint
+receives text at its configured address. Ollama receives text at its configured
+server. Host editing and MCP sampling share text with the calling host, which
+may use a remote model. Set `ARTICULATE_LOCAL_ONLY=1` to allow only loopback
+Ollama and deterministic editing; other editor backends are refused before a
+connection. Plan payloads and edit results contain document text; handle them
+as source material. A content-free audit receipt keeps no verbatim text: it drops the matched
+substring and the exact offsets, keeping only which rule fired, its tier and
+category, and the line. A team can retain and replay a record without storing the
+sensitive source. Content-free is not zero-leakage: which rules fired and the line
+remain, which for a closed-vocabulary rule narrows the flagged word to that rule's
+small public candidate set. A personal voice profile is built only from files
+you name, holds aggregates and no sample sentence, and stays in your local voice
+store until `articulate voice delete --all`. The house-voice brief that enters a
+model's context is the same published text for everyone. The `hash` mode keeps a sha256 for an equality check
+against a known string, so it is dictionary-reversible for those closed-vocabulary
+rules; use `drop` when the flagged word must stay secret. An auto-filled `reviewer`
+(from `$GITHUB_ACTOR`) records CI attribution, and a named human sign-off needs an
+explicit `--reviewer`. Committed receipts live as long as the repo, with no
+automatic expiry (bounded retention is a later self-hosted tier). The full
+[documentation](docs/) covers each surface and the boundaries in depth.
 
 ## Status
 
-Pre-1.0. Version 0.6.0 is prepared for release as `articulate-writing`; it is
-unreleased and listed in the [changelog](CHANGELOG.md). The fairness
-harness has run on proxy corpora only. No arm yet groups adult academic writers
-by first language, and none covers dictated text, disabled writers or World
-Englishes. The release gate for the new ruleset passes on the Liang et al.
-corpus, which the rules were tuned on, and fails on the held-out PERSUADE 2.0
-corpus, so a release that ships this ruleset is blocked
-([confirmatory run](docs/fairness-confirmatory.md)). The gate runs only when a
-release changes the ruleset.
+Pre-1.0. The core detector, profile system, writing modes (including the science
+modes for proofs and technical exposition), the genre axis (fiction, memoir,
+screenplay, poetry), the editor injection boundary, per-span mixed-authorship
+verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
+guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
+receipts, the content-free audit receipt, and the MCP server are built into this
+one package. Version 0.8.0 is prepared for release as `articulate-writing`; the
+[changelog](CHANGELOG.md) records what each release added. Optional adapters can
+use a model you supply; no model is bundled. This release retains the published
+v0.5.2 detector rules and fingerprint while extending packaging and rewrite
+guards. It excludes withheld development-branch scanner changes. Retention does
+not establish fairness, and accepted rewrites can still change meaning.

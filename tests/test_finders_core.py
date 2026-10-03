@@ -46,4 +46,3 @@ def test_finders_match_the_uncapped_regexes_on_generated_input():
     rng = random.Random(20260923)
     for _ in range(4000):
         _check("".join(rng.choice(ATOMS) for _ in range(rng.randint(0, 40))))
-

@@ -1,5 +1,4 @@
-"""We eat our own dog food: our shipped prose must pass our own checker under
-the house profile.
+"""We eat our own dog food: our shipped prose must pass our own detector.
 
 detector.py is deliberately excluded. It is the device catalog: it names every
 device it detects ("not X but Y", "instead", em-dash) in its own comments, so it
@@ -16,26 +15,20 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOCS = ["README.md", "editors/vscode/README.md",
         "docs/README.md", "docs/getting-started.md", "docs/walkthrough.md",
         "docs/features.md", "docs/cli.md", "docs/boundaries.md",
-        "docs/fairness-audit.md", "docs/fairness-confirmatory.md", "corpus/README.md"]
+        "docs/house-voice.md", "docs/series-and-voice.md", "docs/claude-plugin.md",
+        "claude-plugin/README.md"]
 MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "receipt.py", "lsp_server.py", "pysource.py", "modes.py",
            "genres.py", "masking.py", "claude_cli.py", "__init__.py",
-           "fairness.py", "fairness_gates.py", "fairness_stats.py",
-           "fairness_corpora.py", "density.py", "logical.py", "rule_reasons.py",
-           "cadence.py", "gate.py", "scan.py", "fingerprint.py", "binary.py",
-           "prompts.py", "polish.py", "fix.py", "mathmask.py", "editor_metrics.py",
-           "tool_text.py", "cli_output.py", "cli_receipts.py", "aliases.py",
-           "process_ledger.py", "process_commit.py", "process_events.py",
-           "process_export.py", "disclose.py", "provenance.py", "cli_process.py",
-           "desk.py", "desk_inside.py", "desk_field.py", "cli_desk.py",
-           "quoting.py", "citations.py", "sentence_notes.py", "note_reasons.py",
-           "local_only.py", "editor_cli.py", "fairness_scan.py"]
+           "house.py", "house_spec.py", "house_settings.py", "house_edits.py", "house_hook.py",
+           "house_tools.py", "cli_house.py", "bench_house.py", "voice_identity.py",
+           "voice_apply.py", "cli_voice.py", "mcp_local_tools.py", "voice_store.py",
+           "voice.py", "voice_tools.py", "authorship.py", "interview.py", "restructure.py",
+           "titles.py", "corpus.py", "cli_corpus.py"]
 
 
 def _gate(path, text):
-    # The project holds its own prose to its house style, which a writer who
-    # never chose it is not held to.
-    prof = profiles.load("house")
+    prof = profiles.resolve(path=str(path), text=text)
     r = articulate.check_text(text, profile=prof)
     return r["gate"], [f"L{f['line']} {f['match']!r}" for f in r["high"] + r["medium"]]
 
@@ -53,3 +46,12 @@ def test_module_prose_is_clean():
         prose = pysource.prose_of(p.read_text(encoding="utf-8"))
         gate, hits = _gate(p, prose)
         assert gate == "ok", f"{mod} docstrings/comments fail our own standard: {hits}"
+
+
+def test_the_house_brief_is_clean():
+    """The brief every session receives passes our own standard."""
+    from articulate import house
+    text = house.brief()
+    r = articulate.check_text(text, profile=profiles.resolve(path="brief.md", text=text))
+    assert r["gate"] == "ok", [f["match"] for f in r["high"] + r["medium"]]
+    assert "—" not in text

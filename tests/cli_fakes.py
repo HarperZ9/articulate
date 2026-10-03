@@ -41,12 +41,8 @@ class _Disk:
         return path in self.paths
 
 
-# Registered under the name `work`, so a test asks for it by that name while
-# the module that imports it binds `_work_fixture`. Importing a fixture under
-# its own name and then naming a test argument after it is a redefinition
-# that ruff reports as F811.
-@pytest.fixture(name="work")
-def _work_fixture():
+@pytest.fixture()
+def work():
     os.makedirs(_TMP, exist_ok=True)
     yield _TMP
     shutil.rmtree(_TMP, ignore_errors=True)

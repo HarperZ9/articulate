@@ -11,7 +11,7 @@ import json
 import sys
 
 from . import desk
-from .binary import binary_reason
+from .detector import binary_reason
 
 
 def register(sub):

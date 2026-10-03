@@ -54,8 +54,8 @@ def test_plan_honors_declared_profile(tmp_path, capsys):
     source.write_text("writing-profile: narrative\nThe rain fell.", encoding="utf-8")
     assert cli.main(["plan", str(source)]) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert plan["profile"]["house"] is False
-    assert plan["profile"]["gate_level"] == "off"
+    assert plan["profile"]["no_em_dash"] is False
+    assert plan["profile"]["slop"] == "off"
 
 
 def test_plan_mode_wins_over_profile_inference(tmp_path, capsys):

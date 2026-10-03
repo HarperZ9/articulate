@@ -9,7 +9,6 @@ import json
 import re
 
 from . import backends, detector, host_edit, prompts
-from .origin_guard import clean_notes, strip_origin_guesses
 
 
 def _scores(output):
@@ -23,8 +22,6 @@ def _scores(output):
     if any(type(value.get(k)) is not int or not 1 <= value[k] <= 5
            for k in prompts.QUALITIES):
         return None
-    if isinstance(value.get("worst"), list):
-        value["worst"] = clean_notes(value["worst"])
     return value
 
 
@@ -107,8 +104,7 @@ accepts only complete five-score assessments with no individual regression.
         return fallback(info)
     if goal == "judge":
         result = host_edit.deterministic_edit(text, goal="judge", **options)
-        result["assessment"], removed = strip_origin_guesses(output)
-        result["origin_claims_removed"] = removed
+        result["assessment"] = output
         return finish(result, info)
 
     best, best_info = text, info
@@ -130,14 +126,11 @@ accepts only complete five-score assessments with no individual regression.
             if not isinstance(notes, list):
                 notes = []
             notes = [str(n) for n in notes]
-            if is_tex:
-                from .mathmask import scrub_math_notes
-                notes = scrub_math_notes(notes)
             if required & low:
                 notes.append("Clear required advisories: " + ", ".join(sorted(required & low)))
             instructions = candidate_plan["instructions"]
             if notes:
-                instructions += "\n\n" + prompts.findings_block("Quality suggestions:\n" + "\n".join(notes))
+                instructions += "\n\n" + prompts._detector_block("Quality suggestions:\n" + "\n".join(notes))
             output, info = call(instructions, candidate_plan["masked_text"])
         else:
             candidate_plan = host_edit.edit_plan(best, goal="fix", **options)
@@ -163,7 +156,7 @@ accepts only complete five-score assessments with no individual regression.
             candidate_local = detector.check_text(candidate_text, profile=resolved_profile)
             candidate_low = {f["category"] for f in candidate_local["low"]}
             if (any(candidate_quality[k] < quality[k] for k in prompts.QUALITIES)
-                    or (current["gate"] == "ok" and candidate["gate_after"] == "blocked")
+                    or candidate["gate_after"] != "ok"
                     or required.intersection(candidate_low - low)):
                 note = "Candidate regressed a quality score or required advisory, or failed the gate; kept best."
                 break

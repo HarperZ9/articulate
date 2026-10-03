@@ -1,5 +1,5 @@
 name: "Articulate"
-description: "Local prose checks with SARIF output for inline PR annotations: named patterns, where they occur, and what each costs a reader."
+description: "Writing-quality and AI-tell checks with SARIF output for inline PR annotations."
 branding:
   icon: "edit-3"
   color: "green"
@@ -31,13 +31,8 @@ runs:
     - run: pip install "${{ github.action_path }}"
       shell: bash
     - run: |
-        shopt -s globstar nullglob
         PROFILE=""
         if [ -n "${{ inputs.profile }}" ]; then PROFILE="--profile ${{ inputs.profile }}"; fi
-        case "${{ inputs.profile }}" in
-          house|house-essay)
-            echo "::notice::This workflow applies the house profile to every contributor's text. It is one writer's style. On the Liang et al. corpus it blocked learner texts more often than other texts; on PERSUADE 2.0 it blocked most school essays in both groups (57% of learner essays, 64% of others). See docs/fairness-audit.md and docs/fairness-confirmatory.md." ;;
-        esac
         python -m articulate.cli check ${{ inputs.files }} $PROFILE --sarif > articulate.sarif
       shell: bash
     - uses: github/codeql-action/upload-sarif@v3

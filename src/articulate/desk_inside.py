@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 
 from .citations import unanchored_appeals
-from .gate import detect_injection, segment_blocks
+from .detector import detect_injection, segment_blocks
 from .logical import sentences, units
 
 VENUES = {

@@ -269,7 +269,7 @@ def test_fix_logs_the_rewrite_when_pass_two_fails(doc, monkeypatch, capsys):
         return accepted, backends.BackendInfo("stub", "stub", [])
 
     monkeypatch.setattr(backends, "complete", fake)
-    assert editor.fix(doc, doc + ".fixed.md", passes=2, profile="essay") == 0
+    assert editor.fix(doc, doc + ".fixed.md", passes=2) == 0
     assert len(calls) == 2
     assert pathlib.Path(doc + ".fixed.md").read_text(encoding="utf-8") == accepted
     printed = capsys.readouterr().out
@@ -279,10 +279,9 @@ def test_fix_logs_the_rewrite_when_pass_two_fails(doc, monkeypatch, capsys):
 
 
 def test_polish_logs_an_accepted_pass(doc, monkeypatch):
-    from articulate import polish
     pl.init(doc)
     judged = iter([{k: 3 for k in editor.QUALITIES}] + [{k: 5 for k in editor.QUALITIES}] * 5)
-    rc = polish.polish(doc, doc + ".polished.md", 1, 4,
+    rc = editor.polish(doc, doc + ".polished.md", 1, 4,
                        rewrite_fn=lambda *a, **k: TEXT2,
                        judge_fn=lambda *a, **k: next(judged))
     assert rc == 0

@@ -240,3 +240,13 @@ def record_editor_pass(doc, pass_name, where="whole document", *, backend=None, 
     return record_assist(doc, "articulate", verb, [where], version=__version__,
                          model=model if backend != "none" else None,
                          receipt=f"articulate {pass_name} pass (backend: {backend or 'unknown'})")
+
+
+def log_pass(path, name, backend=None, model=None):
+    """Record an accepted editor pass in the document's process log, if it has one."""
+    from .process_ledger import LogBroken
+    try:
+        if record_editor_pass(path, name, backend=backend, model=model):
+            print(f"[{name}] recorded an assistance entry in this document's process log")
+    except LogBroken as e:
+        print(f"[{name}] the process log is broken, so no entry was added: {e}")

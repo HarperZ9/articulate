@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# Every job only reads the repository.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -38,6 +42,26 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: python -m pytest -q
 
+  # The Claude plugin starts its server with python3, and macOS is the third
+  # system it supports. These are the plugin tests; the smoke run starts a built
+  # plugin with the stock python3 the command line tools install.
+  test-macos-plugin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: >-
+          python -m pytest -q tests/test_tool_annotations.py
+          tests/test_claude_plugin_bundle.py tests/test_claude_plugin_launch.py
+          tests/test_local_mcp_plugin_surface.py tests/test_local_tools_stay_local.py
+          tests/test_claude_plugin_claims.py tests/test_claude_plugin_scripts.py
+          tests/test_claude_plugin_audit.py
+      - run: python scripts/build_claude_plugin.py build/claude-plugin --dev
+      - run: /usr/bin/python3 scripts/smoke_claude_plugin.py build/claude-plugin --command /usr/bin/python3
+
   articulate-self-check:
     runs-on: ubuntu-latest
     steps:
@@ -46,9 +70,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e .
-      # Dogfood in CI: our shipped docs must pass our own gate under the house
-      # profile, the style this project chose. No path rule selects it for anyone.
-      - run: python -m articulate.cli check README.md CHANGELOG.md docs/*.md --gate --profile house
+      # Dogfood in CI: our shipped docs must pass our own gate.
+      - run: python -m articulate.cli check README.md CHANGELOG.md docs/*.md --gate
 
   build:
     runs-on: ubuntu-latest

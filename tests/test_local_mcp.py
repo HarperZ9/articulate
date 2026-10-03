@@ -43,15 +43,20 @@ def _payload(result):
 
 
 def test_the_server_imports_without_fastmcp():
-    """The defect this module exists to fix.
-
-    Asserting the import succeeded is not enough on a machine where fastmcp
-    happens to be installed, so this also checks that importing the module did
-    not pull fastmcp in.
-    """
-    assert "fastmcp" not in sys.modules, (
-        "importing articulate.local_mcp pulled in fastmcp; the whole point is "
-        "that the stdio server runs from a bare install")
+    """Import with installed packages disabled, independent of test order."""
+    code = (
+        "import sys; sys.path.insert(0, sys.argv[1]); "
+        "import articulate.local_mcp; "
+        "assert 'fastmcp' not in sys.modules"
+    )
+    result = subprocess.run(
+        [sys.executable, "-I", "-S", "-c", code, str(_SRC.parent)],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, (
+        "the local MCP server must import with only the standard library: "
+        + result.stderr
+    )
 
 
 def test_initialize_reports_identity_and_protocol():
@@ -69,11 +74,15 @@ def test_tools_list_matches_the_fastmcp_surface():
     cheaper than importing it, and it works in CI where the extra is absent.
     """
     tree = ast.parse((_SRC / "mcp_server.py").read_text(encoding="utf-8"))
-    build = next(n for n in ast.walk(tree)
-                 if isinstance(n, ast.FunctionDef) and n.name == "build_server")
-    decorated = {n.name for n in build.body
-                 if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
-    assert decorated, "found no tool functions in build_server"
+    decorated = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        for decorator in node.decorator_list:
+            target = decorator.func if isinstance(decorator, ast.Call) else decorator
+            if isinstance(target, ast.Attribute) and target.attr == "tool":
+                decorated.add(node.name)
+    assert decorated, "found no @mcp.tool functions; the parse assumption broke"
     served = {tool["name"] for tool in local_mcp.TOOLS}
     assert decorated <= served, (
         "the fastmcp server exposes tools the stdio server does not: "
@@ -99,7 +108,10 @@ def test_status_and_doctor_answer_without_a_backend():
     assert doctor["tools"] == [t["name"] for t in local_mcp.TOOLS]
     # The split is the honest part: a host with no LLM backend still gets a
     # working detector, and doctor says which tools that covers.
-    assert doctor["local_only"] == ["check", "score", "edit_plan", "edit_submit"]
+    assert doctor["local_only"] == ["check", "score", "edit_plan", "edit_submit",
+                                    "corpus_check", "title_workshop", "interview",
+                                    "restructure_plan", "voice_compare", "voice_apply_plan",
+                                    "house_brief", "house_transform"]
     assert doctor["needs_llm_backend"] == []
     assert set(doctor["optional_llm_backend"]) == {"judge", "fix", "polish"}
     assert doctor["sampling_advertised"] is False

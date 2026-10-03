@@ -33,8 +33,7 @@ def _run(messages):
 
 URI = "file:///C:/tmp/doc.md"
 SLOP = ("In today's landscape, AI is not just a tool, but a force. "
-        "You can watch what a model does. You cannot watch what it is. "
-        "As mentioned above, it plays a vital role in order to succeed.")
+        "You can watch what a model does. You cannot watch what it is.")
 
 
 def test_initialize_advertises_sync():

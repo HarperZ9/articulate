@@ -202,3 +202,16 @@ def cmd_disclose(args):
         print(f"[disclose] cannot build the statement: {e!r}", file=sys.stderr)
         return 2
     return 0
+
+
+def record_pass(args, result, text):
+    """Add an accepted editor pass to the writer's process record, if one exists."""
+    if args.cmd not in ("fix", "polish", "submit") or "plan_id" in result:
+        return
+    if result.get("text") == text:
+        return
+    try:
+        ev.record_editor_pass(args.file, args.cmd, backend=result.get("backend"),
+                              model=result.get("model"))
+    except pl.LogBroken as exc:
+        result["process_log_warning"] = str(exc)

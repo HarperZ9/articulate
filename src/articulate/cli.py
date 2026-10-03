@@ -4,9 +4,6 @@
 
   articulate check [FILE ...] [--profile P] [--json] [--gate] [--verbose]
   articulate score [FILE ...] [--profile P]
-  articulate receipt | verify | audit | modes
-  articulate process ... | disclose     (a writer-held process record)
-  articulate desk FILE                  (questions for a reviewer)
 
 With no FILE, reads stdin. The profile is chosen by --profile, else an in-file
 `writing-profile:` tag, else the file path, else the default. `--gate` exits 1
@@ -14,19 +11,107 @@ when any input is blocked under its profile, for CI use.
 """
 import argparse
 import json
+import os
 import sys
 
-from . import cli_desk, cli_process, cli_receipts, modes, profiles, pysource
-from .cli_output import print_check, print_score, print_spans, redact, to_sarif  # noqa: F401
-from .detector import analyze_blocks, binary_reason, check_text
-from .local_only import command_map
-from .markup import ALLOW_HELP
-from .tool_text import DOES_NOT_PROVE, PRODUCT
+from . import modes, profiles, pysource, receipt
+from .detector import binary_reason, check_text, ruleset_fingerprint
+
+
+def _resolve(name, text, args):
+    """Return (label, profile_dict). A --mode wins over profile inference."""
+    if getattr(args, "mode", None):
+        return args.mode, modes.load(args.mode)
+    pname = _profile_name(name, text, args.profile)
+    return pname, profiles.load(pname)
+
+
+def _redact(r):
+    """Strip the content-bearing fields from a result, so no export path carries a
+    verbatim substring OR the exact offsets/length that reconstruct it under
+    --content-free. Keeps only line, rule_id, tier, and category per finding."""
+    def strip(f):
+        # label enumerates a closed-vocabulary rule's candidate words, so drop it
+        # from content-free output and report the category alone.
+        for k in ("match", "snippet", "col", "start", "end", "label"):
+            f.pop(k, None)
+    for tier in ("high", "medium", "low"):
+        for f in r.get(tier, []):
+            strip(f)
+    for b in r.get("blocks", []):
+        b.pop("snippet", None)
+        for tier in ("high", "medium", "low"):
+            for f in b.get(tier, []):
+                strip(f)
+    return r
+
+
+def _prose(name, text):
+    """A .py file's prose is its docstrings and comments; extract those, keeping
+    line numbers, so the detector does not score code as prose."""
+    if name.lower().endswith(".py"):
+        return pysource.prose_of(text)
+    return text
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (AttributeError, ValueError):
     pass
+
+_SARIF_LEVEL = {"HIGH": "error", "MEDIUM": "warning", "LOW": "note"}
+
+
+def _pkgver():
+    try:
+        from . import __version__
+        return __version__
+    except Exception:  # noqa: BLE001
+        return "0.0.0"
+
+
+def to_sarif(results):
+    """SARIF 2.1.0 from check results, using the span records. GitHub Code
+    Scanning, Azure DevOps, and reviewdog ingest this for inline PR annotations."""
+    rules, out = {}, []
+    for r in results:
+        uri = "stdin" if r["file"] == "<stdin>" else r["file"].replace("\\", "/")
+        for f in r["high"] + r["medium"] + r.get("low", []):
+            rid = f["rule_id"]
+            desc = f.get("label") or f["category"]      # category only when redacted
+            rules.setdefault(rid, {"id": rid, "name": f["category"],
+                                   "shortDescription": {"text": desc}})
+            if f.get("match") is not None:
+                msg = f"{desc}: {f['match']!r}"
+            else:
+                msg = f"{desc}" if "label" in f else f"{f['category']} tell"
+            # Exact offsets when present, else a line-only locator for a content-free
+            # run, so the export never leaks the match length or position.
+            if all(k in f for k in ("col", "start", "end")):
+                region = {"startLine": f["line"], "startColumn": f["col"],
+                          "endColumn": f["col"] + (f["end"] - f["start"]),
+                          "charOffset": f["start"], "charLength": f["end"] - f["start"]}
+            else:
+                region = {"startLine": f["line"]}
+            out.append({
+                "ruleId": rid,
+                "level": _SARIF_LEVEL.get(f["tier"], "note"),
+                "message": {"text": msg},
+                "locations": [{"physicalLocation": {
+                    "artifactLocation": {"uri": uri}, "region": region,
+                }}],
+            })
+    return {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {"driver": {
+                "name": "Articulate", "version": _pkgver(),
+                "informationUri": "https://github.com/HarperZ9/articulate",
+                "rules": list(rules.values()),
+            }},
+            "results": out,
+        }],
+    }
 
 
 def _profile_name(path, text, override):
@@ -38,22 +123,6 @@ def _profile_name(path, text, override):
     if path and path != "<stdin>":
         return profiles.profile_for(path)
     return profiles.DEFAULT
-
-
-def _resolve(name, text, args):
-    """Return (label, profile_dict). A --mode wins over profile inference."""
-    if getattr(args, "mode", None):
-        return args.mode, modes.load(args.mode)
-    pname = _profile_name(name, text, args.profile)
-    return pname, profiles.load(pname)
-
-
-def _prose(name, text):
-    """A .py file's prose is its docstrings and comments; extract those, keeping
-    line numbers, so code is never scored as prose."""
-    if name.lower().endswith(".py"):
-        return pysource.prose_of(text)
-    return text
 
 
 def _decode(data):
@@ -68,123 +137,270 @@ def _inputs(files):
     """Yield (name, text, reason). A binary or unsupported document is refused with
     a reason and no text, so the caller fails closed and never scans a lossy decode
     of its bytes."""
-    if not files:
+    if files:
+        for p in files:
+            try:
+                with open(p, "rb") as fh:
+                    data = fh.read()
+            except OSError as e:
+                yield p, None, f"cannot read: {e}"
+                continue
+            reason = binary_reason(data, name=p)
+            if reason:
+                yield p, None, reason
+            else:
+                yield p, _decode(data), None
+    else:
         yield "<stdin>", sys.stdin.read(), None
-        return
-    for p in files:
-        try:
-            with open(p, "rb") as fh:
-                data = fh.read()
-        except OSError as e:
-            yield p, None, f"cannot read: {e}"
-            continue
-        reason = binary_reason(data, name=p)
-        yield (p, None, reason) if reason else (p, _decode(data), None)
 
 
-def _screen(args):
-    """Yield (name, profile_name, result) per readable input; None on a refusal;
-    raise ValueError on an unknown profile or mode."""
+def _print_spans(name, pname, blocks):
+    """Per-paragraph verdicts, so an AI-heavy block is flagged in place and one
+    aggregate score cannot smear across a whole clean document."""
+    flagged = [b for b in blocks if b["gate"] == "blocked" or b["elevated"]]
+    print(f"[articulate] {name} [{pname}]: {len(blocks)} span(s), {len(flagged)} flagged")
+    for b in blocks:
+        if b["gate"] == "blocked" or b["elevated"]:
+            mark = "FLAG"
+        elif b["verdict"] == "unverifiable":
+            mark = " ?? "
+        else:
+            mark = " ok "
+        print(f"  [{mark}] span {b['index']} L{b['start_line']}-{b['end_line']}: "
+              f"{b['verdict']}, texture {b['texture_score']}/100 "
+              f"({b['counts']['high']}H/{b['counts']['medium']}M): {b.get('snippet', '')[:52]}")
+
+
+def _print_check(name, pname, r, verbose):
+    base = name
+    if r.get("verdict") == "unverifiable":
+        head = f"[articulate] {base} [{pname}]: unverifiable (below the signal floor)"
+    elif r["clean"]:
+        head = f"[articulate] {base} [{pname}]: clean"
+    else:
+        head = (f"[articulate] {base} [{pname}]: {len(r['high'])} high, "
+                f"{len(r['medium'])} medium ({r['gate']})")
+    print(head + f"  texture {r['texture_score']}/100")
+    for f in r["high"] + r["medium"]:
+        print(f"  L{f['line']} [{f['tier']} {f['category']}] "
+              f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
+    if verbose and r["low"]:
+        for f in r["low"]:
+            print(f"  L{f['line']} [LOW {f['category']}] "
+                  f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
+
+
+def _cmd_check(args):
+    blocked = False
+    refused = False
+    payload = []
     for name, text, reason in _inputs(args.files):
         if reason:
             print(f"[articulate] {name}: cannot screen ({reason})", file=sys.stderr)
-            yield None
+            refused = True
             continue
         text = _prose(name, text)
         try:
             pname, prof = _resolve(name, text, args)
         except (profiles.ProfileError, modes.ModeError) as e:
-            raise ValueError(str(e)) from e
-        notes = getattr(args, "house_notes", False)
-        r = check_text(text, profile=prof, house_notes=notes)
+            print(f"[articulate] {e}", file=sys.stderr)
+            return 2
+        r = check_text(text, profile=prof)
         r["file"], r["profile"] = name, pname
         if getattr(args, "spans", False):
-            r["blocks"] = analyze_blocks(text, profile=prof, house_notes=notes)
-        yield name, pname, r
-
-
-def _cmd_check(args):
-    blocked = refused = False
-    payload = []
-    quiet = args.json or getattr(args, "sarif", False)
-    try:
-        for item in _screen(args):
-            if item is None:
-                refused = True
-                continue
-            name, pname, r = item
-            if getattr(args, "content_free", False):
-                redact(r)          # no export path carries a verbatim substring
-            payload.append(r)
-            blocked = blocked or r["gate"] == "blocked"
-            if not quiet:
-                if getattr(args, "spans", False):
-                    print_spans(name, pname, r["blocks"])
-                else:
-                    print_check(name, pname, r, args.verbose)
-    except ValueError as e:
-        print(f"[articulate] {e}", file=sys.stderr)
-        return 2
+            from .detector import analyze_blocks
+            r["blocks"] = analyze_blocks(text, profile=prof)
+        if getattr(args, "content_free", False):
+            _redact(r)          # no export path carries a verbatim substring
+        payload.append(r)
+        if r["gate"] == "blocked":
+            blocked = True
+        if not args.json and not getattr(args, "sarif", False):
+            if getattr(args, "spans", False):
+                _print_spans(name, pname, r["blocks"])
+            else:
+                _print_check(name, pname, r, args.verbose)
     if getattr(args, "sarif", False):
         print(json.dumps(to_sarif(payload), ensure_ascii=False, indent=2))
     elif args.json:
         print(json.dumps({"results": payload}, ensure_ascii=False, indent=2))
-    elif payload and not getattr(args, "spans", False):
-        print(f"[articulate] {DOES_NOT_PROVE}")   # every run, a passing gate included
     # Fail closed: an unscreenable input fails the gate and never passes silently.
     return 1 if (args.gate and (blocked or refused)) else 0
 
 
-def _cmd_score(args):
-    try:
-        for item in _screen(args):
-            if item is not None:
-                print_score(item[0], item[1], item[2])
-    except ValueError as e:
-        print(f"[articulate] {e}", file=sys.stderr)
-        return 2
-    print("[articulate] density counts the findings that block under the profile, per "
-          "1,000 words; the per-rule counts are the primary output.")
-    print(f"[articulate] {DOES_NOT_PROVE}")
+def _cmd_receipt(args):
+    redact = getattr(args, "redact", "none")
+    redact = None if redact in (None, "none") else redact
+    # The "who": an explicit --reviewer, else the CI actor, else unrecorded.
+    reviewer = getattr(args, "reviewer", None) or os.environ.get("GITHUB_ACTOR") or None
+    for name, text, reason in _inputs(args.files):
+        if reason:
+            print(f"[articulate] {name}: cannot screen ({reason})", file=sys.stderr)
+            continue
+        pname = _profile_name(name, text, args.profile)
+        rec = receipt.make_receipt(text, pname, per_span=getattr(args, "spans", False),
+                                   redact=redact, reviewer=reviewer)
+        rec["file"] = name
+        print(json.dumps(rec, ensure_ascii=False, indent=2))
     return 0
 
 
-def _add_check_args(p, cmd):
-    p.add_argument("files", nargs="*")
-    p.add_argument("--profile", default=None, help="force a profile (house, essay, ...)")
-    p.add_argument("--mode", default=None,
-                   help="a writing mode (domain/articulation, e.g. memo/argue)")
-    if cmd in ("check", "score"):
-        p.add_argument("--house-notes", action="store_true",
-                       help="also report the house style's patterns as low notes "
-                            "(a house profile gates them; no other profile shows them)")
-    if cmd == "check":
-        p.add_argument("--json", action="store_true",
-                       help="the findings, gate, counts and does-not-prove line as JSON")
-        p.add_argument("--sarif", action="store_true", help="emit SARIF 2.1.0")
-        p.add_argument("--gate", action="store_true",
-                       help="exit 1 when any file is blocked or cannot be screened")
-        p.add_argument("--verbose", action="store_true",
-                       help="expand the low notes and print each finding's reason")
-        p.add_argument("--spans", action="store_true",
-                       help="per-paragraph counts by rule, in document order; "
-                            "a view of where the findings sit")
-        p.add_argument("--content-free", action="store_true",
-                       help="omit every verbatim substring from console/JSON/SARIF output")
-    if cmd == "receipt":
-        p.add_argument("--spans", action="store_true",
-                       help="record per-paragraph counts in the receipt")
-        p.add_argument("--redact", choices=["none", "drop", "hash"], default="none",
-                       help="content-free audit receipt: drop or hash the matched text")
-        p.add_argument("--reviewer", default=None,
-                       help="record who screened it (else the CI actor, else unset)")
+def _cmd_verify(args):
+    try:
+        with open(args.receipt, encoding="utf-8") as fh:
+            rec = json.load(fh)
+    except (OSError, ValueError) as e:
+        print(f"[articulate] cannot read receipt {args.receipt}: {e}", file=sys.stderr)
+        return 2
+    try:
+        with open(args.file, "rb") as fh:
+            data = fh.read()
+    except OSError as e:
+        print(f"[articulate] cannot read {args.file}: {e}", file=sys.stderr)
+        return 2
+    reason = binary_reason(data, name=args.file)
+    if reason:
+        print(f"[articulate] cannot screen {args.file}: {reason}", file=sys.stderr)
+        return 2
+    if isinstance(rec, dict) and str(rec.get("schema", "")).startswith("articulate/corpus-receipt/"):
+        from . import cli_corpus
+        return cli_corpus.verify(rec, [args.file] + args.more)
+    if isinstance(rec, dict) and rec.get("schema") == "articulate/house-receipt/v1":
+        from . import cli_house
+        return cli_house.verify(rec, args.file)
+    text = _decode(data)
+    verdict, detail = receipt.verify_receipt(rec, text)
+    print(f"[articulate] {verdict}: {detail}")
+    return {"Match": 0, "Drift": 1, "Unverifiable": 2}.get(verdict, 2)
 
 
-_CHECK_HELP = {
-    "check": "report the findings and the gate (local)",
-    "score": "per-rule counts and density per 1,000 words (local)",
-    "receipt": "a re-derivable screening as JSON; --redact for a content-free one (local)",
-}
+def _load_receipts(paths):
+    """Yield (path, receipt) for JSON receipts under the given files or directories.
+    Non-JSON, unparseable, and non-receipt files are skipped."""
+    files = []
+    for p in paths:
+        if os.path.isdir(p):
+            for root, _dirs, names in os.walk(p):
+                files.extend(os.path.join(root, n) for n in names if n.endswith(".json"))
+        else:
+            files.append(p)
+    for fp in sorted(files):
+        try:
+            with open(fp, encoding="utf-8") as fh:
+                rec = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        if isinstance(rec, dict) and rec.get("schema") in (receipt.SCHEMA, receipt.AUDIT_SCHEMA):
+            yield fp, rec
+
+
+def _within_days(created_at, days):
+    """True if an ISO-8601 timestamp falls in the last `days` (a bounded window, so a
+    future-dated stamp is not counted). False on any malformed or non-string value, so
+    a bad stamp is never counted as recent and never crashes the audit."""
+    if not isinstance(created_at, str):
+        return False
+    from datetime import datetime, timedelta, timezone
+    try:
+        ts = datetime.fromisoformat(created_at)
+    except (ValueError, TypeError):
+        return False
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    return now - timedelta(days=days) <= ts <= now
+
+
+def _cmd_audit(args):
+    """Query a directory of committed receipts locally: recorded verdicts, blocked
+    rules, stale-ruleset receipts, recent activity, and (with --reverify) whether
+    each receipt still holds against its source. No server, no network."""
+    from collections import Counter
+
+    current_fp = ruleset_fingerprint()
+    recs = list(_load_receipts(args.paths or ["."]))
+    by_gate, by_verdict, blocked_rules, reverify = Counter(), Counter(), Counter(), Counter()
+    stale = recent = 0
+    for _fp, rec in recs:
+        by_gate[rec.get("gate", "?")] += 1
+        by_verdict[rec.get("verdict", "?")] += 1
+        if rec.get("ruleset_version") != current_fp:
+            stale += 1
+        if _within_days(rec.get("created_at"), args.days):
+            recent += 1
+        if rec.get("gate") == "blocked":
+            for f in (rec.get("findings") or []):   # `or []` also covers findings: null
+                blocked_rules[f.get("rule_id", "?")] += 1
+        if args.reverify:
+            src = rec.get("file")
+            if not src or not os.path.isfile(src):
+                reverify["source-missing"] += 1
+                continue
+            try:
+                with open(src, "rb") as fh:
+                    data = fh.read()
+            except OSError:            # a race or a permission-denied source is unreadable
+                reverify["source-unreadable"] += 1
+                continue
+            if binary_reason(data, name=src):
+                reverify["source-unreadable"] += 1
+                continue
+            text = _decode(data)
+            # A source that changed since screening is a stale receipt (a real gate
+            # failure), kept apart from an honest sub-threshold/ruleset Unverifiable.
+            if rec.get("text_sha256") != receipt.text_sha256(text):
+                reverify["source-changed"] += 1
+            else:
+                verdict, _ = receipt.verify_receipt(rec, text)
+                reverify[verdict] += 1
+
+    summary = {
+        "receipts": len(recs),
+        "by_gate": dict(by_gate),
+        "by_verdict": dict(by_verdict),
+        "stale_ruleset": stale,
+        f"recent_{args.days}d": recent,
+        "blocked_by_rule": dict(blocked_rules.most_common(10)),
+    }
+    if args.reverify:
+        summary["reverify"] = dict(reverify)
+
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+    else:
+        print(f"[audit] {len(recs)} receipt(s); "
+              f"gate {dict(by_gate)}; verdict {dict(by_verdict)}")
+        print(f"[audit] stale-ruleset {stale}; active in last {args.days}d {recent}")
+        if blocked_rules:
+            top = ", ".join(f"{r} x{n}" for r, n in blocked_rules.most_common(10))
+            print(f"[audit] blocked by rule: {top}")
+        if args.reverify:
+            print(f"[audit] reverify: {dict(reverify)}")
+    # Fail closed on a real integrity failure: the source drifted from its receipt,
+    # changed since screening, or cannot be read. A sub-threshold or stale-ruleset
+    # Unverifiable is informational, never a gate failure.
+    bad = (reverify.get("Drift", 0) + reverify.get("source-changed", 0)
+           + reverify.get("source-unreadable", 0))
+    return 1 if (args.gate and args.reverify and bad) else 0
+
+
+def _cmd_score(args):
+    for name, text, reason in _inputs(args.files):
+        if reason:
+            print(f"[articulate] {name}: cannot screen ({reason})", file=sys.stderr)
+            continue
+        text = _prose(name, text)
+        try:
+            pname, prof = _resolve(name, text, args)
+        except (profiles.ProfileError, modes.ModeError) as e:
+            print(f"[articulate] {e}", file=sys.stderr)
+            return 2
+        r = check_text(text, profile=prof)
+        print(f"[articulate] {name} [{pname}]: verdict {r['verdict']}, "
+              f"texture {r['texture_score']}/100 "
+              f"({'elevated' if r['elevated'] else 'low'}), gate {r['gate']} "
+              f"[{len(r['high'])}H/{len(r['medium'])}M, {r['cadence']['words']}w]")
+    return 0
 
 
 def _read_edit_file(path):
@@ -195,6 +411,12 @@ def _read_edit_file(path):
         raise ValueError(f"cannot edit binary input ({reason})")
     return _decode(data)
 
+
+def _author_text(args):
+    path = getattr(args, "author_text", None)
+    return _read_edit_file(path) if path else None
+
+
 def _cmd_edit(args):
     from . import editing, host_edit
     try:
@@ -203,14 +425,14 @@ def _cmd_edit(args):
             result = host_edit.edit_submit(
                 text, _read_edit_file(args.rewrite), args.plan,
                 scores=json.loads(args.scores) if args.scores else None,
-                model=args.model)
+                model=args.model, author_text=_author_text(args))
         else:
             options = {"mode": args.mode,
                        "profile": None if args.mode else _profile_name(args.file, text, args.profile),
                        "is_html": args.is_html or args.file.lower().endswith((".html", ".htm")),
                        "is_tex": args.is_tex or args.file.lower().endswith(".tex")}
             if args.cmd == "plan":
-                result = host_edit.edit_plan(text, goal=args.goal, **options)
+                result = host_edit.edit_plan(text, goal=args.goal, author_text=_author_text(args), **options)
             else:
                 result = editing.run_edit(text, goal=args.cmd, backend=args.backend,
                                           bar=args.bar, passes=args.passes,
@@ -222,13 +444,8 @@ def _cmd_edit(args):
         if getattr(args, "out", None) and "text" in result and "plan_id" not in result:
             with open(args.out, "w", encoding="utf-8", newline="") as fh:
                 fh.write(result["text"])
-        if args.cmd in ("fix", "polish", "submit") and "plan_id" not in result and result.get("text") != text:
-            from .process_events import record_editor_pass
-            from .process_ledger import LogBroken
-            try:
-                record_editor_pass(args.file, args.cmd, backend=result.get("backend"), model=result.get("model"))
-            except LogBroken as exc:
-                result["process_log_warning"] = str(exc)
+        from .cli_process import record_pass
+        record_pass(args, result, text)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError) as exc:
@@ -236,9 +453,10 @@ def _cmd_edit(args):
         return 2
 
 
-def build_parser():
-    ap = argparse.ArgumentParser(prog="articulate", description=PRODUCT, epilog=command_map(),
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    ap = argparse.ArgumentParser(prog="articulate",
+                                 description="Local writing-quality and AI-tell detection.")
     sub = ap.add_subparsers(dest="cmd")
     for cmd in ("plan", "submit", "judge", "fix", "polish"):
         p = sub.add_parser(cmd)
@@ -261,13 +479,36 @@ def build_parser():
                 p.add_argument("--bar", type=int, default=4)
                 p.add_argument("--passes", type=int, default=3)
                 p.add_argument("--timeout", type=float, default=600)
+        if cmd in ("plan", "submit"):
+            p.add_argument("--author-text", help="a file of your own words the edit may add")
         p.add_argument("--out", help="write accepted text to this file")
         p.add_argument("--json", action="store_true", help="emit result JSON (the editor default)")
-    for cmd, text in _CHECK_HELP.items():
-        _add_check_args(sub.add_parser(cmd, help=text, epilog=ALLOW_HELP), cmd)
+    for cmd in ("check", "score", "receipt"):
+        p = sub.add_parser(cmd)
+        p.add_argument("files", nargs="*")
+        p.add_argument("--profile", default=None, help="force a register profile")
+        p.add_argument("--mode", default=None,
+                       help="a writing mode (domain/articulation, e.g. memo/argue)")
+        if cmd == "check":
+            p.add_argument("--json", action="store_true")
+            p.add_argument("--sarif", action="store_true", help="emit SARIF 2.1.0")
+            p.add_argument("--gate", action="store_true", help="exit 1 if blocked")
+            p.add_argument("--verbose", action="store_true")
+            p.add_argument("--spans", action="store_true",
+                           help="per-paragraph verdicts (localize mixed authorship)")
+            p.add_argument("--content-free", action="store_true",
+                           help="omit every verbatim substring from console/JSON/SARIF output")
+        if cmd == "receipt":
+            p.add_argument("--spans", action="store_true",
+                           help="record a per-span (per-paragraph) receipt")
+            p.add_argument("--redact", choices=["none", "drop", "hash"], default="none",
+                           help="content-free audit receipt: drop or hash the matched text")
+            p.add_argument("--reviewer", default=None,
+                           help="record who screened it (else the CI actor, else unset)")
     pv = sub.add_parser("verify", help="replay a receipt against text")
     pv.add_argument("receipt", help="a receipt JSON file")
     pv.add_argument("file", help="the text file to re-derive against")
+    pv.add_argument("more", nargs="*", help="further files for a corpus receipt")
     pa = sub.add_parser("audit", help="query committed receipts locally")
     pa.add_argument("paths", nargs="*", help="receipt files or directories (default: .)")
     pa.add_argument("--days", type=int, default=30, help="recent-activity window")
@@ -277,29 +518,32 @@ def build_parser():
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
+    from . import cli_corpus, cli_desk, cli_house, cli_process
+    cli_corpus.register(sub)
+    cli_house.register(sub)
     cli_process.register(sub)
     cli_desk.register(sub)
-    return ap
-
-
-def main(argv=None):
-    argv = sys.argv[1:] if argv is None else argv
-    ap = build_parser()
     args = ap.parse_args(argv)
+    if getattr(args, "corpus_handler", None):
+        return args.corpus_handler(args)
     if args.cmd in ("plan", "submit", "judge", "fix", "polish"):
         return _cmd_edit(args)
-    handlers = {
-        "check": lambda: _cmd_check(args),
-        "score": lambda: _cmd_score(args),
-        "receipt": lambda: cli_receipts.cmd_receipt(args, _inputs, _profile_name),
-        "verify": lambda: cli_receipts.cmd_verify(args, _decode),
-        "audit": lambda: cli_receipts.cmd_audit(args, _decode),
-        "process": lambda: cli_process.cmd_process(args),
-        "disclose": lambda: cli_process.cmd_disclose(args),
-        "desk": lambda: cli_desk.cmd_desk(args),
-    }
-    if args.cmd in handlers:
-        return handlers[args.cmd]()
+    if args.cmd == "check":
+        return _cmd_check(args)
+    if args.cmd == "score":
+        return _cmd_score(args)
+    if args.cmd == "receipt":
+        return _cmd_receipt(args)
+    if args.cmd == "verify":
+        return _cmd_verify(args)
+    if args.cmd == "audit":
+        return _cmd_audit(args)
+    if args.cmd == "process":
+        return cli_process.cmd_process(args)
+    if args.cmd == "disclose":
+        return cli_process.cmd_disclose(args)
+    if args.cmd == "desk":
+        return cli_desk.cmd_desk(args)
     if args.cmd == "modes":
         for m in modes.names():
             print(m)
