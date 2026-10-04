@@ -1,6 +1,20 @@
-# Articulate
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-dark.svg">
+  <img src="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-light.svg" alt="articulate: Local writing-quality and AI-tell detection and editing, no network. A fan of ruled sheets drawn in fine lines, the top sheet lit by a bright core." width="100%">
+</picture>
 
-![Articulate: a local writing-quality and AI-tell detection and editing tool. Lines of prose bow around a verified core, one span is marked as drift, and the verdict lattice reads Match, Drift, Unverifiable.](assets/articulate-hero.svg)
+# articulate
+
+Local writing-quality and AI-tell detection and editing, no network.
+
+```
+python -m articulate.cli check path/to/doc.md --gate
+```
+
+[![version: 0.9.0](https://img.shields.io/badge/version-0.9.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/articulate-writing/)
+[![CI](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-FSL--1.1--MIT-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/articulate/blob/main/LICENSE)
+![python 3.9+](https://img.shields.io/badge/python-3.9%2B-e6e1d6?style=flat-square&labelColor=1a1712)
 
 A local writing-quality and AI-tell detection and editing tool. It flags the
 prose devices and machine-writing tells that make text read as generated, scores
