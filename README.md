@@ -34,6 +34,15 @@ say what a verdict and a receipt mean and what they never claim. The
 [series review and your own voice](docs/series-and-voice.md) cover the 0.8.0
 voice features.
 
+## See it work, step by step
+
+The [animated explainer](https://harperz9.github.io/repo-explainers/articulate.html)
+follows one short draft through the checker: the six findings and their tiers,
+how three profiles gate the same findings, how the texture score is computed,
+per-span verdicts, and a receipt that replays to Match, Drift or Unverifiable.
+Every value on it is output from this repository. Its source is
+[docs/explainer/index.html](docs/explainer/index.html).
+
 ## What it does
 
 - **Detect.** Flags banned rhetorical devices (antithesis including keyword-free
