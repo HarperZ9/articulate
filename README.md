@@ -43,6 +43,37 @@ per-span verdicts, and a receipt that replays to Match, Drift or Unverifiable.
 Every value on it is output from this repository. Its source is
 [docs/explainer/index.html](docs/explainer/index.html).
 
+## Watch
+
+No concept film fits this tool closely yet. The walkthrough below covers it in text, with real commands and output.
+
+Video walkthrough: coming with the next release.
+
+## Walkthrough
+
+Install it, run it once, then use the main feature. Each command below is real, and so is its output.
+
+1. **Install.** Install from PyPI. Python 3.9 or newer; the checker uses the standard library only and makes no network call.
+
+   ```text
+   $ python -m pip install articulate-writing
+   ```
+
+2. **First run: check a draft.** Check a draft against a profile. With `--gate` the command exits 1 when high findings block it.
+
+   ```text
+   $ articulate check post.md --profile readme --gate
+   [articulate] post.md [readme]: 3 high, 2 medium (blocked)  texture 70/100
+   ```
+
+3. **Seal a receipt and re-derive it.** Write a receipt for the check, then verify it against the same file.
+
+   ```text
+   $ articulate receipt post.md --profile readme > post.receipt.json
+   $ articulate verify post.receipt.json post.md
+   [articulate] Match: re-derived 6 findings, gate blocked, texture 70
+   ```
+
 ## What it does
 
 - **Detect.** Flags banned rhetorical devices (antithesis including keyword-free
