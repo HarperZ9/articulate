@@ -43,12 +43,6 @@ per-span verdicts, and a receipt that replays to Match, Drift or Unverifiable.
 Every value on it is output from this repository. Its source is
 [docs/explainer/index.html](docs/explainer/index.html).
 
-## Watch
-
-No concept film fits this tool closely yet. The walkthrough below covers it in text, with real commands and output.
-
-Video walkthrough: coming with the next release.
-
 ## Walkthrough
 
 Install it, run it once, then use the main feature. Each command below is real, and so is its output.
