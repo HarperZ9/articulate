@@ -4,7 +4,10 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## 0.9.1
+## 0.10.0
+
+The v0.9.1 tag never reached PyPI: the release build accepts only versions
+ending in .0, so the same changes ship as 0.10.0.
 
 A measured baseline with known provenance replaces Pangram, and bench
 references name their model version. Detector rules are unchanged
