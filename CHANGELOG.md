@@ -4,6 +4,32 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.11.0
+
+Dialogue and character voice checks for game and stage scripts. Detector rules
+for prose are unchanged, and no prose finding changes.
+
+- `articulate dialogue FILES_OR_DIRS --voices DIR` reads LWD, `NAME: text` and
+  printed-play scripts and reports every spoken line against a dialogue
+  profile: antithesis and contrast pairs, epigram shapes (semicolon pivots,
+  definitions of abstractions, maxims, "In A ... here ..." comparisons),
+  characters stating the theme, closing zingers and abstract-noun density.
+  Plain, broken and repetitive speech is left alone.
+- Character voice sheets (`articulate-voice-sheet/1`, one JSON file per
+  character) hold register, region markers and idioms, a sentence-length
+  range, never-words and patterns, keyword knowledge bounds, wants, fears,
+  secrets and tics. Each line is checked against its speaker's sheet.
+- Blind attribution: a complement naive Bayes classifier, trained on the other
+  folds of the script, names the speaker of each held-out line. The report
+  gives per-character accuracy with Wilson 95% intervals against chance.
+- JSON output, a summary table, a Markdown report (`--markdown`) and a gate for
+  CI (`--gate`). The same audit is the `dialogue_check` MCP tool.
+- Calibrated on public-domain dialogue by Shaw, Chekhov (Fell and West
+  translations), Twain and Dickens, with Wilde as the epigram contrast:
+  epigram shapes on 0.1 to 0.5 percent of naturalistic lines and on 1.6
+  percent of Wilde's. `scripts/dialogue_calibrate.py` repeats the measurement;
+  see `docs/dialogue.md`.
+
 ## 0.10.0
 
 The v0.9.1 tag never reached PyPI: the release build accepts only versions
