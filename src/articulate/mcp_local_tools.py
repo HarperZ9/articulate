@@ -1,11 +1,11 @@
-"""FastMCP registration for the series, personal-voice and house-voice tools.
+"""FastMCP registration for the series, personal-voice, house-voice and dialogue tools.
 
 Each wrapper declares its arguments for FastMCP's schema and passes them to the
 same handler the stdio server uses, so both servers behave the same.
 """
 from typing import List, Optional
 
-from . import house_tools, voice_tools
+from . import dialogue_tools, house_tools, voice_tools
 from .tool_meta import fastmcp_options
 from .tool_text import description
 
@@ -56,3 +56,11 @@ def register(mcp):
     def house_transform(text: str, settings: Optional[dict] = None, house: bool = True) -> dict:
         return house_tools.handle("house_transform", _given(text=text, settings=settings,
                                                             house=house))
+
+    @mcp.tool(**_opts("dialogue_check"))
+    def dialogue_check(text: str, format: str = "auto", voices: Optional[List[dict]] = None,
+                       theme_words: Optional[List[str]] = None, min_lines: int = 20,
+                       worst: int = 30) -> dict:
+        return dialogue_tools.handle("dialogue_check", _given(
+            text=text, format=format, voices=voices, theme_words=theme_words,
+            min_lines=min_lines, worst=worst))

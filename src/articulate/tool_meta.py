@@ -23,6 +23,7 @@ TITLES = {
     "voice_apply_plan": "Plan an edit toward your own voice",
     "house_brief": "The house voice brief",
     "house_transform": "Apply the house voice to model output",
+    "dialogue_check": "Check dialogue and character voices",
     "articulate.status": "Articulate server status",
     "articulate.doctor": "Articulate readiness check",
 }

@@ -42,6 +42,11 @@ settings file; the `articulate` command line comes with the PyPI package
   only when you say the draft is yours. No tool learns, exports or deletes a
   profile. The separate `articulate` command line (PyPI package
   `articulate-writing`, not installed by this plugin) does that.
+- Dialogue and character voice: `dialogue_check` reads a script you pass it
+  (LWD lines, `NAME: text` lines or a printed play) and reports epigram shapes,
+  antithesis, theme statements and closing zingers in the spoken lines, checks
+  each line against the character voice sheets you pass, and scores how well a
+  plain classifier can tell the characters apart. It opens no file.
 
 - `check` returns each HIGH and MEDIUM finding with its rule, tier, line, span
   and label, a count of LOW advisories (`advisory_count`), `clean` and `verdict`

@@ -36,7 +36,9 @@ the [CLI reference](docs/cli.md), and the [boundaries](docs/boundaries.md) that
 say what a verdict and a receipt mean and what they never claim. The
 [house voice](docs/house-voice.md) spec and the guide to
 [series review and your own voice](docs/series-and-voice.md) cover the 0.8.0
-voice features.
+voice features. [Dialogue and character voice](docs/dialogue.md) covers
+`articulate dialogue`: script checks, character voice sheets and blind speaker
+attribution.
 
 ## See it work, step by step
 
