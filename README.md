@@ -1,28 +1,32 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-dark.svg">
-  <img src="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-light.svg" alt="articulate: Local writing-quality and AI-tell detection and editing, no network. A fan of ruled sheets drawn in fine lines, the top sheet lit by a bright core." width="100%">
+  <img src="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-light.svg" alt="articulate. A fan of ruled sheets drawn in fine lines, the top sheet lit by a bright core. The caption in the image is an older tagline; the line below states what the tool does." width="100%">
 </picture>
 
 # articulate
 
-Local writing-quality and AI-tell detection and editing, no network.
+Local prose checks for writing devices and plain-writing problems, with an optional editor. No network.
 
 ```
 python -m articulate.cli check path/to/doc.md --gate
 ```
 
-[![version: 0.10.0](https://img.shields.io/badge/version-0.10.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/articulate-writing/)
+[![version: 0.11.0](https://img.shields.io/badge/version-0.11.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/articulate-writing/)
 [![CI](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-FSL--1.1--MIT-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/articulate/blob/main/LICENSE)
 ![python 3.9+](https://img.shields.io/badge/python-3.9%2B-e6e1d6?style=flat-square&labelColor=1a1712)
 
-A local writing-quality and AI-tell detection and editing tool. It flags the
-prose devices and machine-writing tells that make text read as generated, scores
-how machine-textured a passage is, and (with an LLM backend) rewrites prose to a
-plain, skilled standard. The core runs standard-library-only with no network
-call. Detection quality and writing quality are the goals; a detector score is a
-benchmark and a byproduct, never something the tool optimizes toward, and it is
-not an evasion tool.
+A local writing-quality tool. It flags writing devices common in AI output and in
+weak prose, says where each one occurs, scores how densely a passage uses them,
+and (with an LLM backend) rewrites prose to a plain, skilled standard. The core
+runs standard-library-only with no network call. Writing quality is the goal; it
+is not an evasion tool, and no detector score is a target.
+
+It is a style tool. It is not an authorship detector. On 183 texts of known origin it flagged all
+84 AI texts and also 57 of 75 human texts (76%, 95% interval 65% to 84%), including 10 of
+18 essays by English learners; see [the results](corpus/provenance/README.md) and
+[`results.json`](corpus/provenance/results.json). Never use a finding to accuse anyone of
+using AI, and never to judge a student's work.
 
 ## Documentation
 
@@ -116,7 +120,7 @@ rewrite with its selected model, and submit it through `edit_submit`. The model
 account and conversation policy belong to that client. Local checks and host
 edits require no publisher-hosted service or separate model API key.
 
-Version 0.10.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
+Version 0.11.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
 with a Python runtime included. The [source plugin](docs/claude-plugin.md) remains
 available for local Claude Code, Codex and portable MCP hosts with installed
 Python. Native client installation and marketplace acceptance remain unverified.
@@ -235,11 +239,11 @@ automatic expiry (bounded retention is a later self-hosted tier). The full
 
 Pre-1.0. The core detector, profile system, writing modes (including the science
 modes for proofs and technical exposition), the genre axis (fiction, memoir,
-screenplay, poetry), the editor injection boundary, per-span mixed-authorship
-verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
+screenplay, poetry), the editor injection boundary, per-paragraph
+findings, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.10.0 is prepared for release as `articulate-writing`; the
+one package. Version 0.11.0 is prepared for release as `articulate-writing`; the
 [changelog](CHANGELOG.md) records what each release added. Optional adapters can
 use a model you supply; no model is bundled. This release retains the published
 v0.5.2 detector rules and fingerprint while extending packaging and rewrite

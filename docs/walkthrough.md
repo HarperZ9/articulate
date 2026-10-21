@@ -23,12 +23,12 @@ articulate check post.md --verbose
 ```
 
 The verdict is `blocked` because HIGH findings are present. The texture score of
-63 says the whole document reads machine-heavy, beyond the specific device hits.
+63 says the whole document is dense with these devices, beyond the specific hits.
 Each line points at the exact place to fix.
 
-## 2. Localize mixed authorship
+## 2. Find the dense paragraph
 
-A whole-file score hides a single generated paragraph inside otherwise clean
+A whole-file score hides a single device-heavy paragraph inside otherwise clean
 prose. `--spans` scores each paragraph on its own:
 
 ```bash
@@ -43,8 +43,7 @@ articulate check post.md --spans
   [ ?? ] span 3 L14-14: unverifiable, texture 0/100 (0H/0M): Thanks for reading.
 ```
 
-The generated paragraph is span 1 on lines 2 to 8. The hand-written paragraphs
-read clean, and the short closing line is `unverifiable` because it falls under
+The dense paragraph is span 1 on lines 2 to 8. The other paragraphs read clean, and the short closing line is `unverifiable` because it falls under
 the word floor, so the tool abstains and does not guess.
 
 ## 3. Read the judgment-level quality

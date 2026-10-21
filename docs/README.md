@@ -1,8 +1,8 @@
 # Articulate documentation
 
-Articulate is a local writing-quality and AI-tell tool. It flags the prose and
-formatting tells that make text read as generated, scores how machine-textured a
-passage is, and rewrites prose to a plain, skilled standard. The core runs on the
+Articulate is a local writing-quality tool. It flags writing devices common in AI
+output and in weak prose, scores how densely a passage uses them, and rewrites
+prose to a plain, skilled standard. The core runs on the
 standard library with no network call, and every verdict is one a reviewer can
 reproduce.
 
@@ -22,8 +22,15 @@ reproduce.
 
 ## The one boundary worth stating up front
 
-Articulate does detection and writing quality. It is not an evasion tool, it never
-disguises machine authorship, and a receipt attests that a named ruleset ran and
+Articulate is a style tool. It is not an authorship detector. On 183 texts of known
+origin it flagged all 84 AI texts and also 57 of 75 human texts (76%, 95%
+interval 65% to 84%), among them 10 of 18 essays by English learners. The
+figures and their limits are in the
+[known-provenance results](../corpus/provenance/README.md) and
+[`results.json`](../corpus/provenance/results.json). Never use a finding to accuse a person of using AI, and never to
+judge a student's work.
+
+It is not an evasion tool, and a receipt attests that a named ruleset ran and
 re-derives, never that a result is correct or that a document meets a regulation.
 The full statement is in [Boundaries](boundaries.md).
 

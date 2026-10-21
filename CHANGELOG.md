@@ -4,6 +4,27 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.11.0
+
+Public descriptions now say what the evidence supports. No rule, threshold or
+finding changes (fingerprint `sha256:9f78a7484bb20f84`).
+
+- On the known-provenance corpus the bench call flags all 84 AI texts and 57 of
+  75 human texts (76%, 95% interval 65% to 84%), 10 of 18 essays by English
+  learners among them. Articulate measures writing devices, not authorship.
+- The README, the package description, the CLI and MCP tool descriptions, the
+  GitHub Action, the VS Code extension and the docs no longer present it as
+  detecting AI authorship. They call it a style tool, link
+  `corpus/provenance/results.json`, and say never to use a finding to accuse a
+  person or to judge a student's work.
+- `--spans` is described as per-paragraph findings, and the bench prints its
+  counts as a regression check, not as recall and specificity.
+- The hero image still carries the older tagline in its pixels. It needs a
+  re-render through the art pipeline, which keeps receipts for its bytes.
+- The package docstring in `articulate/__init__.py` keeps its older first line.
+  The release check pins that file's bytes with the v0.5.2 detector closure, so
+  it changes with the next reviewed ruleset.
+
 ## 0.10.0
 
 The v0.9.1 tag never reached PyPI: the release build accepts only versions

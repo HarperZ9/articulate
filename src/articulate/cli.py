@@ -457,7 +457,7 @@ def _cmd_edit(args):
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(prog="articulate",
-                                 description="Local writing-quality and AI-tell detection.")
+                                 description="Local prose checks for writing devices. Not an authorship detector.")
     sub = ap.add_subparsers(dest="cmd")
     for cmd in ("plan", "submit", "judge", "fix", "polish"):
         p = sub.add_parser(cmd)
@@ -499,7 +499,7 @@ def main(argv=None):
             p.add_argument("--gate", action="store_true", help="exit 1 if blocked")
             p.add_argument("--verbose", action="store_true")
             p.add_argument("--spans", action="store_true",
-                           help="per-paragraph verdicts (localize mixed authorship)")
+                           help="per-paragraph findings, so one dense paragraph shows in place")
             p.add_argument("--content-free", action="store_true",
                            help="omit every verbatim substring from console/JSON/SARIF output")
         if cmd == "receipt":

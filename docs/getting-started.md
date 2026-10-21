@@ -1,31 +1,32 @@
 # Getting started
 
-Articulate reads prose and tells you where it reads as machine-written or breaks
-a plain-writing standard, with a line number for each finding. The detector runs on your
+Articulate reads prose and tells you where it uses a named writing device or
+breaks a plain-writing standard, with a line number for each finding. It does not
+tell you who wrote the text: it flags most human writing too. The detector runs on your
 machine with no network call. Model editing follows the selected backend's
 privacy policy. Install the package, run a check, create a receipt and connect
 your editor with the commands below.
 
 ## Install
 
-Version 0.10.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
+Version 0.11.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
 packages include a Python runtime; see the [native package guide](native-local-package.md).
 They include no model. A connected client supplies rewritten text through
 `edit_plan` and `edit_submit`, using its own model account and permissions.
 
 The Python package and source plugin need Python 3.9 or newer and the standard
-library. The following commands select 0.10.0 after publication.
+library. The following commands select 0.11.0 after publication.
 
 From PyPI:
 
 ```bash
-pip install articulate-writing==0.10.0
+pip install articulate-writing==0.11.0
 ```
 
 From source:
 
 ```bash
-git clone --branch v0.10.0 https://github.com/HarperZ9/articulate
+git clone --branch v0.11.0 https://github.com/HarperZ9/articulate
 cd articulate
 pip install -e .
 ```
@@ -36,7 +37,7 @@ a bare install. The optional FastMCP surface, `python -m articulate.mcp_server`,
 uses the `mcp` extra:
 
 ```bash
-pip install "articulate-writing[mcp]==0.10.0"
+pip install "articulate-writing[mcp]==0.11.0"
 ```
 
 ## Your first check
