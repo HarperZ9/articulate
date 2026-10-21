@@ -4,10 +4,28 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.9.1
 
-Bench references now name their model version. Detector rules are unchanged
+A measured baseline with known provenance replaces Pangram, and bench
+references name their model version. Detector rules are unchanged
 (fingerprint `sha256:9f78a7484bb20f84`), and no finding changes.
+
+- `corpus/provenance/` holds 183 documents whose origin is known: 75 human
+  texts (public-domain books and speeches, and PERSUADE 2.0 student essays
+  kept local), 84 texts from four local models and 24 local-model edits of
+  human texts. `manifest.json` hashes every document and records the
+  licence, or the model, digest, prompt, seed and date.
+- `scripts/provenance_eval.py` measures the bench call against that ground
+  truth. On this corpus: recall 84 of 84 (95% interval 0.96 to 1.00),
+  false-positive rate 57 of 75 (0.65 to 0.84), precision 0.60 (0.51 to
+  0.67) against a base rate of 0.53. The bench call separates AI text from
+  human text only a little better than chance here; see
+  `corpus/provenance/README.md` for the breakdown and the limits.
+- Binoculars and Fast-DetectGPT run locally as comparison detectors
+  (`scripts/provenance_detectors.py`), with every score recorded beside its
+  text hash, model pair, versions and date. AUROC 0.85 and 0.81.
+- Pangram is retired as the baseline. Its records and rescore script stay as
+  an optional tool.
 
 - The bench reads `corpus/pangram-records.jsonl`. Each record names the text by
   SHA-256 and carries the model version the result came from and the scan

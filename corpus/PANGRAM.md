@@ -1,5 +1,11 @@
 # Pangram reference records
 
+Pangram is no longer the baseline. Since 21 October 2026 the baseline is the
+[known-provenance corpus](provenance/README.md), with Binoculars and
+Fast-DetectGPT as local comparison detectors. The project holds no Pangram
+key and plans no Pangram scans. The records and the rescore script below stay
+as an optional tool for anyone who holds a key.
+
 The bench prints a Pangram result beside some corpus files. Pangram is an
 outside reference point for the bench. No rule, gate, threshold, editor
 setting or accept decision reads these records, and no work here aims to move

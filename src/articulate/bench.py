@@ -9,7 +9,9 @@ recall on AI-authored samples (does it flag them), specificity on
 human-authored samples (does it leave them alone), and the per-file detail.
 
 This is how the tool earns "high quality": precision and recall against
-labeled data, not vibes. External detector results (e.g. Pangram) can be
+labeled data, not vibes. The measured baseline is the known-provenance
+corpus in corpus/provenance/ (scripts/provenance_eval.py). Older outside
+detector results (Pangram) can still be
 recorded per sample in `<corpus>/pangram-records.jsonl`, keyed by the text's
 SHA-256 with the model version and the date observed, for cross-reference;
 they are printed but never used as an optimization target. The tool flags; it
