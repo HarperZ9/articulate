@@ -11,7 +11,7 @@ Local writing-quality and AI-tell detection and editing, no network.
 python -m articulate.cli check path/to/doc.md --gate
 ```
 
-[![version: 0.9.0](https://img.shields.io/badge/version-0.9.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/articulate-writing/)
+[![version: 0.9.1](https://img.shields.io/badge/version-0.9.1-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/articulate-writing/)
 [![CI](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-FSL--1.1--MIT-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/articulate/blob/main/LICENSE)
 ![python 3.9+](https://img.shields.io/badge/python-3.9%2B-e6e1d6?style=flat-square&labelColor=1a1712)
@@ -116,7 +116,7 @@ rewrite with its selected model, and submit it through `edit_submit`. The model
 account and conversation policy belong to that client. Local checks and host
 edits require no publisher-hosted service or separate model API key.
 
-Version 0.9.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
+Version 0.9.1 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
 with a Python runtime included. The [source plugin](docs/claude-plugin.md) remains
 available for local Claude Code, Codex and portable MCP hosts with installed
 Python. Native client installation and marketplace acceptance remain unverified.
@@ -239,7 +239,7 @@ screenplay, poetry), the editor injection boundary, per-span mixed-authorship
 verdicts, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.9.0 is prepared for release as `articulate-writing`; the
+one package. Version 0.9.1 is prepared for release as `articulate-writing`; the
 [changelog](CHANGELOG.md) records what each release added. Optional adapters can
 use a model you supply; no model is bundled. This release retains the published
 v0.5.2 detector rules and fingerprint while extending packaging and rewrite
