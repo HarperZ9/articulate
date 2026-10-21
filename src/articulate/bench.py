@@ -9,15 +9,17 @@ recall on AI-authored samples (does it flag them), specificity on
 human-authored samples (does it leave them alone), and the per-file detail.
 
 This is how the tool earns "high quality": precision and recall against
-labeled data, not vibes. External detector verdicts (e.g. Pangram) can be
-recorded per sample in a sidecar `.pangram` file for cross-reference; they
-are printed but never used as an optimization target. The tool flags; it
+labeled data, not vibes. External detector results (e.g. Pangram) can be
+recorded per sample in `<corpus>/pangram-records.jsonl`, keyed by the text's
+SHA-256 with the model version and the date observed, for cross-reference;
+they are printed but never used as an optimization target. The tool flags; it
 never rewrites toward a score.
 
 Corpus layout:
     articulate-corpus/human/<name>.txt   human-authored (expect: clean)
     articulate-corpus/ai/<name>.txt      AI-authored    (expect: flagged)
-    articulate-corpus/<any>/<name>.pangram   optional: "<label> <pct>" reference
+    articulate-corpus/pangram-records.jsonl  optional: versioned references
+    articulate-corpus/<any>/<name>.pangram   older unversioned reference
 
 Usage: python articulate-bench.py [corpus_dir]
 Exit code is the number of misclassified files (0 = perfect), for CI use.
@@ -48,14 +50,11 @@ def run_checker(path):
             "clean": r["clean"], "cadence": cad}
 
 
-def pangram_ref(path):
-    side = os.path.splitext(path)[0] + ".pangram"
-    if os.path.isfile(side):
-        try:
-            return open(side, encoding="utf-8").read().strip()
-        except OSError:
-            return ""
-    return ""
+def pangram_ref(path, corpus=None, records=None):
+    """The versioned reference for one file; see pangram_records."""
+    from . import pangram_records
+    corpus = corpus or os.path.dirname(os.path.dirname(path))
+    return pangram_records.reference(corpus, path, records)
 
 
 def expected_miss(path):
@@ -91,6 +90,8 @@ def main(argv):
         print(f"[bench] no corpus at {corpus}/ai or {corpus}/human")
         return 0
 
+    from . import pangram_records
+    records = pangram_records.load(corpus)
     misses = 0
     print(f"[bench] corpus: {corpus}")
     print(f"{'label':<7} {'verdict':<9} {'H/M/L':<10} {'texture':<22} file")
@@ -118,7 +119,7 @@ def main(argv):
         verdict = "FLAGGED" if flagged else "clean"
         mark = " " if correct else ("~" if known else "X")
         hml = f"{r['high']}/{r['medium']}/{r['low']}"
-        ref = pangram_ref(path)
+        ref = pangram_ref(path, corpus, records)
         name = os.path.basename(path) + (f"   [pangram: {ref}]" if ref else "")
         print(f"{truth:<7} {verdict:<9} {hml:<10} {tex:<22}{mark} {name}")
 

@@ -16,8 +16,8 @@ DOCS = ["README.md", "editors/vscode/README.md",
         "docs/README.md", "docs/getting-started.md", "docs/walkthrough.md",
         "docs/features.md", "docs/cli.md", "docs/boundaries.md",
         "docs/house-voice.md", "docs/series-and-voice.md", "docs/claude-plugin.md",
-        "claude-plugin/README.md"]
-MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
+        "claude-plugin/README.md", "corpus/PANGRAM.md"]
+MODULES = ["cli.py", "editor.py", "bench.py", "pangram_records.py", "mcp_server.py", "profiles.py",
            "receipt.py", "lsp_server.py", "pysource.py", "modes.py",
            "genres.py", "masking.py", "claude_cli.py", "__init__.py",
            "house.py", "house_spec.py", "house_settings.py", "house_edits.py", "house_hook.py",

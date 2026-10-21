@@ -4,6 +4,26 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+Bench references now name their model version. Detector rules are unchanged
+(fingerprint `sha256:9f78a7484bb20f84`), and no finding changes.
+
+- The bench reads `corpus/pangram-records.jsonl`. Each record names the text by
+  SHA-256 and carries the model version the result came from and the scan
+  date. Records are appended and never rewritten, so a new Pangram model sits
+  beside the old results. A corpus without the file falls back to the
+  `.pangram` sidecars, now shown as "model unrecorded".
+- The two existing sidecar results are kept unchanged and recorded with model
+  `unrecorded`, since their version and date were never written down.
+- `scripts/pangram_rescore.py` estimates the cost of a rescore with no network
+  call and, with a key, scores the corpus under a named model.
+  `scripts/pangram_agreement.py` reports agreement, precision, recall and
+  AUROC per model version with 95% intervals and lists every disagreement.
+  Both are reports. No rule, gate or editor setting is chosen from them.
+- `corpus/PANGRAM.md` records the Pangram versions (4 and 4.1), the record
+  format and the known limits.
+
 ## 0.9.0
 
 The 0.8.0 release build stopped before PyPI, so 0.9.0 is the first PyPI release
