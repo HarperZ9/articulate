@@ -19,6 +19,7 @@ from .mcp_server import do_check, do_fix, do_judge, do_polish, do_score, do_edit
 from .tool_meta import TOOLS_VAR, tool_set, offline, annotations, local_only_switch
 from .tool_text import description
 from . import house_tools as _house_tools, voice_tools as _voice_tools, tool_options
+from . import dialogue_tools as _dialogue_tools
 
 PROTOCOL = "2025-06-18"
 
@@ -166,8 +167,8 @@ TOOLS = [{'name': 'check',
 
 
 # Series, personal-voice and house-voice tools: local, read-only, defined beside their handlers.
-TOOLS += _voice_tools.TOOLS + _house_tools.TOOLS
-LOCAL_ONLY += _voice_tools.NAMES + _house_tools.NAMES
+TOOLS += _voice_tools.TOOLS + _house_tools.TOOLS + _dialogue_tools.TOOLS
+LOCAL_ONLY += _voice_tools.NAMES + _house_tools.NAMES + _dialogue_tools.NAMES
 TOOLS[0]["inputSchema"]["properties"]["max_hits"] = {
     "type": "integer", "default": 50, "minimum": 0, "maximum": 1000,
     "description": "Maximum span records; full-text verdict and scores are unchanged."}
@@ -251,6 +252,8 @@ def _call(params: dict, session=None) -> dict:
                                     scores=args.get("scores"), model=args.get("model"),
                                     author_text=args.get("author_text"),
                                     **tool_options.given(name, args))
+        elif name in _dialogue_tools.NAMES:
+            result = _dialogue_tools.handle(name, args)
         elif name in _voice_tools.NAMES or name in _house_tools.NAMES:
             result = (_voice_tools if name in _voice_tools.NAMES else _house_tools).handle(name, args)
         else:

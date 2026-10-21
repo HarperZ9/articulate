@@ -34,7 +34,7 @@ from find_program import find_program  # noqa: E402  (the path is set just above
 LOCAL_TOOLS = {"check", "score", "edit_plan", "edit_submit", "judge", "fix",
                "polish", "articulate.status", "articulate.doctor", "corpus_check",
                "title_workshop", "interview", "restructure_plan", "voice_compare",
-               "voice_apply_plan", "house_brief", "house_transform"}
+               "voice_apply_plan", "house_brief", "house_transform", "dialogue_check"}
 ORIGINAL = "We leverage 42 samples. See [the report](https://example.org/report)."
 GOOD_REWRITE = "We use 42 samples. See [the report](https://example.org/report)."
 BAD_REWRITE = "We use 43 samples."

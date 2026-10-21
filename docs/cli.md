@@ -370,6 +370,19 @@ articulate restructure DOC [--out FILE] [--anchors footnote|link]
 
 All four report or propose. None edits an input file in place.
 
+## dialogue
+
+```
+articulate dialogue FILES_OR_DIRS... [--voices DIR] [--format auto|lwd|colon|play]
+                    [--theme WORDS] [--min-lines N] [--worst N] [--json]
+                    [--markdown FILE] [--gate] [--max-epigram-rate R] [--min-lift X]
+```
+
+Checks spoken lines against the dialogue profile and each character's voice
+sheet, and scores how distinct each voice is by blind attribution. Prints a
+table per character and the worst lines, or the full report with `--json`.
+`--gate` exits 1 when the report fails. See [dialogue and character voice](dialogue.md).
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.

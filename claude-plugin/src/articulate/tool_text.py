@@ -58,6 +58,10 @@ TOOLS = {
                         "edits, a meaning guard, located notes and a receipt. house false "
                         "returns the text unchanged. Local, no network; it edits none of "
                         "your files."),
+    "dialogue_check": ("Check fiction dialogue: epigram shapes, antithesis, characters stating "
+                       "the theme, closing zingers and abstract nouns; each line against its "
+                       "character's voice sheet; and a blind attribution test of how distinct "
+                       "each voice is. Local, no network; it edits none of your files."),
     "articulate.status": "Local server identity and liveness. No network call.",
     "articulate.doctor": ("Local readiness report: version, tools, optional backends "
                           "and session sampling capability. No network call."),
