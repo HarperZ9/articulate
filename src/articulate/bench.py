@@ -3,15 +3,15 @@
 """
 articulate-bench.py
 
-Measured quality for the Articulate writing detector. Runs
-check-writing-devices.py over a labeled corpus and prints a scorecard:
-recall on AI-authored samples (does it flag them), specificity on
-human-authored samples (does it leave them alone), and the per-file detail.
+A regression check for the Articulate writing-device rules. It runs the
+detector over a small labeled corpus and prints, per file, what it raised,
+and fails when a file stops raising, or starts raising, what it should. The
+counts are no measure of detection: the corpus holds nine files.
 
-This is how the tool earns "high quality": precision and recall against
-labeled data, not vibes. The measured baseline is the known-provenance
-corpus in corpus/provenance/ (scripts/provenance_eval.py). Older outside
-detector results (Pangram) can still be
+The measure against ground truth is the known-provenance corpus in
+corpus/provenance/ (scripts/provenance_eval.py). There the bench call flags
+all 84 AI texts and 57 of 75 human texts, so it is a style check. It is not an
+authorship test. Older outside detector results (Pangram) can still be
 recorded per sample in `<corpus>/pangram-records.jsonl`, keyed by the text's
 SHA-256 with the model version and the date observed, for cross-reference;
 they are printed but never used as an optimization target. The tool flags; it
@@ -24,7 +24,7 @@ Corpus layout:
     articulate-corpus/<any>/<name>.pangram   older unversioned reference
 
 Usage: python articulate-bench.py [corpus_dir]
-Exit code is the number of misclassified files (0 = perfect), for CI use.
+Exit code is the number of files that changed what they raise (0 = none), for CI use.
 """
 import json
 import os
@@ -135,15 +135,14 @@ def main(argv):
     human_clean = sum(1 for p in human_files if not is_flagged(run_checker(p)))
     print("-" * 78)
     if n_ai:
-        print(f"[bench] AI recall (flagged/total):      {ai_flagged}/{n_ai} "
-              f"= {ai_flagged / n_ai:.0%}")
+        print(f"[bench] ai/ files flagged:     {ai_flagged}/{n_ai}")
     if n_human:
-        print(f"[bench] human specificity (clean/total): {human_clean}/{n_human} "
-              f"= {human_clean / n_human:.0%}  (false positives: {n_human - human_clean})")
+        print(f"[bench] human/ files clean:    {human_clean}/{n_human}")
     print(f"[bench] regressions (unexpected misses): {misses}   "
           f"[~ = known ceiling, not a regression]")
-    print("[bench] note: device-clean AI can pass Articulate yet fail a trained "
-          "detector; those are the honest misses, marked ~ and gated as expected.")
+    print("[bench] note: a regression check on a small corpus, not a detection measure. "
+          "On known-provenance text the same call flags 57 of 75 human texts; "
+          "see corpus/provenance/README.md.")
     return misses + _domain_misses(corpus)
 
 

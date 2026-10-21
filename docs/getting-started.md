@@ -1,7 +1,8 @@
 # Getting started
 
-Articulate reads prose and tells you where it reads as machine-written or breaks
-a plain-writing standard, with a line number for each finding. The detector runs on your
+Articulate reads prose and tells you where it uses a named writing device or
+breaks a plain-writing standard, with a line number for each finding. It does not
+tell you who wrote the text: it flags most human writing too. The detector runs on your
 machine with no network call. Model editing follows the selected backend's
 privacy policy. Install the package, run a check, create a receipt and connect
 your editor with the commands below.

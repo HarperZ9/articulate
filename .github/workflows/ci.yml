@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install -e ".[dev]"
-      # The suite gates on the benchmark (recall/specificity), the dogfood check
+      # The suite gates on the benchmark (a regression check), the dogfood check
       # (our own prose passes our own standard), the mode/receipt/LSP contracts,
       # and the ReDoS safety test.
       - run: python -m pytest -q

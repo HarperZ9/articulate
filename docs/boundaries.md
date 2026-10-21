@@ -3,13 +3,27 @@
 Articulate makes narrow claims on purpose. This page states what a verdict and a
 receipt mean, and what they never mean. Read it before you rely on either.
 
-## Detection and writing quality, never evasion
+## Not an authorship detector
 
-Articulate finds where prose reads as machine-written or breaks a plain-writing
+Articulate is a style tool. It is not an authorship detector. On 183 texts of known
+origin it flagged all 84 AI texts and also 57 of 75 human texts (76%, 95%
+interval 65% to 84%), among them 10 of 18 essays by English learners. The
+figures and their limits are in the
+[known-provenance results](../corpus/provenance/README.md) and
+[`results.json`](../corpus/provenance/results.json).
+
+A finding, a verdict, a texture score or a per-paragraph flag names devices in the
+text. None of them is evidence about who or what wrote it. Never use one to accuse
+a person of using AI, and never to grade, discipline or judge a student. Learner
+English was flagged at a lower rate than other student essays in this sample (10
+of 18 against 31 of 36), but both rates are high and the sample is small.
+
+## Writing quality, never evasion
+
+Articulate finds where prose uses a named device or breaks a plain-writing
 standard, and it helps you rewrite to that standard. It is not a tool for slipping
-past another detector, and it never disguises machine authorship. A lower detector
-score is a byproduct of clearer writing, and it is never the target the tool
-optimizes toward. The rewrite loop is gated on writing quality, and the benchmark
+past another detector. A detector score is never the target the tool optimizes
+toward. The rewrite loop is gated on writing quality, and the benchmark
 refuses to report a competitor-detector-evasion result as a feature.
 
 ## Exposition quality is not correctness

@@ -456,17 +456,17 @@ no trust in whoever issued it first. The verdict uses a closed set of three:
 There is deliberately no trusted or approved value. The receipt certifies
 re-derivability, and the issuer's identity is not load-bearing.
 
-## Per-span mixed-authorship
+## Per-paragraph findings
 
 `--spans` scores each paragraph on its own and reports its line range, so a single
-generated paragraph in an otherwise clean document is flagged in place, and one
+paragraph dense with devices in an otherwise clean document is flagged in place, and one
 aggregate score cannot smear across the whole file. A per-span receipt records the
 per-block verdicts, each with its own text hash.
 
 ## Sub-threshold calibration
 
-Below a 30-word floor there are too few tokens to call a text clean human writing,
-so a device-clean short text reads `unverifiable` and the receipt abstains rather
+Below a 30-word floor there are too few words to call a text clean, so a
+device-clean short text reads `unverifiable` and the receipt abstains rather
 than emit a confident verdict on noise. A banned device is unambiguous at any
 length, so a short text with a device still reads `flagged`.
 
@@ -509,7 +509,11 @@ The same detection reaches you through several surfaces:
 
 ## The benchmark
 
-Quality is measured, not asserted. `articulate.bench` runs the detector over a
-labeled corpus and reports recall on the AI-authored samples, specificity on the
-human-authored samples, and a count of regressions. The exit code is the number
-of misclassified files, so a checker can gate on it.
+`articulate.bench` is a regression check. It runs the detector over a small
+corpus of nine files and fails when a file stops raising, or starts raising, what
+it raised before. The exit code is the number of changed files, so a checker can
+gate on it. Its counts are no measure of detection.
+
+The measure against ground truth is `scripts/provenance_eval.py` on the
+[known-provenance corpus](../corpus/provenance/README.md): all 84 AI texts
+flagged, and 57 of 75 human texts flagged as well.

@@ -19,7 +19,7 @@ TOOLS = {
               "up to max_hits HIGH and MEDIUM findings (50 by default), with span "
               "records capped at about 30,000 characters. The clean/flagged verdict, "
               "texture score, advisory count and cadence cover the full text. " + DOES_NOT_PROVE),
-    "score": ("Return the 0-100 machine-texture score, finding counts, passive-voice "
+    "score": ("Return the 0-100 device-density (texture) score, finding counts, passive-voice "
               "and adverb rates, and cadence flags. Local, no network. " + DOES_NOT_PROVE),
     "judge": "Assess prose. " + _EDIT,
     "fix": "Suggest a rewrite. " + _EDIT,
