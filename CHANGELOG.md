@@ -4,6 +4,20 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+- `articulate campaign` reads a JSON list of short social texts and reports
+  promotional templates in posts, stock-persona slot grammar in bios, and
+  clusters of near-duplicate or templated posts with their shared skeleton.
+  Each finding names the pattern, its offsets and its cost to a reader. The
+  report format is `articulate-campaign-report/1`, with a JSON schema at
+  `docs/campaign-schema.json`. Python API: `articulate.campaign.analyze`.
+- A labelled synthetic corpus in `corpus/campaign/` with ESL, dialect,
+  translated, code-switched and non-English hard negatives, a per-platform
+  split, a per-stratum fairness bound and controls that must fail. Run it with
+  `python -m articulate.campaign_bench`. No change to the prose checker or its
+  ruleset.
+
 ## 0.12.0
 
 Public descriptions now say what the evidence supports. No rule, threshold or
