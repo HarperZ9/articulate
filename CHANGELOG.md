@@ -4,6 +4,28 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.12.0
+
+Public descriptions now say what the evidence supports. No rule, threshold or
+finding changes. The 0.11.0 release went out before this change merged, so its
+PyPI description still read "AI-tell detection".
+
+- On the known-provenance corpus the bench call flags all 84 AI texts and 57 of
+  75 human texts (76%, 95% interval 65% to 84%), 10 of 18 essays by English
+  learners among them. Articulate measures writing devices, not authorship.
+- The README, the package description, the CLI and MCP tool descriptions, the
+  GitHub Action, the VS Code extension and the docs no longer present it as
+  detecting AI authorship. They call it a style tool, link
+  `corpus/provenance/results.json`, and say never to use a finding to accuse a
+  person or to judge a student's work.
+- `--spans` is described as per-paragraph findings, and the bench prints its
+  counts as a regression check, not as recall and specificity.
+- The hero image still carries the older tagline in its pixels. It needs a
+  re-render through the art pipeline, which keeps receipts for its bytes.
+- The package docstring in `articulate/__init__.py` keeps its older first line.
+  The release check pins that file's bytes with the v0.5.2 detector closure, so
+  it changes with the next reviewed ruleset.
+
 ## 0.11.0
 
 Dialogue and character voice checks for game and stage scripts. Detector rules
@@ -29,25 +51,6 @@ for prose are unchanged, and no prose finding changes.
   epigram shapes on 0.1 to 0.5 percent of naturalistic lines and on 1.6
   percent of Wilde's. `scripts/dialogue_calibrate.py` repeats the measurement;
   see `docs/dialogue.md`.
-
-Public descriptions now say what the evidence supports. No prose rule,
-threshold or finding changes for this part.
-
-- On the known-provenance corpus the bench call flags all 84 AI texts and 57 of
-  75 human texts (76%, 95% interval 65% to 84%), 10 of 18 essays by English
-  learners among them. Articulate measures writing devices, not authorship.
-- The README, the package description, the CLI and MCP tool descriptions, the
-  GitHub Action, the VS Code extension and the docs no longer present it as
-  detecting AI authorship. They call it a style tool, link
-  `corpus/provenance/results.json`, and say never to use a finding to accuse a
-  person or to judge a student's work.
-- `--spans` is described as per-paragraph findings, and the bench prints its
-  counts as a regression check, not as recall and specificity.
-- The hero image still carries the older tagline in its pixels. It needs a
-  re-render through the art pipeline, which keeps receipts for its bytes.
-- The package docstring in `articulate/__init__.py` keeps its older first line.
-  The release check pins that file's bytes with the v0.5.2 detector closure, so
-  it changes with the next reviewed ruleset.
 
 ## 0.10.0
 

@@ -9,24 +9,24 @@ your editor with the commands below.
 
 ## Install
 
-Version 0.11.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
+Version 0.12.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
 packages include a Python runtime; see the [native package guide](native-local-package.md).
 They include no model. A connected client supplies rewritten text through
 `edit_plan` and `edit_submit`, using its own model account and permissions.
 
 The Python package and source plugin need Python 3.9 or newer and the standard
-library. The following commands select 0.11.0 after publication.
+library. The following commands select 0.12.0 after publication.
 
 From PyPI:
 
 ```bash
-pip install articulate-writing==0.11.0
+pip install articulate-writing==0.12.0
 ```
 
 From source:
 
 ```bash
-git clone --branch v0.11.0 https://github.com/HarperZ9/articulate
+git clone --branch v0.12.0 https://github.com/HarperZ9/articulate
 cd articulate
 pip install -e .
 ```
@@ -37,7 +37,7 @@ a bare install. The optional FastMCP surface, `python -m articulate.mcp_server`,
 uses the `mcp` extra:
 
 ```bash
-pip install "articulate-writing[mcp]==0.11.0"
+pip install "articulate-writing[mcp]==0.12.0"
 ```
 
 ## Your first check
