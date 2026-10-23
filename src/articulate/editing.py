@@ -108,8 +108,7 @@ accepts only complete five-score assessments with no individual regression.
         return fallback(info)
     if goal == "judge":
         result = host_edit.deterministic_edit(text, goal="judge", **options)
-        result["assessment"] = output
-        return finish(result, info)
+        return finish(host_edit.judge_floor(result, output), info)
 
     best, best_info = text, info
     baseline = quality = _scores(output) if goal == "polish" else None
