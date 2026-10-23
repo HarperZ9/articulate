@@ -1,7 +1,7 @@
 # Releasing Articulate
 
-A release is a version tag on `main`. Pushing the tag runs
-`.github/workflows/publish.yml`, which builds the Python package, the Claude
+A release is a version tag on `main` plus a published GitHub release for that
+tag. Publishing the release runs `.github/workflows/publish.yml`, which builds the Python package, the Claude
 Code plugin and the Windows native package, then publishes to PyPI and attaches
 the archives to a GitHub release.
 
@@ -42,6 +42,9 @@ answers.
    the three plugin manifests.
 2. Move the CHANGELOG entries from Unreleased to the new version.
 3. Open a pull request, wait for CI to pass, then merge.
-4. Tag the merge commit on `main` with `v<version>` and push the tag.
-5. Watch the publish workflow. When it finishes, install the version from PyPI
+4. Tag the merge commit on `main` with `v<version>` and push the tag. The tag
+   alone starts nothing.
+5. Publish a GitHub release for the tag, with the CHANGELOG section as notes:
+   `gh release create v<version> --verify-tag --notes-file notes.md`.
+6. Watch the publish workflow. When it finishes, install the version from PyPI
    into a clean virtual environment and run `articulate --version`.
