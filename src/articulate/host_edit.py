@@ -123,6 +123,49 @@ def _summary(findings):
     return '\n'.join('L{line} [{tier} {category}] {reason}: {snippet}'.format(**f) for f in findings) or 'No mechanical findings.'
 
 
+def _blocking(findings):
+    return [f for f in findings if str(f.get('tier', '')).upper() == 'HIGH']
+
+
+def _terms(finding):
+    """Words a reader would use to name one finding: its category and its label parts."""
+    category = finding.get('category', '')
+    label = finding.get('label', '')
+    parts = {category, category.replace('-', ' '), category.replace('-', '')}
+    for chunk in [re.sub(r'\([^)]*\)', '', label)] + re.findall(r'\(([^)]*)\)', label):
+        parts.update(part.strip() for part in chunk.split('/'))
+    return {part.lower() for part in parts if len(part) >= 3 or (part and not part.isascii())}
+
+
+def _names(assessment, finding):
+    text = ' '.join(assessment.lower().split())
+    for term in _terms(finding):
+        if not term.isascii():
+            if term in text:
+                return True
+        elif re.search(r'(?<![a-z])' + re.escape(term) + r'(?![a-z])', text):
+            return True
+    return False
+
+
+def judge_floor(result, assessment):
+    """Mark a judge result unreliable when the gate blocked the text and the
+    assessment names none of the blocking findings. The floor checks naming, not
+    the quality of the advice."""
+    result['assessment'] = assessment
+    blocking = _blocking(result.get('findings_before', []))
+    if result.get('gate_before') == 'ok' or not blocking:
+        return result
+    if not isinstance(assessment, str) or not any(_names(assessment, f) for f in blocking):
+        cats = sorted({f['category'] for f in blocking})
+        result['quality_status'] = 'unreliable'
+        result['quality_note'] = ('The judge named none of the {} blocking finding(s) ({}); '
+                                  'treat this assessment as unreliable.').format(len(blocking), ', '.join(cats))
+        if isinstance(result.get('receipt'), dict):
+            result['receipt']['quality_status'] = 'unreliable'
+    return result
+
+
 def plan_settings(text, plan_id):
     """The settings a plan binds, after checking the plan matches the text."""
     return _verify(text, plan_id)
@@ -137,7 +180,8 @@ def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=F
     before = check_under(text, settings['profile'])
     findings = _findings(before)
     delta = settings['profile'].get('editor', {}).get('standard_delta', '')
-    instr = (prompts.judge_instructions(_summary(findings), delta) if goal == 'judge'
+    blocking = _summary(_blocking(findings)) if before['gate'] != 'ok' and _blocking(findings) else ''
+    instr = (prompts.judge_instructions(_summary(findings), delta, blocking) if goal == 'judge'
              else prompts.rewrite_instructions(_summary(findings), is_html=is_html, standard_delta=delta,
                                                voice_notes=voice_notes))
     instr += edit_options.instruction_note(settings)
@@ -217,8 +261,7 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
     _check_author_text(settings, author_text)
     if settings['goal'] == 'judge':
         out = _result(text, text, settings, [], 'host', model, author_text_origin=author_text_origin)
-        out['assessment'] = rewrite
-        return out
+        return judge_floor(out, rewrite)
     allow, freeze = edit_options.bound(settings)
     guarded = restore_masks(text, rewrite, settings['is_html'], settings['is_tex'], author_text,
                             allow=allow, freeze=freeze)

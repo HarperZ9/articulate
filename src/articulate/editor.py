@@ -196,6 +196,8 @@ def _execute_file(path, goal, out_path=None, passes=3, bar=4, mode=None, backend
               f"{attempt.get('reason', 'unavailable')}")
     if goal == "judge":
         print(result.get("assessment") or mechanical_text(text, _resolve_mode(mode)[0])[1])
+        if result.get("quality_status") == "unreliable":
+            print(f"[judge] unreliable: {result.get('quality_note')}")
     else:
         out_path = out_path or os.path.splitext(path)[0] + (".fixed" if goal == "fix" else ".polished") + ext
         accepted = result["text"]
