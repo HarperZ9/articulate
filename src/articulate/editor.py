@@ -164,16 +164,8 @@ def strip_preamble(out):
 
 def _kept_reason(result):
     """Why an edit returned the original text, in one line."""
-    reasons = sorted({r for item in result.get("refused") or [] for r in item.get("reasons", [])})
-    if reasons:
-        return "the checks refused the rewrite (" + "; ".join(reasons) + ")"
-    if result.get("note"):
-        return result["note"]
-    if result.get("backend") in ("none", "host", None):
-        return "no model backend ran, and the deterministic pass found nothing it may change"
-    if result.get("gate_after") == "ok" and result.get("quality_met"):
-        return "the text already met the quality bar"
-    return "no rewrite passed the gate and the no-regression checks"
+    from .edit_notes import kept_reason
+    return kept_reason(result)
 
 
 def _execute_file(path, goal, out_path=None, passes=3, bar=4, mode=None, backend=None):
