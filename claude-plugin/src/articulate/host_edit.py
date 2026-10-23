@@ -23,8 +23,9 @@ import json
 import re
 
 from . import checkext, detector, domains, edit_options, modes, profiles, prompts
-from . import house_edits
 from .meaning_guard import _PARAGRAPH, guard_rewrite, mask_text, protected_spans, restore_masks
+from .edit_notes import _blocking, judge_floor  # noqa: F401  (judge_floor is public here)
+from .phrase_pass import kept_edits as _kept_edits, phrase_pass as _phrase_pass
 
 
 def _canonical(value):
@@ -121,49 +122,6 @@ def _findings(result):
 
 def _summary(findings):
     return '\n'.join('L{line} [{tier} {category}] {reason}: {snippet}'.format(**f) for f in findings) or 'No mechanical findings.'
-
-
-def _blocking(findings):
-    return [f for f in findings if str(f.get('tier', '')).upper() == 'HIGH']
-
-
-def _terms(finding):
-    """Words a reader would use to name one finding: its category and its label parts."""
-    category = finding.get('category', '')
-    label = finding.get('label', '')
-    parts = {category, category.replace('-', ' '), category.replace('-', '')}
-    for chunk in [re.sub(r'\([^)]*\)', '', label)] + re.findall(r'\(([^)]*)\)', label):
-        parts.update(part.strip() for part in chunk.split('/'))
-    return {part.lower() for part in parts if len(part) >= 3 or (part and not part.isascii())}
-
-
-def _names(assessment, finding):
-    text = ' '.join(assessment.lower().split())
-    for term in _terms(finding):
-        if not term.isascii():
-            if term in text:
-                return True
-        elif re.search(r'(?<![a-z])' + re.escape(term) + r'(?![a-z])', text):
-            return True
-    return False
-
-
-def judge_floor(result, assessment):
-    """Mark a judge result unreliable when the gate blocked the text and the
-    assessment names none of the blocking findings. The floor checks naming, not
-    the quality of the advice."""
-    result['assessment'] = assessment
-    blocking = _blocking(result.get('findings_before', []))
-    if result.get('gate_before') == 'ok' or not blocking:
-        return result
-    if not isinstance(assessment, str) or not any(_names(assessment, f) for f in blocking):
-        cats = sorted({f['category'] for f in blocking})
-        result['quality_status'] = 'unreliable'
-        result['quality_note'] = ('The judge named none of the {} blocking finding(s) ({}); '
-                                  'treat this assessment as unreliable.').format(len(blocking), ', '.join(cats))
-        if isinstance(result.get('receipt'), dict):
-            result['receipt']['quality_status'] = 'unreliable'
-    return result
 
 
 def plan_settings(text, plan_id):
@@ -286,35 +244,6 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
     allowed = guarded.get('allowed_changes', []) if accepted != text else []
     return _result(text, accepted, settings, refused, 'host', model, quality, scores,
                    author_text_origin, allowed)
-
-
-def _paragraph_of(text, offset):
-    return len(_PARAGRAPH.findall(text, 0, offset))
-
-
-def _phrase_pass(text, is_html, is_tex, allow, freeze):
-    """Apply each closed-list phrase edit alone, kept only if the meaning guard
-    accepts it. Returns the text, the kept edits and the refusals."""
-    spans = protected_spans(text, is_html, is_tex, freeze)
-    current, kept, refused = text, [], []
-    for e in reversed(house_edits.phrase_edits(text, spans)):
-        trial = current[:e['start']] + e['new'] + current[e['end']:]
-        guarded = guard_rewrite(current, trial, is_html, is_tex, allow=allow, freeze=freeze)
-        if guarded['refused']:
-            refused += [dict(r, paragraph=_paragraph_of(text, e['start'])) for r in guarded['refused']]
-            continue
-        current = trial
-        kept.append({'rule': 'phrase', 'line': text.count('\n', 0, e['start']) + 1,
-                     'start': e['start'], 'end': e['end'], 'old': text[e['start']:e['end']], 'new': e['new']})
-    return current, kept[::-1], refused
-
-
-def _kept_edits(text, edits, refused):
-    """Drop edits in any paragraph the final guard kept as the original."""
-    lost = {r.get('paragraph') for r in refused}
-    if None in lost:
-        return []
-    return [e for e in edits if _paragraph_of(text, e['start']) not in lost]
 
 
 def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False,
