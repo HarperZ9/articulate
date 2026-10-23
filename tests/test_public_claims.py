@@ -10,8 +10,9 @@ SURFACES = ["README.md", "pyproject.toml", "action.yml", "editors/vscode/package
             "editors/vscode/README.md", "docs/README.md", "docs/getting-started.md",
             "docs/boundaries.md", "docs/features.md", "docs/cli.md", "docs/walkthrough.md",
             "src/articulate/cli.py", "src/articulate/mcp_server.py",
-            "src/articulate/tool_text.py", "src/articulate/bench.py"]
-OVERCLAIM = re.compile(r"(?i)AI-tell detection|machine-textured|machine-texture score|"
+            "src/articulate/tool_text.py", "src/articulate/bench.py",
+            ".pre-commit-hooks.yaml", "assets/make_hero.py", "assets/articulate-hero.svg"]
+OVERCLAIM = re.compile(r"(?i)AI-tell detection|\bAI[- ]tells?\b|AI and prose tells|machine-textured|machine-texture score|"
                        r"reads as machine-written|mixed[- ]authorship|AI recall|human specificity|"
                        r"specificity on the\s+human")
 
@@ -27,6 +28,11 @@ def test_no_surface_presents_articulate_as_an_authorship_detector():
     for rel in SURFACES:
         m = OVERCLAIM.search(_text(rel))
         assert not m, (rel, m and m.group(0))
+
+
+def test_the_overclaim_check_can_fail():
+    for planted in ("Flag AI and prose tells", "AI-tell detection and editing", "no AI tells"):
+        assert OVERCLAIM.search(planted), planted
 
 
 def test_the_main_surfaces_state_the_evidence_and_the_student_rule():
