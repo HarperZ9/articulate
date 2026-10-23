@@ -62,6 +62,21 @@ jobs:
       - run: python scripts/build_claude_plugin.py build/claude-plugin --dev
       - run: /usr/bin/python3 scripts/smoke_claude_plugin.py build/claude-plugin --command /usr/bin/python3
 
+  extras:
+    # The [mcp] and [hosted] extras pull fastmcp. The default jobs install only
+    # [dev], so the fastmcp tests skip there. This job installs both extras,
+    # fails if fastmcp did not import, and runs the full suite with them.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev,mcp,hosted]"
+      - run: python -c "import fastmcp; print('fastmcp', fastmcp.__version__)"
+      - run: python -m pytest -q tests/test_tool_annotations.py tests/test_hosted_mcp.py tests/test_house_mcp.py tests/test_local_mcp.py tests/test_mcp_editing.py tests/test_voice_mcp.py
+      - run: python -m pytest -q
+
   articulate-self-check:
     runs-on: ubuntu-latest
     steps:
