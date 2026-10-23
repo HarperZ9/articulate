@@ -53,6 +53,8 @@ def test_an_edit_the_meaning_guard_refuses_is_dropped(monkeypatch):
             return {"text": original, "refused": [{"paragraph": 0, "reasons": ["planted"]}]}
         return real(original, rewrite, *args, **kwargs)
 
+    from articulate import phrase_pass
+    monkeypatch.setattr(phrase_pass, "guard_rewrite", refuse_moreover)
     monkeypatch.setattr(host_edit, "guard_rewrite", refuse_moreover)
     out = host_edit.deterministic_edit(SLOP, goal="fix")
     assert "Moreover, the cache" in out["text"]

@@ -78,7 +78,8 @@ def _edit(text, goal, **options):
         result = (deterministic_edit if backend == "none" else edit_plan)(text, goal=goal, **settings)
         if goal == "polish":
             result.update(scores=None, quality_met=False)
-        return result
+        from .edit_notes import annotate_kept
+        return annotate_kept(result, text, goal)
     try:
         from .editing import run_edit
     except ImportError:

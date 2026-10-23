@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import re
 
-from . import backends, host_edit, prompts
+from . import backends, host_edit, prompts, edit_notes
 
 
 def _scores(output):
@@ -80,7 +80,7 @@ accepts only complete five-score assessments with no individual regression.
             result["receipt"]["model_calls"] = list(calls)
         if refused:
             result["refused"] = refused + result.get("refused", [])
-        return result
+        return edit_notes.annotate_kept(result, text, goal)
 
     def fallback(info):
         if info.backend == "host":

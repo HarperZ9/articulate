@@ -75,6 +75,11 @@ def to_sarif(results):
     rules, out = {}, []
     for r in results:
         uri = "stdin" if r["file"] == "<stdin>" else r["file"].replace("\\", "/")
+        if uri != "stdin" and os.path.isabs(r["file"]):
+            # SARIF wants a URI: an absolute path becomes file:///, a relative
+            # path stays a relative reference to the repository root.
+            from pathlib import Path
+            uri = Path(r["file"]).resolve().as_uri()
         for f in r["high"] + r["medium"] + r.get("low", []):
             rid = f["rule_id"]
             desc = f.get("label") or f["category"]      # category only when redacted
