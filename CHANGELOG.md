@@ -4,7 +4,29 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.14.0
+
+Bug fixes now ship as patch releases, the command line reports its version, and
+the `[mcp]` extra installs a fastmcp that works.
+
+- `articulate --version` and `-V` print the package version. Before, the flag
+  failed with exit 2.
+- The native release check no longer refuses a version whose patch number is
+  above 0. That check stopped the 0.12.1 publish. The tag, ref, clean-tree and
+  ruleset checks still apply. `RELEASING.md` describes the process.
+- The `[mcp]` extra now reads `fastmcp>=3.2.4,<4`. fastmcp 4 dropped the tool
+  annotation hints. A new CI job installs `[mcp]` and `[hosted]` and runs the
+  MCP tests and the full suite with them.
+- A voice range no longer goes below 0, and a share range stops at 1. A rate
+  had read `your range -0.134 to 1.474`.
+- The pre-commit hook description and the hero caption source now describe
+  named writing devices. They had said "AI and prose tells" and "AI-tell
+  detection".
+- `scripts/sync_local_install.py` prints the version that the PATH command, the
+  Claude Code MCP server and the plugin each run.
+
+The Markdown structure fix below shipped in this release too.
+
 
 Markdown structure no longer reads as prose. The detector rules and their
 fingerprint are unchanged; the fix sits in the check layer in front of them.
