@@ -4,7 +4,7 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## Unreleased
+## 0.15.0
 
 The editor now does part of the work the checker points at, and it refuses
 rewrites that change meaning.
