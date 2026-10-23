@@ -96,7 +96,10 @@ def _range(profile, key):
     values = [s[key] for s in profile["per_sample"]]
     low, high = min(values), max(values)
     margin = max(0.1 * (high - low), 0.05 * abs((low + high) / 2))
-    return round(low - margin, 3), round(high + margin, 3)
+    # Every scalar is a count, length, rate or share, so the widened range stops
+    # at 0, and a share stops at 1.
+    ceiling = 1.0 if key.endswith("_share") else float("inf")
+    return round(max(0.0, low - margin), 3), round(min(ceiling, high + margin), 3)
 
 
 def _rare_openings(text, profile):
