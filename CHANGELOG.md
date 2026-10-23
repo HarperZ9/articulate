@@ -4,6 +4,15 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+- `articulate negation` scores each entry by the share of its clauses spent on
+  what a thing lacks: "does not", "never", "no server", "not yet", "only",
+  "limited to". The copy rule warns at 30% and fails at 50%. The fiction rule
+  warns at 45%, fails at 65% and skips character speech. The report also lists
+  virtue phrases such as "provenance" and "verifiable". Readers cover Markdown,
+  HTML, `.lwd` scripts, JSON film scripts and JavaScript UI strings.
+
 ## 0.15.1
 
 A patch release. It is also the first release to use the patch path that 0.14.0
