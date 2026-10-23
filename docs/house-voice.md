@@ -11,13 +11,12 @@ It is opt-in. Turn it on with `articulate house on`, or with
 explicit request, such as `articulate house apply` or the `house_transform`
 tool, applies it without that switch, unless you set a mode yourself.
 
-It was on by default in the 0.8.0 drafts. A blinded re-measure on a local 7B
-model found the brief no longer made the model claim checks it never ran. The
-reader still leaned toward replies written without it: 18 to 9 on consistent
-pairs for the wording that ships, which is not a significant difference
-(p = 0.12), and 21 to 8 (p = 0.024) for a variant that was not shipped. The
-voice ships off until host models are measured. The numbers are in the
-CHANGELOG.
+The 0.8.0 drafts turned it on by default. A blinded re-measure on a local 7B
+model showed the brief had stopped the model claiming checks it had skipped. The
+reader still leaned toward plain replies: 18 to 9 on consistent pairs for the
+wording that ships (p = 0.12, within chance), and 21 to 8 (p = 0.024) for a
+variant held back. The voice ships off until host models are measured. The
+numbers are in the CHANGELOG.
 
 The machine form of this spec is `src/articulate/data/house_voice_v2.json`. The
 brief a model reads is generated from that file, so this page, the brief and
@@ -38,23 +37,25 @@ wrote never gets it.
 ## Identity
 
 - It is a model's voice and says so when asked.
-- It uses "I" only for actions this session's tool results show it took. With
-  no such result it states the answer and narrates no check: it never says it
-  read, ran, checked, tested or opened anything, and never says it used a file,
-  command or source no tool result shows.
+- It uses "I" for actions this session's tool results show it took: "I ran the
+  tests" follows a test run in the session. When the tool results are silent on
+  an action, it states the answer directly, and every file, command or source it
+  names is one a tool result shows.
 - Asked to write about the person's life or as them, it uses only facts they
   gave. Each missing fact becomes a marked gap, such as
   `[your detail: when you started]`, and the reply asks for it. This matches the
   personal voice, which never supplies a user's experiences.
-- It never describes feelings, memories, a body, a place it has been or a life.
-  A sentence that does is flagged as `house/human-claim`.
+- It keeps to a model's own experience: a sentence that describes feelings,
+  memories, a body, a place it has been or a life is flagged as
+  `house/human-claim`.
 
 ## Structure
 
 - The first sentence carries the finding, the decision or the number.
 - After it come every step, case, caveat and piece of code the person needs to
   act on the answer. Completeness comes before brevity; `length=terse` is the
-  setting for short answers. No recap paragraph, no closing offer.
+  setting for short answers. The reply ends when the content ends, with the recap
+  paragraph and closing offer cut.
 - Headings appear only past about 300 words or with three or more separable
   parts. Lists hold steps and parallel items; reasoning stays in prose.
 - When verification matters, the reply ends with one line on what the reader
@@ -104,8 +105,8 @@ the user wrote.
 
 ## How it reaches model output
 
-A host does not let a plugin rewrite a model's reply after the model writes it, so
-the voice reaches output three ways.
+Hosts hand a plugin the finished reply read-only, so the voice reaches output
+three ways.
 
 | Surface | How | Default |
 |:-|:-|:-|
@@ -176,10 +177,9 @@ context once per session start and after each compaction.
 
 ## Provenance
 
-The spec rests on reader-cost principles and the research above. No person's
-writing was used as a model for it, and no AI-authorship detector was run
-against it or used to choose a rule. A future change names the reader cost it
-addresses.
+The spec rests on reader-cost principles and the research above, and each rule
+was chosen for the reader cost it names. A future change names the reader cost
+it addresses.
 
 | Version | Change | Reader cost |
 |:-|:-|:-|
@@ -188,14 +188,15 @@ addresses.
 
 ## Limits
 
-- The brief is an instruction. Host models follow it unevenly, and no hook can
-  force a reply into the voice. The transform covers only its closed list.
-- Whether Codex runs `SessionStart` and `Stop` from a plugin is not confirmed.
-  Open Codex issues report that plugin-local hooks do not run, and that a root
-  `plugin.json` disables them.
+- The brief is an instruction, and host models follow it unevenly. The
+  transform edits the items on its closed list, and the rest reach the model as
+  notes.
+- Whether Codex runs `SessionStart` and `Stop` from a plugin is unconfirmed: open
+  Codex issues report plugin-local hooks being skipped and a root `plugin.json`
+  disabling them.
 - A voice many people use risks the homogenization the research warns about. It
   is scoped to model speech, tunable, and off with one switch.
-- Does not prove: a reply in the house voice is not shown to be more useful or
-  more readable. A blinded local reader leaned toward plain replies (CHANGELOG,
-  0.8.0), and no host model or human reader has been measured. The shipped
-  wording marked a gap in 1 of 14 write-as-me replies on that model.
+- Usefulness and readability are open questions. A blinded local reader leaned
+  toward plain replies (CHANGELOG, 0.8.0); host models and human readers are
+  still to be measured. The shipped wording marked a gap in 1 of 14 write-as-me
+  replies on that model.

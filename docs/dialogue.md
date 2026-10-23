@@ -47,7 +47,7 @@ looks for the shapes a model reaches for when it writes a character.
 
 A line's score is the sum of its weights, with the voice-sheet checks below
 added in. Theme words come from `--theme` or the voices folder's
-`_project.json`; with none set, the theme check does not run.
+`_project.json`, and the theme check runs when one of them sets theme words.
 
 ### Calibration
 
@@ -79,8 +79,8 @@ about the world.
 
 ## Voice sheets
 
-A voices folder holds one JSON file per character. Every field except `name`
-is optional, and a check whose field is missing does not run.
+A voices folder holds one JSON file per character. `name` is required and every
+other field is optional; each check runs when its field is present.
 
 ```json
 {

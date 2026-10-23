@@ -17,9 +17,9 @@ the package source. Build from the matching package tag for release use; use
 `--dev` for a local test build before that tag exists.
 
 The same release workflow prepares [Windows x64 native ZIP and MCPB packages](native-local-package.md)
-with their runtime included. Those packages use a binary entrypoint and do not
-require installed Python. The instructions below cover the separate source
-plugin. Both forms use the calling model for host edits and include no model.
+with their runtime included. Those packages start from a binary entrypoint, so
+they run on a machine with Python absent. The instructions below cover the
+separate source plugin. Both forms use the calling model for host edits.
 
 The plugin needs Python 3.9 or later, runnable as `python3`, and nothing else:
 it carries its own copy of the package source, which uses only the standard
@@ -53,7 +53,7 @@ folder. `-X utf8`
 makes the standard streams UTF-8, and the server switches them to UTF-8 itself
 as well, because Windows reads a pipe in the console code page by default.
 
-The plugin sets two variables for that process only:
+The plugin sets two variables, scoped to that process:
 
 | Variable | Value | Effect |
 |:-|:-|:-|
@@ -79,21 +79,22 @@ rewrite. `edit_submit` takes the exact original `text`, that `rewrite` and
 `host`. A refusal can restore the original paragraph while `ok` remains true,
 so callers must inspect `refused` and use the returned text.
 
-Both tools work with `ARTICULATE_LOCAL_ONLY=1`. They add no separate network
-exposure: the text is already in the calling model's conversation. The guard is
-lexical, not proof of semantic equivalence, quality or factual correctness. The
-plan token binds content and settings through a checksum. It provides no
-signature or proof of authority.
+Both tools work with `ARTICULATE_LOCAL_ONLY=1`. The text they handle is the text
+already in the calling model's conversation, and the tools open no connection of
+their own. The guard compares wording; read the result to judge meaning, quality
+and facts. The plan token binds content and settings through a checksum, which
+detects a changed plan; it carries no signature.
 
 In the plugin, `fix`, `judge` and `polish` accept `auto` or `host` to prepare a
-host plan, or `none` for deterministic checks and edits. They refuse explicit
-external backends, including negotiated sampling, before execution. Outside the
-plugin, the package can use optional backends under its own configuration.
+host plan, or `none` for deterministic checks and edits. A request for an
+external backend, negotiated sampling included, is refused before it runs. The
+PyPI package, used outside the plugin, can use optional backends under its own
+configuration.
 
 `check` retains the 0.5.1 `clean`, `verdict`, `texture_score`, HIGH/MEDIUM hits,
 LOW advisory count and cadence fields, with the plugin's bounded hit output.
-`score` returns the 0.5.1 heuristic score and structural rates. Neither exposes
-the unreleased density or fairness outputs.
+`score` returns the 0.5.1 heuristic score and structural rates. The density and
+fairness outputs are reserved for a later release.
 
 ## House-voice hooks
 
@@ -109,25 +110,25 @@ same isolated Python flags as the server.
   This hook imports none of the style rules; the plugin shim loads the hook's
   modules without running the package initializer. It measured a 72 ms p95 on
   Windows.
-- `Stop`, after every reply: it prints nothing unless the user chose mode
-  `revise` (`ARTICULATE_HOUSE_VOICE=revise`, or
-  `articulate house set mode=revise`). Claude Code's Stop event holds the full
-  text of the last reply; the hook reads it only in that mode. When the reply claims a human life or has a HIGH style
-  finding, it asks the model for one revision and names each finding by line.
-  `stop_hook_active` stops a second request. It never opens the transcript.
+- `Stop`, after every reply: it acts in mode `revise`
+  (`ARTICULATE_HOUSE_VOICE=revise`, or `articulate house set mode=revise`) and
+  stays silent in the others. Claude Code's Stop event holds the full text of the
+  last reply, and in `revise` the hook reads that text. When the reply claims a
+  human life or has a HIGH style finding, it asks the model for one revision and
+  names each finding by line. `stop_hook_active` stops a second request. The
+  transcript file stays unopened.
 
 The house voice is off by default. `ARTICULATE_HOUSE_VOICE=off` or
 `articulate house off` keeps both hooks silent. The `articulate` command line
-comes with the PyPI package `articulate-writing`; the plugin does not install
-it. Every
-path exits 0. The hooks read the packaged spec and the house settings file and
-write nothing.
+comes with the PyPI package `articulate-writing`, installed on its own with
+`pip install articulate-writing`. Every path exits 0. The hooks read the packaged
+spec and the house settings file, and write no files.
 
 Codex: the Codex manifest points at the same hooks file. Whether Codex runs
-plugin `SessionStart` and `Stop` hooks is not confirmed. Open Codex issues
-report that plugin-local hooks do not run (openai/codex #16430) and that a root
-`plugin.json` disables a plugin's hooks (openai/codex #39895); this plugin has a
-root `plugin.json`. If the brief does not arrive, run
+plugin `SessionStart` and `Stop` hooks is unconfirmed: open Codex issues report
+plugin-local hooks being skipped (openai/codex #16430) and a root `plugin.json`
+disabling a plugin's hooks (openai/codex #39895), and this plugin has a root
+`plugin.json`. If the brief is missing from a Codex session, run
 `articulate house brief --agents` and paste the result into AGENTS.md, or point
 a user-level Codex hook at `articulate-house-hook` after
 `pip install articulate-writing`.
@@ -164,11 +165,11 @@ to 6,000, with a count of what was left out, so a large edit does not copy its
 changed code blocks into the model's context.
 
 On Windows, Codex replaces `${CLAUDE_PLUGIN_ROOT}` in the hook command with the
-plugin folder before it starts `cmd.exe /C`, so the shell never reads that name.
+plugin folder before it starts `cmd.exe /C`, so the shell receives a plain path.
 `tests/test_codex_hook_windows.py` runs the command that way under cmd.exe,
 Windows PowerShell and pwsh, from a folder whose path has a space. The hook needs
-a `python3` on PATH that is Python 3.9 or newer, as the MCP server does. No live
-Codex session has fired the hook end to end.
+a `python3` on PATH that is Python 3.9 or newer, as the MCP server does. An end
+to end run inside a live Codex session is still to come.
 
 On Windows the hook needs Codex 0.145.0 or newer. Codex before 0.145.0 (including
 the 0.144 patch line) escapes the quotes in the command as `\"` when it starts
@@ -181,9 +182,9 @@ differ.
 ## Tool titles and hints
 
 Tools declare titles and all four MCP behavior hints. In the plugin environment,
-they are read-only, not destructive, idempotent and closed-world: the plugin
-edits no file and invokes no external backend. Hints describe behavior; they do
-not prove the truth or semantic quality of an edit. `src/articulate/tool_meta.py`
+they are read-only, non-destructive, idempotent and closed-world: the plugin
+leaves files as they are and calls only local code. Hints describe behavior;
+the edit's truth and quality are for the reader. `src/articulate/tool_meta.py`
 holds the metadata shared by both servers.
 
 ## Build the plugin from this repository
@@ -206,8 +207,8 @@ fields, a single server variable, a README of at least 40 words with a Privacy
 Policy section that matches `PRIVACY.md`, and the skill front matter. It exits 1
 and lists each problem when a check fails.
 
-Use `--dev` when testing changes before their package tag exists. Do not publish
-a development build as a package release.
+Use `--dev` when testing changes before their package tag exists, and publish
+releases from the tagged build.
 
 Without `--dev` the build is a release build. Before it writes anything, it
 refuses untracked or changed files in the folders it copies, and it refuses

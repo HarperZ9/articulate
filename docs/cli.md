@@ -19,17 +19,18 @@ articulate check [FILE ...] [--profile P] [--mode M] [--gate] [--json]
   [Domain profiles](features.md#domain-profiles).
 - `--mode M`: a writing mode, for example `memo/argue`. A mode wins over profile
   inference.
-- `--gate`: exit 1 when any file is blocked or cannot be screened, otherwise 0.
+- `--gate`: exit 0 when every file is screened and passes, and 1 when any file is
+  blocked or fails to screen.
 - `--json`: a machine-readable payload with findings, cadence, and the verdict.
 - `--sarif`: SARIF 2.1.0 for GitHub code scanning, Azure DevOps, and reviewdog.
 - `--verbose`: expand the LOW advisories to line numbers.
 - `--spans`: per-paragraph findings, so a paragraph dense with devices is flagged
-  in place. A flagged paragraph is not shown to be machine-written.
+  in place. A flag marks style; it leaves authorship open.
 - `--content-free`: omit every verbatim substring and exact offset from the
   console, JSON, and SARIF output.
 - `--config PATH|none`: the project config. By default the nearest
   `.articulate.json` above each file is read; for standard input the search
-  starts in the current directory. `none` turns discovery off. See
+  starts in the current directory. `--config none` turns discovery off. See
   [Project config](features.md#project-config).
 
 A project config's terminology findings print with their rule id, for example
@@ -41,10 +42,15 @@ the file and the reason.
 
 ## score
 
-Print the graded texture score and the verdict, without the per-finding lines.
+Print the graded texture score and the verdict on one line per file.
 
 ```bash
 articulate score [FILE ...] [--profile P] [--mode M]
+```
+
+```text
+$ articulate score docs/getting-started.md
+[articulate] docs/getting-started.md [flavored]: verdict clean, texture 0/100 (low), gate ok [0H/0M, 916w]
 ```
 
 ## receipt
@@ -59,10 +65,10 @@ articulate receipt [FILE ...] [--profile P] [--spans]
 - `--spans`: record the per-paragraph verdicts in the receipt.
 - `--redact drop`: a content-free audit receipt with the matched substring and the
   offsets dropped.
-- `--redact hash`: as `drop`, keeping a hash of the match for an equality check
-  against a known string. See the [hash caveat](boundaries.md#hash-mode-supports-an-equality-check).
-- `--reviewer NAME`: record who screened it. Without it, the CI actor fills the
-  field if one is set, and otherwise it stays unset.
+- `--redact hash`: as `drop`, plus a hash of the match for an equality check
+  against a known string. Read [hash mode](boundaries.md#hash-mode-supports-an-equality-check) first.
+- `--reviewer NAME`: record who screened it. When the flag is absent, the CI
+  actor fills the field if one is set.
 
 ## verify
 
@@ -87,8 +93,8 @@ articulate audit [PATH ...] [--days N] [--reverify] [--gate] [--json]
 - `--reverify`: replay each receipt against its source file, and report `Match`,
   `Drift`, `source-changed`, `source-missing`, or `source-unreadable`.
 - `--gate`: with `--reverify`, exit 1 when any source drifted, changed since it
-  was screened, or could not be read. A sub-threshold or stale-ruleset
-  `Unverifiable` is reported, and it does not fail the gate.
+  was screened, or failed to read. A sub-threshold or stale-ruleset
+  `Unverifiable` is reported and leaves the gate passing.
 - `--json`: the summary as JSON.
 
 ## config
@@ -135,8 +141,8 @@ articulate process verify (DOC | SUMMARY.json)
 ```
 
 `export --include` names the fields a default export leaves out: `words`, `diff`,
-`time`, `labels`, `citations`, `review_names` and `input_method`. `continue` works
-only on a broken log. `verify` reads a file as a summary when its `schema` field
+`time`, `labels`, `citations`, `review_names` and `input_method`. `continue` is
+for a broken log. `verify` reads a file as a summary when its `schema` field
 says so, whatever its name; on a document it reports `intact` (exit 0),
 `broken` (exit 1) or `missing` (exit 3). A missing log is no record: "an absent or
 short record shows nothing about a writer". `verify`, `export` and `disclose`
@@ -151,8 +157,9 @@ articulate disclose DOC [--template {general,pip}] [--contributions F]
                     [--include input_method] [--claim SENTENCE]
 ```
 
-It exits 2 and writes nothing when the log is missing or broken, or when the
-request would misstate the log.
+It writes a statement that matches the log. When the log is missing or broken,
+or the request would misstate the log, it exits 2 and leaves the files as they
+are.
 
 ## desk
 
@@ -181,10 +188,10 @@ All three accept `--backend auto|host|sampling|anthropic|claude-cli|openai|ollam
 project config's terminology and pack options travel in the edit plan, and its
 freeze terms are protected in every rewrite. `fix` and `polish` also take
 `--allow-change KINDS` and `--explain [json|text]`, described below. Sampling requires an MCP
-session that advertised sampling; a plain CLI cannot request the host's model
-through that transport. `host` returns a plan for a calling model to complete.
-Without a model, `none` makes conservative mechanical fixes and reports remaining
-findings; its judge reports local findings and rule reasons. Inspect the gate
+session that advertised sampling, so it works from an MCP client. `host` returns
+a plan for a calling model to complete. With no model, `none` makes conservative
+mechanical fixes and reports remaining findings; its judge reports local findings
+and rule reasons. Inspect the gate
 and refused spans even when a call succeeds.
 
 The legacy entry point remains available:
@@ -198,7 +205,7 @@ python -m articulate.editor --review FILE
 
 ### plan and submit
 
-Use a calling agent's model without a separate model account:
+Use the calling agent's own model, through the account it already has:
 
 ```bash
 articulate plan FILE [--mode M] [--profile P] [--goal fix|polish|judge]
@@ -243,7 +250,7 @@ The kinds that can be allowed are `citation`, `code`, `link`, `modal`,
 `negation`, `number`, `number-range`, `quantity`, `quote`, `scope`, `term` and
 `url`. A change of an allowed kind is accepted and listed in `allowed_changes`
 (paragraph and kind) in the result and in the editor receipt. A change of any
-other kind still keeps the paragraph. Disclosure lines, an added first-person
+other kind makes the guard keep the original paragraph. Disclosure lines, an added first-person
 sentence, HTML and math can never be allowed; naming one exits 2 with the list
 of kinds that can be. The plan binds the allowed kinds, so `submit` cannot
 widen them. A plan with no allowed kinds and no frozen terms keeps the v2 plan
@@ -286,7 +293,7 @@ for the process. The default is `auto`.
   `ARTICULATE_MODEL`; text goes to the configured compatible endpoint.
 - `ollama`: `ARTICULATE_OLLAMA_URL` and `ARTICULATE_LOCAL_MODEL`; text goes to
   the configured Ollama server.
-- `none`: no account or model needed; no model or network call.
+- `none`: runs offline with mechanical edits; needs no account or model.
 
 In MCP, `auto` uses sampling when advertised, otherwise returning a host edit
 plan before trying a separately billed backend. The calling model can complete
@@ -304,14 +311,13 @@ for every OpenAI-compatible endpoint, including the default OpenAI address.
 Ollama defaults to `http://127.0.0.1:11434`. With `ARTICULATE_LOCAL_MODEL` unset,
 it inspects installed models through `/api/tags`, preferring `qwen3:8b`,
 `qwen2.5:7b`, `llama3.2:3b`, then `gemma3:4b`, then the first installed model.
-It never pulls a model.
+It uses models already pulled.
 
-Set `ARTICULATE_LOCAL_ONLY=1` to permit only Ollama on a loopback address and
+Set `ARTICULATE_LOCAL_ONLY=1` to keep editing on Ollama at a loopback address or
 `none`. The editor backend selector refuses hosted routes, host and sampling
-before a connection. Direct `plan` and `submit` calls perform local checks only;
-they do not control the calling host's handling of a document already in its
-conversation. For deterministic editing alone,
-use `--backend none`.
+before a connection. `plan` and `submit` run their checks locally; a document
+already in a host's conversation follows that host's data policy. For
+deterministic editing alone, use `--backend none`.
 
 For the Claude CLI, `ARTICULATE_CLAUDE_CLI` must be an absolute executable path;
 otherwise Articulate searches absolute PATH entries and skips the current
@@ -322,9 +328,9 @@ account, configure `ANTHROPIC_API_KEY`, or choose Ollama or `none`.
 
 The CLI child runs in a private empty temporary folder with user settings only,
 using `--setting-sources user --strict-mcp-config --tools ""`. Document-folder
-settings do not load. On Windows, `NoDefaultCurrentDirectoryInExePath=1` keeps
-the npm shim's `node` lookup on PATH. An older CLI that rejects these flags is
-reported as unavailable. This isolation does not make a hosted call local.
+settings stay out. On Windows, `NoDefaultCurrentDirectoryInExePath=1` keeps the
+npm shim's `node` lookup on PATH. An older CLI that rejects these flags is
+reported as unavailable. The text still goes to the CLI's hosted provider.
 
 ## house
 
@@ -368,7 +374,8 @@ articulate interview DOC [--voice N] [--out FILE] | --collect FILE [--answers-ou
 articulate restructure DOC [--out FILE] [--anchors footnote|link]
 ```
 
-All four report or propose. None edits an input file in place.
+All four report or propose. They write the files you name with `--out`,
+`--receipt` or `--answers-out`, and leave input files as they are.
 
 ## dialogue
 
