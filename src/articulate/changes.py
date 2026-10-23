@@ -156,5 +156,5 @@ def format_report(rep, name=""):
         lines.append("[changes] kept %s: %s" % (where, "; ".join(r["reasons"])))
     for a in rep["allowed_changes"]:
         lines.append("[changes] allowed %s change in paragraph %d" % (a["kind"], a["paragraph"] + 1))
-    lines.append("[changes] does not prove: " + rep["does_not_prove"])
+    lines.append("[changes] Read each pair to check the meaning held.")
     return "\n".join(lines)

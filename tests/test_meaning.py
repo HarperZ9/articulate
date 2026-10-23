@@ -117,10 +117,12 @@ def test_container_claims_its_inner_tokens_once():
     assert [i["kind"] for i in items] == ["url"]
 
 
-def test_report_states_what_it_does_not_prove():
+def test_report_states_what_the_checks_cover():
     report = meaning.compare("a", "b")
     assert "surface proxies" in report["does_not_prove"]
-    assert "does not prove" in meaning.format_report(report)
+    text = meaning.format_report(report)
+    assert "Read the rewrite to confirm the meaning." in text
+    assert "does not prove" not in text
 
 
 def test_moved_negation_is_a_documented_blind_spot():

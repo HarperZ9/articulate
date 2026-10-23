@@ -163,7 +163,7 @@ def describe(rows, limit=5):
 
 def format_report(report, show_kept=False):
     """The human-readable report: a verdict line, one line per non-kept item,
-    and the does-not-prove statement."""
+    and a line on what the checks cover."""
     c = report["counts"]
     lines = [f"[meaning] {report['verdict']}: {c['kept']} kept, {c['dropped']} dropped, "
              f"{c['added']} added, {c['changed']} changed"]
@@ -171,7 +171,8 @@ def format_report(report, show_kept=False):
         if r["status"] == "kept" and not show_kept:
             continue
         lines.append(f"  {r['status']:<8} {r['kind']:<9} " + _where(r))
-    lines.append(f"[meaning] does not prove: {report['does_not_prove']}")
+    lines.append("[meaning] These checks cover numbers, names, negations and other "
+                 "surface markers. Read the rewrite to confirm the meaning.")
     return "\n".join(lines)
 
 

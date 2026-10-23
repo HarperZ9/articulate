@@ -88,7 +88,7 @@ def test_cli_explain_text_prints_a_report_instead_of_json(tmp_path, capsys):
     assert cli.main(["fix", _write(tmp_path), "--backend", "none", "--explain", "text"]) == 0
     out = capsys.readouterr().out
     assert out.startswith("[changes] ") and "gone: em-dash/em-dash" in out
-    assert "does not prove" in out and not out.lstrip().startswith("{")
+    assert "Read each pair to check the meaning held." in out and not out.lstrip().startswith("{")
 
 
 def test_cli_submit_takes_explain(tmp_path, capsys):

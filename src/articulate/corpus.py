@@ -140,7 +140,7 @@ def analyze_corpus(docs, *, keep=(), genre="essay", single=False):
 
 
 def format_report(report):
-    """Plain text: each finding with its locations, direction and limit."""
+    """Plain text: each finding with its locations and direction."""
     out = [f"{len(report['documents'])} documents, {len(report['findings'])} findings."]
     for f in report["findings"]:
         out += ["", f"[{f['category']}] {f['reader_cost']}"]
@@ -151,9 +151,10 @@ def format_report(report):
             out.append(f"  {loc['doc']}:{loc['line_start']}-{loc['line_end']}  {loc['excerpt']}")
         if len(f["locations"]) > 12:
             out.append(f"  and {len(f['locations']) - 12} more locations")
-        out += [f"  Direction: {f['direction']}", f"  Does not prove: {f['does_not_prove']}"]
+        out.append(f"  Direction: {f['direction']}")
     if report["protected"]:
         out += ["", f"Protected and never flagged: {len(report['protected'])} "
                     "(declared repetition and disclosure lines)."]
-    out += ["", report["does_not_prove"]]
+    out += ["", "These findings name patterns a reader can notice. "
+                "They are not an authorship test."]
     return "\n".join(out)

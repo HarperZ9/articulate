@@ -27,7 +27,7 @@ def _within_budget(hits, budget=HITS_BUDGET):
 
 
 def do_check(text, max_hits=None):
-    """Find named writing devices with span records. Local, no network. Not an authorship test."""
+    """Find named writing devices with span records. Runs on your machine. Not an authorship detector."""
     if max_hits is not None and (type(max_hits) is not int or not 0 <= max_hits <= 1000):
         raise ValueError("max_hits must be a whole number from 0 to 1000")
     r = core.check_text(text)
@@ -48,7 +48,7 @@ def do_check(text, max_hits=None):
 
 
 def do_score(text):
-    """Graded device-density (texture) score and structural rates. Local, no network."""
+    """Graded device-density (texture) score and structural rates. Runs on your machine."""
     r = core.check_text(text)
     cad = r["cadence"]
     return {
@@ -184,12 +184,12 @@ def build_server():
 
     @mcp.tool(description=description("check"), **fastmcp_options("check"))
     def check(text: str, max_hits: int = 50) -> dict:
-        """Find named writing devices and return findings with cadence stats. Local, no network."""
+        """Find named writing devices and return findings with cadence stats. Runs on your machine."""
         return do_check(text, max_hits)
 
     @mcp.tool(description=description("score"), **fastmcp_options("score"))
     def score(text: str) -> dict:
-        """Return the device-density (texture) score and structural rates. Local, no network."""
+        """Return the device-density (texture) score and structural rates. Runs on your machine."""
         return do_score(text)
 
     @mcp.tool(description=description("judge"), **fastmcp_options("judge"))
