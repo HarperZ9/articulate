@@ -6,8 +6,8 @@ a profile you build from your own writing, on your own computer, so you can
 compare a draft with how you write and, when you ask, shape your draft toward
 it.
 
-Neither feature writes your experiences for you. Where your perspective would
-help, Articulate asks a question and leaves the answer to you.
+Your experiences stay yours to write. Where your perspective would help,
+Articulate asks a question and leaves the answer to you.
 
 ## Series review
 
@@ -18,20 +18,26 @@ articulate interview essays/draft.md --out essays/draft.marked.md
 articulate restructure essays/draft.md --out essays/draft.restructured.md
 ```
 
-`corpus` names patterns that only show across a set: one title formula used
-again and again, phrases shared by three or more pieces, the same paragraph
-scaffold (claim, source, confidence, limit) in most paragraphs, sections of
-near-equal length, sentence lengths that barely vary, long stretches with no
-author present, and runs of paragraphs with no number, date, name or place.
-Each finding has its location, what it costs a reader, and a direction. None
-proposes replacement prose, and none gates a build. `--keep FILE` lists phrases
+`corpus` names patterns that show across a set:
+
+- one title formula used again and again
+- phrases shared by three or more pieces
+- the same paragraph scaffold (claim, source, confidence, limit) in most
+  paragraphs
+- sections of near-equal length, and sentence lengths that barely vary
+- long stretches where the author is absent
+- runs of paragraphs missing a number, date, name or place
+
+Each finding has its location, what it costs a reader, and a direction for you
+to take. The findings are advisory, so the rewriting stays with you and a build
+keeps passing. `--keep FILE` lists phrases
 you repeat on purpose. `--receipt OUT` writes an `articulate/corpus-receipt/v1`
 receipt that `articulate verify` replays.
 
 `titles` groups titles by skeleton ("The Map Is Not the Road" and "The Vote Is
 Not the Law" share `the X is not the X`) and asks, for each repeated title, how
 you would describe the piece to a friend. With `--answers FILE` it offers up to
-three suggestions built only from the words of your answer.
+three suggestions built from the words of your answer.
 
 `interview` asks questions only you can answer, each at its lines: why the
 piece matters to you, what you saw yourself, whether you would stake your name
@@ -54,19 +60,19 @@ articulate voice apply draft.md --name mine --authored-by-me --out plan.json
 articulate voice delete --all
 ```
 
-`learn` builds a profile from the files you name, and only after `--mine` says
-they are your own writing. The profile holds measured aggregates: sentence and
-paragraph length ranges, how your sentences open, how often you concede, give a
-reason, ask a question or write in the first person, and function-word rates.
-It never stores a sentence of your samples, and names of people and places are
-dropped before the vocabulary field is built (`--no-vocabulary` leaves that
-field out). Below about 5,000 words of samples the profile says it is
-indicative only.
+`learn` builds a profile from the files you name, once `--mine` says they are
+your own writing. The profile holds measured aggregates: sentence and paragraph
+length ranges, how your sentences open, how often you concede, give a reason,
+ask a question or write in the first person, and function-word rates. It stores
+numbers, and the sentences of your samples stay in your files. Names of people
+and places are dropped before the vocabulary field is built (`--no-vocabulary`
+leaves that field out). Below about 5,000 words of samples the profile labels
+itself indicative.
 
 `show` prints every stored field as a plain sentence and the file's path.
 `compare` places a draft against your own range, feature by feature, and points
-at long stretches with no author present. It gives no total and no rewritten
-text.
+at long stretches where the author is absent. Its output is the per-feature
+comparison; the draft stays as you wrote it.
 
 `apply` plans an edit of your own draft toward your measured habits. It runs
 only with `--authored-by-me`, and the plan binds the profile's name and hash.
@@ -85,32 +91,33 @@ owner id made on your computer, and every profile records the owner it was
 learned under. `compare` and `apply` refuse a profile from another owner.
 
 `voice export NAME --out FILE` and `voice import FILE` move a profile to your
-other computers. On a computer with no identity yet, `--adopt-identity` takes
-the export's owner. A store never accepts a second owner.
+other computers. On a computer that has yet to make an identity,
+`--adopt-identity` takes the export's owner. Each store has one owner.
 
-The binding is a consent and provenance record. A local user who edits the
-JSON can defeat it, so it is not access control.
+The binding is a consent and provenance record. A local user who edits the JSON
+can change it, so use file permissions for access control.
 
 ### What leaves your computer
 
-Learning, comparing, exporting and deleting happen on your computer and send
-nothing anywhere. No MCP tool learns, exports, imports or deletes a profile. In
-`apply`, the profile's plain-sentence description enters the conversation with
-the calling model, because that model writes the rewrite. Your sample text never
-does: the profile holds none.
+Learning, comparing, exporting and deleting run on your computer. Learning,
+exporting, importing and deleting are command-line steps; over MCP a model can
+compare a draft and plan an apply. In `apply`, the profile's plain-sentence description enters the
+conversation with the calling model, because that model writes the rewrite. The
+profile holds numbers and that description, so your sample text stays in your
+files.
 
 ## The house voice is separate
 
-The [house voice](house-voice.md) is the model's own voice. It never reads your
-voice store, and it is never applied to text you wrote. Your voice shapes only
-text you say is yours, and only when you run `voice apply`.
+The [house voice](house-voice.md) is the model's own voice, applied to the
+model's replies. Your voice store feeds `voice apply`, which shapes text you say
+is yours when you run it.
 
 ## Limits
 
 - Move labels come from cue words and mislabel some sentences; reports show
   excerpts so you can judge.
 - Thresholds are starting values from a small set of essays.
-- A draft inside your measured range can still not sound like you, and one
-  outside it can. The profile measures surface habits, not voice in any deeper
-  sense.
-- No feature here calls an AI-authorship detector or reports a humanness score.
+- The profile measures surface habits. A draft inside your range can still
+  sound unlike you, and one outside it can sound like you, so your ear decides.
+- These features measure style against your own writing; they report on habits,
+  and leave authorship and humanness unscored.
