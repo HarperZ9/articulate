@@ -4,6 +4,31 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## Unreleased
+
+The editor now does part of the work the checker points at, and it refuses
+rewrites that change meaning.
+
+- `fix --backend none` removes a closed list of openers, such as "Moreover,"
+  and "It is crucial to note that". Each edit passes the meaning check on its
+  own, and the receipt lists it.
+- A model rewrite that reorders a date or adds a HIGH or MEDIUM device, or a
+  corrective negation, keeps the original paragraph. The CLI prints the reason.
+- When the gate blocks a text, the judge sees the blocking findings. A judge
+  result that names none of them reads `quality_status: unreliable`.
+- In Markdown, inline and display math between `$` signs is skipped, and a
+  sentence-start name counts as a name when the same name appears mid-sentence.
+  Receipts record `markdown/2`; `markdown/1` receipts still replay.
+- The hero images and the social card carry the current caption.
+- MCP `fix` and `polish` return `kept_original_reason` when they hand back the
+  original text.
+- SARIF output validates against the 2.1.0 schema in the tests, and an absolute
+  path goes out as a `file:///` URI.
+- The GitHub Action takes inputs through the environment, matches `**/*.md` at
+  the repository root, and stops on a pattern that matches nothing. New inputs:
+  `gate` fails the build on a blocked file, and `upload-sarif` can skip the
+  upload. CI now runs the hook and the action from clean repositories.
+
 ## 0.14.0
 
 Bug fixes now ship as patch releases, the command line reports its version, and

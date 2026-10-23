@@ -9,7 +9,7 @@ to optimise, and Articulate is not a tool for getting past AI detectors. Any
 criterion that would reward a lower detector score is out of scope by
 definition.
 
-Measured on 22 October 2026 against `main` at 0.12.1, with the Markdown fix from
+Updated on 23 October 2026 for 0.14.0 and wave 2 (pull requests 46 to 62); rows not named there keep their first measurement. First measured on 22 October 2026 against `main` at 0.12.1, with the Markdown fix from
 pull request 43 applied. Pull request 43 merged as `1b3f8fd`, after `main` moved to 0.13.0. The machine was Windows 11 with Python 3.12, and a
 local Ollama model, `qwen3:8b`, served the model backend.
 
@@ -17,10 +17,10 @@ local Ollama model, `qwen3:8b`, served the model backend.
 
 | Status | Count |
 | --- | --- |
-| PASS | 45 |
-| PARTIAL | 12 |
-| FAIL | 17 |
-| NOT BUILT | 9 |
+| PASS | 67 |
+| PARTIAL | 6 |
+| FAIL | 2 |
+| NOT BUILT | 8 |
 | Total | 83 |
 
 PASS means the check ran and held. PARTIAL means it holds in part, and the row
@@ -37,13 +37,13 @@ nothing exists to check yet.
 | C4 | `audit --reverify --gate` reads committed receipts and fails on a break | Content-free receipt in a folder, audit it | PASS | `reverify: {'Match': 1}`, exit 0 |
 | C5 | `modes` lists every mode and `check --mode` applies one | `modes` count matches `modes.names()` | PASS | 29 modes listed |
 | C6 | `plan` and `submit` guard protected spans and claim features, with `--allow-change` as the named escape | Submit a rewrite that drops a negation; expect a refusal, then acceptance with `--allow-change negation,modal` | PASS | Refused with `negation claim features changed`; accepted with the flag, gate `blocked` to `ok` |
-| C7 | `judge` names the problems in a passage that the detector blocks | Judge a passage with three HIGH findings; the assessment must name at least one | FAIL | `qwen3:8b` answered "The prose is strong and clear ... No significant quality failures" on a blocked passage |
-| C8 | `fix` with a model keeps dates and numbers verbatim and adds no device | Fix `slop.md`; diff dates; check the result for corrective negation | FAIL | "3 May" became "May 3"; output added "The focus is on process, not features." and the gate still read `ok` |
-| C9 | `fix --backend none` applies deterministic edits for the closed-list devices | Fix a passage with "It is crucial to" and "Moreover,"; expect at least one edit | FAIL | Zero edits; `gate_before` and `gate_after` both `blocked` |
-| C10 | `polish` improves or keeps the text and never ends worse | Polish `slop.md`; expect fewer blocking findings or the original back with a reason | PARTIAL | Original returned, gate still `blocked`, no reason given |
-| C11 | `--version` prints the package version | `articulate --version` exits 0 | FAIL | `unrecognized arguments: --version`, exit 2 |
+| C7 | `judge` names the problems in a passage that the detector blocks | Judge a passage with three HIGH findings; the assessment must name at least one | PARTIAL | Since #57 a judge result that names no blocking finding on a blocked passage reads `quality_status: unreliable`, with the missed categories; the recorded `qwen3:8b` reply now comes back unreliable. The judge still has to name the problem; no live rerun yet |
+| C8 | `fix` with a model keeps dates and numbers verbatim and adds no device | Fix `slop.md`; diff dates; check the result for corrective negation | PASS | Since #54 the guard refuses "3 May" to "May 3" (`date protected spans changed`) and an added corrective negation (`device introduced`); `tests/test_meaning_guard.py`. No live `qwen3:8b` rerun yet |
+| C9 | `fix --backend none` applies deterministic edits for the closed-list devices | Fix a passage with "It is crucial to" and "Moreover,"; expect at least one edit | PASS | Since #55 "It is crucial to note that ... Moreover, ..." loses both openers, each edit guarded and listed in `edits`; `tests/test_fix_none.py` |
+| C10 | `polish` improves or keeps the text and never ends worse | Polish `slop.md`; expect fewer blocking findings or the original back with a reason | PASS | Since #54 the CLI prints `kept the original: <reason>` when polish returns the original |
+| C11 | `--version` prints the package version | `articulate --version` exits 0 | PASS | 0.14.0: `articulate 0.14.0`, exit 0 (#47) |
 | C12 | Unknown profile or mode fails closed with the list of known names | `check --profile nosuch` exits 2 and lists profiles | PASS | Exit 2 with the full list |
-| C13 | `check --sarif` emits valid SARIF 2.1.0 and `--content-free` removes every substring | Validate against the schema; grep the output for a matched word | PARTIAL | SARIF header and schema URL present; no schema validation run in this pass |
+| C13 | `check --sarif` emits valid SARIF 2.1.0 and `--content-free` removes every substring | Validate against the schema; grep the output for a matched word | PASS | #61: `tests/test_sarif_schema.py` validates real output against the vendored SARIF 2.1.0 schema, with and without `--content-free`; absolute paths now go out as `file:///` URIs. Content-free output keeps rule ids, which name the rule word lists |
 | C14 | `--spans` gives a per-paragraph verdict | `check --spans` on a 43-paragraph doc | PASS | `43 span(s), 0 flagged` |
 | C15 | `house`, `corpus`, `titles`, `interview`, `restructure`, `dialogue`, `process`, `disclose`, `desk` each have a test file and a docs entry | Test file per command and a heading in `docs/cli.md` | PASS | Suite 1,681 passed; headings present |
 
@@ -54,10 +54,10 @@ Measured through the `articulate` MCP server that Claude Code runs from the
 
 | ID | Criterion | Check that can fail | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| M1 | `check` returns span records and no Markdown false positives | Send a table and a proper name | PARTIAL | Running server (0.12.0) still reports the table delimiter row and "Transformative"; fixed in source by pull request 43, live after release and restart |
+| M1 | `check` returns span records and no Markdown false positives | Send a table and a proper name | PASS | The MCP server now runs the installed 0.14.0 package, which carries the masks; MCP `check` covered in `tests/test_markdown_structure.py` |
 | M2 | `score` returns texture, hard hits and rates | Call on a short passage | PASS | `hard_hits: 3` and rates returned |
-| M3 | `fix` returns a rewrite or a host plan | Call with `backend none` | PARTIAL | Returns, but makes no deterministic edit (same gap as C9) |
-| M4 | `polish` returns a rewrite or a host plan | Call with `backend none` | PARTIAL | Returns the text unchanged with `quality_met: false` |
+| M3 | `fix` returns a rewrite or a host plan | Call with `backend none` | PASS | Since #55 `fix` with `backend none` returns the closed-list edits in `receipt.edits` |
+| M4 | `polish` returns a rewrite or a host plan | Call with `backend none` | PASS | #59: MCP `fix` and `polish` return `kept_original_reason` whenever they return the original; same text as the CLI |
 | M5 | `judge` returns a host plan when no backend is set | Call with no backend | PASS | `status: host_edit_required` with copyeditor instructions |
 | M6 | `edit_plan` masks protected spans and returns a signed plan id | Call on text with numbers | PASS | `14` and `3` listed as protected spans |
 | M7 | `edit_submit` refuses a rewrite that changes a claim feature and returns a receipt | Submit a rewrite that drops a modal | PASS | Refused with `modal claim features changed`, receipt returned |
@@ -67,17 +67,17 @@ Measured through the `articulate` MCP server that Claude Code runs from the
 | M11 | `corpus_check` finds shared titles, phrases and constructions across documents | Two documents with one title formula | PASS | Title formula, shared n-gram and shared constructions found. The n-gram excerpt runs across a sentence boundary |
 | M12 | `dialogue_check` flags epigram lines and scores voice distinctness | Four lines, one epigram | PASS | One `epigram-definition` with attribution intervals |
 | M13 | `title_workshop` groups formulas and asks one question per repeated title | Three titles, two sharing a formula | PASS | Two families, two questions, no invented suggestions |
-| M14 | The installed Claude Code plugin serves the current version and every tool above | `articulate_status` version equals PyPI | FAIL | Plugin reports `0.5.1` and exposes 7 tools |
-| M15 | The FastMCP surface works with the fastmcp that the `[mcp]` extra installs | Install `[mcp]`, run `tests/test_tool_annotations.py` | FAIL | fastmcp 4.1.3 installs and the test fails with `KeyError: 'readOnlyHint'` |
+| M14 | The installed Claude Code plugin serves the current version and every tool above | `articulate_status` version equals PyPI | PASS | Plugin rebuilt from v0.14.0 in the local marketplace and updated from 0.5.1 to 0.14.0; active after a Claude Code restart |
+| M15 | The FastMCP surface works with the fastmcp that the `[mcp]` extra installs | Install `[mcp]`, run `tests/test_tool_annotations.py` | PASS | `[mcp]` capped at `fastmcp>=3.2.4,<4` (#48); CI job `extras` runs the MCP tests and the full suite |
 
 ## 3. Voice learning
 
 | ID | Criterion | Check that can fail | Status | Evidence |
 | --- | --- | --- | --- | --- |
 | V1 | `voice learn`, `show`, `compare`, `apply`, `export`, `import` and `delete` work from the command line | Learn from three samples, compare a draft, delete | PASS | Learned `probe`, compared, `Deleted vstore\probe.json` |
-| V2 | The CLI on the author's PATH has the `voice` command | `articulate voice --help` on PATH | FAIL | PATH CLI is 0.5.1, which has no `voice` command |
+| V2 | The CLI on the author's PATH has the `voice` command | `articulate voice --help` on PATH | PASS | PATH CLI upgraded to 0.14.0, which has `voice` |
 | V3 | The author has a saved voice profile on this machine | `articulate voice list` shows one | NOT BUILT | `No voice profiles stored.` The author chooses the samples; the store is `%LOCALAPPDATA%\articulate\voice` |
-| V4 | Every reported range is possible for its measure | Rates per 1,000 words never go below 0 | FAIL | `concession_per_1k ... your range -0.134 to 1.474` |
+| V4 | Every reported range is possible for its measure | Rates per 1,000 words never go below 0 | PASS | Ranges stop at 0 and shares at 1 (#49); test in `tests/test_voice.py` |
 | V5 | `voice_apply_plan` runs only when the user says the draft is theirs | Call with `authored_by_user` false | PASS | Guard covered by `tests/test_voice_boundaries.py` |
 
 ## 4. Profiles and modes
@@ -123,24 +123,24 @@ freely, so the default profile blocks it.
 | K5 | Fenced code, tilde fences, fences in lists and double-backtick spans are not prose | Probe file | PASS | No findings |
 | K6 | URLs and autolinks are not prose | Probe file | PASS | No findings on `--` or an em-dash inside a URL |
 | K7 | A register word inside a capitalised name is not flagged; a heading still is | Same test file | PASS | "Transformative AI Fund" and "Robust Intelligence" clean; Title Case heading still flagged |
-| K8 | A name at the start of a sentence is not flagged | "Robust Intelligence builds models." | PARTIAL | Still flagged; a capital at sentence start is no evidence of a name, so the mask leaves it |
-| K9 | `---` inside inline `$...$` math is not an em-dash | `Let $a---b$ be the gap.` | FAIL | HIGH em-dash |
-| K10 | Block quotes follow one stated rule | A product decision recorded in `docs/features.md` | NOT BUILT | Block quotes are checked today; a quote can be a cited source or the author's own callout |
+| K8 | A name at the start of a sentence is not flagged | "Robust Intelligence builds models." | PARTIAL | Since #56 a sentence-start run counts as a name when the same run appears mid-sentence elsewhere; a lone "Robust Intelligence builds models." still fires |
+| K9 | `---` inside inline `$...$` math is not an em-dash | `Let $a---b$ be the gap.` | PASS | Since #56 `$a---b$` and `$$...$$` are masked; dollar amounts stay prose |
+| K10 | Block quotes follow one stated rule | A product decision recorded in `docs/features.md` | PASS | Rule written in `docs/features.md`, "Markdown structure": block quotes are prose; escapes are a fenced block or `allowed` in project config |
 | K11 | The fix reaches every surface | CLI, per-paragraph view, receipts, MCP, edit hook, editor gate, house notes | PASS | All covered in `tests/test_markdown_structure.py`; the corpus series check still calls the detector directly |
 
 ## 7. Packaging and install
 
 | ID | Criterion | Check that can fail | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | PASS | 0.13.0 on PyPI and in `pyproject.toml`; the 0.12.1 publish had failed at `native-build` |
-| G2 | A clean venv install resolves every console script | `publish.yml` script check, then a local clean venv | PASS | Clean venv from PyPI: `articulate.__version__` is 0.13.0 and all five console scripts exist |
-| G9 | A bug fix can ship as a patch release | Tag `vX.Y.1` and run `publish.yml` | FAIL | `scripts/native_release_source.py` raises `mature release version must end in .0`, so every fix needs a minor version |
+| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | PASS | 0.14.0 on PyPI and in `pyproject.toml` |
+| G2 | A clean venv install resolves every console script | `publish.yml` script check, then a local clean venv | PASS | Clean venv from PyPI: `articulate --version` prints 0.14.0; a table separator row passes the gate |
+| G9 | A bug fix can ship as a patch release | Tag `vX.Y.1` and run `publish.yml` | PARTIAL | #46 removed the `.0` rule; 0.14.0 passed `native-build`. No patch tag has shipped yet to prove the path end to end |
 | G3 | The release ruleset check holds the v0.5.2 detector closure | `scripts/check_release_ruleset.py` | PASS | `PASS`, fingerprint `sha256:9f78a7484bb20f84` |
-| G4 | Optional extras pin versions that work | `[mcp]` and `[hosted]` installed in CI | FAIL | `[mcp]` says `fastmcp>=3` with no ceiling; CI installs only `[dev]`, so the break is invisible |
-| G5 | The author's machine runs the current release everywhere | PATH CLI, plugin and MCP server report one version | FAIL | PATH CLI 0.5.1, plugin 0.5.1, MCP server from a checkout on the `release-0.12.0` branch |
+| G4 | Optional extras pin versions that work | `[mcp]` and `[hosted]` installed in CI | PASS | `[mcp]` and `[hosted]` both pin `fastmcp>=3.2.4,<4`; CI job `extras` installs both |
+| G5 | The author's machine runs the current release everywhere | PATH CLI, plugin and MCP server report one version | PASS | `scripts/sync_local_install.py` reports 0.14.0 for the PATH CLI, the MCP server and the plugin, exit 0 |
 | G6 | Windows native ZIP and MCPB install and run on a clean machine | Install on a machine with no Python | PARTIAL | Built and tested in CI; native client install still unverified, per the README |
 | G7 | The VS Code extension is published | Marketplace listing for `harperz9` | NOT BUILT | `editors/vscode` at 0.1.0; no listing found in this pass |
-| G8 | The pre-commit hook and GitHub Action work from a clean repository | Install the hook in a scratch repository and commit a blocked file | PARTIAL | Files present; not run in this pass |
+| G8 | The pre-commit hook and GitHub Action work from a clean repository | Install the hook in a scratch repository and commit a blocked file | PASS | #60: CI job `hook-clean-repo` commits a clean file and sees the hook refuse a prose em-dash |
 
 ## 8. Documentation
 
@@ -148,8 +148,8 @@ freely, so the default profile blocks it.
 | --- | --- | --- | --- | --- |
 | D1 | Every shipped doc passes Articulate's own gate | CI `articulate-self-check` | PASS | Exit 0 locally and in CI |
 | D2 | `docs/cli.md` covers every subcommand | Compare `articulate --help` with the headings | PASS | All 22 subcommands covered |
-| D3 | Every public description makes the same style-not-authorship claim | Grep public files for "AI tells" and "AI-tell detection" | FAIL | `.pre-commit-hooks.yaml` says "Flag AI and prose tells"; the PATH CLI help says "AI-tell detection" |
-| D4 | The hero image matches the current tagline | Compare image text with the README | FAIL | The CHANGELOG for 0.12.0 records the stale tagline in the pixels |
+| D3 | Every public description makes the same style-not-authorship claim | Grep public files for "AI tells" and "AI-tell detection" | PASS | #50 fixed the hook and hero source; `tests/test_public_claims.py` covers them. The pinned detector closure keeps two historical strings |
+| D4 | The hero image matches the current tagline | Compare image text with the README | PASS | #53 redrew the caption in the hero SVGs and the social card; `scripts/check_art_receipts.py` passes. The art footer still reads "A FLYWHEEL LANE / BETA" |
 | D5 | A completion ledger exists and stays current | This file, updated in the same change as a status move | PASS | This page |
 
 ## 9. Enterprise roadmap
@@ -162,7 +162,7 @@ September roadmap.
 | E1 | Content-free receipts (drop or hash) verify as Match | `receipt --redact drop`, then `verify` | PASS | Audit run read `Match` |
 | E2 | `audit` queries committed receipts with no server | `audit --reverify --gate` | PASS | See C4 |
 | E3 | Receipts carry a reviewer and a timestamp outside the verified core | `receipt --reviewer` | PASS | `tests/test_audit.py` |
-| E4 | The GitHub Action re-verifies committed receipts | `action.yml` run in a scratch repository | PARTIAL | Present; not run in this pass |
+| E4 | The GitHub Action re-verifies committed receipts | `action.yml` run in a scratch repository | PASS | #60: CI job `action-clean-repo` reads `Match` on a committed receipt, fails on a changed source and fails the gate on a blocked file |
 | E5 | Optional tamper-evidence signing, `[sign]` extra | `pip install articulate-writing[sign]` | NOT BUILT | Deferred until a buyer asks |
 | E6 | Self-hosted audit store with SSO, RBAC and retention | Any deployable artifact | NOT BUILT | Gated on a paying signal |
 | E7 | Hosted dashboard | Any deployable artifact | NOT BUILT | Gated on tiers A and B |
@@ -177,17 +177,14 @@ September roadmap.
 | ID | Criterion | Check that can fail | Status | Evidence |
 | --- | --- | --- | --- | --- |
 | T1 | The full suite passes on CI for Python 3.9 to 3.12 on Linux, Windows and macOS | CI on pull request 43 | PASS | All jobs green on pull request 43 |
-| T2 | The full suite passes locally with every extra installed | `pip install -e .[dev,mcp,hosted]`, then `pytest` | FAIL | 1,681 passed, 6 failed, all in the fastmcp and hosted tests (see G4) |
-| T3 | Timing tests hold on a loaded machine | `test_house_latency`, `test_native_process` | PARTIAL | Failed in one local run of two |
+| T2 | The full suite passes locally with every extra installed | `pip install -e .[dev,mcp,hosted]`, then `pytest` | PASS | CI job `extras` installs `[dev,mcp,hosted]` and runs the full suite (#48) |
+| T3 | Timing tests hold on a loaded machine | `test_house_latency`, `test_native_process` | PASS | #62: calibrated timing; passes under 30 busy-loop processes, and a planted slowdown still fails |
 
 ## Release note
 
-Pull request 43 fixed K1, K3, K4 and K7 and merged to `main` as `1b3f8fd`. It
-carries no version change; its CHANGELOG entry sits under Unreleased. The
-v0.13.0 tag points at `8b9e3e3`, one merge earlier, so 0.13.0 does not carry
-the fix. The release workflow accepts only versions that end in `.0`, so the
-fix reaches PyPI with 0.14.0 at the earliest. A clean venv with 0.13.0 from
-PyPI still blocks a table under `--gate` on the delimiter row, as expected.
+Pull request 43 shipped in 0.14.0 with wave 1, released on 23 October 2026 at
+`0466d40`. A clean venv with 0.14.0 from PyPI passes a table on its delimiter
+row under `--gate`. Wave 2 merged after the release and sits under Unreleased.
 
 ## Wave plan
 
@@ -196,7 +193,7 @@ the same wave never touch the same file. Every package starts with a failing
 test, keeps the detector closure byte-identical (`scripts/check_release_ruleset.py`
 must pass), and ends with the full suite and the self-check green.
 
-### Wave 1, parallel
+### Wave 1, parallel (merged: pull requests 46 to 50, released in 0.14.0)
 
 **W1-A Version and install hygiene.** Fixes C11, G5, M14, V2.
 Owns `src/articulate/cli.py` (the `--version` flag only) and a new
@@ -229,7 +226,7 @@ Owns `scripts/native_release_source.py`, `.github/workflows/publish.yml`, `tests
 Entry: a `v0.13.1` dry run fails `qualify`.
 Exit: a patch tag reaches PyPI, checked from a clean venv.
 
-### Wave 2, parallel, after wave 1 merges
+### Wave 2, parallel (merged: pull requests 53 to 57; follow-ups 59 to 62 closed C13, M4, G8, E4 and T3)
 
 **W2-A Deterministic transform for backend none.** Fixes C9, M3.
 Owns `src/articulate/editing.py`, `src/articulate/house_edits.py` (shared closed list), a new `tests/test_fix_none.py`.
