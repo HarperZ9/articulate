@@ -1,10 +1,20 @@
 """The house transform and the SessionStart hook stay within five times their
 budgets (docs/house-voice.md). The measured numbers come from
-`python -m articulate.bench house`; five times the budget keeps timing noise
-on a shared CI runner from failing a build while still catching a regression
-of an order of magnitude."""
+`python -m articulate.bench house`; five times the budget catches a regression
+of an order of magnitude.
+
+A wall-clock budget alone fails on a loaded machine, such as a full suite under
+`pytest -n 8`, though the code did not change. So each sample runs next to a
+calibration workload of the same kind: a pure-Python loop for the in-process
+transform, an empty interpreter start for the hook. When the calibration runs
+slower than its reference time on an idle machine, the sample is scaled down by
+the same factor. A faster machine never gets a looser budget. The guard still
+fails on a real slowdown, which slows the sample and not the calibration
+(test_the_guard_fails_on_a_planted_slowdown). Set ARTICULATE_STRICT_TIMING=1 to
+check the raw times with no scaling."""
 import json
 import os
+import statistics
 import subprocess
 import sys
 import time
@@ -12,11 +22,42 @@ import time
 from articulate import bench, house
 
 CEILING = 5
+# Idle reference times on Windows 11, Python 3.12.10: the loop below takes
+# 8 to 10 ms, and an empty `python -I -S -B` start takes about 30 ms.
+LOOP_REF_MS = 10.0
+START_REF_MS = 30.0
 
 
-def _p95(samples):
-    s = sorted(samples)
-    return s[max(0, int(round(0.95 * len(s))) - 1)]
+def _ms(fn):
+    t0 = time.perf_counter()
+    fn()
+    return (time.perf_counter() - t0) * 1000
+
+
+def _loop():
+    sum(i * i for i in range(200_000))
+
+
+def _empty_start():
+    subprocess.run([sys.executable, "-I", "-S", "-B", "-c", "pass"], capture_output=True, timeout=30)
+
+
+def _load_adjusted_median(sample, calibrate, ref_ms, runs):
+    """Median sample time, each sample divided by the load seen beside it."""
+    strict = os.environ.get("ARTICULATE_STRICT_TIMING") == "1"
+    adjusted = []
+    for _ in range(runs):
+        before = _ms(calibrate)
+        took = _ms(sample)
+        after = _ms(calibrate)
+        load = 1.0 if strict else max(1.0, min(before, after) / ref_ms)
+        adjusted.append(took / load)
+    return statistics.median(adjusted), adjusted
+
+
+def _transform_median(text, sample=None):
+    house.transform(text)
+    return _load_adjusted_median(sample or (lambda: house.transform(text)), _loop, LOOP_REF_MS, 7)
 
 
 def test_bench_text_has_the_requested_length():
@@ -27,14 +68,20 @@ def test_bench_text_has_the_requested_length():
 def test_warm_transform_within_budget():
     for words, budget in ((300, bench.HOUSE_BUDGET_MS["transform_300"]),
                           (2000, bench.HOUSE_BUDGET_MS["transform_2000"])):
-        text = bench.house_text(words)
+        median, times = _transform_median(bench.house_text(words))
+        assert median <= CEILING * budget, (words, times)
+
+
+def test_the_guard_fails_on_a_planted_slowdown():
+    budget = bench.HOUSE_BUDGET_MS["transform_300"]
+    text = bench.house_text(300)
+
+    def slow():
         house.transform(text)
-        times = []
-        for _ in range(7):
-            t0 = time.perf_counter()
-            house.transform(text)
-            times.append((time.perf_counter() - t0) * 1000)
-        assert _p95(times) <= CEILING * budget, (words, times)
+        time.sleep(2 * CEILING * budget / 1000)
+
+    median, times = _transform_median(text, slow)
+    assert median > CEILING * budget, times
 
 
 def test_session_start_hook_cold_within_budget(tmp_path):
@@ -43,14 +90,14 @@ def test_session_start_hook_cold_within_budget(tmp_path):
     env = dict(os.environ, ARTICULATE_CONFIG_DIR=str(tmp_path / "cfg"))
     env["ARTICULATE_HOUSE_VOICE"] = "on"
     event = json.dumps({"hook_event_name": "SessionStart", "source": "startup"}).encode()
-    times = []
-    for _ in range(5):
-        t0 = time.perf_counter()
+
+    def hook():
         run = subprocess.run([sys.executable, "-I", "-S", "-B", "-X", "utf8", str(shim)],
                              input=event, capture_output=True, env=env, timeout=30)
-        times.append((time.perf_counter() - t0) * 1000)
         assert run.returncode == 0 and b"additionalContext" in run.stdout
-    assert _p95(times) <= CEILING * bench.HOUSE_BUDGET_MS["session_start"], times
+
+    median, times = _load_adjusted_median(hook, _empty_start, START_REF_MS, 5)
+    assert median <= CEILING * bench.HOUSE_BUDGET_MS["session_start"], times
 
 
 def test_transform_reports_its_own_timing():
