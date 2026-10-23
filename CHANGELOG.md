@@ -4,6 +4,18 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.15.1
+
+A patch release. It is also the first release to use the patch path that 0.14.0
+opened.
+
+- The art footer reads "Zain Dana Harper / on PyPI". It had read "A Flywheel
+  lane / beta", which is internal language.
+- `editor.py` is split into `editor.py`, `editor_text.py` and `editor_cli.py`,
+  each under 300 lines. Every name still imports from `articulate.editor`.
+- The package keywords no longer list `ai-detection`. Articulate checks style
+  and does not detect who wrote a text.
+
 ## 0.15.0
 
 The editor now does part of the work the checker points at, and it refuses
