@@ -132,7 +132,7 @@ freely, so the default profile blocks it.
 
 | ID | Criterion | Check that can fail | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | PASS | 0.14.0 on PyPI and in `pyproject.toml` |
+| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | PASS | 0.15.0 on PyPI and in `pyproject.toml` |
 | G2 | A clean venv install resolves every console script | `publish.yml` script check, then a local clean venv | PASS | Clean venv from PyPI: `articulate --version` prints 0.14.0; a table separator row passes the gate |
 | G9 | A bug fix can ship as a patch release | Tag `vX.Y.1` and run `publish.yml` | PARTIAL | #46 removed the `.0` rule; 0.14.0 passed `native-build`. No patch tag has shipped yet to prove the path end to end |
 | G3 | The release ruleset check holds the v0.5.2 detector closure | `scripts/check_release_ruleset.py` | PASS | `PASS`, fingerprint `sha256:9f78a7484bb20f84` |
@@ -184,7 +184,9 @@ September roadmap.
 
 Pull request 43 shipped in 0.14.0 with wave 1, released on 23 October 2026 at
 `0466d40`. A clean venv with 0.14.0 from PyPI passes a table on its delimiter
-row under `--gate`. Wave 2 merged after the release and sits under Unreleased.
+row under `--gate`. Wave 2 and its follow-ups shipped in 0.15.0 at `3caf7da`. A
+clean venv with 0.15.0 from PyPI prints `articulate 0.15.0`, reports no em-dash
+in `Let $a---b$ be the gap.`, and `fix --backend none` makes two phrase edits.
 
 ## Wave plan
 
@@ -193,7 +195,7 @@ the same wave never touch the same file. Every package starts with a failing
 test, keeps the detector closure byte-identical (`scripts/check_release_ruleset.py`
 must pass), and ends with the full suite and the self-check green.
 
-### Wave 1, parallel (merged: pull requests 46 to 50, released in 0.14.0)
+### Wave 1, parallel (pull requests 46 to 50, released in 0.14.0)
 
 **W1-A Version and install hygiene.** Fixes C11, G5, M14, V2.
 Owns `src/articulate/cli.py` (the `--version` flag only) and a new
@@ -226,7 +228,7 @@ Owns `scripts/native_release_source.py`, `.github/workflows/publish.yml`, `tests
 Entry: a `v0.13.1` dry run fails `qualify`.
 Exit: a patch tag reaches PyPI, checked from a clean venv.
 
-### Wave 2, parallel (merged: pull requests 53 to 57; follow-ups 59 to 62 closed C13, M4, G8, E4 and T3)
+### Wave 2, parallel (pull requests 53 to 57 and follow-ups 59 to 62, released in 0.15.0)
 
 **W2-A Deterministic transform for backend none.** Fixes C9, M3.
 Owns `src/articulate/editing.py`, `src/articulate/house_edits.py` (shared closed list), a new `tests/test_fix_none.py`.
