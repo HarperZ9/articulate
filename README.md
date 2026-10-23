@@ -5,28 +5,52 @@
 
 # articulate
 
-Local prose checks for writing devices and plain-writing problems, with an optional editor. No network.
+Articulate checks prose on your own computer, names each writing pattern it finds, and shows the line where it occurs.
 
+Articulate is for people who write documentation, READMEs, release notes, essays and commit messages and want a second reader that flags stacked hedges, marketing words, corporate verbs and the rhetorical habits common in model-written text. Each finding names the pattern and its line. A profile per kind of writing decides which findings block, so a procedure gates strictly and fiction gates nothing. The checker uses only the Python standard library and makes no network call.
+
+It is a style tool and not an authorship detector. In its own evaluation on 183 texts of known origin it flagged all 84 AI texts and also 57 of 75 human texts (76%, 95% interval 65% to 84%), including 10 of 18 essays by English learners; see [the results](corpus/provenance/README.md) and [`results.json`](corpus/provenance/results.json). Never use a finding to accuse anyone of using AI or to grade a student's work.
+
+## Install and first run
+
+Python 3.9 or newer. No model, account or API key.
+
+```bash
+python -m pip install articulate-writing
 ```
-python -m articulate.cli check path/to/doc.md --gate
+
+Check a draft. With `--gate` the command exits 1 when a high finding blocks it under the chosen profile.
+
+```text
+$ articulate check post.md --profile readme --gate
+[articulate] post.md [readme]: 4 high, 2 medium (blocked)  texture 100/100
+  L3 [HIGH antithesis] it's not just X, it's Y: This release is not just a bug fix; it is a new foundation. ...
+  L3 [HIGH corporate-verb] leverage / underscore / reflect (as corporate verb): ...
+  L4 [HIGH filler-intensifier] genuinely / really / truly / actually: ...
 ```
 
-[![version: 0.12.0](https://img.shields.io/badge/version-0.12.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/articulate-writing/)
-[![CI](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml)
-[![license](https://img.shields.io/badge/license-FSL--1.1--MIT-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/articulate/blob/main/LICENSE)
-![python 3.9+](https://img.shields.io/badge/python-3.9%2B-e6e1d6?style=flat-square&labelColor=1a1712)
+Write a receipt for the check, then replay it. A receipt replays to Match on the same text and to Unverifiable once the text changes.
 
-A local writing-quality tool. It flags writing devices common in AI output and in
-weak prose, says where each one occurs, scores how densely a passage uses them,
-and (with an LLM backend) rewrites prose to a plain, skilled standard. The core
-runs standard-library-only with no network call. Writing quality is the goal; it
-is not an evasion tool, and no detector score is a target.
+```text
+$ articulate receipt post.md --profile readme > post.receipt.json
+$ articulate verify post.receipt.json post.md
+[articulate] Match: re-derived 6 findings, gate blocked, texture 100
+```
 
-It is a style tool. It is not an authorship detector. On 183 texts of known origin it flagged all
-84 AI texts and also 57 of 75 human texts (76%, 95% interval 65% to 84%), including 10 of
-18 essays by English learners; see [the results](corpus/provenance/README.md) and
-[`results.json`](corpus/provenance/results.json). Never use a finding to accuse anyone of
-using AI, and never to judge a student's work.
+The same checks run as `python -m articulate.cli`, as a Python library, as SARIF output for CI, as an LSP server for editors and as an MCP server for AI clients. The [CLI reference](docs/cli.md) lists every command.
+
+## How it compares
+
+- **Vale** enforces a style guide you write as YAML rules, with editor and CI integrations. Articulate ships its own rule set and register profiles, and adds replayable receipts and a texture score.
+- **proselint** and **write-good** flag usage problems and weak phrasing. Articulate overlaps on hedges and weak phrasing, and adds patterns such as contrast framing, rule-of-three lists and corporate verbs, with a profile deciding which ones block.
+- **LanguageTool** and **Grammarly** check grammar and spelling, and their main products send text to a server. Articulate does not check grammar or spelling, and its checker stays on your computer.
+- **Hemingway Editor** scores readability in an editor window. Articulate runs from the command line and in CI, and states which rule fired on which line.
+
+## Limits
+
+- Pattern rules miss judgement-level problems such as a vague claim stated with confidence. `articulate judge` covers some of these with a model you supply.
+- A clean gate means the text passed a named rule set. It says nothing about whether the content is true.
+- The optional editor (`fix`, `polish`) uses a model you configure, and an accepted rewrite can still change meaning. Read every rewrite.
 
 ## Documentation
 
@@ -48,31 +72,6 @@ how three profiles gate the same findings, how the texture score is computed,
 per-span verdicts, and a receipt that replays to Match, Drift or Unverifiable.
 Every value on it is output from this repository. Its source is
 [docs/explainer/index.html](docs/explainer/index.html).
-
-## Walkthrough
-
-Install it, run it once, then use the main feature. Each command below is real, and so is its output.
-
-1. **Install.** Install from PyPI. Python 3.9 or newer; the checker uses the standard library only and makes no network call.
-
-   ```text
-   $ python -m pip install articulate-writing
-   ```
-
-2. **First run: check a draft.** Check a draft against a profile. With `--gate` the command exits 1 when high findings block it.
-
-   ```text
-   $ articulate check post.md --profile readme --gate
-   [articulate] post.md [readme]: 3 high, 2 medium (blocked)  texture 70/100
-   ```
-
-3. **Seal a receipt and re-derive it.** Write a receipt for the check, then verify it against the same file.
-
-   ```text
-   $ articulate receipt post.md --profile readme > post.receipt.json
-   $ articulate verify post.receipt.json post.md
-   [articulate] Match: re-derived 6 findings, gate blocked, texture 70
-   ```
 
 ## What it does
 
@@ -245,7 +244,7 @@ screenplay, poetry), the editor injection boundary, per-paragraph
 findings, a sub-threshold "unverifiable" calibration, binary fail-closed input
 guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
 receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.12.0 is prepared for release as `articulate-writing`; the
+one package. Version 0.12.0 is on PyPI as `articulate-writing`; the
 [changelog](CHANGELOG.md) records what each release added. Optional adapters can
 use a model you supply; no model is bundled. This release retains the published
 v0.5.2 detector rules and fingerprint while extending packaging and rewrite
