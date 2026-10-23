@@ -37,6 +37,7 @@ Articulate is a style checker and is not an authorship detector. On 183 texts of
 - **Receipts.** `articulate receipt` records a check, and `articulate verify` replays it against the file later. `articulate audit` queries a folder of committed receipts.
 - **House voice.** `articulate house on` gives an AI model a published, versioned voice: answer first, numbers with denominators. `articulate house off` turns it off.
 - **Your own voice.** `articulate voice learn --mine` builds a profile from files you name. Compare drafts with it, or shape your own draft toward it.
+- **A voice from intent.** `articulate voice intend` takes a goal, an audience and a stance and writes a spec with a plan. `articulate voice check draft.md --intent spec.json` scores the draft against it and names, by line, the template shapes a line-by-line check misses: one-line paragraphs, anaphora runs, closing maxims, "It is not X. It is Y." See [a voice built from intent](docs/voice-intent.md).
 - **Series review.** `articulate corpus` reads several documents together and reports repeated title formulas, shared paragraph scaffolds and even rhythm, with locations.
 - **Dialogue.** `articulate dialogue` checks game and stage scripts and builds character voice sheets.
 
@@ -119,5 +120,5 @@ Version 0.15.1 is on PyPI as `articulate-writing`. The [changelog](CHANGELOG.md)
 - [Features](docs/features.md): every capability and how to reach it.
 - [CLI reference](docs/cli.md): each command and flag, with exit codes.
 - [Boundaries](docs/boundaries.md): what a result and a receipt mean.
-- [House voice](docs/house-voice.md), [series and your own voice](docs/series-and-voice.md), [dialogue](docs/dialogue.md).
+- [House voice](docs/house-voice.md), [series and your own voice](docs/series-and-voice.md), [a voice built from intent](docs/voice-intent.md), [dialogue](docs/dialogue.md).
 - [Animated explainer](https://harperz9.github.io/repo-explainers/articulate.html): one draft through the checker, profiles, texture score and receipts.
