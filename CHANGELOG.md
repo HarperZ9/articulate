@@ -4,7 +4,7 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
-## 0.12.1
+## 0.13.0
 
 Documentation and package metadata only. No rule, threshold or finding changes.
 
@@ -14,6 +14,9 @@ Documentation and package metadata only. No rule, threshold or finding changes.
   this release on.
 - The package summary names the 57 of 75 human-text result beside the style
   claim, and the author entry carries zaindharper@gmail.com.
+- The v0.12.1 tag carried these changes first. Its publish run stopped at the
+  native build, which accepts only release versions that end in `.0`, so
+  0.12.1 never reached PyPI and has no release assets.
 
 ## 0.12.0
 
