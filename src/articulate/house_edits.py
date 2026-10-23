@@ -31,6 +31,28 @@ SPACE = re.compile(r"(?<=\S)[ \t]{2,}(?=\S)")
 _SENTENCE = re.compile(r"[^.!?\n]+[.!?]+[\"'”’)]*")
 RULES = ("dash", "space", "residue", "residue-paragraph")
 
+# phrase: the closed list that `fix --backend none` applies. A listed opener at
+# the start of a sentence is deleted and the next letter is capitalised. Each
+# one carries emphasis or sequence and no claim, so the sentence keeps its
+# meaning. Mid-sentence uses, and any other phrasing, are left to a model edit.
+# The house transform does not apply this rule.
+PHRASE = re.compile(
+    r"(?:^|(?<=[.!?][ \t])|(?<=[.!?][\"'”’)][ \t]))"
+    r"(?:(?:Moreover|Furthermore|Additionally|In addition),"
+    r"|It(?: is|'s|’s) (?:crucial|important|essential|vital) to (?:note|remember) that"
+    r"|It(?: is|'s|’s) worth noting that)"
+    r"[ \t]+(?P<next>[A-Za-z])", re.M)
+
+
+def phrase_edits(text, spans):
+    """Closed-list phrase edits for text, in original offsets, outside every span."""
+    edits = []
+    for m in PHRASE.finditer(text):
+        if not _overlaps(m.start(), m.end(), spans):
+            edits.append({"rule": "phrase", "start": m.start(), "end": m.end(),
+                          "new": m.group("next").upper()})
+    return edits
+
 
 def _compiled(kind):
     return [re.compile(p, re.I) for p in spec()["residue"][kind]]
@@ -168,6 +190,10 @@ def _rule_ok(text, e, spans):
                 and not _overlaps(e["start"], e["end"], spans))
     if rule == "space":
         return new == " " and re.fullmatch(r"[ \t]{2,}", old) and not _overlaps(e["start"], e["end"], spans)
+    if rule == "phrase":
+        m = PHRASE.match(text, e["start"])
+        return (m is not None and m.end() == e["end"] and new == m.group("next").upper()
+                and not _overlaps(e["start"], e["end"], spans))
     if rule == "residue":
         return new == "" and bool(residue_run(old, OPENERS) or residue_run(old, CLOSERS))
     if rule == "residue-paragraph":

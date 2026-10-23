@@ -23,7 +23,8 @@ import json
 import re
 
 from . import checkext, detector, domains, edit_options, modes, profiles, prompts
-from .meaning_guard import guard_rewrite, mask_text, protected_spans, restore_masks
+from . import house_edits
+from .meaning_guard import _PARAGRAPH, guard_rewrite, mask_text, protected_spans, restore_masks
 
 
 def _canonical(value):
@@ -244,16 +245,46 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
                    author_text_origin, allowed)
 
 
+def _paragraph_of(text, offset):
+    return len(_PARAGRAPH.findall(text, 0, offset))
+
+
+def _phrase_pass(text, is_html, is_tex, allow, freeze):
+    """Apply each closed-list phrase edit alone, kept only if the meaning guard
+    accepts it. Returns the text, the kept edits and the refusals."""
+    spans = protected_spans(text, is_html, is_tex, freeze)
+    current, kept, refused = text, [], []
+    for e in reversed(house_edits.phrase_edits(text, spans)):
+        trial = current[:e['start']] + e['new'] + current[e['end']:]
+        guarded = guard_rewrite(current, trial, is_html, is_tex, allow=allow, freeze=freeze)
+        if guarded['refused']:
+            refused += [dict(r, paragraph=_paragraph_of(text, e['start'])) for r in guarded['refused']]
+            continue
+        current = trial
+        kept.append({'rule': 'phrase', 'line': text.count('\n', 0, e['start']) + 1,
+                     'start': e['start'], 'end': e['end'], 'old': text[e['start']:e['end']], 'new': e['new']})
+    return current, kept[::-1], refused
+
+
+def _kept_edits(text, edits, refused):
+    """Drop edits in any paragraph the final guard kept as the original."""
+    lost = {r.get('paragraph') for r in refused}
+    if None in lost:
+        return []
+    return [e for e in edits if _paragraph_of(text, e['start']) not in lost]
+
+
 def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False,
                        allow_change=None, freeze_terms=None):
     settings = _settings(mode, profile, goal, is_html, is_tex,
                          allow_change=allow_change, freeze_terms=freeze_terms)
     allow, freeze = edit_options.bound(settings)
-    candidate = text
+    candidate, edits, phrase_refused = text, [], []
     prof = settings['profile']
     if goal != 'judge' and prof.get('slop') != 'off' and prof.get('editor', {}).get('run_fix_by_default', True):
+        candidate, edits, phrase_refused = _phrase_pass(text, is_html, is_tex, allow, freeze)
         # Transform only unprotected text. A final common guard also checks the result.
-        spans = sorted(protected_spans(text, is_html, is_tex, freeze), key=lambda s: (s['start'], -s['end']))
+        spans = sorted(protected_spans(candidate, is_html, is_tex, freeze), key=lambda s: (s['start'], -s['end']))
         chunks, end = [], 0
         def transform(prose):
             if prof.get('no_em_dash', True):
@@ -262,15 +293,19 @@ def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False,
             return re.sub(r'(?<=\S)[ \t]{2,}(?=\S)', ' ', prose)
         for span in spans:
             if span['start'] >= end:
-                chunks.extend((transform(text[end:span['start']]), text[span['start']:span['end']]))
+                chunks.extend((transform(candidate[end:span['start']]), candidate[span['start']:span['end']]))
                 end = span['end']
-        chunks.append(transform(text[end:]))
+        chunks.append(transform(candidate[end:]))
         candidate = ''.join(chunks)
     checked = guard_rewrite(text, candidate, is_html, is_tex, allow=allow, freeze=freeze)
+    edits = _kept_edits(text, edits, checked['refused'])
+    checked = dict(checked, refused=phrase_refused + checked['refused'])
     if goal == 'polish' and check_under(text, prof)['gate'] == 'ok' and check_under(checked['text'], prof)['gate'] != 'ok':
         checked = {'text': text, 'refused': [{'paragraph': None, 'reasons': ['detector gate regressed']}]}
     out = _result(text, checked['text'], settings, checked['refused'], 'none', None,
                   allowed=checked.get('allowed_changes'))
+    # Every closed-list phrase edit that survived the guards, in original offsets.
+    out['edits'] = out['receipt']['edits'] = edits
     out['instruction'] = 'For a model edit, use edit_plan/edit_submit or configure a reachable model backend.'
     if goal == 'judge':
         out['assessment'] = _summary(out['findings_before'])

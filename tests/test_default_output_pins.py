@@ -1,7 +1,11 @@
 """With no project config and no domain profile, command output is byte-identical
 to the release line before project rules, domain profiles, allow-change and the
 change report were added. The pins were computed from that release line
-(commit b9eaae6) on corpus/ai/blog-intro.md copied to an empty directory."""
+(commit b9eaae6) on corpus/ai/blog-intro.md copied to an empty directory.
+
+fix_none was re-pinned when `fix --backend none` gained the closed-list phrase
+edits (tests/test_fix_none.py). Its output now lists those edits, and the sample
+loses one sentence-initial "Moreover,"."""
 import contextlib
 import hashlib
 import io
@@ -27,7 +31,7 @@ PINS = {
     "score": (["score", "sample.md"],
               "9e2e2f2a452c8b305e96925f9936db8c5c614c9b7b7703e5de92645c6ab9871c"),
     "fix_none": (["fix", "sample.md", "--backend", "none"],
-                 "900c4c4208f6978ef33eee6d6bf333d4524f8df4681fda41f90331186be358f8"),
+                 "11e8f35eb5fb5e3a54d3fbe7443546ab6689d1fbd8c778c9ab7094e340dd180f"),
     "plan": (["plan", "sample.md"],
              "1be2cab1d1fb0f9e0bc767d0251948797bbd14357a83fa1e0e56962fdcab92b6"),
 }
