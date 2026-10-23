@@ -296,6 +296,37 @@ gate and dialogue keeps the character's voice. Poetry reads by the line, and the
 craft-device categories drop from its report, because they name legitimate
 technique in verse.
 
+## Markdown structure
+
+Some Markdown is not prose, and Articulate blanks it before the rules run. The
+masks keep every offset, so a finding still points at the right line and column.
+
+- A table delimiter row such as `| :--- | ---: |` is not an em-dash. A dash
+  inside a table cell still fires.
+- Fenced code, an indented code block outside a list, and YAML or TOML front
+  matter are skipped.
+- Inline math such as `$a---b$` or `$$x -- y$$`, and a display block between two
+  `$$` lines, are skipped. A dollar amount is not math. An opening `$` needs a
+  non-space after it, and a closing `$` needs a non-space before it and no digit
+  after it, so "$5 and $10" and "$5-$10" stay prose. An escaped `\$` never opens
+  or closes a span.
+- A register word inside a run of capitalised words, such as `Transformative` in
+  `the Transformative AI Fund`, is a name and is not reported. At the start of a
+  sentence a capital proves nothing, so the word still fires there, unless the
+  same capitalised run appears elsewhere in the document away from a sentence
+  start. `Robust Intelligence builds models.` alone is still flagged.
+
+Block quotes are checked as prose. A quote can be a cited source, and it can
+also be the author's own callout or pull quote, and the Markdown does not say
+which. Checking both keeps the author's own words from slipping past the gate.
+To quote a source verbatim without findings, put it in a fenced block, which
+the checker skips. A term the project accepts in every file goes in the
+`allowed` list of the project config.
+
+A receipt records the mask set as `structure`. `markdown/1` is the set in 0.14.0,
+and `markdown/2` adds the math masks and the sentence-start names. A receipt
+replays under the set it names, so a receipt from 0.14.0 still reads Match.
+
 ## Science and mathematical writing
 
 `academic/prove` and `science-writing/explain` target hard technical exposition:

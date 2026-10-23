@@ -13,12 +13,21 @@ words, and `mask_spans` hides those words behind same-length placeholder letters
 for a second detector pass. Every mask keeps the text length and line breaks,
 so a finding's offsets stay valid in the original text, and `restore` copies
 `match` and `snippet` back from the original.
+
+The masks are versioned, because a receipt replays under the masks it names.
+`markdown/1` is the 0.14.0 set. `markdown/2` adds inline and display math
+(`$a---b$`, `$$x$$`, a `$$` block) and a name at the start of a sentence when
+the same capitalised run appears in the document away from a sentence start.
+A dollar amount is not math: an opening `$` needs a non-space after it, a
+closing `$` needs a non-space before it and no digit after it, and an escaped
+dollar never opens or closes. Pandoc uses the same rule.
 """
 import re
 
 from .markup import is_md_hr, is_md_table_sep
 
-VERSION = "markdown/1"
+VERSIONS = ("markdown/1", "markdown/2")
+VERSION = VERSIONS[-1]
 
 _FENCE = re.compile(r"^\s*(```|~~~)")
 _LIST = re.compile(r"^ {0,3}(?:[-*+]|\d{1,9}[.)])(?:\s|$)")
@@ -26,6 +35,21 @@ _HEADING = re.compile(r"^ {0,3}#{1,6}(?:\s|$)")
 _WORD = re.compile(r"[A-Za-z][A-Za-z'’-]*")
 _LEAD = re.compile(r"^[\s>#*+|\-\d.)(\"'“‘\[_`]*")
 _ENDERS = ".!?:"
+_DISPLAY = re.compile(r"(?<!\\)\$\$(?=\S)[^$\n]*?\S\$\$")
+_INLINE = re.compile(r"(?<![\\$])\$(?![\s$])(?:[^$\n]*?[^\s\\$])?\$(?![\d$])")
+
+
+def _level(version):
+    if version not in VERSIONS:
+        raise ValueError(f"unknown structure masks {version!r}")
+    return VERSIONS.index(version) + 1
+
+
+def _mask_math(line):
+    """The line with inline `$...$` and `$$...$$` spans blanked."""
+    for pattern in (_DISPLAY, _INLINE):
+        line = pattern.sub(lambda m: " " * len(m.group(0)), line)
+    return line
 
 
 def _blank(line):
@@ -44,9 +68,12 @@ def _indent(line):
     return width
 
 
-def mask_structure(text):
+def mask_structure(text, version=VERSION):
     """The text with table delimiter rows, indented code blocks and TOML front
-    matter blanked. Fenced code is left to the detector, which skips it."""
+    matter blanked, and from markdown/2 math as well. Fenced code is left to the
+    detector, which skips it."""
+    math = _level(version) >= 2
+    in_math = False
     lines = text.splitlines(keepends=True)
     out = []
     in_fence = False
@@ -69,6 +96,12 @@ def mask_structure(text):
         if in_fence:
             out.append(raw)
             continue
+        if math and (in_math or body.strip() == "$$"):
+            if body.strip() == "$$":
+                in_math = not in_math
+            out.append(_blank(raw))
+            prev_blank = False
+            continue
         if not body.strip():
             out.append(raw)
             prev_blank = True
@@ -86,6 +119,8 @@ def mask_structure(text):
             list_active = False
         if is_md_table_sep(body) and not is_md_hr(body):
             out.append(raw.replace("-", " ").replace(":", " "))
+        elif math and "$" in body:
+            out.append(_mask_math(raw))
         else:
             out.append(raw)
         prev_blank = False
@@ -117,6 +152,44 @@ def _name_words(line):
     return sorted(keep)
 
 
+def _initial_run(line, start):
+    """Words of the capitalised run that opens at `start`, as (start, end) pairs."""
+    run = []
+    for m in _WORD.finditer(line, start):
+        if not _capitalised(m.group(0)) or (run and line[run[-1][1]:m.start()].strip()):
+            break
+        run.append((m.start(), m.end()))
+    return run
+
+
+def known_names(text):
+    """Capitalised runs that appear away from a sentence start on a prose line,
+    as tuples of words. They are evidence of a name anywhere in the document."""
+    names = set()
+    for line in text.splitlines():
+        if not _prose_line(line):
+            continue
+        run = []
+        for w in _name_words(line) + [None]:
+            if w is not None and run and not line[run[-1][1]:w[0]].strip():
+                run.append(w)
+                continue
+            if len(run) >= 2:
+                names.add(tuple(line[a:b] for a, b in run))
+            run = [w] if w is not None else []
+    return names
+
+
+def _initial_name(line, start, end, known):
+    """(start, end) of a known name that opens a sentence and covers the finding."""
+    run = _initial_run(line, start)
+    words = tuple(line[a:b] for a, b in run)
+    for k in range(len(run), 1, -1):
+        if words[:k] in known and run[k - 1][1] >= end:
+            return run[0][0], run[k - 1][1]
+    return None
+
+
 def _prose_line(line):
     """A sentence-case line: not a heading, with a lowercase word of four or more
     letters, so a Title Case line is not taken for a run of names."""
@@ -125,8 +198,14 @@ def _prose_line(line):
     return any(w[0].islower() and len(w) >= 4 for w in _WORD.findall(line))
 
 
-def name_spans(text, result):
-    """Document offsets (start, end) of register-word findings inside a name."""
+def name_spans(text, result, version=VERSION, known=None):
+    """Document offsets (start, end) of register-word findings inside a name.
+    From markdown/2 a finding at a sentence start counts when its capitalised
+    run is in `known` (default: the known names of `text`)."""
+    if _level(version) < 2:
+        known = set()
+    elif known is None:
+        known = known_names(text)
     lines = text.splitlines(keepends=True)
     offsets, acc = [], 0
     for ln in lines:
@@ -145,6 +224,10 @@ def name_spans(text, result):
         covered = [(m.start(), m.end()) for m in _WORD.finditer(line[s:e])]
         if inside and len(inside) == len(covered) and inside[0][0] <= s and inside[-1][1] >= e:
             spans.append((base + inside[0][0], base + inside[-1][1]))
+        elif known and _sentence_initial(line, s):
+            found = _initial_name(line, s, e, known)
+            if found:
+                spans.append((base + found[0], base + found[1]))
     return spans
 
 
