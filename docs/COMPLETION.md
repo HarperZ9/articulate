@@ -17,9 +17,9 @@ local Ollama model, `qwen3:8b`, served the model backend.
 
 | Status | Count |
 | --- | --- |
-| PASS | 43 |
-| PARTIAL | 13 |
-| FAIL | 18 |
+| PASS | 45 |
+| PARTIAL | 12 |
+| FAIL | 17 |
 | NOT BUILT | 9 |
 | Total | 83 |
 
@@ -132,8 +132,8 @@ freely, so the default profile blocks it.
 
 | ID | Criterion | Check that can fail | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | FAIL | PyPI had 0.12.0 at the end of this pass; the 0.12.1 publish failed at `native-build`, and the 0.13.0 publish was still queued |
-| G2 | A clean venv install resolves every console script | `publish.yml` script check, then a local clean venv | PARTIAL | The workflow step exists and passed for 0.12.0; no newer release has reached PyPI to check |
+| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | PASS | 0.13.0 on PyPI and in `pyproject.toml`; the 0.12.1 publish had failed at `native-build` |
+| G2 | A clean venv install resolves every console script | `publish.yml` script check, then a local clean venv | PASS | Clean venv from PyPI: `articulate.__version__` is 0.13.0 and all five console scripts exist |
 | G9 | A bug fix can ship as a patch release | Tag `vX.Y.1` and run `publish.yml` | FAIL | `scripts/native_release_source.py` raises `mature release version must end in .0`, so every fix needs a minor version |
 | G3 | The release ruleset check holds the v0.5.2 detector closure | `scripts/check_release_ruleset.py` | PASS | `PASS`, fingerprint `sha256:9f78a7484bb20f84` |
 | G4 | Optional extras pin versions that work | `[mcp]` and `[hosted]` installed in CI | FAIL | `[mcp]` says `fastmcp>=3` with no ceiling; CI installs only `[dev]`, so the break is invisible |
@@ -186,7 +186,8 @@ Pull request 43 fixed K1, K3, K4 and K7 and merged to `main` as `1b3f8fd`. It
 carries no version change; its CHANGELOG entry sits under Unreleased. The
 v0.13.0 tag points at `8b9e3e3`, one merge earlier, so 0.13.0 does not carry
 the fix. The release workflow accepts only versions that end in `.0`, so the
-fix reaches PyPI with 0.14.0 at the earliest. Until then, M1 stays as measured.
+fix reaches PyPI with 0.14.0 at the earliest. A clean venv with 0.13.0 from
+PyPI still blocks a table under `--gate` on the delimiter row, as expected.
 
 ## Wave plan
 
@@ -221,11 +222,10 @@ Owns `.pre-commit-hooks.yaml`, `action.yml` description text, `editors/vscode/pa
 Waits for any open README or PyPI text PR to close, and does not edit `README.md`.
 Exit: a grep for "AI tells" and "AI-tell detection" across public files returns nothing.
 
-**W1-E Release path for fixes.** Fixes G1, G9. Needs the author's decision first:
+**W1-E Release path for fixes.** Fixes G9. Needs the author's decision first:
 either the native build accepts patch versions, or the Python release publishes
 without the native build when the version is a patch.
 Owns `scripts/native_release_source.py`, `.github/workflows/publish.yml`, `tests/test_native_release.py`.
-Waits for pull request 44 to merge, since that pull request owns the version strings.
 Entry: a `v0.13.1` dry run fails `qualify`.
 Exit: a patch tag reaches PyPI, checked from a clean venv.
 
@@ -282,5 +282,6 @@ G7 needs a publisher account action by the author.
 4. The `[mcp]` extra installs a fastmcp that breaks the FastMCP surface, and CI
    does not test it (G4, M15).
 5. No author voice profile exists, so `voice_compare` cannot run (V3, M8).
-6. A fix cannot ship as a patch: the native build accepts only `.0` versions, the
-   0.12.1 publish failed on that rule, and PyPI still serves 0.12.0 (G1, G9).
+6. A fix cannot ship as a patch: the native build accepts only `.0` versions, and
+   the 0.12.1 publish failed on that rule. The Markdown fix missed the 0.13.0 tag
+   by one merge, so it waits for 0.14.0 (G9).
