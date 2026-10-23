@@ -1,12 +1,13 @@
 {
  "receipts": {
   "hero-dark.png": {
-   "backend": "chrome-154.0.8037.95-skia",
+   "backend": "chrome-155.0.8059.85-skia",
    "content_sha256": "aa5695a4b5d28baf7bb28ee526582924a9fbc48a8882175d379f2187730a998b",
    "does_not_prove": [
     "It does not show the figure's numbers come from a real run, except where the alt text quotes a README result.",
     "It does not show the PNG bytes are the same under another Chrome build; the SVG and the scene are the portable record.",
-    "It does not show the artwork meets the brand rules; that is a human review against ART-DIRECTION.md."
+    "It does not show the artwork meets the brand rules; that is a human review against ART-DIRECTION.md.",
+    "It does not show the scene and content hashes match this caption; they describe the generator run before the 2026-10-23 caption edit."
    ],
    "media": {
     "format": "rgb8",
@@ -16,15 +17,23 @@
     "width": 1280
    },
    "outputs": {
-    "hero-dark.png": "ed9073191d862318dde1667126aa9e5d27b1ebef7dc431c53672477ea5733404",
-    "hero-dark.svg": "d2a6b6c2b6cddb79b0c40d3cefb217239807529fd25f14beae4e201f34fa7c36"
+    "hero-dark.png": "63c80c474e15bc4bb3142c9fa08641c10844191b3dd42587d98da1de29ee3190",
+    "hero-dark.svg": "7ab7954eeb607ed74e0c5a7e4807b603b6239a5f8f4b9746b25c7190bc12a2ee"
    },
    "producer": {
     "name": "harperz9.repo-art",
     "version": "0.1.0"
    },
-   "receipt_sha256": "0c00f3a25a4422f67ba7531460519ff34e57a3e65b1498e0c55c2104556d3753",
-   "reconcile": null,
+   "receipt_sha256": "bb9ec54763813ef9b47d8d564593fcf953c4971dff5bfe96b9b79eb422926527",
+   "reconcile": {
+    "change": "Caption re-outlined from Hanken Grotesk Regular with fontTools to state the current claim; the generator scene was not rerun.",
+    "date": "2026-10-23",
+    "method": "fontTools SVGPathPen at the old cap height, then a headless Chrome screenshot at 1280x480 converted to RGB",
+    "stale_fields": [
+     "scene_sha256",
+     "content_sha256"
+    ]
+   },
    "scene_sha256": "04975a5b2b05bc795b5a42a25a2276d2e9848dac4b8645aff803e710c4c981bc",
    "schema": "superstack.receipt/1",
    "seed": "articulate",
@@ -37,12 +46,13 @@
    }
   },
   "hero-light.png": {
-   "backend": "chrome-154.0.8037.95-skia",
+   "backend": "chrome-155.0.8059.85-skia",
    "content_sha256": "588ae8fcbfb929745a7f1c22ce3daa00a48ad6b9fcb074f19a72ee4bc42f86d5",
    "does_not_prove": [
     "It does not show the figure's numbers come from a real run, except where the alt text quotes a README result.",
     "It does not show the PNG bytes are the same under another Chrome build; the SVG and the scene are the portable record.",
-    "It does not show the artwork meets the brand rules; that is a human review against ART-DIRECTION.md."
+    "It does not show the artwork meets the brand rules; that is a human review against ART-DIRECTION.md.",
+    "It does not show the scene and content hashes match this caption; they describe the generator run before the 2026-10-23 caption edit."
    ],
    "media": {
     "format": "rgb8",
@@ -52,15 +62,23 @@
     "width": 1280
    },
    "outputs": {
-    "hero-light.png": "b12f9344e4ed8ac4357e2b3081645456605c94dd3186667ca424445f9a4c7edf",
-    "hero-light.svg": "3e8feb4e80b6c538f0adad60cb601ee07d0c246976aef0325821749ac38b1f9e"
+    "hero-light.png": "39dbe8e5709604dc6dca19f0206fb7abae5b8ae5271a513f14fd5f0ca827cee7",
+    "hero-light.svg": "79daafa11cc1fd957829031fd85c115a7f525780f851e6408df17c5aede1d952"
    },
    "producer": {
     "name": "harperz9.repo-art",
     "version": "0.1.0"
    },
-   "receipt_sha256": "226bf39cbca2f35d4d1cbec35064f2107cb01cf9918e86ba252289cc89d539f6",
-   "reconcile": null,
+   "receipt_sha256": "fae8118747186da5feb8db752b96cfa0964ce02c7ff66da30e57b0c1a68e9553",
+   "reconcile": {
+    "change": "Caption re-outlined from Hanken Grotesk Regular with fontTools to state the current claim; the generator scene was not rerun.",
+    "date": "2026-10-23",
+    "method": "fontTools SVGPathPen at the old cap height, then a headless Chrome screenshot at 1280x480 converted to RGB",
+    "stale_fields": [
+     "scene_sha256",
+     "content_sha256"
+    ]
+   },
    "scene_sha256": "90413287370e2ca9befb1e9b2c92d9bfffa42bebb5fe402bb137a428635f8e5d",
    "schema": "superstack.receipt/1",
    "seed": "articulate",

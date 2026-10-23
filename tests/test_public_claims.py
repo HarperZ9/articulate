@@ -11,7 +11,8 @@ SURFACES = ["README.md", "pyproject.toml", "action.yml", "editors/vscode/package
             "docs/boundaries.md", "docs/features.md", "docs/cli.md", "docs/walkthrough.md",
             "src/articulate/cli.py", "src/articulate/mcp_server.py",
             "src/articulate/tool_text.py", "src/articulate/bench.py",
-            ".pre-commit-hooks.yaml", "assets/make_hero.py", "assets/articulate-hero.svg"]
+            ".pre-commit-hooks.yaml", "assets/make_hero.py", "assets/articulate-hero.svg",
+            "docs/art/hero-dark.svg", "docs/art/hero-light.svg"]
 OVERCLAIM = re.compile(r"(?i)AI-tell detection|\bAI[- ]tells?\b|AI and prose tells|machine-textured|machine-texture score|"
                        r"reads as machine-written|mixed[- ]authorship|AI recall|human specificity|"
                        r"specificity on the\s+human")
@@ -19,7 +20,7 @@ OVERCLAIM = re.compile(r"(?i)AI-tell detection|\bAI[- ]tells?\b|AI and prose tel
 
 def _text(rel):
     text = (ROOT / rel).read_text(encoding="utf-8")
-    if rel == "README.md":  # the hero alt text names the older caption baked into the image
+    if rel == "README.md":  # the hero alt text is checked through the SVG title it repeats
         text = re.sub(r'<img [^>]*>', "", text)
     return text
 

@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-dark.svg">
-  <img src="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-light.svg" alt="articulate. A fan of ruled sheets drawn in fine lines, the top sheet lit by a bright core. The caption in the image is an older tagline; the line below states what the tool does." width="100%">
+  <img src="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-light.svg" alt="articulate. A fan of ruled sheets drawn in fine lines, the top sheet lit by a bright core. The caption reads: Local writing-quality checker and editor. No network. Not an authorship detector." width="100%">
 </picture>
 
 # articulate
