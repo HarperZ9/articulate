@@ -4,6 +4,33 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.12.2
+
+Markdown structure no longer reads as prose. The detector rules and their
+fingerprint are unchanged; the fix sits in the check layer in front of them.
+
+- A table delimiter row such as `|---|---|` or `| :--- | ---: |` was reported
+  as a HIGH em-dash, which blocked any Markdown file with a table under
+  `--gate`. Agents had started rewriting tables as `|-|-|` to quiet it. The row
+  is now blanked before the rules run. An em-dash or `---` inside a table cell
+  still fires.
+- An indented code block, outside a list, and TOML front matter between `+++`
+  lines are blanked the same way. YAML front matter and fenced code were
+  already skipped.
+- A register word inside a run of capitalised words, such as "Transformative"
+  in "the Transformative AI Fund", is no longer reported. A heading, a word
+  that opens a sentence, and a Title Case line still fire.
+- `articulate check`, the per-paragraph view, receipts, the MCP `check` and
+  `score` tools, the edit hook, the editor gate and the house notes all use the
+  same masks. On 3,000 Markdown files under the workspace the masks removed
+  5,123 separator findings, 8 register words in names and 2 findings inside
+  indented code, and added none.
+- A receipt for text the masks change records `"structure": "markdown/1"`, and
+  `verify` replays it with the masks. A receipt without the field replays
+  without them, so receipts made by earlier releases still read Match.
+- Still open: `---` inside inline `$...$` math, and block quotes, which can be
+  a cited source or the author's own callout.
+
 ## 0.12.1
 
 Documentation and package metadata only. No rule, threshold or finding changes.

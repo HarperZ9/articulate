@@ -16,7 +16,7 @@ import hashlib
 import re
 import time
 
-from . import detector, house_edits, house_settings
+from . import checkext, detector, house_edits, house_settings
 from .house_spec import (BRIEF_CEILING, CURRENT, brief, default_tuning,  # noqa: F401
                          fingerprint, session_context, spec, versions)
 from .house_edits import verify_edits  # noqa: F401  (part of this module's interface)
@@ -47,7 +47,7 @@ def human_claims(text):
 
 
 def style_notes(text, tiers=("high", "medium")):
-    result = detector.check_text(text)
+    result = checkext.check_text(text)
     return [{"category": "style/" + str(f.get("category")), "line": f["line"],
              "match": f["match"][:80], "reason": f["label"], "tier": tier}
             for tier in tiers for f in result[tier]]

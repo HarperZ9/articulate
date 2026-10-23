@@ -100,12 +100,12 @@ def _normalize(result, redaction=None) -> list:
     return out
 
 
-def _block_receipt(text, prof) -> list:
+def _block_receipt(text, prof, structure=True) -> list:
     """Per-span (per-paragraph) verdicts for the receipt: which block is flagged,
     its line range, its own text hash, and its localized texture. This is what
     makes the receipt reportable per span, beyond the whole-document verdict."""
     out = []
-    for b in checkext.analyze_blocks(text, profile=prof):
+    for b in checkext.analyze_blocks(text, profile=prof, structure=structure):
         out.append({
             "index": b["index"],
             "start_line": b["start_line"], "end_line": b["end_line"],
@@ -158,6 +158,10 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
         rec["project_rules_sha256"] = project.payload_sha256(rules)
     if rules_ext.active(prof):
         rec["extension_fingerprint"] = rules_ext.fingerprint()
+    # Named only when the Markdown masks change this text, so a receipt for text
+    # without that structure is the same as before the masks existed.
+    if checkext.changes_text(text):
+        rec["structure"] = checkext.STRUCTURE_VERSION
     if per_span:
         rec["blocks"] = _block_receipt(text, prof)
     return rec
@@ -218,7 +222,13 @@ def verify_receipt(receipt: dict, text: str):
     prof, problem = _replay_profile(receipt, prof)
     if problem:
         return "Unverifiable", problem
-    r = checkext.check_text(text, profile=prof)
+    # A receipt without the field predates the Markdown masks, or its text has
+    # none of that structure; either way the unmasked replay re-derives it.
+    recorded = receipt.get("structure")
+    if recorded not in (None, checkext.STRUCTURE_VERSION):
+        return "Unverifiable", f"receipt names unknown structure masks {recorded!r}"
+    structure = recorded is not None
+    r = checkext.check_text(text, profile=prof, structure=structure)
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.
     same = (_normalize(r, redaction) == receipt.get("findings")
@@ -233,7 +243,7 @@ def verify_receipt(receipt: dict, text: str):
                 f"below the {detector.MIN_WORDS_FOR_VERDICT}-word signal floor; "
                 f"no confident clean verdict on this little text")
     # A per-span receipt also re-derives its per-block verdicts.
-    if "blocks" in receipt and _block_receipt(text, prof) != receipt["blocks"]:
+    if "blocks" in receipt and _block_receipt(text, prof, structure) != receipt["blocks"]:
         return "Drift", "re-derived per-span block verdicts differ from the receipt"
     n = len(r["high"]) + len(r["medium"]) + len(r["low"])
     span = f", {len(receipt['blocks'])} spans" if "blocks" in receipt else ""

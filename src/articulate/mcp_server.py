@@ -8,7 +8,7 @@ import asyncio
 import json
 from typing import List, Optional
 
-from . import detector as core
+from . import checkext as core
 from .tool_meta import fastmcp_options, offline
 from .tool_text import description
 
