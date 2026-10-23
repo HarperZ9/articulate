@@ -22,7 +22,7 @@ import os
 import re
 import sys
 
-from . import detector, meaning
+from . import checkext, meaning
 
 PROSE_SUFFIXES = frozenset((".md", ".markdown", ".mdx", ".txt", ".text", ".rst",
                             ".adoc", ".asciidoc", ".tex"))
@@ -137,7 +137,7 @@ def preservation_notes(old, new, is_tex=False):
 
 
 def style_notes(new):
-    result = detector.check_text(new)
+    result = checkext.check_text(new)
     hits = sorted(result["high"] + result["medium"], key=lambda h: h["start"])
     notes = [clip("L%d %s %r" % (h["line"], h["label"], h["match"])) for h in hits[:MAX_STYLE]]
     if len(hits) > MAX_STYLE:

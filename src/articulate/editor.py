@@ -120,8 +120,8 @@ def mechanical(path, profile=None):
 def assess(text, profile=None):
     """The full detector result under a profile/mode (findings + gate + low
     advisories). The editor threads the mode here, so it is no longer profile-blind."""
-    from . import detector
-    return detector.check_text(text, profile=profile)
+    from . import checkext
+    return checkext.check_text(text, profile=profile)
 
 
 def mechanical_text(text, profile=None):
