@@ -14,7 +14,14 @@ A caller may name change kinds it accepts (allow) and terms it freezes
 allowed_changes, never accepted in silence. Disclosure, added-first-person,
 HTML and math changes cannot be allowed; articulate.edit_options validates the
 kinds before they reach this module.
+
+A date is a protected span of kind date, so "3 May" cannot become "May 3". A
+rewrite paragraph that adds a writing device the original paragraph lacked (a
+HIGH or MEDIUM detector finding, or a corrective negation such as "X, not Y")
+is retained with reason "device introduced: <name>". An edit exists to remove
+devices, so one that adds a device is refused.
 """
+from collections import Counter
 import hashlib
 import re
 
@@ -26,6 +33,16 @@ from .authorship import disclosure_spans, novel_first_person, strip_supplied
 _MATH = re.compile(
     r'\\begin\{(equation|align|gather|multline|eqnarray|split|theorem|lemma|proof|definition|proposition|corollary|claim)\*?\}.*?\\end\{\1\*?\}'
     r'|\$\$.*?\$\$|\\\[.*?\\\]|\\\(.*?\\\)|(?<!\\)\$(?:\\.|[^$\\])*\$', re.S)
+_MONTH = (r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?'
+          r'|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?')
+_DATE = re.compile(r'\b\d{1,2}(?:st|nd|rd|th)?\s+' + _MONTH + r'(?:,?\s+\d{4})?(?!\w)'
+                   r'|\b' + _MONTH + r'\s+\d{1,2}(?:st|nd|rd|th)?\b(?:,?\s+\d{4})?'
+                   r'|\b\d{4}-\d{2}-\d{2}\b')
+# Corrective negation: "X, not Y", "not just X but Y", "isn't X; it's Y".
+_CORRECTIVE = re.compile(
+    r"(?i),\s+not\s+(?!only\b|just\b|merely\b|least\b|yet\b|always\b|all\b)[a-z]"
+    r"|\bnot\s+(?:just|only|merely)\b[^.!?\n]*\bbut\b"
+    r"|\b(?:isn|aren|wasn)[’']t\b[^.!?\n]*[,;:—]\s*(?:it|they)[’'](?:s|re)\b")
 _TAG_BODY = r'''(?:[^>"']|"[^"]*"|'[^']*')*'''
 _HTML = re.compile(r'<!--.*?-->|<(?P<opaque>script|style|pre|code)\b' + _TAG_BODY +
                    r'>.*?</(?P=opaque)\s*>|<![^>]*>|</?[A-Za-z]' + _TAG_BODY + r'>', re.S | re.I)
@@ -45,6 +62,7 @@ _PATTERNS = [
     # CommonMark permits lazy continuation without a leading >. Protect the
     # entire quote paragraph, conservatively including such following lines.
     ('quote', re.compile(r'(?m)^[ \t]*>[^\n]*(?:\n(?![ \t]*\r?$)[^\n]+)*')),
+    ('date', _DATE),
     ('number', re.compile(r'[+-]?\d+(?:[.,:/\-]\d+)*(?:\s?%|[eE][+-]?\d+)?')),
     ('number-range', re.compile(r'\d+(?:[.,]\d+)*(?:[A-Za-z%]+)?[ \t]*[\u2013\u2014-][ \t]*\d+(?:[.,]\d+)*(?:[A-Za-z%]+)?')),
     ('quantity', re.compile(r'\d+(?:[.,]\d+)*(?:[A-Za-z\u00b5\u03bc\u00b0%]+|[ \t]+(?:kg|mg|g|km|cm|mm|m|ml|mL|L|Hz|kHz|MHz|GHz|ms|s|W|kW|V|A|K|\u00b0C|\u00b0F)\b)')),
@@ -101,6 +119,21 @@ def _refusal(index, reasons):
     return {'paragraph': index, 'reasons': reasons}
 
 
+def _devices(paragraph):
+    """Counts of writing devices in one paragraph: detector rule ids at HIGH and
+    MEDIUM, plus corrective negation, which the pinned detector does not name."""
+    from .checkext import check_text
+    found = check_text(paragraph)
+    counts = Counter(f["rule_id"] for key in ("high", "medium") for f in found[key])
+    counts["corrective-negation"] += len(_CORRECTIVE.findall(paragraph))
+    return counts
+
+
+def _added_devices(before, after):
+    old, new = _devices(before), _devices(after)
+    return sorted(name for name, n in new.items() if n > old.get(name, 0))
+
+
 def _claim_paragraphs(parts, is_html, is_tex):
     """Blank opaque containers globally, then use original paragraph boundaries."""
     # A closing fence in a later paragraph must not become a new opening fence
@@ -154,6 +187,8 @@ def guard_rewrite(original, rewrite, is_html=False, is_tex=False, author_text=No
         reasons.extend(kind + ' claim features changed' for kind in sorted(changed))
         if novel_first_person(old[i], new[i], author_text):
             reasons.append('added-first-person')
+        reasons.extend('device introduced: ' + name.split('/')[0]
+                       for name in _added_devices(old[i], checked[i]))
         blocking, kinds = _split_allowed(reasons, allow)
         if blocking:
             new[i] = checked[i] = old[i]
