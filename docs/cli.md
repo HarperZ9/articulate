@@ -383,6 +383,28 @@ sheet, and scores how distinct each voice is by blind attribution. Prints a
 table per character and the worst lines, or the full report with `--json`.
 `--gate` exits 1 when the report fails. See [dialogue and character voice](dialogue.md).
 
+## negation
+
+```
+articulate negation FILES_OR_DIRS... [--profile NAME] [--rule copy|fiction]
+                    [--min-words N] [--all] [--json] [--gate]
+```
+
+Finds entries that spend their words on what a thing lacks. An entry is a
+paragraph, list item, HTML block, README section, script block, dialogue line
+or UI string. Each entry splits into clauses, and the score is the share of
+clauses whose main job is negation, limitation or disclaimer, such as "does
+not", "never", "no server", "not yet", "only" and "limited to". The output also
+gives the share of words those clauses hold, and it lists virtue phrases such
+as "provenance", "receipts" and "verifiable" when an entry uses them to sell.
+
+The copy rule warns at 30% and fails at 50%. The fiction rule warns at 45% and
+fails at 65%, and it skips character speech, so a character can say no while
+narration still counts. Narrative and genre profiles take the fiction rule;
+`--rule` picks one directly. Readers cover Markdown, HTML, Low Water `.lwd`
+scripts, JSON (a `lines` list reads as one film segment) and JavaScript string
+literals. `--gate` exits 1 when any entry reaches the fail line.
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.

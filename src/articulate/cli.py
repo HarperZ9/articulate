@@ -531,9 +531,10 @@ def main(argv=None):
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
-    from . import cli_corpus, cli_desk, cli_dialogue, cli_house, cli_process
+    from . import cli_corpus, cli_desk, cli_dialogue, cli_house, cli_negation, cli_process
     cli_corpus.register(sub)
     cli_dialogue.register(sub)
+    cli_negation.register(sub)
     cli_house.register(sub)
     cli_process.register(sub)
     cli_desk.register(sub)
