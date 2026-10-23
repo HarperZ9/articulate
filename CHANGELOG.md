@@ -4,6 +4,17 @@ All notable changes to `articulate-writing` are recorded here. The package uses
 semantic versioning. This is the package version. The detector ruleset carries its
 own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
+## 0.12.1
+
+Documentation and package metadata only. No rule, threshold or finding changes.
+
+- The README opens with what Articulate checks, who it serves, an install and
+  first run, a comparison with Vale, proselint, write-good, LanguageTool,
+  Grammarly and Hemingway Editor, and short limits. PyPI shows that text from
+  this release on.
+- The package summary names the 57 of 75 human-text result beside the style
+  claim, and the author entry carries zaindharper@gmail.com.
+
 ## 0.12.0
 
 Public descriptions now say what the evidence supports. No rule, threshold or
