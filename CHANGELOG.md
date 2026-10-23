@@ -6,6 +6,11 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+## 0.16.0
+
+You can now build a voice from what you want a piece to do, and check a draft
+against it. The release also adds the negation-load check.
+
 - `articulate voice intend` builds a voice spec from a goal, an audience, a
   stance and optional reference samples, and prints a plan: open on an anchor,
   name the opposing view, try the other side, ask what if, say what you think,
