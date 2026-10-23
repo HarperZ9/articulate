@@ -9,7 +9,7 @@ to optimise, and Articulate is not a tool for getting past AI detectors. Any
 criterion that would reward a lower detector score is out of scope by
 definition.
 
-Updated on 23 October 2026 for 0.14.0 and wave 2 (pull requests 46 to 57); rows not named there keep their first measurement. First measured on 22 October 2026 against `main` at 0.12.1, with the Markdown fix from
+Updated on 23 October 2026 for 0.14.0 and wave 2 (pull requests 46 to 62); rows not named there keep their first measurement. First measured on 22 October 2026 against `main` at 0.12.1, with the Markdown fix from
 pull request 43 applied. Pull request 43 merged as `1b3f8fd`, after `main` moved to 0.13.0. The machine was Windows 11 with Python 3.12, and a
 local Ollama model, `qwen3:8b`, served the model backend.
 
@@ -17,8 +17,8 @@ local Ollama model, `qwen3:8b`, served the model backend.
 
 | Status | Count |
 | --- | --- |
-| PASS | 62 |
-| PARTIAL | 11 |
+| PASS | 67 |
+| PARTIAL | 6 |
 | FAIL | 2 |
 | NOT BUILT | 8 |
 | Total | 83 |
@@ -43,7 +43,7 @@ nothing exists to check yet.
 | C10 | `polish` improves or keeps the text and never ends worse | Polish `slop.md`; expect fewer blocking findings or the original back with a reason | PASS | Since #54 the CLI prints `kept the original: <reason>` when polish returns the original |
 | C11 | `--version` prints the package version | `articulate --version` exits 0 | PASS | 0.14.0: `articulate 0.14.0`, exit 0 (#47) |
 | C12 | Unknown profile or mode fails closed with the list of known names | `check --profile nosuch` exits 2 and lists profiles | PASS | Exit 2 with the full list |
-| C13 | `check --sarif` emits valid SARIF 2.1.0 and `--content-free` removes every substring | Validate against the schema; grep the output for a matched word | PARTIAL | SARIF header and schema URL present; no schema validation run in this pass |
+| C13 | `check --sarif` emits valid SARIF 2.1.0 and `--content-free` removes every substring | Validate against the schema; grep the output for a matched word | PASS | #61: `tests/test_sarif_schema.py` validates real output against the vendored SARIF 2.1.0 schema, with and without `--content-free`; absolute paths now go out as `file:///` URIs. Content-free output keeps rule ids, which name the rule word lists |
 | C14 | `--spans` gives a per-paragraph verdict | `check --spans` on a 43-paragraph doc | PASS | `43 span(s), 0 flagged` |
 | C15 | `house`, `corpus`, `titles`, `interview`, `restructure`, `dialogue`, `process`, `disclose`, `desk` each have a test file and a docs entry | Test file per command and a heading in `docs/cli.md` | PASS | Suite 1,681 passed; headings present |
 
@@ -57,7 +57,7 @@ Measured through the `articulate` MCP server that Claude Code runs from the
 | M1 | `check` returns span records and no Markdown false positives | Send a table and a proper name | PASS | The MCP server now runs the installed 0.14.0 package, which carries the masks; MCP `check` covered in `tests/test_markdown_structure.py` |
 | M2 | `score` returns texture, hard hits and rates | Call on a short passage | PASS | `hard_hits: 3` and rates returned |
 | M3 | `fix` returns a rewrite or a host plan | Call with `backend none` | PASS | Since #55 `fix` with `backend none` returns the closed-list edits in `receipt.edits` |
-| M4 | `polish` returns a rewrite or a host plan | Call with `backend none` | PARTIAL | Returns the text unchanged with `quality_met: false` |
+| M4 | `polish` returns a rewrite or a host plan | Call with `backend none` | PASS | #59: MCP `fix` and `polish` return `kept_original_reason` whenever they return the original; same text as the CLI |
 | M5 | `judge` returns a host plan when no backend is set | Call with no backend | PASS | `status: host_edit_required` with copyeditor instructions |
 | M6 | `edit_plan` masks protected spans and returns a signed plan id | Call on text with numbers | PASS | `14` and `3` listed as protected spans |
 | M7 | `edit_submit` refuses a rewrite that changes a claim feature and returns a receipt | Submit a rewrite that drops a modal | PASS | Refused with `modal claim features changed`, receipt returned |
@@ -140,7 +140,7 @@ freely, so the default profile blocks it.
 | G5 | The author's machine runs the current release everywhere | PATH CLI, plugin and MCP server report one version | PASS | `scripts/sync_local_install.py` reports 0.14.0 for the PATH CLI, the MCP server and the plugin, exit 0 |
 | G6 | Windows native ZIP and MCPB install and run on a clean machine | Install on a machine with no Python | PARTIAL | Built and tested in CI; native client install still unverified, per the README |
 | G7 | The VS Code extension is published | Marketplace listing for `harperz9` | NOT BUILT | `editors/vscode` at 0.1.0; no listing found in this pass |
-| G8 | The pre-commit hook and GitHub Action work from a clean repository | Install the hook in a scratch repository and commit a blocked file | PARTIAL | Files present; not run in this pass |
+| G8 | The pre-commit hook and GitHub Action work from a clean repository | Install the hook in a scratch repository and commit a blocked file | PASS | #60: CI job `hook-clean-repo` commits a clean file and sees the hook refuse a prose em-dash |
 
 ## 8. Documentation
 
@@ -162,7 +162,7 @@ September roadmap.
 | E1 | Content-free receipts (drop or hash) verify as Match | `receipt --redact drop`, then `verify` | PASS | Audit run read `Match` |
 | E2 | `audit` queries committed receipts with no server | `audit --reverify --gate` | PASS | See C4 |
 | E3 | Receipts carry a reviewer and a timestamp outside the verified core | `receipt --reviewer` | PASS | `tests/test_audit.py` |
-| E4 | The GitHub Action re-verifies committed receipts | `action.yml` run in a scratch repository | PARTIAL | Present; not run in this pass |
+| E4 | The GitHub Action re-verifies committed receipts | `action.yml` run in a scratch repository | PASS | #60: CI job `action-clean-repo` reads `Match` on a committed receipt, fails on a changed source and fails the gate on a blocked file |
 | E5 | Optional tamper-evidence signing, `[sign]` extra | `pip install articulate-writing[sign]` | NOT BUILT | Deferred until a buyer asks |
 | E6 | Self-hosted audit store with SSO, RBAC and retention | Any deployable artifact | NOT BUILT | Gated on a paying signal |
 | E7 | Hosted dashboard | Any deployable artifact | NOT BUILT | Gated on tiers A and B |
@@ -178,7 +178,7 @@ September roadmap.
 | --- | --- | --- | --- | --- |
 | T1 | The full suite passes on CI for Python 3.9 to 3.12 on Linux, Windows and macOS | CI on pull request 43 | PASS | All jobs green on pull request 43 |
 | T2 | The full suite passes locally with every extra installed | `pip install -e .[dev,mcp,hosted]`, then `pytest` | PASS | CI job `extras` installs `[dev,mcp,hosted]` and runs the full suite (#48) |
-| T3 | Timing tests hold on a loaded machine | `test_house_latency`, `test_native_process` | PARTIAL | Failed in one local run of two |
+| T3 | Timing tests hold on a loaded machine | `test_house_latency`, `test_native_process` | PASS | #62: calibrated timing; passes under 30 busy-loop processes, and a planted slowdown still fails |
 
 ## Release note
 
@@ -226,7 +226,7 @@ Owns `scripts/native_release_source.py`, `.github/workflows/publish.yml`, `tests
 Entry: a `v0.13.1` dry run fails `qualify`.
 Exit: a patch tag reaches PyPI, checked from a clean venv.
 
-### Wave 2, parallel (merged: pull requests 53 to 57, unreleased)
+### Wave 2, parallel (merged: pull requests 53 to 57; follow-ups 59 to 62 closed C13, M4, G8, E4 and T3)
 
 **W2-A Deterministic transform for backend none.** Fixes C9, M3.
 Owns `src/articulate/editing.py`, `src/articulate/house_edits.py` (shared closed list), a new `tests/test_fix_none.py`.

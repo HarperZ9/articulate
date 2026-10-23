@@ -20,6 +20,14 @@ rewrites that change meaning.
   sentence-start name counts as a name when the same name appears mid-sentence.
   Receipts record `markdown/2`; `markdown/1` receipts still replay.
 - The hero images and the social card carry the current caption.
+- MCP `fix` and `polish` return `kept_original_reason` when they hand back the
+  original text.
+- SARIF output validates against the 2.1.0 schema in the tests, and an absolute
+  path goes out as a `file:///` URI.
+- The GitHub Action takes inputs through the environment, matches `**/*.md` at
+  the repository root, and stops on a pattern that matches nothing. New inputs:
+  `gate` fails the build on a blocked file, and `upload-sarif` can skip the
+  upload. CI now runs the hook and the action from clean repositories.
 
 ## 0.14.0
 
