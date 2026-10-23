@@ -31,7 +31,7 @@ fingerprint are unchanged; the fix sits in the check layer in front of them.
 - Still open: `---` inside inline `$...$` math, and block quotes, which can be
   a cited source or the author's own callout.
 
-## 0.12.1
+## 0.13.0
 
 Documentation and package metadata only. No rule, threshold or finding changes.
 
@@ -41,6 +41,9 @@ Documentation and package metadata only. No rule, threshold or finding changes.
   this release on.
 - The package summary names the 57 of 75 human-text result beside the style
   claim, and the author entry carries zaindharper@gmail.com.
+- The v0.12.1 tag carried these changes first. Its publish run stopped at the
+  native build, which accepts only release versions that end in `.0`, so
+  0.12.1 never reached PyPI and has no release assets.
 
 ## 0.12.0
 
