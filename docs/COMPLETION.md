@@ -17,8 +17,8 @@ local Ollama model, `qwen3:8b`, served the model backend.
 
 | Status | Count |
 | --- | --- |
-| PASS | 67 |
-| PARTIAL | 6 |
+| PASS | 68 |
+| PARTIAL | 5 |
 | FAIL | 2 |
 | NOT BUILT | 8 |
 | Total | 83 |
@@ -132,9 +132,9 @@ freely, so the default profile blocks it.
 
 | ID | Criterion | Check that can fail | Status | Evidence |
 | --- | --- | --- | --- | --- |
-| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | PASS | 0.15.0 on PyPI and in `pyproject.toml` |
+| G1 | PyPI latest equals the repository version | PyPI JSON `info.version` | PASS | 0.15.1 on PyPI and in `pyproject.toml` |
 | G2 | A clean venv install resolves every console script | `publish.yml` script check, then a local clean venv | PASS | Clean venv from PyPI: `articulate --version` prints 0.14.0; a table separator row passes the gate |
-| G9 | A bug fix can ship as a patch release | Tag `vX.Y.1` and run `publish.yml` | PARTIAL | #46 removed the `.0` rule; 0.14.0 passed `native-build`. No patch tag has shipped yet to prove the path end to end |
+| G9 | A bug fix can ship as a patch release | Tag `vX.Y.1` and run `publish.yml` | PASS | 0.15.1 shipped as a patch: tag `v0.15.1` at `8f5b6b2`, publish run 39912921892 passed `native-build` and `publish`, native ZIP and MCPB attached; a clean venv from PyPI prints `articulate 0.15.1` |
 | G3 | The release ruleset check holds the v0.5.2 detector closure | `scripts/check_release_ruleset.py` | PASS | `PASS`, fingerprint `sha256:9f78a7484bb20f84` |
 | G4 | Optional extras pin versions that work | `[mcp]` and `[hosted]` installed in CI | PASS | `[mcp]` and `[hosted]` both pin `fastmcp>=3.2.4,<4`; CI job `extras` installs both |
 | G5 | The author's machine runs the current release everywhere | PATH CLI, plugin and MCP server report one version | PASS | `scripts/sync_local_install.py` reports 0.14.0 for the PATH CLI, the MCP server and the plugin, exit 0 |
@@ -149,7 +149,7 @@ freely, so the default profile blocks it.
 | D1 | Every shipped doc passes Articulate's own gate | CI `articulate-self-check` | PASS | Exit 0 locally and in CI |
 | D2 | `docs/cli.md` covers every subcommand | Compare `articulate --help` with the headings | PASS | All 22 subcommands covered |
 | D3 | Every public description makes the same style-not-authorship claim | Grep public files for "AI tells" and "AI-tell detection" | PASS | #50 fixed the hook and hero source; `tests/test_public_claims.py` covers them. The pinned detector closure keeps two historical strings |
-| D4 | The hero image matches the current tagline | Compare image text with the README | PASS | #53 redrew the caption in the hero SVGs and the social card; `scripts/check_art_receipts.py` passes. The art footer still reads "A FLYWHEEL LANE / BETA" |
+| D4 | The hero image matches the current tagline | Compare image text with the README | PASS | #53 redrew the caption and #66 replaced the footer with "Zain Dana Harper / on PyPI" in the hero SVGs and the social card; `scripts/check_art_receipts.py` passes |
 | D5 | A completion ledger exists and stays current | This file, updated in the same change as a status move | PASS | This page |
 
 ## 9. Enterprise roadmap
@@ -186,7 +186,8 @@ Pull request 43 shipped in 0.14.0 with wave 1, released on 23 October 2026 at
 `0466d40`. A clean venv with 0.14.0 from PyPI passes a table on its delimiter
 row under `--gate`. Wave 2 and its follow-ups shipped in 0.15.0 at `3caf7da`. A
 clean venv with 0.15.0 from PyPI prints `articulate 0.15.0`, reports no em-dash
-in `Let $a---b$ be the gap.`, and `fix --backend none` makes two phrase edits.
+in `Let $a---b$ be the gap.`, and `fix --backend none` makes two phrase edits. Patch release 0.15.1 at `8f5b6b2`
+carries the art footer and the `editor.py` split, and proves the patch path (G9).
 
 ## Wave plan
 
