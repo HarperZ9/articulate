@@ -1,13 +1,13 @@
 {
  "receipts": {
   "hero-dark.png": {
-   "backend": "chrome-155.0.8059.85-skia",
+   "backend": "chromium-145.0.7632.6-skia",
    "content_sha256": "aa5695a4b5d28baf7bb28ee526582924a9fbc48a8882175d379f2187730a998b",
    "does_not_prove": [
     "It does not show the figure's numbers come from a real run, except where the alt text quotes a README result.",
     "It does not show the PNG bytes are the same under another Chrome build; the SVG and the scene are the portable record.",
     "It does not show the artwork meets the brand rules; that is a human review against ART-DIRECTION.md.",
-    "It does not show the scene and content hashes match this caption; they describe the generator run before the 2026-10-23 caption edit."
+    "It does not show the scene and content hashes match this caption and footer; they describe the generator run before the 2026-10-23 caption and footer edits."
    ],
    "media": {
     "format": "rgb8",
@@ -17,18 +17,18 @@
     "width": 1280
    },
    "outputs": {
-    "hero-dark.png": "63c80c474e15bc4bb3142c9fa08641c10844191b3dd42587d98da1de29ee3190",
-    "hero-dark.svg": "7ab7954eeb607ed74e0c5a7e4807b603b6239a5f8f4b9746b25c7190bc12a2ee"
+    "hero-dark.png": "1aadd5dbfcb570e1dbbe83506d022110aef5f8f1dc6dfbd7d81e0bc9601a460e",
+    "hero-dark.svg": "bfd4178d4f45b48b2b38c85196e5d268836d2945928549b486164245609e5ab2"
    },
    "producer": {
     "name": "harperz9.repo-art",
     "version": "0.1.0"
    },
-   "receipt_sha256": "bb9ec54763813ef9b47d8d564593fcf953c4971dff5bfe96b9b79eb422926527",
+   "receipt_sha256": "084f2fe17bc935b847f377c7b3a73645cdfffd51f40e0cf541725c480b22e7cb",
    "reconcile": {
-    "change": "Caption re-outlined from Hanken Grotesk Regular with fontTools to state the current claim; the generator scene was not rerun.",
+    "change": "Caption re-outlined from Hanken Grotesk Regular with fontTools to state the current claim (2026-10-23). Footer \"ZAIN DANA HARPER / A FLYWHEEL LANE / BETA\" recomposed as \"ZAIN DANA HARPER / ON PYPI\" from the footer glyph outlines already in this file (2026-10-23). The generator scene was not rerun.",
     "date": "2026-10-23",
-    "method": "fontTools SVGPathPen at the old cap height, then a headless Chrome screenshot at 1280x480 converted to RGB",
+    "method": "Caption: fontTools SVGPathPen at the old cap height. Footer: existing glyph outlines translated, at the measured in-word, word and separator spacing. PNG: Playwright Chromium 145 screenshot at 1280x480, converted to RGB",
     "stale_fields": [
      "scene_sha256",
      "content_sha256"
@@ -46,13 +46,13 @@
    }
   },
   "hero-light.png": {
-   "backend": "chrome-155.0.8059.85-skia",
+   "backend": "chromium-145.0.7632.6-skia",
    "content_sha256": "588ae8fcbfb929745a7f1c22ce3daa00a48ad6b9fcb074f19a72ee4bc42f86d5",
    "does_not_prove": [
     "It does not show the figure's numbers come from a real run, except where the alt text quotes a README result.",
     "It does not show the PNG bytes are the same under another Chrome build; the SVG and the scene are the portable record.",
     "It does not show the artwork meets the brand rules; that is a human review against ART-DIRECTION.md.",
-    "It does not show the scene and content hashes match this caption; they describe the generator run before the 2026-10-23 caption edit."
+    "It does not show the scene and content hashes match this caption and footer; they describe the generator run before the 2026-10-23 caption and footer edits."
    ],
    "media": {
     "format": "rgb8",
@@ -62,18 +62,18 @@
     "width": 1280
    },
    "outputs": {
-    "hero-light.png": "39dbe8e5709604dc6dca19f0206fb7abae5b8ae5271a513f14fd5f0ca827cee7",
-    "hero-light.svg": "79daafa11cc1fd957829031fd85c115a7f525780f851e6408df17c5aede1d952"
+    "hero-light.png": "4e6dfc6be21da8e50f4213c93b99a9a58ae9d53b6e69852ea8b4b42a206fcb8d",
+    "hero-light.svg": "c0bb04fb24d00ada7088b03d6d6c160fe057353b1197c1a38b359d251be3c68d"
    },
    "producer": {
     "name": "harperz9.repo-art",
     "version": "0.1.0"
    },
-   "receipt_sha256": "fae8118747186da5feb8db752b96cfa0964ce02c7ff66da30e57b0c1a68e9553",
+   "receipt_sha256": "8dc8447c864a7df0425bb6c521ca00f65c3ee858860c569266b4e56e485df0b3",
    "reconcile": {
-    "change": "Caption re-outlined from Hanken Grotesk Regular with fontTools to state the current claim; the generator scene was not rerun.",
+    "change": "Caption re-outlined from Hanken Grotesk Regular with fontTools to state the current claim (2026-10-23). Footer \"ZAIN DANA HARPER / A FLYWHEEL LANE / BETA\" recomposed as \"ZAIN DANA HARPER / ON PYPI\" from the footer glyph outlines already in this file (2026-10-23). The generator scene was not rerun.",
     "date": "2026-10-23",
-    "method": "fontTools SVGPathPen at the old cap height, then a headless Chrome screenshot at 1280x480 converted to RGB",
+    "method": "Caption: fontTools SVGPathPen at the old cap height. Footer: existing glyph outlines translated, at the measured in-word, word and separator spacing. PNG: Playwright Chromium 145 screenshot at 1280x480, converted to RGB",
     "stale_fields": [
      "scene_sha256",
      "content_sha256"
