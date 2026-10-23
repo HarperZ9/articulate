@@ -43,8 +43,6 @@ def qualify(root, version=None, *, mode='release', ref=None):
     head = git(root, 'rev-parse', 'HEAD')
     tag = 'v' + version
     if mode == 'release':
-        if not version.endswith('.0'):
-            raise ValueError('mature release version must end in .0')
         if git(root, 'status', '--porcelain', '--untracked-files=all'):
             raise ValueError('release source must be clean')
         if git(root, 'rev-parse', '--verify', f'refs/tags/{tag}^{{commit}}') != head:
