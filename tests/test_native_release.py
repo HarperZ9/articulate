@@ -45,6 +45,24 @@ def test_tagged_clean_release_source_qualifies(release_source):
     assert result['commit'] == git(release_source, 'rev-parse', 'HEAD')
 
 
+def test_patch_release_qualifies(release_source):
+    # A bug fix ships as X.Y.Z with Z > 0; the tag, ref and ruleset checks still hold.
+    helper = load('native_release_source')
+    for path in ('src/articulate/__init__.py', 'pyproject.toml', 'claude-plugin/plugin.json',
+                 'claude-plugin/.claude-plugin/plugin.json', 'claude-plugin/.codex-plugin/plugin.json'):
+        target = release_source / path
+        target.write_text(target.read_text(encoding='utf-8').replace('0.6.0', '0.6.1'), encoding='utf-8')
+    git(release_source, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+        'commit', '-qam', 'patch')
+    with pytest.raises(ValueError, match='release source Git qualification failed'):
+        helper.qualify(release_source, '0.6.1', ref='refs/tags/v0.6.1')
+    git(release_source, 'tag', 'v0.6.1')
+    result = helper.qualify(release_source, '0.6.1', ref='refs/tags/v0.6.1')
+    assert (result['version'], result['tag']) == ('0.6.1', 'v0.6.1')
+    with pytest.raises(ValueError, match='release ref must equal the version tag'):
+        helper.qualify(release_source, '0.6.1', ref='refs/tags/v0.6.0')
+
+
 @pytest.mark.parametrize('mutation', ['dirty', 'untracked', 'wrong-tag', 'missing-tag', 'ref', 'version', 'rules'])
 def test_source_mutations_refuse_before_archive_output(release_source, tmp_path, mutation):
     if mutation == 'dirty':

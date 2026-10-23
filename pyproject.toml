@@ -21,7 +21,7 @@ classifiers = [
 dependencies = []  # the core detector is standard-library only
 
 [project.optional-dependencies]
-mcp = ["fastmcp>=3"]      # the MCP server surface
+mcp = ["fastmcp>=3.2.4,<4"]      # the MCP server surface; fastmcp 4 drops the tool annotation hints
 hosted = ["fastmcp>=3.2.4,<4", "pydantic>=2.12,<3", "uvicorn>=0.30,<1"]  # opt-in authenticated HTTP
 dev = ["pytest>=7"]
 
