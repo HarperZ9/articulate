@@ -38,8 +38,8 @@ def canonical_digest(value):
 
 def check(root, baseline_path):
     receipt = {"status": "FAIL", "checked_files": 0, "failures": [],
-               "does_not_prove": "fairness, semantic quality, adapter behavior, "
-               "installed artifact identity, or release readiness"}
+               "scope": "Checks that each retained ruleset file matches the reviewed "
+               "baseline and that the ruleset fingerprint re-derives from those files."}
     failures = receipt["failures"]
     try:
         baseline = json.loads(baseline_path.read_text(encoding="utf-8"))

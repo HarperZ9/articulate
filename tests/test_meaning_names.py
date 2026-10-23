@@ -59,7 +59,7 @@ def test_single_sentence_start_name_swap_is_a_documented_blind_spot():
     therefore goes unreported, and the report says so."""
     report = meaning.compare("Alice approved the change.", "Mallory approved the change.")
     assert report["verdict"] == "preserved"
-    assert "opens a sentence" in report["does_not_prove"]
+    assert "opens a sentence" in report["scope"]
 
 
 # The compare path keyed each citation and quote on its raw text, so a

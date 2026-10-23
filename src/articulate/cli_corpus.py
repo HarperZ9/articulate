@@ -110,7 +110,7 @@ def cmd_restructure(args):
     print(out["diff"] or "No sentence to move.")
     print(f"Moved {s['moved_sentences']} sentences. Paragraphs ending in a limit or confidence "
           f"line: {s['scaffold_share_before']} before, {s['scaffold_share_after']} after.")
-    print(s["does_not_prove"])
+    print(s["scope"])
     if not out["verdict"]["ok"]:
         print("Refused: " + "; ".join(out["verdict"]["reasons"]))
         return 1

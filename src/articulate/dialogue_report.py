@@ -60,5 +60,7 @@ def markdown(report, *, title="Voice audit", worst_n=30, preamble=""):
     out += ["", "## Findings by check", "", "| Check | Lines |", "|:-|-:|"]
     for c, k in sorted(report["checks"].items(), key=lambda kv: -kv[1]):
         out.append(f"| {c} | {k} |")
-    out += ["", "## What this does not prove", "", report["does_not_prove"], ""]
+    out += ["", "## Reading these numbers", "",
+            "Each hit marks a line to read. A deliberate epigram is still flagged, and a "
+            "character can score as distinct through one repeated tic.", ""]
     return "\n".join(out)

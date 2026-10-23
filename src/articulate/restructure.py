@@ -17,7 +17,7 @@ from . import corpus_features as cf
 from .authorship import is_disclosure
 from .meaning_guard import protected_spans
 
-SCHEMA = "articulate/restructure/v1"
+SCHEMA = "articulate/restructure/v2"
 HEADING = "## Sources and method"
 LIMIT = ("Moving a limit line changes where a reader meets it. Check that each claim still "
          "reads as bounded where it stands.")
@@ -156,7 +156,7 @@ def propose(text, anchors="footnote"):
             "moved": [{k: i[k] for k in ("id", "line", "section", "sentences")} for i in plan],
             "summary": {"moved_sentences": sum(i["sentences"] for i in plan), "by_section": by_section,
                         "scaffold_share_before": _scaffold_share(text),
-                        "scaffold_share_after": _scaffold_share(body), "does_not_prove": LIMIT},
+                        "scaffold_share_after": _scaffold_share(body), "scope": LIMIT},
             "verdict": verdict, "ai_detector_consulted": False,
             "diff": "".join(difflib.unified_diff(text.splitlines(keepends=True),
                                                  proposal.splitlines(keepends=True),

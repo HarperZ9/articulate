@@ -26,7 +26,7 @@ With `--gate` the command exits 1 when a high finding blocks under the chosen pr
 
 Use it on documentation, READMEs, release notes, essays and commit messages. It flags stacked hedges, marketing words, corporate verbs, contrast framing, rule-of-three lists, em dashes and the rhetorical habits common in model-written text.
 
-Articulate is a style checker and is not an authorship detector. On 183 texts of known origin it flagged all 84 AI texts and 57 of 75 human texts (76%, 95% interval 65% to 84%), including 10 of 18 essays by English learners ([`results.json`](corpus/provenance/results.json)). Do not use a finding to decide who wrote a text or to grade a student.
+Articulate finds writing patterns and shows where they are. Use it to improve writing. Use other evidence to decide who wrote a text. On 183 texts of known origin it flagged all 84 AI texts and 57 of 75 human texts (76%, 95% interval 65% to 84%), including 10 of 18 essays by English learners ([`results.json`](corpus/provenance/results.json)). Teachers: use it to help a student improve a draft, and use other evidence to judge who wrote an essay.
 
 ## What it does
 
@@ -119,6 +119,6 @@ Version 0.16.0 is on PyPI as `articulate-writing`. The [changelog](CHANGELOG.md)
 - [Walkthrough](docs/walkthrough.md): one document from check to rewrite to a committed receipt.
 - [Features](docs/features.md): every capability and how to reach it.
 - [CLI reference](docs/cli.md): each command and flag, with exit codes.
-- [Boundaries](docs/boundaries.md): what a result and a receipt mean.
+- [What results mean](docs/boundaries.md): what a result and a receipt cover.
 - [House voice](docs/house-voice.md), [series and your own voice](docs/series-and-voice.md), [a voice built from intent](docs/voice-intent.md), [dialogue](docs/dialogue.md).
 - [Animated explainer](https://harperz9.github.io/repo-explainers/articulate.html): one draft through the checker, profiles, texture score and receipts.

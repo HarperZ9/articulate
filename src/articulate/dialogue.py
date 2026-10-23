@@ -12,11 +12,10 @@ from collections import Counter, defaultdict
 from . import dialogue_attrib, dialogue_rules, dialogue_sheet
 from .dialogue_lexicon import words
 
-FORMAT = "articulate-dialogue-report/1"
+FORMAT = "articulate-dialogue-report/2"
 GENERIC_WEIGHT = 1
-DOES_NOT_PROVE = ("Pattern hits and attribution scores locate lines to read. They do not prove "
-                  "a line is bad or a voice is good: a deliberate epigram is still flagged, and a "
-                  "character can be distinctive through one repeated tic.")
+SCOPE = ("Marks lines to read and scores how distinct each voice is. A deliberate "
+         "epigram is still marked. One repeated habit can make a voice score as distinct.")
 
 
 def _generic_cut(k):
@@ -53,7 +52,7 @@ def audit(records, sheets=None, project=None, *, min_lines=None, theme_words=Non
                             "min_lines": att["min_lines"], "block_size": att.get("block_size"),
                             "speakers_scored": k},
             "checks": dict(Counter(f["check"] for d in detail for f in d["findings"])),
-            "detail": detail, "does_not_prove": DOES_NOT_PROVE}
+            "detail": detail, "scope": SCOPE}
 
 
 def _epigram(d):

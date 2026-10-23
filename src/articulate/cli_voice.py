@@ -88,7 +88,7 @@ def _submit(args):
             fh.write(out["text"])
     v = out.get("voice", {})
     _emit(out, args, f"Features outside your range: {v.get('outside_before')} before, "
-                     f"{v.get('outside_after')} after. {v.get('does_not_prove', '')}\n"
+                     f"{v.get('outside_after')} after. {v.get('scope', '')}\n"
                      f"Kept original for {len(out['refused'])} paragraph(s).")
     return 0
 

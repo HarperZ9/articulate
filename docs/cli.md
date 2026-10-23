@@ -66,7 +66,7 @@ articulate receipt [FILE ...] [--profile P] [--spans]
 - `--redact drop`: a content-free audit receipt with the matched substring and the
   offsets dropped.
 - `--redact hash`: as `drop`, plus a hash of the match for an equality check
-  against a known string. Read [hash mode](boundaries.md#hash-mode) first.
+  against a known string. Read [hash mode](boundaries.md#hash-mode-supports-an-equality-check) first.
 - `--reviewer NAME`: record who screened it. When the flag is absent, the CI
   actor fills the field if one is set.
 
@@ -171,7 +171,7 @@ articulate desk FILE [--venue {none,paper,course}] [--disclosure F] [--author] [
 ```
 
 An unknown `--venue` exits 2 with the list of venues. The JSON output carries a
-`does_not_prove` line.
+`scope` line that says what the report covers.
 
 ## Editor commands
 
@@ -273,8 +273,8 @@ kept, with its reasons, and each allowed change. `--explain` or
 `--explain json` adds this as `changes` to the result JSON; `--explain text`
 prints the report in place of the JSON. The MCP `fix`, `polish` and
 `edit_submit` tools take `explain: true` for the same report. The findings
-columns show what the checker saw, not why the editor changed a sentence, and
-the report carries a `does_not_prove` line saying so.
+columns show what the checker saw. The report carries a `scope` line that says
+what the pairs cover.
 
 ### Backend configuration
 
@@ -343,7 +343,7 @@ articulate house set KEY=VALUE...
 ```
 
 `apply` runs the house transform on model output and prints the result; notes
-go to standard error. `--receipt` writes an `articulate/house-receipt/v1`
+go to standard error. `--receipt` writes an `articulate/house-receipt/v2`
 receipt that `articulate verify` replays. `brief --agents` prints the brief as an
 AGENTS.md section. `on`, `off` and `set` write the settings file and nothing
 else. Keys for `set`: `mode`, `length`, `headings`, `lists`, `first_person`,

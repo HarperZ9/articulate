@@ -133,8 +133,8 @@ def main(argv=None):
     rows = rows_for(a.local_root)
     res = report(rows)
     res["documents_measured"] = len(rows)
-    res["does_not_prove"] = ("Measured on this corpus only. A flag names prose patterns; it is not "
-                             "evidence about who wrote a given text.")
+    res["scope"] = ("Measured on this corpus only. A flag names a prose pattern in a text. "
+                    "Use other evidence to decide who wrote a text.")
     a.out.write_text(json.dumps(res, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps(res["articulate"]["overall"], indent=1))
     print(f"wrote {a.out}")

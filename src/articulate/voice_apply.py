@@ -20,8 +20,8 @@ from . import host_edit, voice, voice_identity, voice_store
 
 ATTEST = ("voice apply shapes only text that is yours; say so with --authored-by-me "
           "(authored_by_user: true over MCP)")
-DISTANCE_LIMIT = ("These counts place the text against your measured range. They do not show "
-                  "the text sounds like you, and they never decide whether an edit is accepted.")
+DISTANCE_LIMIT = ("These counts place the text against your measured range. The author "
+                  "decides whether to accept each edit.")
 
 
 def _owned(name, directory):
@@ -55,7 +55,7 @@ def distances(before_text, after_text, profile):
     rows = [{"feature": b["feature"], "before": b["verdict"], "after": a["verdict"]}
             for b, a in zip(before["features"], after["features"])]
     return {"outside_before": _outside(before), "outside_after": _outside(after),
-            "features": rows, "does_not_prove": DISTANCE_LIMIT}
+            "features": rows, "scope": DISTANCE_LIMIT}
 
 
 def check_bound_profile(text, plan_id, directory=None):

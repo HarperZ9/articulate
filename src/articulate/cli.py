@@ -270,7 +270,7 @@ def _cmd_verify(args):
     if isinstance(rec, dict) and str(rec.get("schema", "")).startswith("articulate/corpus-receipt/"):
         from . import cli_corpus
         return cli_corpus.verify(rec, [args.file] + args.more)
-    if isinstance(rec, dict) and rec.get("schema") == "articulate/house-receipt/v1":
+    if isinstance(rec, dict) and str(rec.get("schema", "")).startswith("articulate/house-receipt/"):
         from . import cli_house
         return cli_house.verify(rec, args.file)
     text = _decode(data)
@@ -465,7 +465,7 @@ def main(argv=None):
         print(f"articulate {_pkgver()}")
         return 0
     ap = argparse.ArgumentParser(prog="articulate",
-                                 description="Local prose checks for writing devices. Not an authorship detector.")
+                                 description="Finds writing patterns and shows where they are.")
     ap.add_argument("-V", "--version", action="version", version=f"articulate {_pkgver()}")
     sub = ap.add_subparsers(dest="cmd")
     for cmd in ("plan", "submit", "judge", "fix", "polish"):

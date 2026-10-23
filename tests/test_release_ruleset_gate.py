@@ -37,7 +37,7 @@ def test_retained_release_detector_is_accepted(candidate):
     assert receipt["status"] == "PASS"
     assert receipt["baseline_commit"] == "2884ce4a489b6598d51b57bbdfc98edb3d3ef306"
     assert receipt["checked_files"] == 6
-    assert "fairness" in receipt["does_not_prove"]
+    assert "reviewed baseline" in receipt["scope"]
 
 
 @pytest.mark.parametrize("name", MODULES)

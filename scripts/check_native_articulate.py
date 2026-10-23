@@ -150,8 +150,8 @@ def check(executable, version):
             'local_tools': sorted(TOOLS), 'host_edit_roundtrip': True, 'changed_fact_refused': True,
             'house_spec_bundled': True,
             'backend_refusals': 15, 'python_on_path': False, 'hostile_environment_overridden': True,
-            'does_not_prove': ['global egress prevention', 'clean OS installation',
-                               'marketplace acceptance', 'semantic equivalence']}
+            'scope': ('Checks the executable hash, the local tool list, a host edit round '
+                      'trip, the refusal of a changed fact and the backend refusals.')}
 
 
 if __name__ == '__main__':

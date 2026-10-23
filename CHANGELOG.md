@@ -6,6 +6,19 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+- Reports and receipts now name their limit field `scope`, and each scope says
+  what the result covers. The field was named `does_not_prove` before. These
+  schemas move to version 2: changes, meaning, corpus-report, corpus-receipt,
+  desk, interview, titles, restructure, voice-compare, house-receipt,
+  process-summary, editor-receipt and the dialogue report. `articulate verify`
+  still accepts version 1 corpus receipts, voice comparisons, house receipts and
+  process summaries. To read either version in your own code, read `scope` and
+  fall back to `does_not_prove`; `articulate.scope.scope_of` does this.
+- Tool descriptions say "Runs on your machine". The findings tools say "Use the
+  findings to improve writing. Use other evidence to decide who wrote a text."
+  The CLI describes Articulate as a tool that finds writing patterns and shows
+  where they are.
+
 ## 0.16.0
 
 You can now build a voice from what you want a piece to do, and check a draft

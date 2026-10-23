@@ -64,7 +64,7 @@ def test_inside_items_hold_check_span_question_and_limit_in_document_order():
     assert lines == sorted(lines)
     for i in items:
         assert i["quote"] and i["question"].endswith("?")
-        assert i["does_not_prove"]
+        assert i["scope"]
 
 
 def test_the_number_question_names_the_number():

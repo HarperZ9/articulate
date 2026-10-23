@@ -27,14 +27,14 @@ import sys
 import pytest
 
 from articulate import local_mcp
-from articulate.tool_text import DOES_NOT_PROVE
+from articulate.tool_text import LIMIT
 
 HINTS = ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint")
 
 # Tools whose result carries rewritten text. Their names read like file edits.
 REWRITES = {"fix", "polish", "edit_plan", "edit_submit"}
 # Tools whose result is a set of findings; their description carries the
-# does-not-prove line.
+# authorship limit.
 FINDINGS = {"check", "score"}
 
 OVERCLAIM = re.compile(
@@ -45,7 +45,7 @@ OVERCLAIM = re.compile(
     r"|\bworld[- ]class\b|\bundetectable\b|\bbypass|\bevad(?:e|es|ing)\b|\bhumani[sz]"
     r"|\bhuman[- ](?:written|authored)\b|\bai[- ](?:generated|written|authored|detect)"
     r"|\bdetects? ai\b|\bauthorship\b|\bwho (?:or what )?wrote\b")
-LOCAL_WORDS = re.compile(r"(?i)\blocal\b|\bno network\b|\bnetwork-free\b")
+LOCAL_WORDS = re.compile(r"(?i)\blocal\b|\bno network\b|\bnetwork-free\b|\bon your machine\b")
 SENDS = re.compile(r"(?i)\bsends?\b|\bhosted\b|\buploads?\b")
 WRITES_A_FILE = re.compile(
     r"(?i)\b(?:writes?|saves?|edits?|modif(?:y|ies)|overwrites?|deletes?) "
@@ -64,9 +64,9 @@ def _listed(monkeypatch, tool_set):
 def _overclaims(name, title, description, hints):
     """Every way this tool's words claim more than its hints say it does."""
     problems = []
-    # The does-not-prove line is the vetted statement of what a finding does not
-    # show; it is scanned for presence, never as a claim.
-    body = description.replace(DOES_NOT_PROVE, "")
+    # The limit line is the vetted statement that a finding says nothing about
+    # authorship; it is scanned for presence, never as a claim.
+    body = description.replace(LIMIT, "")
     for text, where in ((title, "title"), (body, "description")):
         found = OVERCLAIM.search(text)
         if found:
@@ -85,8 +85,8 @@ def _overclaims(name, title, description, hints):
         problems.append(f"{name}: marked read-only and says it writes a file")
     if name in REWRITES and "edits none of your files" not in body:
         problems.append(f"{name}: returns a rewrite and does not say it edits no file")
-    if name in FINDINGS and DOES_NOT_PROVE not in description:
-        problems.append(f"{name}: returns findings without the does-not-prove line")
+    if name in FINDINGS and LIMIT not in description:
+        problems.append(f"{name}: returns findings without the authorship limit")
     return problems
 
 
@@ -133,22 +133,22 @@ _LOCAL = {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True
           "openWorldHint": False}
 _HOSTED = {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False,
            "openWorldHint": True}
-_OK_LOCAL = "Checks a passage. Local, no network. " + DOES_NOT_PROVE
+_OK_LOCAL = "Checks a passage. Runs on your machine. " + LIMIT
 
 
 @pytest.mark.parametrize("name,title,description,hints,expected", [
-    ("check", "Check prose", "Guarantees every error is caught. Local. " + DOES_NOT_PROVE,
+    ("check", "Check prose", "Guarantees every error is caught. Local. " + LIMIT,
      _LOCAL, "overclaims"),
-    ("check", "Check prose", "Tells you who wrote the text. Local. " + DOES_NOT_PROVE,
+    ("check", "Check prose", "Tells you who wrote the text. Local. " + LIMIT,
      _LOCAL, "overclaims"),
     ("check", "Perfect prose checker", _OK_LOCAL, _LOCAL, "title overclaims"),
-    ("check", "Check prose", "Sends the text for a second read. Local. " + DOES_NOT_PROVE,
+    ("check", "Check prose", "Sends the text for a second read. Local. " + LIMIT,
      _LOCAL, "say it sends"),
-    ("check", "Check prose", "Checks a passage. " + DOES_NOT_PROVE, _LOCAL,
+    ("check", "Check prose", "Checks a passage. " + LIMIT, _LOCAL,
      "does not say it runs locally"),
-    ("check", "Check prose", "Checks a passage. Local, no network.", _LOCAL,
-     "does-not-prove"),
-    ("score", "Score prose", "Scores a passage and saves the file. Local. " + DOES_NOT_PROVE,
+    ("check", "Check prose", "Checks a passage. Runs on your machine.", _LOCAL,
+     "authorship limit"),
+    ("score", "Score prose", "Scores a passage and saves the file. Local. " + LIMIT,
      _LOCAL, "writes a file"),
     ("judge", "Editor read through a hosted model", "Reads the passage.", _HOSTED,
      "does not say so"),
@@ -157,7 +157,7 @@ _OK_LOCAL = "Checks a passage. Local, no network. " + DOES_NOT_PROVE
     ("fix", "Suggest a rewrite through a hosted model",
      "Rewrites the passage through a hosted model.", _HOSTED, "edits no file"),
 ], ids=["guarantee", "who-wrote", "title-perfect", "local-says-sends", "no-local-word",
-        "no-does-not-prove", "read-only-saves", "hosted-unnamed", "hosted-title",
+        "no-authorship-limit", "read-only-saves", "hosted-unnamed", "hosted-title",
         "rewrite-no-file-line"])
 def test_the_overclaim_check_can_fail(name, title, description, hints, expected):
     """Control: each rule above rejects a description written to break it, so a

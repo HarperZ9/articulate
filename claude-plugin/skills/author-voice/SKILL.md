@@ -29,7 +29,7 @@ and stop.
 
 Call `voice_compare` with the draft and the profile name. Report each feature
 that sits above or below the user's range, and the located stretches. There is
-no total score. Keep the `does_not_prove` line.
+no total score. Keep the `scope` line.
 
 ## Shape the user's own draft
 

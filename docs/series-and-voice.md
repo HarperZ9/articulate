@@ -31,7 +31,7 @@ articulate restructure essays/draft.md --out essays/draft.restructured.md
 Each finding has its location, what it costs a reader, and a direction for you
 to take. The findings are advisory, so the rewriting stays with you and a build
 keeps passing. `--keep FILE` lists phrases
-you repeat on purpose. `--receipt OUT` writes an `articulate/corpus-receipt/v1`
+you repeat on purpose. `--receipt OUT` writes an `articulate/corpus-receipt/v2`
 receipt that `articulate verify` replays.
 
 `titles` groups titles by skeleton ("The Map Is Not the Road" and "The Vote Is

@@ -29,7 +29,7 @@ def test_changed_sentence_lists_gone_and_remaining_findings():
     assert rec["findings_gone"] == [{"rule_id": "r/foo", "label": "r/foo label"}]
     assert rec["findings_remaining"] == [{"rule_id": "r/bar", "label": "r/bar label"}]
     assert rec["findings_added"] == []
-    assert rep["schema"] == changes.SCHEMA and rep["does_not_prove"]
+    assert rep["schema"] == changes.SCHEMA and rep["scope"]
 
 
 def test_unchanged_text_has_no_records_and_new_findings_are_added():
@@ -88,7 +88,7 @@ def test_cli_explain_text_prints_a_report_instead_of_json(tmp_path, capsys):
     assert cli.main(["fix", _write(tmp_path), "--backend", "none", "--explain", "text"]) == 0
     out = capsys.readouterr().out
     assert out.startswith("[changes] ") and "gone: em-dash/em-dash" in out
-    assert "does not prove" in out and not out.lstrip().startswith("{")
+    assert "Read each pair to check the meaning held." in out and not out.lstrip().startswith("{")
 
 
 def test_cli_submit_takes_explain(tmp_path, capsys):

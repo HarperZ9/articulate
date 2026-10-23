@@ -95,11 +95,11 @@ def test_no_report_carries_a_score_and_each_says_no_detector():
 def test_report_strings_carry_no_em_dash_and_pass_the_style_rules():
     from articulate import check_text, corpus, interview, voice
     reports = _reports()
-    prose = [f["reader_cost"] + " " + f["direction"] + " " + f["does_not_prove"]
+    prose = [f["reader_cost"] + " " + f["direction"] + " " + f["scope"]
              for f in reports["corpus"]["findings"]]
     prose += [q["question"] for q in reports["interview"]["questions"]]
     prose += voice.describe(voice.build_profile([t for _, _, t in VARIED]))
-    prose += [reports["voice"]["does_not_prove"], reports["corpus"]["does_not_prove"]]
+    prose += [reports["voice"]["scope"], reports["corpus"]["scope"]]
     text = "\n\n".join(sorted(set(prose)))
     assert "—" not in text
     result = check_text(text)

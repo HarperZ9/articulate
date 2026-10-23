@@ -155,7 +155,7 @@ def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=F
             'quality_status': 'unassessed',
             'quality_scores_format': {'before': {q: 'integer 1..5' for q in prompts.QUALITIES},
                                       'after': {q: 'integer 1..5' for q in prompts.QUALITIES}} if goal == 'polish' else None,
-            'does_not_prove': 'Protected-span preservation is not semantic equivalence or factual correctness.'}
+            'scope': 'Checks that the rewrite keeps every protected span. Read the rewrite to confirm the meaning.'}
 
 
 def _quality(scores):
@@ -177,7 +177,7 @@ def _result(original, accepted, settings, refused, backend, model, quality_statu
     bc, ac = Counter(f['rule_id'] for f in bf), Counter(f['rule_id'] for f in af)
     deltas = [{'rule_id': rule, 'before': bc[rule], 'after': ac[rule], 'delta': ac[rule] - bc[rule]}
               for rule in sorted(set(bc) | set(ac))]
-    receipt = {'schema': 'articulate/editor-receipt/v1', 'backend': backend, 'model': model, 'attempts': [],
+    receipt = {'schema': 'articulate/editor-receipt/v2', 'backend': backend, 'model': model, 'attempts': [],
                'original_sha256': 'sha256:' + _hash(original), 'text_sha256': 'sha256:' + _hash(accepted),
                'ruleset_version': settings['ruleset'], 'settings': settings,
                'gate_before': before['gate'], 'gate_after': after['gate'], 'rule_deltas': deltas,
@@ -185,7 +185,7 @@ def _result(original, accepted, settings, refused, backend, model, quality_statu
                'author_text_sha256': settings.get('author_text_sha256'),
                'voice_profile_sha256': settings.get('voice_profile_sha256'),
                'author_text_origin': author_text_origin,
-               'does_not_prove': 'A lexical guard and detector gate do not prove semantic equivalence, quality or factual correctness. Host scores are supplied assessments, not independent measurements.'}
+               'scope': 'Records the gate result before and after the edit and the change in each rule count. The host model supplies the quality scores.'}
     out = {'ok': True, 'text': accepted, 'goal': settings['goal'], 'backend': backend, 'model': model,
            'attempts': [], 'gate_before': before['gate'], 'gate_after': after['gate'], 'gate': after['gate'],
            'findings_before': bf, 'findings_after': af, 'remaining_findings': af,

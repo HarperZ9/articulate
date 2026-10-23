@@ -87,7 +87,7 @@ def test_compare_has_no_total_distance_and_ends_with_its_limit():
     v = voice()
     report = v.compare(templated_doc(0), v.build_profile(SAMPLES))
     assert not {"score", "distance", "total", "similarity"} & set(report)
-    assert report["does_not_prove"].startswith("A draft inside your measured range")
+    assert report["scope"].startswith("Places each feature of the draft")
     assert report["ai_detector_consulted"] is False
 
 

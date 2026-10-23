@@ -64,7 +64,7 @@ def test_anchors_are_stable_across_runs():
 def test_summary_reports_scaffold_share_before_and_after():
     s = rs().propose(SCAFFOLD_ESSAY)["summary"]
     assert s["scaffold_share_after"] < s["scaffold_share_before"]
-    assert s["does_not_prove"].startswith("Moving a limit line changes where a reader meets it.")
+    assert s["scope"].startswith("Moving a limit line changes where a reader meets it.")
 
 
 def _tamper(kind):
@@ -98,7 +98,7 @@ def test_an_added_sentence_is_refused():
 def test_diff_is_unified_and_input_is_never_written(tmp_path):
     out = rs().propose(SCAFFOLD_ESSAY)
     assert out["diff"].startswith("--- ")
-    assert out["schema"] == "articulate/restructure/v1"
+    assert out["schema"] == "articulate/restructure/v2"
     assert out["input_sha256"].startswith("sha256:")
 
 

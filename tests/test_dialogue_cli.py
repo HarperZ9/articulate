@@ -46,7 +46,7 @@ def test_cli_table_gate_and_markdown(tmp_path, capsys):
     assert code == 1 and "gate: failed" in out and "WENNA" in out
     text = md.read_text(encoding="utf-8")
     for heading in ("## Worst lines by score", "## Distinctiveness per character",
-                    "## Epigram-flagged lines per group", "## What this does not prove"):
+                    "## Epigram-flagged lines per group", "## Reading these numbers"):
         assert heading in text
     assert "Mercy is a tide." in text
 

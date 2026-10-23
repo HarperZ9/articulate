@@ -32,5 +32,5 @@ def test_comparison_selected_large_inputs_finish_within_budget(name, text):
     started = time.perf_counter()
     report = meaning.compare(text, text[:len(text) // 2])
     elapsed = time.perf_counter() - started
-    assert report["schema"] == "articulate/meaning/v1"
+    assert report["schema"] == "articulate/meaning/v2"
     assert elapsed < 3.0, f"{name}: {elapsed:.2f}s exceeded the 3.0s case budget"

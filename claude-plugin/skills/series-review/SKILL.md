@@ -15,7 +15,7 @@ and short name. Never invent a tool result when a tool is missing.
    `corpus_check` as `documents`, each with a `name` and its `text`. Pass any
    phrases the user repeats on purpose as `keep`.
 2. Report each finding with its category, the documents and lines, the
-   excerpt, the `reader_cost` and the `direction`. Keep the `does_not_prove`
+   excerpt, the `reader_cost` and the `direction`. Keep the `scope`
    line beside the findings. Findings are report-only; none fails a build.
 3. For titles, call `title_workshop` with the titles. Present each family and
    its question to the user and wait. Pass the user's own one-line answers back
