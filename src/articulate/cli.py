@@ -456,8 +456,12 @@ def _cmd_edit(args):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    if list(argv[:1]) in (["--version"], ["-V"]):
+        print(f"articulate {_pkgver()}")
+        return 0
     ap = argparse.ArgumentParser(prog="articulate",
                                  description="Local prose checks for writing devices. Not an authorship detector.")
+    ap.add_argument("-V", "--version", action="version", version=f"articulate {_pkgver()}")
     sub = ap.add_subparsers(dest="cmd")
     for cmd in ("plan", "submit", "judge", "fix", "polish"):
         p = sub.add_parser(cmd)
