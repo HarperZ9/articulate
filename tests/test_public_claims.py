@@ -52,3 +52,29 @@ def test_the_quoted_numbers_match_results_json():
     assert (a["overall"]["recall"]["k"], a["overall"]["recall"]["n"]) == (84, 84)
     ell = a["student_essay_fpr_by_ell"]["Yes"]
     assert (ell["k"], ell["n"]) == (10, 18)
+
+
+# The art speaks to readers, so it carries no internal release or workflow words.
+# The footers are glyph outlines, which no text check can read; the readable
+# layer is the title, the description, the aria-label and any <text> element.
+ART = ["docs/art/hero-dark.svg", "docs/art/hero-light.svg", "assets/articulate-hero.svg"]
+INTERNAL = re.compile(r"(?i)\bflywheel lane\b|\blanes?\b|\bbeta\b|\boperator\b|\bgate\b")
+
+
+def _readable_svg_text(svg):
+    parts = re.findall(r"<(?:title|desc|text)\b[^>]*>(.*?)</(?:title|desc|text)>", svg, re.S)
+    parts += re.findall(r'aria-label="([^"]*)"', svg)
+    return " ".join(parts)
+
+
+def test_the_art_carries_no_internal_register_words():
+    for rel in ART:
+        text = _readable_svg_text((ROOT / rel).read_text(encoding="utf-8"))
+        assert text.strip(), rel
+        m = INTERNAL.search(text)
+        assert not m, (rel, m and m.group(0))
+
+
+def test_the_internal_register_check_can_fail():
+    planted = '<svg aria-label="articulate"><title>A FLYWHEEL LANE / BETA</title></svg>'
+    assert INTERNAL.search(_readable_svg_text(planted))
