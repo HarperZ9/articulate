@@ -14,7 +14,8 @@ def _corpus(sub, run, handler, genres):
 
 
 def _voice(sub, run, handler):
-    p = sub.add_parser("voice", help="your personal voice: learn, show, compare, apply, export, delete")
+    p = sub.add_parser("voice", help="your personal voice: learn, show, compare, apply, export, delete; "
+                       "intend and check for a voice built from intent")
     vs = p.add_subparsers(dest="voice_cmd", required=True)
     learn = vs.add_parser("learn", help="build a profile from samples of your own writing")
     learn.add_argument("samples", nargs="+")
@@ -60,6 +61,8 @@ def _voice(sub, run, handler):
     ident.add_argument("--name", dest="display_name", help="a display name to store")
     vs.add_parser("list", help="list stored profiles")
     vs.add_parser("path", help="print the store folder")
+    from .voice_intent_cli import add_parsers as add_intent
+    add_intent(vs)
     for parser in vs.choices.values():
         parser.add_argument("--dir", help="store folder (default: your local data folder)")
     p.set_defaults(corpus_handler=run(handler))
