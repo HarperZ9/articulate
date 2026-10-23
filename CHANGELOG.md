@@ -19,6 +19,21 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   The CLI describes Articulate as a tool that finds writing patterns and shows
   where they are.
 
+- `articulate voice intend` builds a voice spec from a goal, an audience, a
+  stance and optional reference samples, and prints a plan: open on an anchor,
+  name the opposing view, try the other side, ask what if, say what you think,
+  turn once, end on a question. Samples leave hashes and device counts, never
+  text. `--base zain` starts from the built-in spec made from the author's
+  prose rules and his stance for posts.
+- `articulate voice check DRAFT --intent SPEC` scores a draft from 0 to 100
+  against a spec and lists each miss with its line and a fix. `--min-score`
+  sets an exit code for hooks and CI.
+- New cross-sentence device checks (`articulate.voice_devices`) find what the
+  line checker misses in posts built from one-sentence paragraphs: one-line
+  paragraphs, anaphora and epistrophe runs, fragment runs, tricolons, the
+  split antithesis ("That's not faith. That's hypocrisy."), aphorism lines,
+  a closing maxim, numbered escalation, colon drumrolls, stock reveal phrases
+  and hedges.
 - `articulate negation` scores each entry by the share of its clauses spent on
   what a thing lacks: "does not", "never", "no server", "not yet", "only",
   "limited to". The copy rule warns at 30% and fails at 50%. The fiction rule

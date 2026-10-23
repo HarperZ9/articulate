@@ -28,6 +28,6 @@ student improve a draft, and use other evidence to judge who wrote an essay.
 ## More
 
 - [Claude plugin](claude-plugin.md): local checks and host editing in Claude Code.
-- [House voice](house-voice.md) and [series and your own voice](series-and-voice.md).
+- [House voice](house-voice.md), [series and your own voice](series-and-voice.md) and [a voice built from intent](voice-intent.md).
 - [Dialogue and character voice](dialogue.md): the dialogue profile, voice sheets,
   blind speaker attribution and the CI gate for game and stage scripts.

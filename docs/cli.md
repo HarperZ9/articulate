@@ -360,9 +360,13 @@ articulate voice submit DRAFT REWRITE --plan ID [--author-text FILE] [--out FILE
 articulate voice export N --out FILE
 articulate voice import FILE [--adopt-identity]
 articulate voice delete N | --all
+articulate voice intend [--goal G] [--audience A] [--stance S] [--sample FILE]... [--base NAME]
+                        [--tool NAME]... [--name N] [--out FILE] [--json] [--list]
+articulate voice check DRAFT... --intent SPEC|NAME [--min-score N] [--json]
 ```
 
-Every verb takes `--dir` for the store folder. See
+`voice check` exits 1 when a draft scores under `--min-score`; see
+[a voice built from intent](voice-intent.md). Every verb takes `--dir` for the store folder. See
 [series review and your own voice](series-and-voice.md).
 
 ## corpus, titles, interview, restructure
