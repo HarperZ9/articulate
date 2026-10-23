@@ -1,21 +1,23 @@
 # Native local Articulate package
 
-The Windows x64 development package runs Articulate's local MCP tools without a
-separate Python installation. It includes a Python runtime and no model. Your
-connected client supplies rewritten text through `edit_plan` and `edit_submit`.
-The tool requires no API key, hosted service or publisher-funded compute.
+The Windows x64 development package runs Articulate's local MCP tools with its
+own bundled Python runtime. Your connected client's model supplies rewritten
+text through `edit_plan` and `edit_submit`, so the package runs on your machine
+with no API key or hosted service.
 
 The portable ZIP and Claude Desktop MCPB contain the same executable and license
 files. Extract the ZIP and set your local MCP client's executable to
-`server/articulate-local.exe`, with no arguments. Clients supporting binary MCPB
-extensions can read the included manifest. The executable rejects arguments and
-forces local-only settings before loading Articulate. Inherited settings cannot
-enable a model backend. Client connection and installation remain unverified.
+`server/articulate-local.exe`, with an empty argument list. Clients supporting
+binary MCPB extensions can read the included manifest. The executable refuses
+arguments and sets local-only mode before loading Articulate, so inherited
+settings leave model backends off. Connecting and installing it in each client
+is still to be checked.
 
 ## Build and check a development candidate
 
 From this repository, run the following with an isolated Windows x64 Python
-environment that already has PyInstaller installed. `OUTPUT` must not exist.
+environment that already has PyInstaller installed. `OUTPUT` is a new folder
+the build creates.
 
 ```text
 python scripts/build_native_articulate.py OUTPUT --mode dev
@@ -53,9 +55,8 @@ and asset attachment. The workflow checks native and source-plugin checksums
 before attaching both sets to the same release, without replacing existing
 assets. The source plugin remains separate; its MCPB requires installed Python.
 
-Local development bytes remain unpublished even when their embedded version
-matches an existing release. The workflow has not been dispatched for this
-candidate. Clean-device and supported-client acceptance and signing decisions
-remain separate release work. Source retention does not establish fairness or
-semantic quality; deterministic archives do not establish repeatable compiler
-output across machines or builds.
+Local development builds stay unpublished, even when their embedded version
+matches an existing release. This candidate awaits its first workflow run.
+Clean-device and supported-client acceptance and signing decisions are separate
+release steps. Deterministic archives give a stable zip layout; whether the
+compiler output repeats across machines and builds is untested.

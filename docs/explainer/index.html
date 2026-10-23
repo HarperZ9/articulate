@@ -178,7 +178,7 @@ mark.on{text-decoration-color:var(--ink)}
   </div>
   <ul class="uses">
     <li><b>Findings with locations</b>Each finding names its rule, its precision tier and the line and column it sits on.</li>
-    <li><b>A bar that fits the register</b>A profile decides which tiers block: fiction blocks nothing, a README blocks the precise tier, a procedure blocks more.</li>
+    <li><b>A bar that fits the register</b>A profile decides which tiers block: fiction reports and passes, a README blocks the precise tier, a procedure blocks more.</li>
     <li><b>A replayable receipt</b><code>articulate verify</code> re-derives the result and answers Match, Drift or Unverifiable.</li>
     <li><b>Where you write</b>A CLI, a library call, SARIF for CI, an LSP server for editors and an MCP server for agent hosts.</li>
   </ul>
@@ -267,17 +267,17 @@ mark.on{text-decoration-color:var(--ink)}
       <li class="step" tabindex="-1" data-scene="texture" data-state="score"><div class="card">
         <span class="num">03</span><h3>A graded score beside the gate</h3>
         <p>The texture score is a separate 0 to 100 read of how machine-textured the whole draft is. Each HIGH or MEDIUM finding is worth 8 points per 100 words. Five findings in 57 words gives 70.2, rounded to 70. Uniform sentence lengths, repeated openers, and adverb or passive rates above a threshold add more.</p>
-        <p>The score never changes the gate. Under 30 words it returns 0, because there is too little text to say anything.</p>
+        <p>The gate decides pass or fail; the score sits beside it. Under 30 words the score is 0, because the sample is too short to grade.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/articulate/blob/c94bf176411d56972f34a38c53c71d3373716c8e/src/articulate/detector.py">detector.py</a>, <code>texture_score</code></p>
       </div></li>
       <li class="step" tabindex="-1" data-scene="spans" data-state="spans"><div class="card">
         <span class="num">04</span><h3>Find the paragraph, and abstain on the rest</h3>
-        <p>A whole-file score can hide one generated paragraph in otherwise clean prose. <code>--spans</code> scores each block on its own. The middle paragraph is flagged at 100. The heading and the last paragraph have no findings and fewer than 30 words, so they read unverifiable. The tool abstains and makes no clean claim about them.</p>
+        <p>A whole-file score can hide one generated paragraph in otherwise clean prose. <code>--spans</code> scores each block on its own. The middle paragraph is flagged at 100. The heading and the last paragraph are free of findings and under 30 words, so they read unverifiable: the tool abstains on them.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/articulate/blob/c94bf176411d56972f34a38c53c71d3373716c8e/src/articulate/detector.py">detector.py</a>, <code>MIN_WORDS_FOR_VERDICT = 30</code>; docs/walkthrough.md, step 2</p>
       </div></li>
       <li class="step" tabindex="-1" data-scene="receipt" data-state="rcpt"><div class="card">
         <span class="num">05</span><h3>Record a receipt</h3>
-        <p>A receipt stores the result with the two things needed to reproduce it: the SHA-256 of the exact text and a fingerprint of the ruleset that ran. It holds no Trusted or Approved field. It certifies that the result can be re-derived, and nothing about authority.</p>
+        <p>A receipt stores the result with the two things needed to reproduce it: the SHA-256 of the exact text and a fingerprint of the ruleset that ran. Its verdicts are Match, Drift and Unverifiable. It certifies that anyone can re-derive the result.</p>
         <p class="src">Source: <a href="https://github.com/HarperZ9/articulate/blob/c94bf176411d56972f34a38c53c71d3373716c8e/src/articulate/receipt.py">src/articulate/receipt.py</a>, module docstring</p>
       </div></li>
       <li class="step" tabindex="-1" data-scene="verify" data-state="match"><div class="card">
@@ -288,8 +288,8 @@ mark.on{text-decoration-color:var(--ink)}
       </div></li>
       <li class="step" tabindex="-1" data-scene="fix" data-state="fix"><div class="card">
         <span class="num">07</span><h3>Rewrite, then check again</h3>
-        <p>The fix is to say the concrete thing. The rewrite in the panel was written for this page, outside Articulate's editor. Under the same profile it has no findings, a texture score of 0, and <code>--gate</code> exits 0.</p>
-        <p>Articulate's own editor (<code>fix</code>, <code>judge</code>, <code>polish</code>) uses the calling host's model, a backend you configure, or mechanical fixes with no model. Every result names the backend that made it. A rewrite is a suggestion to read against the original.</p>
+        <p>The fix is to say the concrete thing. The rewrite in the panel was written for this page, outside Articulate's editor. Under the same profile it comes back clean, with a texture score of 0, and <code>--gate</code> exits 0.</p>
+        <p>Articulate's own editor (<code>fix</code>, <code>judge</code>, <code>polish</code>) uses the calling host's model, a backend you configure, or offline mechanical fixes. Every result names the backend that made it. A rewrite is a suggestion to read against the original.</p>
         <p class="src">Source: README.md, "Edit" and "Editing from a host or the command line"; docs/walkthrough.md, step 4</p>
       </div></li>
     </ol>
@@ -300,7 +300,7 @@ mark.on{text-decoration-color:var(--ink)}
   <h2 id="walkthrough">Walkthrough</h2>
   <p class="measure">Install it, run it once, then use the main feature. Each command below is real, and so is its output.</p>
   <ol class="walkthrough">
-    <li><h3>Install</h3><p>Install from PyPI. Python 3.9 or newer; the checker uses the standard library only and makes no network call.</p>
+    <li><h3>Install</h3><p>Install from PyPI. The checker needs Python 3.9 or newer, runs on the standard library and works offline.</p>
 <pre class="cmd"><code>$ python -m pip install articulate-writing</code></pre></li>
     <li><h3>First run: check a draft</h3><p>Check a draft against a profile. With <code>--gate</code> the command exits 1 when high findings block it.</p>
 <pre class="cmd"><code>$ articulate check post.md --profile readme --gate
@@ -316,12 +316,12 @@ $ articulate verify post.receipt.json post.md
 <section class="block wrap" aria-labelledby="limits">
   <h2 id="limits">What it does not do</h2>
   <ul class="limits">
-    <li>It does not establish who or what wrote a text. A flag is evidence of a pattern, not proof of authorship.</li>
-    <li>The checks are patterns over the text. They cannot see token probability, so device-clean generated prose can still score low.</li>
-    <li>It is not an evasion tool. The editor works toward writing quality and never tunes prose toward a lower detector score.</li>
-    <li>A clean gate or a Match receipt says the prose was screened under a named ruleset. It says nothing about whether the content is true; a clearly written proof can still be false.</li>
+    <li>A flag is evidence of a pattern in the text. Authorship is a separate question that a flag leaves open.</li>
+    <li>The checks are patterns over the text, so device-clean generated prose can score low.</li>
+    <li>The editor works toward writing quality for the reader. What it accepts is set by the gate and the quality scores.</li>
+    <li>A clean gate or a Match receipt says the prose was screened under a named ruleset. Truth is checked elsewhere: a clearly written proof can still be false.</li>
     <li>A content-free audit receipt drops the matched words, yet the rule and line remain. For a closed-vocabulary rule that narrows the flagged word to a small public set.</li>
-    <li>The optional editor sends text to whichever model backend you configure, under that provider's terms. Set <code>ARTICULATE_LOCAL_ONLY=1</code> to allow only loopback Ollama and mechanical edits.</li>
+    <li>The optional editor sends text to whichever model backend you configure, under that provider's terms. Set <code>ARTICULATE_LOCAL_ONLY=1</code> to keep editing on loopback Ollama and mechanical edits.</li>
   </ul>
   <p class="src">Source: README.md "Privacy" and "Scientific and mathematical writing"; detector.py <code>texture_score</code>; docs/boundaries.md, at c94bf17</p>
 </section>
@@ -329,10 +329,10 @@ $ articulate verify post.receipt.json post.md
 <section class="block wrap recall" aria-labelledby="recall">
   <h2 id="recall">Check what stuck</h2>
   <p class="measure">Answer each one in your head before you open it.</p>
-  <details><summary>The same draft is blocked under readme and ok under narrative. What changed?</summary><p>Only the profile's level. The findings are identical; "flavored" blocks the HIGH tier and "off" blocks nothing.</p></details>
-  <details><summary>Where does the texture score of 70 come from?</summary><p>Five HIGH or MEDIUM findings at 8 points each per 100 words, over 57 words: 70.2, rounded to 70. Nothing else added to it here.</p></details>
-  <details><summary>Why is the last paragraph unverifiable and not clean?</summary><p>It has no findings and fewer than 30 words. Below that floor the tool abstains and makes no confident clean claim.</p></details>
-  <details><summary>Editing the text gives Unverifiable, while editing the receipt gives Drift. Why the difference?</summary><p>A changed text no longer matches the receipt's hash, so there is nothing valid to re-derive. A changed receipt still matches the text and ruleset, so the replay runs and disagrees with what the receipt says.</p></details>
+  <details><summary>The same draft is blocked under readme and ok under narrative. What changed?</summary><p>The profile's level. The findings are identical; "flavored" blocks the HIGH tier and "off" reports them and passes.</p></details>
+  <details><summary>Where does the texture score of 70 come from?</summary><p>Five HIGH or MEDIUM findings at 8 points each per 100 words, over 57 words: 70.2, rounded to 70. Those findings are the whole score here.</p></details>
+  <details><summary>Why does the last paragraph read unverifiable?</summary><p>It is free of findings and under 30 words. Below that floor the tool abstains, because a short text is too small a sample to call clean.</p></details>
+  <details><summary>Editing the text gives Unverifiable, while editing the receipt gives Drift. Why the difference?</summary><p>A changed text has a new hash, so the receipt's findings belong to a different text and the replay stops. A changed receipt still matches the text and ruleset, so the replay runs and disagrees with what the receipt says.</p></details>
 </section>
 </main>
 <footer class="foot wrap">
