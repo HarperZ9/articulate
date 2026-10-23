@@ -48,7 +48,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
-from . import checkext, detector, domains, profiles, project, rules_ext
+from . import checkext, detector, domains, mdstructure, profiles, project, rules_ext
 
 SCHEMA = "articulate/receipt/v1"
 AUDIT_SCHEMA = "articulate/receipt/audit/v1"
@@ -225,9 +225,9 @@ def verify_receipt(receipt: dict, text: str):
     # A receipt without the field predates the Markdown masks, or its text has
     # none of that structure; either way the unmasked replay re-derives it.
     recorded = receipt.get("structure")
-    if recorded not in (None, checkext.STRUCTURE_VERSION):
+    if recorded is not None and recorded not in mdstructure.VERSIONS:
         return "Unverifiable", f"receipt names unknown structure masks {recorded!r}"
-    structure = recorded is not None
+    structure = recorded if recorded is not None else False
     r = checkext.check_text(text, profile=prof, structure=structure)
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.

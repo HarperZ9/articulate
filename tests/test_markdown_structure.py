@@ -167,3 +167,63 @@ def test_untouched_text_gives_byte_identical_results():
     text = PROSE + "It is crucial to delve into this.\n"
     assert checkext.check_text(text) == checkext.check_text(text, structure=False)
     assert "structure" not in receipt.make_receipt(text)
+
+
+# Inline math (markdown/2) -------------------------------------------------
+
+MATH_LINES = ["Let $a---b$ be the gap between the two readings.",
+              "The bound $$x -- y$$ holds for every reading on the sheet.",
+              "Let $a—b$ be the gap between the two readings."]
+
+
+def test_inline_math_is_not_prose():
+    for line in MATH_LINES:
+        assert _emdash(PROSE + line + "\n") == [], line
+
+
+def test_display_math_block_is_not_prose():
+    doc = PROSE + "$$\na --- b\n$$\n\n" + PROSE
+    assert _emdash(doc) == []
+
+
+def test_prices_are_not_math():
+    # A dollar amount is not a math span, so the prose between two prices is checked.
+    for line in ("The kit costs $5 — and the spare costs $10 at the shop.",
+                 "Prices run $5—$10 for each sheet at the shop.",
+                 "We paid $5 — then $10 — for the two sheets."):
+        assert _emdash(PROSE + line + "\n"), line
+
+
+def test_escaped_dollars_and_code_are_not_math():
+    assert _emdash(PROSE + r"The fee is \$5 — or \$10 with the spare." + "\n")
+
+
+def test_math_receipt_matches_and_old_version_replays_without_math():
+    doc = PROSE + "Let $a---b$ be the gap between the two readings.\n"
+    rec = receipt.make_receipt(doc)
+    assert rec["structure"] == checkext.STRUCTURE_VERSION == "markdown/2"
+    assert receipt.verify_receipt(json.loads(json.dumps(rec)), doc)[0] == "Match"
+    # A receipt made by 0.14.0 names markdown/1, which had no math mask.
+    r = checkext.check_text(doc, structure="markdown/1")
+    assert [f["match"] for f in r["high"] if f["category"] == "em-dash"]
+    old = dict(rec, structure="markdown/1", gate=r["gate"], clean=r["clean"],
+               verdict=r["verdict"], texture_score=r["texture_score"],
+               findings=receipt._normalize(r, None),
+               counts={k: len(r[k]) for k in ("high", "medium", "low")})
+    assert receipt.verify_receipt(old, doc)[0] == "Match"
+
+
+# Names at the start of a sentence (markdown/2) ----------------------------
+
+def test_a_name_seen_mid_sentence_is_a_name_at_sentence_start():
+    doc = PROSE + ("She works at Robust Intelligence in the city.\n\n"
+                   "Robust Intelligence builds models for the office.\n")
+    assert [m for c, m in _cats(doc) if c == "register-word"] == []
+
+
+def test_a_capital_at_sentence_start_alone_is_still_not_a_name():
+    doc = PROSE + "Robust Intelligence builds models for the office.\n"
+    assert any(c == "register-word" for c, _ in _cats(doc))
+    doc = PROSE + ("She works at Robust Intelligence in the city.\n\n"
+                   "Robust systems need care in the field every day.\n")
+    assert ("register-word", "Robust") in _cats(doc)
