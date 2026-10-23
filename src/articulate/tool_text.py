@@ -1,12 +1,10 @@
 """Shared descriptions for the 0.5.1 MCP tools."""
 from .tool_meta import EDITORS, offline
 
-DOES_NOT_PROVE = ("These findings name prose patterns and where they occur. They "
-                  "do not establish factual correctness, quality, or who or what wrote "
-                  "the text, and no finding or count is a basis for an accusation.")
-# The one limit a tool description carries. DOES_NOT_PROVE above stays as the
-# does_not_prove value in desk receipts.
-LIMIT = "Not an authorship detector. No finding is a basis for an accusation."
+# What a set of findings covers. The desk report carries it as its scope.
+SCOPE = "Names prose patterns and shows where they occur in the text."
+# The one use statement that a findings tool description carries.
+LIMIT = "Use the findings to improve writing. Use other evidence to decide who wrote a text."
 
 _EDIT = ("Use negotiated sampling or return a host plan. Explicit backends may send "
          "text to a hosted model; backend none is deterministic. It edits none of your "

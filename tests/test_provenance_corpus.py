@@ -72,7 +72,7 @@ def test_every_detector_score_names_text_models_and_date():
 
 def test_results_carry_their_limits():
     res = json.loads((PROV / "results.json").read_text(encoding="utf-8"))
-    assert "does_not_prove" in res
+    assert "scope" in res
     overall = res["articulate"]["overall"]
     assert {"precision", "recall", "fpr"} <= set(overall)
     assert all(v["ci95"] for v in overall.values())

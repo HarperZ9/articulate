@@ -74,8 +74,8 @@ def build(output, *, mode='release', root=ROOT, release_ref=None):
                'source_sha256': hashes, 'command': cmd,
                'native_dependencies': native,
                'artifacts': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in targets},
-               'does_not_prove': ['client installation', 'marketplace acceptance',
-                                  'clean OS compatibility', 'meaning preservation']}
+               'scope': 'Records the source hashes, the freeze tools and the hash of each '
+                        'built artifact.'}
     (output / 'build-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
     return targets
 

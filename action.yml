@@ -1,5 +1,5 @@
 name: "Articulate"
-description: "Writing-quality and writing-device checks with SARIF output for inline PR annotations. A style check, not an authorship detector."
+description: "Writing-quality and writing-device checks with SARIF output for inline PR annotations. Finds writing patterns and shows where they are."
 branding:
   icon: "edit-3"
   color: "green"

@@ -25,7 +25,7 @@ near-equal length, sentence lengths that barely vary, long stretches with no
 author present, and runs of paragraphs with no number, date, name or place.
 Each finding has its location, what it costs a reader, and a direction. None
 proposes replacement prose, and none gates a build. `--keep FILE` lists phrases
-you repeat on purpose. `--receipt OUT` writes an `articulate/corpus-receipt/v1`
+you repeat on purpose. `--receipt OUT` writes an `articulate/corpus-receipt/v2`
 receipt that `articulate verify` replays.
 
 `titles` groups titles by skeleton ("The Map Is Not the Road" and "The Vote Is

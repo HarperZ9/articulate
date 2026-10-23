@@ -1,6 +1,6 @@
-"""Public descriptions say what the known-provenance evidence supports: a style
-tool that also flags most human writing, never an authorship detector, and never
-a basis for judging a student."""
+"""Public descriptions say what the known-provenance evidence supports: a tool
+that finds writing patterns, also flags most human writing, and leaves the
+question of who wrote a text to other evidence."""
 import json
 import pathlib
 import re
@@ -39,10 +39,11 @@ def test_the_overclaim_check_can_fail():
 def test_the_main_surfaces_state_the_evidence_and_the_student_rule():
     for rel in ("README.md", "docs/README.md", "docs/boundaries.md"):
         text = " ".join(_text(rel).split())
-        assert "not an authorship detector" in text, rel
+        assert "finds writing patterns and shows where they are" in text, rel
+        assert "Use other evidence to decide who wrote a text." in text, rel
         assert "57 of 75 human texts" in text and "results.json" in text, rel
         assert "student" in text, rel
-    assert "not an authorship detector" in _text("pyproject.toml")
+    assert "use other evidence to decide who wrote a text" in _text("pyproject.toml")
 
 
 def test_the_quoted_numbers_match_results_json():

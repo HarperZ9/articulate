@@ -35,7 +35,8 @@ from . import process_events as ev
 from . import process_ledger as pl
 from .provenance import SOURCE_TYPE, iptc_uri
 
-SCHEMA = "articulate/process-summary/v1"
+SCHEMA = "articulate/process-summary/v2"
+SCHEMA_V1 = "articulate/process-summary/v1"
 LIMITS = (
     "This summary shows that texts with these commitments were logged in this order "
     "and which tools the writer declared. An anchor entry holds a git commit id or a "
@@ -47,15 +48,13 @@ LIMITS = (
 # One line every process output prints: an intact verify, an export and a
 # disclosure statement. A missing log is no record, with an exit code of its own
 # (NO_RECORD_EXIT), kept apart from a broken log (exit 1).
-RECORD_LIMITS = ("A process record shows only what its entries hold: an absent or short "
-                 "record shows nothing about a writer, and a full one does not show who "
-                 "composed the words.")
-NO_RECORD = "no record; an absent or short record shows nothing about a writer"
+RECORD_LIMITS = ("A process record shows what its entries hold. Use other evidence to "
+                 "decide who wrote a text.")
+NO_RECORD = "no record for this file. Use other evidence to decide who wrote a text"
 NO_RECORD_EXIT = 3
-# The summary's does-not-prove line speaks about the record itself.
-PROCESS_DOES_NOT_PROVE = ("This summary lists what the writer logged and declared. It does "
-                          "not show who composed the words or that the record is complete, "
-                          "and a missing or short record shows nothing about a writer.")
+# The summary's scope line speaks about the record itself.
+PROCESS_SCOPE = ("Lists what the writer logged and declared in the process record, in the "
+                 "order of the record.")
 _BASE = ("seq", "kind", "day")
 _DEFAULT = {"init": (), "draft": ("commitment",), "note": (), "source": (),
             "assist": ("tool", "version", "verb", "sections", "model", "receipt", "guard",
@@ -175,7 +174,7 @@ def summary(doc, include=(), reveal=None, contributions=None):
                                      if r.get("editorial_responsibility")],
         "disclosure": statement,
         "reveals": _reveals(doc, entries, reveal),
-        "limits": LIMITS, "does_not_prove": PROCESS_DOES_NOT_PROVE,
+        "limits": LIMITS, "scope": PROCESS_SCOPE,
     }
     if "input_method" in include:
         out["input_methods"] = [{"method": e.get("method"), "sections": e.get("sections")}
@@ -210,7 +209,7 @@ def verify_summary(summ):
 
 def _verify_summary(summ):
     problems = []
-    if summ.get("schema") != SCHEMA:
+    if summ.get("schema") not in (SCHEMA, SCHEMA_V1):
         problems.append("unknown summary schema")
     chain = summ.get("chain") or {}
     if chain.get("state") != "intact":

@@ -29,7 +29,7 @@ def test_changed_sentence_lists_gone_and_remaining_findings():
     assert rec["findings_gone"] == [{"rule_id": "r/foo", "label": "r/foo label"}]
     assert rec["findings_remaining"] == [{"rule_id": "r/bar", "label": "r/bar label"}]
     assert rec["findings_added"] == []
-    assert rep["schema"] == changes.SCHEMA and rep["does_not_prove"]
+    assert rep["schema"] == changes.SCHEMA and rep["scope"]
 
 
 def test_unchanged_text_has_no_records_and_new_findings_are_added():

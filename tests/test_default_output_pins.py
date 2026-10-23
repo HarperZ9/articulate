@@ -5,7 +5,8 @@ change report were added. The pins were computed from that release line
 
 fix_none was re-pinned when `fix --backend none` gained the closed-list phrase
 edits (tests/test_fix_none.py). Its output now lists those edits, and the sample
-loses one sentence-initial "Moreover,"."""
+loses one sentence-initial "Moreover,". fix_none and plan were re-pinned when the
+editor receipt and the plan named their limit field scope (editor-receipt/v2)."""
 import contextlib
 import hashlib
 import io
@@ -31,9 +32,9 @@ PINS = {
     "score": (["score", "sample.md"],
               "9e2e2f2a452c8b305e96925f9936db8c5c614c9b7b7703e5de92645c6ab9871c"),
     "fix_none": (["fix", "sample.md", "--backend", "none"],
-                 "11e8f35eb5fb5e3a54d3fbe7443546ab6689d1fbd8c778c9ab7094e340dd180f"),
+                 "818b57eb59be9e9beaa3019398d97040f43d905210172c6ea69db9db103e3790"),
     "plan": (["plan", "sample.md"],
-             "1be2cab1d1fb0f9e0bc767d0251948797bbd14357a83fa1e0e56962fdcab92b6"),
+             "8ed4140984c41fb5f1dfc5ba9a3085c28866e582e87f1b2c96d78b29b22a33b8"),
 }
 RECEIPT_CLI = "05a6137b8713b3b6dfbef88a8dce695a7f57cede46053999b12c8499cc7c9dfb"
 RECEIPT_LIB = "8859f89cacdf7c637a73c8e724c3b738d9de412e0ac63fee7f0b079d53160a24"

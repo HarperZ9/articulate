@@ -18,14 +18,14 @@ Standard library only.
 from __future__ import annotations
 
 from . import desk_field, desk_inside
-from .tool_text import DOES_NOT_PROVE
+from .tool_text import SCOPE
 
 HEADER = ("Prepares the questions a reviewer should ask, inside the document and across "
           "the field. It checks the document's own statements and cannot judge "
           "contribution, novelty or significance.")
-ITEM_LIMIT = ("This question points at the document's own statement. It says nothing about "
-              "who or what wrote the text, or about the merit of the work.")
-SCHEMA = "articulate/desk/v1"
+ITEM_LIMIT = ("This question points at a statement in the document. The reviewer judges "
+              "the answer.")
+SCHEMA = "articulate/desk/v2"
 
 
 def review(text, venue=None, disclosure=None, author=False):
@@ -38,9 +38,9 @@ def review(text, venue=None, disclosure=None, author=False):
                  + desk_inside.claim_items(text) + desk_inside.hidden_items(text))
     items.sort(key=lambda i: i["line"])
     for i in items:
-        i["does_not_prove"] = ITEM_LIMIT
+        i["scope"] = ITEM_LIMIT
     return {"schema": SCHEMA, "header": HEADER, "venue": venue or "none",
             "side": "author" if author else "reviewer",
             "inside": {"title": "Inside the document", "items": items},
             "across_field": {"title": "Across the field", **field},
-            "does_not_prove": DOES_NOT_PROVE}
+            "scope": SCOPE}

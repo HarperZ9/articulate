@@ -114,11 +114,11 @@ def test_off_returns_the_input_unchanged_with_a_receipt_saying_so():
 def test_receipt_shape_and_replay():
     out = house.transform(RESIDUE_REPLY)
     rec = out["receipt"]
-    assert rec["schema"] == "articulate/house-receipt/v1"
+    assert rec["schema"] == "articulate/house-receipt/v2"
     assert rec["house_version"] == "house/2"
     assert rec["ai_detector_consulted"] is False
     assert rec["house_fingerprint"].startswith("sha256:")
-    assert "does_not_prove" in rec and rec["timing_ms"] >= 0
+    assert "scope" in rec and rec["timing_ms"] >= 0
     assert not set(rec) & {"score", "humanness", "ai_probability"}
     assert house.verify_receipt(rec, RESIDUE_REPLY)[0] == "Match"
     assert house.verify_receipt(rec, RESIDUE_REPLY + " Extra.")[0] == "Drift"

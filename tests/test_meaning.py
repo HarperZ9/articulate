@@ -119,7 +119,7 @@ def test_container_claims_its_inner_tokens_once():
 
 def test_report_states_what_the_checks_cover():
     report = meaning.compare("a", "b")
-    assert "surface proxies" in report["does_not_prove"]
+    assert "surface markers" in report["scope"]
     text = meaning.format_report(report)
     assert "Read the rewrite to confirm the meaning." in text
     assert "does not prove" not in text

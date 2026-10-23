@@ -983,5 +983,5 @@
   }
  },
  "documents_measured": 183,
- "does_not_prove": "Measured on this corpus only. A flag names prose patterns; it is not evidence about who wrote a given text."
+ "scope": "Measured on this corpus only. A flag names a prose pattern in a text. Use other evidence to decide who wrote a text."
 }

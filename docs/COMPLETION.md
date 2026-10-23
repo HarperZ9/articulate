@@ -110,7 +110,7 @@ freely, so the default profile blocks it.
 | F1 | Per-genre human flag and block rates published with intervals | `corpus/provenance/results.json` has `by_genre` with intervals | PARTIAL | Published for flags; n is 3 to 9 per genre in the repository, too small to set a target |
 | F2 | Each genre has a target block rate on human text, and the matched mode meets it | Target in the repository, checked in CI | NOT BUILT | No targets exist |
 | F3 | The learner-English fairness check passes its pre-registered gate | Rerun the PERSUADE 2.0 arm on the current ruleset | FAIL | Last recorded run (27 September) failed G1, G2 and G4; no rerun since (moderate confidence, from the release record) |
-| F4 | Every finding states that it is a style finding and never evidence of who wrote the text | Tool descriptions and `does_not_prove` fields | PASS | Present on every MCP tool and report |
+| F4 | Every findings tool and report says what it covers and leaves authorship to other evidence | Tool descriptions and `scope` fields | PASS | Present on every MCP tool and report |
 
 ## 6. Markdown structure
 

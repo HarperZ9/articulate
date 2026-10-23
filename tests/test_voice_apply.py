@@ -79,7 +79,7 @@ def test_distances_are_reported_and_never_change_acceptance(store, monkeypatch):
     rewrite = SCAFFOLD_ESSAY.replace("Residents asked", "People asked")
     first = voice_apply.submit(SCAFFOLD_ESSAY, rewrite, plan["plan_id"], directory=store)
     d = first["voice"]
-    assert set(d) >= {"outside_before", "outside_after", "features", "does_not_prove"}
+    assert set(d) >= {"outside_before", "outside_after", "features", "scope"}
     assert not {"score", "distance", "total_distance"} & set(d)
     monkeypatch.setattr(voice, "compare", lambda *a, **k: {"features": [
         {"feature": "x", "verdict": "below"}] * 9, "locations": []})

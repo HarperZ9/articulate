@@ -16,13 +16,14 @@ articulate check README.md --profile readme --gate
 - [Features](features.md): every capability and how to reach it, including
   profiles, modes, genres, the editor, receipts, and the LSP, SARIF and MCP surfaces.
 - [CLI reference](cli.md): each command and every flag, with the exit codes.
-- [Boundaries](boundaries.md): what a check result and a receipt mean.
+- [What results mean](boundaries.md): what a check result and a receipt cover.
 
-Articulate is a style checker and is not an authorship detector. On 183 texts of
-known origin it flagged all 84 AI texts and 57 of 75 human texts (76%, 95%
-interval 65% to 84%), among them 10 of 18 essays by English learners
-([`results.json`](../corpus/provenance/results.json)). Do not use a finding to
-decide who wrote a text or to grade a student.
+Articulate finds writing patterns and shows where they are. Use it to improve
+writing. Use other evidence to decide who wrote a text. On 183 texts of known
+origin it flagged all 84 AI texts and 57 of 75 human texts (76%, 95% interval
+65% to 84%), among them 10 of 18 essays by English learners
+([`results.json`](../corpus/provenance/results.json)). Teachers: use it to help a
+student improve a draft, and use other evidence to judge who wrote an essay.
 
 ## More
 

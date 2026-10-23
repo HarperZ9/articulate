@@ -29,16 +29,12 @@ import re
 
 from . import invariants
 
-SCHEMA = "articulate/meaning/v1"
-DOES_NOT_PROVE = (
-    "The invariants are surface proxies. A rewrite can keep every one of them and "
-    "still change the meaning, for example by moving a negation into another "
-    "clause, swapping the order of two numbers, or changing a word no invariant "
-    "covers. A capitalized word that opens a sentence may be an ordinary word, so "
-    "it counts as a name only when the text also uses it as one mid-sentence: a "
-    "name used once, at a sentence start, can be swapped for another unreported. "
-    "A reported change can also be harmless. 'preserved' is a screen, never a "
-    "proof that the two texts say the same thing.")
+SCHEMA = "articulate/meaning/v2"
+SCOPE = (
+    "Compares the surface markers of two texts: numbers, names, negations and the "
+    "other invariant kinds. A capitalized word that opens a sentence counts as a "
+    "name only when the text also uses it as a name mid-sentence. 'preserved' "
+    "means every marker matches. Read the rewrite to confirm the meaning.")
 STATUSES = ("kept", "dropped", "added", "changed")
 # Negation has a single key, so an unmatched pair of negations cannot be a change
 # of value; it is a count change, reported as dropped or added.
@@ -134,7 +130,7 @@ def compare(original, rewrite, *, freeze=(), tex=False, quotes=True):
     changed = counts["dropped"] + counts["added"] + counts["changed"]
     return {"schema": SCHEMA, "verdict": "changed" if changed else "preserved",
             "counts": counts, "by_kind": by_kind, "items": items,
-            "does_not_prove": DOES_NOT_PROVE}
+            "scope": SCOPE}
 
 
 def blocking(report, allow=()):

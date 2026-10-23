@@ -98,5 +98,5 @@ def format_compare(report):
         out.append(f"lines {loc['line_start']}-{loc['line_end']}: {loc['kind']} ({measure})")
     if report["indicative_only"]:
         out.append("The profile rests on under 5,000 words, so read these as indicative only.")
-    out.append(report["does_not_prove"])
+    out.append(report["scope"])
     return "\n".join(out)

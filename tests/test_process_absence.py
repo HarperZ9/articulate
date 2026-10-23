@@ -16,7 +16,7 @@ from articulate import process_events as ev
 from articulate import process_export as px
 from articulate import process_ledger as pl
 from articulate.cli import main
-from articulate.tool_text import DOES_NOT_PROVE
+from articulate.tool_text import SCOPE
 
 TEXT = "The rain fell for three days on the low field.\n"
 
@@ -31,7 +31,7 @@ def doc(tmp_path):
 def test_no_log_is_no_record_with_its_own_exit_code(doc, capsys):
     assert main(["process", "verify", doc]) == px.NO_RECORD_EXIT == 3
     err = capsys.readouterr().err
-    assert "no record; an absent or short record shows nothing about a writer" in err
+    assert "no record for this file. Use other evidence to decide who wrote a text" in err
 
 
 def test_a_tampered_log_still_exits_1(doc):
@@ -64,9 +64,9 @@ def test_export_and_disclose_print_the_limits_line(doc, capsys):
     assert px.RECORD_LIMITS in cap.err and px.RECORD_LIMITS not in cap.out
 
 
-def test_the_summary_does_not_prove_line_speaks_about_the_record(doc):
+def test_the_summary_scope_line_speaks_about_the_record(doc):
     pl.init(doc)
     ev.record_draft(doc, TEXT)
     summ = px.summary(doc, [], {}, None)
-    assert summ["does_not_prove"] != DOES_NOT_PROVE
-    assert "record" in summ["does_not_prove"] and "finding" not in summ["does_not_prove"]
+    assert summ["scope"] != SCOPE
+    assert "record" in summ["scope"] and "finding" not in summ["scope"]

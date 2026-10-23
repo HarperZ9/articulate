@@ -27,7 +27,7 @@ def _within_budget(hits, budget=HITS_BUDGET):
 
 
 def do_check(text, max_hits=None):
-    """Find named writing devices with span records. Runs on your machine. Not an authorship detector."""
+    """Find named writing devices with span records. Runs on your machine."""
     if max_hits is not None and (type(max_hits) is not int or not 0 <= max_hits <= 1000):
         raise ValueError("max_hits must be a whole number from 0 to 1000")
     r = core.check_text(text)
