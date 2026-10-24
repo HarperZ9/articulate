@@ -8,7 +8,7 @@ import asyncio
 import json
 from typing import List, Optional
 
-from . import detector as core
+from . import checkext as core
 from .tool_meta import fastmcp_options, offline
 from .tool_text import description
 
@@ -27,7 +27,7 @@ def _within_budget(hits, budget=HITS_BUDGET):
 
 
 def do_check(text, max_hits=None):
-    """Find named writing devices with span records. Local, no network. Not an authorship test."""
+    """Find named writing devices with span records. Runs on your machine."""
     if max_hits is not None and (type(max_hits) is not int or not 0 <= max_hits <= 1000):
         raise ValueError("max_hits must be a whole number from 0 to 1000")
     r = core.check_text(text)
@@ -48,7 +48,7 @@ def do_check(text, max_hits=None):
 
 
 def do_score(text):
-    """Graded device-density (texture) score and structural rates. Local, no network."""
+    """Graded device-density (texture) score and structural rates. Runs on your machine."""
     r = core.check_text(text)
     cad = r["cadence"]
     return {
@@ -78,7 +78,8 @@ def _edit(text, goal, **options):
         result = (deterministic_edit if backend == "none" else edit_plan)(text, goal=goal, **settings)
         if goal == "polish":
             result.update(scores=None, quality_met=False)
-        return result
+        from .edit_notes import annotate_kept
+        return annotate_kept(result, text, goal)
     try:
         from .editing import run_edit
     except ImportError:
@@ -183,12 +184,12 @@ def build_server():
 
     @mcp.tool(description=description("check"), **fastmcp_options("check"))
     def check(text: str, max_hits: int = 50) -> dict:
-        """Find named writing devices and return findings with cadence stats. Local, no network."""
+        """Find named writing devices and return findings with cadence stats. Runs on your machine."""
         return do_check(text, max_hits)
 
     @mcp.tool(description=description("score"), **fastmcp_options("score"))
     def score(text: str) -> dict:
-        """Return the device-density (texture) score and structural rates. Local, no network."""
+        """Return the device-density (texture) score and structural rates. Runs on your machine."""
         return do_score(text)
 
     @mcp.tool(description=description("judge"), **fastmcp_options("judge"))

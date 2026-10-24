@@ -33,7 +33,7 @@ def test_new_tools_are_listed_with_local_hints(environ):
 
 def test_corpus_check_returns_findings_and_a_receipt():
     out = _payload(_call("corpus_check", {"documents": templated_docs()}))
-    assert out["findings"] and out["receipt"]["schema"] == "articulate/corpus-receipt/v1"
+    assert out["findings"] and out["receipt"]["schema"] == "articulate/corpus-receipt/v2"
 
 
 def test_title_workshop_returns_families_and_questions():
@@ -56,7 +56,7 @@ def test_voice_compare_reads_a_stored_profile(monkeypatch, tmp_path):
                      "mine", tmp_path)
     monkeypatch.setenv("ARTICULATE_VOICE_DIR", str(tmp_path))
     out = _payload(_call("voice_compare", {"text": SCAFFOLD_ESSAY, "voice_name": "mine"}))
-    assert out["schema"] == "articulate/voice-compare/v1" and out["features"]
+    assert out["schema"] == "articulate/voice-compare/v2" and out["features"]
 
 
 def test_voice_compare_with_a_missing_profile_is_a_tool_error(monkeypatch, tmp_path):

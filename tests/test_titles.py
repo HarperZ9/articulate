@@ -85,5 +85,5 @@ def test_suggestions_drop_a_family_already_used_twice():
 def test_workshop_reports_no_score_and_no_detector():
     report = titles().workshop(SERIES)
     assert report["ai_detector_consulted"] is False
-    assert report["schema"] == "articulate/titles/v1"
+    assert report["schema"] == "articulate/titles/v2"
     assert "score" not in report

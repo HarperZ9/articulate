@@ -72,7 +72,7 @@
  },
  "type": "object",
  "required": ["format", "platform", "parameters", "items", "clusters", "persona_groups",
-              "summary", "does_not_prove"],
+              "summary", "scope"],
  "properties": {
   "format": {"const": "articulate-campaign-report/1"},
   "platform": {"enum": ["x", "reddit", "tiktok", "linkedin", "generic"]},
@@ -87,6 +87,6 @@
    "promo_templates": {"type": "integer"}, "persona_templates": {"type": "integer"},
    "clusters": {"type": "integer"}, "posts_in_clusters": {"type": "integer"},
    "persona_groups": {"type": "integer"}}},
-  "does_not_prove": {"type": "string"}
+  "scope": {"type": "string"}
  }
 }

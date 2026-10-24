@@ -15,12 +15,13 @@ import json
 
 from . import corpus, corpus_features, detector, titles, wordlists
 from . import voice
+from .scope import without_scope
 
-SCHEMA = "articulate/corpus-receipt/v1"
+SCHEMA = "articulate/corpus-receipt/v2"
+SCHEMA_V1 = "articulate/corpus-receipt/v1"
 CORPUS_RULESET_SEMVER = "0.8.0"
-DOES_NOT_PROVE = ("A Match shows the same texts give the same findings under the same rules. "
-                  "It does not show the findings are right about a reader, or who or what "
-                  "wrote the texts.")
+SCOPE = ("Re-runs the same rules on the same texts. Match means the findings are the "
+         "same as in the receipt.")
 
 
 def _canonical(value):
@@ -56,7 +57,7 @@ def make_corpus_receipt(docs, *, keep=(), genre="essay", single=False, report=No
             "documents": [{"name": d["name"], "text_sha256": _sha(d["text"])} for d in docs],
             "keep": list(report["keep"]), "keep_sha256": _sha(_canonical(list(report["keep"]))),
             "genre": genre, "single": bool(single), "findings": report["findings"],
-            "ai_detector_consulted": False, "does_not_prove": DOES_NOT_PROVE}
+            "ai_detector_consulted": False, "scope": SCOPE}
 
 
 def _same_documents(receipt, docs):
@@ -72,7 +73,7 @@ def _same_documents(receipt, docs):
 
 def verify_corpus_receipt(receipt, docs):
     """(verdict, detail) for a corpus receipt replayed against docs."""
-    if not isinstance(receipt, dict) or receipt.get("schema") != SCHEMA:
+    if not isinstance(receipt, dict) or receipt.get("schema") not in (SCHEMA, SCHEMA_V1):
         return "Unverifiable", "unknown or missing corpus receipt schema"
     current = corpus_fingerprint()
     if receipt.get("corpus_fingerprint") != current:
@@ -87,19 +88,30 @@ def verify_corpus_receipt(receipt, docs):
     docs = sorted(docs, key=lambda d: order[d["name"]])
     again = corpus.analyze_corpus(docs, keep=receipt["keep"], genre=receipt.get("genre", "essay"),
                                   single=receipt.get("single", False))
-    if again["findings"] != receipt.get("findings"):
+    have, want = again["findings"], receipt.get("findings")
+    if receipt["schema"] == SCHEMA_V1:
+        # A version 1 receipt names each finding's scope does_not_prove, in
+        # older words, so the comparison leaves the scope fields out.
+        have, want = without_scope(have), without_scope(want)
+    if have != want:
         return "Drift", "re-derived findings differ from the receipt"
     return "Match", f"re-derived {len(again['findings'])} findings over {len(docs)} documents"
 
 
 def verify_voice_compare(record, text, profile):
     """(verdict, detail) for a voice comparison replayed from draft and profile."""
-    if not isinstance(record, dict) or record.get("schema") != voice.COMPARE_SCHEMA:
+    if not isinstance(record, dict) or record.get("schema") not in (voice.COMPARE_SCHEMA,
+                                                                    voice.COMPARE_SCHEMA_V1):
         return "Unverifiable", "unknown or missing voice comparison schema"
     if record.get("draft_sha256") != voice.sha256(text):
         return "Unverifiable", "draft does not match the record's hash"
     if record.get("profile_sha256") != voice.sha256(voice.canonical(profile)):
         return "Unverifiable", "profile does not match the record's hash"
-    if voice.compare(text, profile) != record:
+    again = voice.compare(text, profile)
+    if record["schema"] == voice.COMPARE_SCHEMA_V1:
+        # A version 1 record names its scope does_not_prove, in older words.
+        again = without_scope(dict(again, schema=record["schema"]))
+        record = without_scope(record)
+    if again != record:
         return "Drift", "re-derived comparison differs from the record"
     return "Match", f"re-derived {len(record['features'])} feature verdicts"

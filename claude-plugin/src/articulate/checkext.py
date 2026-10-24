@@ -10,9 +10,18 @@ such rules the detector's result is returned as it is, so output stays
 byte-identical.
 
 `analyze_blocks` gives the per-paragraph view under the same rules.
-Standard library only.
+
+Before the detector runs, articulate.mdstructure blanks Markdown structure the
+detector reads as prose (table delimiter rows, indented code, TOML front
+matter) and hides register words that sit inside a capitalised name. The masks
+keep every offset, and `match` and `snippet` come back from the original text.
+Text with none of that structure gives the same result as before. Pass
+`structure=False` for the unmasked result, which a receipt made before
+STRUCTURE_VERSION existed replays against. Standard library only.
 """
-from . import detector, rules_ext
+from . import detector, mdstructure, rules_ext
+
+STRUCTURE_VERSION = mdstructure.VERSION
 
 _TIERS = (("high", "HIGH"), ("medium", "MEDIUM"), ("low", "LOW"))
 
@@ -39,24 +48,60 @@ def _regate(result, profile):
     return result
 
 
-def check_text(text, *, profile=None, allow=()):
-    """detector.check_text plus the profile's rule packs and terminology."""
-    result = detector.check_text(text, profile=profile, allow=allow)
-    if not rules_ext.active(profile):
-        return result
-    extra = rules_ext.scan(text, text.splitlines(keepends=True), profile)
-    for (key, tier), found in zip(_TIERS, extra):
-        result[key] = result[key] + [detector._finding(tier, f) for f in found]
-    return _regate(result, profile)
+def _version(structure):
+    """The mask version for a `structure` argument: True means the current one."""
+    return mdstructure.VERSION if structure is True else structure
 
 
-def analyze_blocks(text, *, profile=None, allow=()):
+def _names(work, profile, allow, version=mdstructure.VERSION, known=None):
+    """(text, detector result). A second pass runs only when a register word sits
+    inside a capitalised name, with that name hidden."""
+    result = detector.check_text(work, profile=profile, allow=allow)
+    spans = mdstructure.name_spans(work, result, version, known)
+    if spans:
+        work = mdstructure.mask_spans(work, spans)
+        result = detector.check_text(work, profile=profile, allow=allow)
+    return work, result
+
+
+def _run(text, work, profile, allow, structure, known=None):
+    """The check of `text`, scanning `work`, its structure-masked copy."""
+    if structure:
+        work, result = _names(work, profile, allow, _version(structure), known)
+    else:
+        result = detector.check_text(work, profile=profile, allow=allow)
+    if rules_ext.active(profile):
+        extra = rules_ext.scan(work, work.splitlines(keepends=True), profile)
+        for (key, tier), found in zip(_TIERS, extra):
+            result[key] = result[key] + [detector._finding(tier, f) for f in found]
+        result = _regate(result, profile)
+    return mdstructure.restore(result, text, work)
+
+
+def changes_text(text):
+    """True when the masks change this text, so a receipt must name them."""
+    work = mdstructure.mask_structure(text)
+    return _names(work, None, ())[0] != text
+
+
+def check_text(text, *, profile=None, allow=(), structure=True):
+    """detector.check_text plus the profile's rule packs and terminology.
+    `structure` is True for the current Markdown masks, a version name such as
+    "markdown/1" for an older set, or False for none."""
+    work = mdstructure.mask_structure(text, _version(structure)) if structure else text
+    return _run(text, work, profile, allow, structure)
+
+
+def analyze_blocks(text, *, profile=None, allow=(), structure=True):
     """detector.analyze_blocks under the same rule layer as check_text."""
-    if not rules_ext.active(profile):
+    if not structure and not rules_ext.active(profile):
         return detector.analyze_blocks(text, profile=profile, allow=allow)
+    work = mdstructure.mask_structure(text, _version(structure)) if structure else text
+    known = mdstructure.known_names(work) if structure and structure != "markdown/1" else None
     out = []
-    for b in detector.segment_blocks(text):
-        r = check_text(b["text"], profile=profile, allow=allow)
+    for b in detector.segment_blocks(work):
+        r = _run(text[b["start"]:b["end"]], work[b["start"]:b["end"]], profile, allow,
+                 structure, known)
         for key, _tier in _TIERS:
             for f in r[key]:
                 f["line"] += b["start_line"] - 1
@@ -73,6 +118,6 @@ def analyze_blocks(text, *, profile=None, allow=()):
             "counts": {"high": len(r["high"]), "medium": len(r["medium"]),
                        "low": len(r["low"])},
             "high": r["high"], "medium": r["medium"], "low": r["low"],
-            "snippet": b["text"].strip()[:100],
+            "snippet": text[b["start"]:b["end"]].strip()[:100],
         })
     return out

@@ -16,15 +16,15 @@ import hashlib
 import re
 import time
 
-from . import detector, house_edits, house_settings
+from . import checkext, detector, house_edits, house_settings
 from .house_spec import (BRIEF_CEILING, CURRENT, brief, default_tuning,  # noqa: F401
                          fingerprint, session_context, spec, versions)
 from .house_edits import verify_edits  # noqa: F401  (part of this module's interface)
 
-RECEIPT = "articulate/house-receipt/v1"
-DOES_NOT_PROVE = ("The edits are exact and on a closed list, and the paragraphs left in place "
-                  "passed a lexical meaning guard. That does not prove the reply is correct, "
-                  "useful or better to read.")
+RECEIPT = "articulate/house-receipt/v2"
+RECEIPT_V1 = "articulate/house-receipt/v1"
+SCOPE = ("Applies exact edits from a closed list. A lexical meaning guard checks each "
+         "paragraph that the edits leave in place.")
 _HUMAN = [re.compile(p, re.I) for p in spec()["human_claims"]]
 _FENCE = re.compile(r"(?m)^[ \t]*(```|~~~)")
 
@@ -47,7 +47,7 @@ def human_claims(text):
 
 
 def style_notes(text, tiers=("high", "medium")):
-    result = detector.check_text(text)
+    result = checkext.check_text(text)
     return [{"category": "style/" + str(f.get("category")), "line": f["line"],
              "match": f["match"][:80], "reason": f["label"], "tier": tier}
             for tier in tiers for f in result[tier]]
@@ -77,7 +77,7 @@ def _receipt(text, out, settings, edits, refused, notes, started):
             "refused": refused, "notes_by_category": _counts(notes),
             "human_claim_notes": sum(1 for n in notes if n["category"] == "house/human-claim"),
             "timing_ms": round((time.perf_counter() - started) * 1000, 3),
-            "ai_detector_consulted": False, "does_not_prove": DOES_NOT_PROVE}
+            "ai_detector_consulted": False, "scope": SCOPE}
 
 
 def _edits_for(text, at_start=True, at_end=True):
@@ -152,7 +152,7 @@ def transform_stream(chunks, settings=None):
 
 def verify_receipt(receipt, text):
     """(Match | Drift | Unverifiable, detail) for a house receipt and its input."""
-    if not isinstance(receipt, dict) or receipt.get("schema") != RECEIPT:
+    if not isinstance(receipt, dict) or receipt.get("schema") not in (RECEIPT, RECEIPT_V1):
         return "Unverifiable", "not an articulate house receipt"
     version = receipt.get("house_version")
     if version not in versions():

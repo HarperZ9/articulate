@@ -49,8 +49,8 @@ the word floor, so the tool abstains and does not guess.
 ## 3. Read the judgment-level quality
 
 The detector catches mechanical tells. The editor layer reads the failures a
-regex cannot see: a fluent paragraph with no fact a reader could restate, hedging
-with no committed position, a weak verb carrying the meaning. Use the calling
+regex misses: a fluent paragraph empty of facts a reader could restate, hedging
+that avoids a position, a weak verb carrying the meaning. Use the calling
 host's model through `plan` and `submit`, or select a configured model backend.
 Without a model, the judge returns local findings and rule reasons.
 
@@ -59,7 +59,8 @@ python -m articulate.editor --judge post.md
 ```
 
 The judge quotes each weak passage, names the failure, and says in one line what
-a skilled writer would do. It reports; it does not rewrite.
+a skilled writer would do. It reports, and the rewriting is `fix` and
+`polish`.
 
 ## 4. Rewrite to the standard
 
@@ -73,9 +74,9 @@ python -m articulate.editor --fix post.md --out post.fixed.md
 
 `--polish` runs a bounded loop that aims for five assessed qualities to clear a bar:
 concreteness, commitment, economy, rhythm, and a restatable fact in each
-paragraph. It accepts a pass only when the detector gate stays clean and no
-quality score drops. Missing scores leave quality unassessed. These checks do
-not establish semantic equivalence or guarantee better writing.
+paragraph. It accepts a pass when the detector gate stays clean and every
+quality score holds or rises. Missing scores leave quality unassessed. Read the
+result against the original to confirm the meaning held.
 
 The rewrite is a suggestion. Read it against the original before you ship it. The
 tool optimizes writing quality, and it never tunes prose toward a lower detector
@@ -126,7 +127,7 @@ change to a rule moves the fingerprint, and an old receipt then reads
 
 A team that must retain a record, without keeping the sensitive text, uses a
 content-free receipt. It drops the matched substring and the exact offsets, and
-keeps only which rule fired and on which line:
+keeps which rule fired and on which line:
 
 ```bash
 articulate receipt post.md --redact drop --reviewer alice > receipts/post.json
@@ -147,9 +148,8 @@ articulate audit receipts/ --reverify --gate
 
 The `source-changed` count is the one file edited after its receipt was recorded.
 With `--gate`, that fails the exit code, so continuous integration flags a
-document that changed without a fresh screening. A content-free record is not
-zero-leakage; the residual and the `hash` mode caveat are in
-[Boundaries](boundaries.md).
+document that changed since its last screening. What a content-free record
+still reveals, and how `hash` mode differs, is in [Boundaries](boundaries.md).
 
 ## 8. Wire it into continuous integration
 

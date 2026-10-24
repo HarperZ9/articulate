@@ -37,7 +37,7 @@ def _print_summary(r):
     for g in r["persona_groups"]:
         print(f"  bio frame group x{g['size']}: {', '.join(g['ids'])}")
         print(f"      frame: {g['skeleton']}")
-    print(f"  does not prove: {r['does_not_prove']}")
+    print(f"  scope: {r['scope']}")
 
 
 def cmd_campaign(args):

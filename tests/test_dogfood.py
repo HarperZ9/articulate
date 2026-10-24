@@ -24,7 +24,8 @@ MODULES = ["cli.py", "editor.py", "bench.py", "pangram_records.py", "mcp_server.
            "house_tools.py", "cli_house.py", "bench_house.py", "voice_identity.py",
            "voice_apply.py", "cli_voice.py", "mcp_local_tools.py", "voice_store.py",
            "voice.py", "voice_tools.py", "authorship.py", "interview.py", "restructure.py",
-           "titles.py", "corpus.py", "cli_corpus.py", "campaign.py", "campaign_promo.py",
+           "titles.py", "corpus.py", "cli_corpus.py", "negation_load.py",
+           "negation_entries.py", "cli_negation.py", "campaign.py", "campaign_promo.py",
            "campaign_persona.py", "campaign_cluster.py", "campaign_corpus.py",
            "campaign_bench.py", "cli_campaign.py"]
 

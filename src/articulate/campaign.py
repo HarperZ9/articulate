@@ -16,7 +16,7 @@ from . import campaign_cluster, campaign_persona, campaign_promo
 FORMAT = "articulate-campaign-report/1"
 KINDS = ("post", "bio")
 PLATFORMS = tuple(campaign_persona.PLATFORMS)
-DOES_NOT_PROVE = (
+SCOPE = (
     "These signals describe the form of the text. They do not show that an account is a bot, "
     "that anyone was paid, or who wrote a post. Similar posts can come from many people "
     "quoting one announcement; template-shaped bios are common among real people. Treat a hit "
@@ -97,4 +97,4 @@ def analyze(items, *, platform="generic", cluster_threshold=0.5, frame_threshold
                                              if r["kind"] == "bio" and r["template"]),
                     "clusters": len(clusters), "posts_in_clusters": clustered,
                     "persona_groups": len(groups)},
-        "does_not_prove": DOES_NOT_PROVE}
+        "scope": SCOPE}

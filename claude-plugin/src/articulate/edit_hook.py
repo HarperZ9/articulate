@@ -22,7 +22,7 @@ import os
 import re
 import sys
 
-from . import detector, meaning
+from . import checkext, meaning
 
 PROSE_SUFFIXES = frozenset((".md", ".markdown", ".mdx", ".txt", ".text", ".rst",
                             ".adoc", ".asciidoc", ".tex"))
@@ -38,8 +38,8 @@ MAX_CONTEXT_CHARS = 6000
 EVENT = "PostToolUse"
 _PATCH_FILE = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+?)\s*$")
 _PATCH_MOVE = re.compile(r"^\*\*\* Move to: (.+?)\s*$")
-DOES_NOT_PROVE = ("Advisory only. A lexical comparison does not prove that meaning changed, "
-                  "and a change the user asked for is expected to appear here.")
+ADVICE_NOTE = ("These notes are advice from a word-level comparison. A change the user "
+                  "asked for will appear here too.")
 
 
 def is_prose(path):
@@ -137,7 +137,7 @@ def preservation_notes(old, new, is_tex=False):
 
 
 def style_notes(new):
-    result = detector.check_text(new)
+    result = checkext.check_text(new)
     hits = sorted(result["high"] + result["medium"], key=lambda h: h["start"])
     notes = [clip("L%d %s %r" % (h["line"], h["label"], h["match"])) for h in hits[:MAX_STYLE]]
     if len(hits) > MAX_STYLE:
@@ -167,7 +167,7 @@ def review(event):
     if len(body) > MAX_CONTEXT_CHARS:
         body = body[:MAX_CONTEXT_CHARS] + "\n... (%d more characters of findings left out)" % (
             len(body) - MAX_CONTEXT_CHARS)
-    return body + "\n" + DOES_NOT_PROVE
+    return body + "\n" + ADVICE_NOTE
 
 
 def respond(raw):

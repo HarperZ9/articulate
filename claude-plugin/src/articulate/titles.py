@@ -15,10 +15,10 @@ import re
 
 from .wordlists import TITLE_CLOSED
 
-SCHEMA = "articulate/titles/v1"
+SCHEMA = "articulate/titles/v2"
 QUESTION = "In one sentence, what is this piece about, in the words you would use to a friend?"
-DOES_NOT_PROVE = ("A shared title shape is a pattern a reader can notice across a series. "
-                  "It does not show that any title is wrong for its piece.")
+SCOPE = ("Groups the titles of a series by shape. Each title can still fit its own "
+         "piece.")
 _WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9'-]*")
 _HAS_NEEDS = frozenset({"has", "have", "needs", "need"})
 _WH = frozenset({"who", "what", "why", "how", "where", "when", "which"})
@@ -175,4 +175,4 @@ def workshop(titles, answers=None, headings=None):
                 suggestions.append(dict(v, title=title))
     return {"schema": SCHEMA, "families": fams, "questions": questions,
             "suggestions": suggestions, "ai_detector_consulted": False,
-            "does_not_prove": DOES_NOT_PROVE}
+            "scope": SCOPE}

@@ -14,50 +14,49 @@ from . import corpus_checks, corpus_shape
 from . import corpus_features as cf
 from .authorship import disclosure_spans
 
-SCHEMA = "articulate/corpus-report/v1"
-DOES_NOT_PROVE = ("These findings name patterns a reader can notice across a series and "
-                  "where they sit. They do not show who or what wrote any text, and they do "
-                  "not show that a reader will judge a piece machine-made.")
+SCHEMA = "articulate/corpus-report/v2"
+SCOPE = ("Names the patterns a reader can notice across a series of texts, and shows "
+         "where each pattern occurs.")
 _INTERVIEW = "Run `articulate interview` on this file. Only you can supply what goes here."
 READER = {
     "corpus/title-formula": (
         "Titles built on one shape start to read as a template, and a reader stops "
         "telling the pieces apart.",
         "Run `articulate titles` and answer its question for each piece in your own words.",
-        "A shared shape does not make any one title wrong for its piece."),
+        "Groups titles by shape. Each title can still fit its own piece."),
     "corpus/shared-ngram": (
         "A reader who meets the same phrase in several pieces hears a formula where you "
         "meant a point.",
         "Keep a phrase you repeat on purpose and list it with --keep. Say the others the "
         "way this piece needs.",
-        "A shared phrase can be a deliberate refrain or a term of art."),
+        "Lists phrases that occur in several pieces. A repeated phrase can be a refrain or a term of art."),
     "corpus/shared-construction": (
         "The same sentence habit in most pieces reads as one voice on autopilot.",
         "Look at the listed lines and decide which uses earn their place.",
-        "A style rule names a habit. It does not show that a sentence is wrong."),
+        "Names a sentence habit and lists where it occurs. You decide which uses to keep."),
     "corpus/paragraph-scaffold": (
         "Readers learn the pattern after a few paragraphs and start skimming the limit "
         "lines, which are the lines you most want read.",
         "Keep each limit. Consider stating shared limits once in a sources and method "
         "section and keeping in-paragraph limits where a claim's limit differs. "
         "`articulate restructure` shows that move.",
-        "Move labels come from cue words and can mislabel a sentence. Check each excerpt."),
+        "Labels each move from cue words. Check each excerpt, because a cue word can mislabel a sentence."),
     "corpus/section-symmetry": (
         "Sections of the same length and the same headings make every piece feel cut "
         "from one mold.",
         "Let each section run as long as its point needs, and name headings for what "
         "this piece says.",
-        "Even sections can be a deliberate format, such as a recurring column."),
+        "Compares section lengths and headings. A recurring column can use even sections on purpose."),
     "corpus/rhythm": (
         "Sentences of one length in a row give prose a flat beat that tires a reader.",
         "Read the listed stretch aloud and break or join sentences where your own "
         "speech would.",
-        "Sentence length is one part of rhythm. Even prose can still read well."),
+        "Measures sentence length, which is one part of rhythm."),
     "corpus/perspective": (
         "The piece argues a position but no one is visible taking it, so a reader cannot "
         "tell what the author saw or would stand behind.",
         _INTERVIEW,
-        "Some pieces should stay impersonal. This counts first-person words and nothing more."),
+        "Counts first-person words. Some pieces stay impersonal on purpose."),
     "corpus/abstract-run": (
         "Several paragraphs in a row without a name, number, place or quotation ask the "
         "reader to trust claims they cannot picture.",
@@ -97,7 +96,7 @@ def finding(category, docs, locations, measure):
     cost, direction, limit = READER[category]
     return {"category": category, "docs": sorted(set(docs)), "locations": locations,
             "measure": measure, "reader_cost": cost, "direction": direction,
-            "does_not_prove": limit, "protected": False}
+            "scope": limit, "protected": False}
 
 
 def _validate(docs, single):
@@ -136,11 +135,11 @@ def analyze_corpus(docs, *, keep=(), genre="essay", single=False):
             "keep": keep, "findings": findings,
             "protected": ctx["protected"] + _disclosures(docs),
             "thresholds": dict(cf.THRESHOLDS), "ai_detector_consulted": False,
-            "does_not_prove": DOES_NOT_PROVE}
+            "scope": SCOPE}
 
 
 def format_report(report):
-    """Plain text: each finding with its locations, direction and limit."""
+    """Plain text: each finding with its locations and direction."""
     out = [f"{len(report['documents'])} documents, {len(report['findings'])} findings."]
     for f in report["findings"]:
         out += ["", f"[{f['category']}] {f['reader_cost']}"]
@@ -151,9 +150,9 @@ def format_report(report):
             out.append(f"  {loc['doc']}:{loc['line_start']}-{loc['line_end']}  {loc['excerpt']}")
         if len(f["locations"]) > 12:
             out.append(f"  and {len(f['locations']) - 12} more locations")
-        out += [f"  Direction: {f['direction']}", f"  Does not prove: {f['does_not_prove']}"]
+        out.append(f"  Direction: {f['direction']}")
     if report["protected"]:
         out += ["", f"Protected and never flagged: {len(report['protected'])} "
                     "(declared repetition and disclosure lines)."]
-    out += ["", report["does_not_prove"]]
+    out += ["", report["scope"]]
     return "\n".join(out)

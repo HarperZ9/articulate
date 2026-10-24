@@ -114,3 +114,82 @@ def test_nested_links_opaque_html_and_indented_code_are_protected(old, new):
 ])
 def test_shortcut_links_and_lazy_quote_continuations_are_protected(old, new):
     assert guard().guard_rewrite(old, new)['text'] == old
+
+
+# Wave 2, W2-B: a model rewrite that reorders a date, changes a number or adds
+# a writing device is refused with a reason, and the CLI says why it kept text.
+
+def test_reordered_date_is_refused_with_a_reason():
+    from articulate.meaning_guard import guard_rewrite
+    out = guard_rewrite("The board met on 3 May 2026 to vote.\n",
+                        "The board met on May 3, 2026 to vote.\n")
+    assert out["text"] == "The board met on 3 May 2026 to vote.\n"
+    assert any("date" in r for item in out["refused"] for r in item["reasons"])
+
+
+def test_changed_number_is_refused():
+    from articulate.meaning_guard import guard_rewrite
+    out = guard_rewrite("We tested 14 models.\n", "We tested 15 models.\n")
+    assert out["text"] == "We tested 14 models.\n"
+    assert out["refused"]
+
+
+def test_added_corrective_negation_is_refused():
+    from articulate.meaning_guard import guard_rewrite
+    original = "The team ships every week and reviews the process.\n"
+    rewrite = "The team ships every week. The focus is on process, not features.\n"
+    out = guard_rewrite(original, rewrite)
+    assert out["text"] == original
+    reasons = [r for item in out["refused"] for r in item["reasons"]]
+    assert "device introduced: corrective-negation" in reasons
+
+
+def test_added_detector_device_is_refused():
+    from articulate.meaning_guard import guard_rewrite
+    original = "The release fixes two bugs.\n"
+    rewrite = "Moreover, it is crucial to note that the release fixes two bugs.\n"
+    out = guard_rewrite(original, rewrite)
+    assert out["text"] == original
+    assert any(r.startswith("device introduced:") for item in out["refused"] for r in item["reasons"])
+
+
+def test_a_device_already_in_the_original_may_stay():
+    from articulate.meaning_guard import guard_rewrite
+    original = "The focus is on process, not features. We ship weekly.\n"
+    rewrite = "The focus is on process, not features. We release weekly.\n"
+    assert guard_rewrite(original, rewrite)["text"] == rewrite
+
+
+def test_removing_a_device_is_accepted():
+    from articulate.meaning_guard import guard_rewrite
+    original = "Moreover, it is crucial to note that the release fixes two bugs.\n"
+    rewrite = "The release fixes two bugs.\n"
+    assert guard_rewrite(original, rewrite)["text"] == rewrite
+
+
+def test_cli_names_why_it_kept_the_original(tmp_path, monkeypatch, capsys):
+    from articulate import editor, editing
+    path = tmp_path / "draft.md"
+    path.write_text("The board met on 3 May 2026 to vote.\n", encoding="utf-8")
+
+    def fake_run_edit(text, **kwargs):
+        return {"text": text, "backend": "stub", "model": "stub", "gate_after": "blocked",
+                "refused": [{"paragraph": 0, "reasons": ["date protected spans changed"]}],
+                "quality_met": False}
+
+    monkeypatch.setattr(editing, "run_edit", fake_run_edit)
+    assert editor.polish(str(path), str(tmp_path / "out.md"), 1, 4) == 0
+    out = capsys.readouterr().out
+    assert "kept the original" in out
+    assert "date protected spans changed" in out
+
+
+def test_cli_reason_when_nothing_was_refused(tmp_path, monkeypatch, capsys):
+    from articulate import editor, editing
+    path = tmp_path / "draft.md"
+    path.write_text("Plain text.\n", encoding="utf-8")
+    monkeypatch.setattr(editing, "run_edit", lambda text, **kw: {
+        "text": text, "backend": "none", "model": None, "gate_after": "ok", "quality_met": False})
+    editor.polish(str(path), str(tmp_path / "out.md"), 1, 4)
+    out = capsys.readouterr().out
+    assert "kept the original" in out

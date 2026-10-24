@@ -23,7 +23,9 @@ import json
 import re
 
 from . import checkext, detector, domains, edit_options, modes, profiles, prompts
-from .meaning_guard import guard_rewrite, mask_text, protected_spans, restore_masks
+from .meaning_guard import _PARAGRAPH, guard_rewrite, mask_text, protected_spans, restore_masks
+from .edit_notes import _blocking, judge_floor  # noqa: F401  (judge_floor is public here)
+from .phrase_pass import kept_edits as _kept_edits, phrase_pass as _phrase_pass
 
 
 def _canonical(value):
@@ -136,7 +138,8 @@ def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=F
     before = check_under(text, settings['profile'])
     findings = _findings(before)
     delta = settings['profile'].get('editor', {}).get('standard_delta', '')
-    instr = (prompts.judge_instructions(_summary(findings), delta) if goal == 'judge'
+    blocking = _summary(_blocking(findings)) if before['gate'] != 'ok' and _blocking(findings) else ''
+    instr = (prompts.judge_instructions(_summary(findings), delta, blocking) if goal == 'judge'
              else prompts.rewrite_instructions(_summary(findings), is_html=is_html, standard_delta=delta,
                                                voice_notes=voice_notes))
     instr += edit_options.instruction_note(settings)
@@ -152,7 +155,7 @@ def edit_plan(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=F
             'quality_status': 'unassessed',
             'quality_scores_format': {'before': {q: 'integer 1..5' for q in prompts.QUALITIES},
                                       'after': {q: 'integer 1..5' for q in prompts.QUALITIES}} if goal == 'polish' else None,
-            'does_not_prove': 'Protected-span preservation is not semantic equivalence or factual correctness.'}
+            'scope': 'Checks that the rewrite keeps every protected span. Read the rewrite to confirm the meaning.'}
 
 
 def _quality(scores):
@@ -174,7 +177,7 @@ def _result(original, accepted, settings, refused, backend, model, quality_statu
     bc, ac = Counter(f['rule_id'] for f in bf), Counter(f['rule_id'] for f in af)
     deltas = [{'rule_id': rule, 'before': bc[rule], 'after': ac[rule], 'delta': ac[rule] - bc[rule]}
               for rule in sorted(set(bc) | set(ac))]
-    receipt = {'schema': 'articulate/editor-receipt/v1', 'backend': backend, 'model': model, 'attempts': [],
+    receipt = {'schema': 'articulate/editor-receipt/v2', 'backend': backend, 'model': model, 'attempts': [],
                'original_sha256': 'sha256:' + _hash(original), 'text_sha256': 'sha256:' + _hash(accepted),
                'ruleset_version': settings['ruleset'], 'settings': settings,
                'gate_before': before['gate'], 'gate_after': after['gate'], 'rule_deltas': deltas,
@@ -182,7 +185,7 @@ def _result(original, accepted, settings, refused, backend, model, quality_statu
                'author_text_sha256': settings.get('author_text_sha256'),
                'voice_profile_sha256': settings.get('voice_profile_sha256'),
                'author_text_origin': author_text_origin,
-               'does_not_prove': 'A lexical guard and detector gate do not prove semantic equivalence, quality or factual correctness. Host scores are supplied assessments, not independent measurements.'}
+               'scope': 'Records the gate result before and after the edit and the change in each rule count. The host model supplies the quality scores.'}
     out = {'ok': True, 'text': accepted, 'goal': settings['goal'], 'backend': backend, 'model': model,
            'attempts': [], 'gate_before': before['gate'], 'gate_after': after['gate'], 'gate': after['gate'],
            'findings_before': bf, 'findings_after': af, 'remaining_findings': af,
@@ -216,8 +219,7 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
     _check_author_text(settings, author_text)
     if settings['goal'] == 'judge':
         out = _result(text, text, settings, [], 'host', model, author_text_origin=author_text_origin)
-        out['assessment'] = rewrite
-        return out
+        return judge_floor(out, rewrite)
     allow, freeze = edit_options.bound(settings)
     guarded = restore_masks(text, rewrite, settings['is_html'], settings['is_tex'], author_text,
                             allow=allow, freeze=freeze)
@@ -249,11 +251,12 @@ def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False,
     settings = _settings(mode, profile, goal, is_html, is_tex,
                          allow_change=allow_change, freeze_terms=freeze_terms)
     allow, freeze = edit_options.bound(settings)
-    candidate = text
+    candidate, edits, phrase_refused = text, [], []
     prof = settings['profile']
     if goal != 'judge' and prof.get('slop') != 'off' and prof.get('editor', {}).get('run_fix_by_default', True):
+        candidate, edits, phrase_refused = _phrase_pass(text, is_html, is_tex, allow, freeze)
         # Transform only unprotected text. A final common guard also checks the result.
-        spans = sorted(protected_spans(text, is_html, is_tex, freeze), key=lambda s: (s['start'], -s['end']))
+        spans = sorted(protected_spans(candidate, is_html, is_tex, freeze), key=lambda s: (s['start'], -s['end']))
         chunks, end = [], 0
         def transform(prose):
             if prof.get('no_em_dash', True):
@@ -262,15 +265,19 @@ def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False,
             return re.sub(r'(?<=\S)[ \t]{2,}(?=\S)', ' ', prose)
         for span in spans:
             if span['start'] >= end:
-                chunks.extend((transform(text[end:span['start']]), text[span['start']:span['end']]))
+                chunks.extend((transform(candidate[end:span['start']]), candidate[span['start']:span['end']]))
                 end = span['end']
-        chunks.append(transform(text[end:]))
+        chunks.append(transform(candidate[end:]))
         candidate = ''.join(chunks)
     checked = guard_rewrite(text, candidate, is_html, is_tex, allow=allow, freeze=freeze)
+    edits = _kept_edits(text, edits, checked['refused'])
+    checked = dict(checked, refused=phrase_refused + checked['refused'])
     if goal == 'polish' and check_under(text, prof)['gate'] == 'ok' and check_under(checked['text'], prof)['gate'] != 'ok':
         checked = {'text': text, 'refused': [{'paragraph': None, 'reasons': ['detector gate regressed']}]}
     out = _result(text, checked['text'], settings, checked['refused'], 'none', None,
                   allowed=checked.get('allowed_changes'))
+    # Every closed-list phrase edit that survived the guards, in original offsets.
+    out['edits'] = out['receipt']['edits'] = edits
     out['instruction'] = 'For a model edit, use edit_plan/edit_submit or configure a reachable model backend.'
     if goal == 'judge':
         out['assessment'] = _summary(out['findings_before'])

@@ -44,7 +44,7 @@ def test_house_transform_tool(monkeypatch, tmp_path):
     monkeypatch.setenv("ARTICULATE_CONFIG_DIR", str(tmp_path))
     out = _payload(_call("house_transform", {"text": RESIDUE_REPLY}))
     assert out["text"] == RESIDUE_CLEAN
-    assert out["receipt"]["schema"] == "articulate/house-receipt/v1"
+    assert out["receipt"]["schema"] == "articulate/house-receipt/v2"
 
 
 def test_house_false_per_call_returns_the_text_unchanged(monkeypatch, tmp_path):
@@ -73,7 +73,7 @@ def test_cli_house_apply_writes_a_receipt_only_when_asked(monkeypatch, capsys, t
     rec = tmp_path / "r.json"
     assert cli.main(["house", "apply", str(src), "--receipt", str(rec)]) == 0
     assert src.read_text(encoding="utf-8") == RESIDUE_REPLY
-    assert json.loads(rec.read_text(encoding="utf-8"))["schema"] == "articulate/house-receipt/v1"
+    assert json.loads(rec.read_text(encoding="utf-8"))["schema"] == "articulate/house-receipt/v2"
     capsys.readouterr()
     assert cli.main(["verify", str(rec), str(src)]) == 0
     assert "Match" in capsys.readouterr().out

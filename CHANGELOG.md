@@ -6,6 +6,18 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+- Reports and receipts now name their limit field `scope`, and each scope says
+  what the result covers. The field was named `does_not_prove` before. These
+  schemas move to version 2: changes, meaning, corpus-report, corpus-receipt,
+  desk, interview, titles, restructure, voice-compare, house-receipt,
+  process-summary, editor-receipt and the dialogue report. `articulate verify`
+  still accepts version 1 corpus receipts, voice comparisons, house receipts and
+  process summaries. To read either version in your own code, read `scope` and
+  fall back to `does_not_prove`; `articulate.scope.scope_of` does this.
+- Tool descriptions say "Runs on your machine". The findings tools say "Use the
+  findings to improve writing. Use other evidence to decide who wrote a text."
+  The CLI describes Articulate as a tool that finds writing patterns and shows
+  where they are.
 - `articulate campaign` reads a JSON list of short social texts and reports
   promotional templates in posts, stock-persona slot grammar in bios, and
   clusters of near-duplicate or templated posts with their shared skeleton.
@@ -17,6 +29,133 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
   split, a per-stratum fairness bound and controls that must fail. Run it with
   `python -m articulate.campaign_bench`. No change to the prose checker or its
   ruleset.
+
+## 0.16.0
+
+You can now build a voice from what you want a piece to do, and check a draft
+against it. The release also adds the negation-load check.
+
+- `articulate voice intend` builds a voice spec from a goal, an audience, a
+  stance and optional reference samples, and prints a plan: open on an anchor,
+  name the opposing view, try the other side, ask what if, say what you think,
+  turn once, end on a question. Samples leave hashes and device counts, never
+  text. `--base zain` starts from the built-in spec made from the author's
+  prose rules and his stance for posts.
+- `articulate voice check DRAFT --intent SPEC` scores a draft from 0 to 100
+  against a spec and lists each miss with its line and a fix. `--min-score`
+  sets an exit code for hooks and CI.
+- New cross-sentence device checks (`articulate.voice_devices`) find what the
+  line checker misses in posts built from one-sentence paragraphs: one-line
+  paragraphs, anaphora and epistrophe runs, fragment runs, tricolons, the
+  split antithesis ("That's not faith. That's hypocrisy."), aphorism lines,
+  a closing maxim, numbered escalation, colon drumrolls, stock reveal phrases
+  and hedges.
+- `articulate negation` scores each entry by the share of its clauses spent on
+  what a thing lacks: "does not", "never", "no server", "not yet", "only",
+  "limited to". The copy rule warns at 30% and fails at 50%. The fiction rule
+  warns at 45%, fails at 65% and skips character speech. The report also lists
+  virtue phrases such as "provenance" and "verifiable". Readers cover Markdown,
+  HTML, `.lwd` scripts, JSON film scripts and JavaScript UI strings.
+
+## 0.15.1
+
+A patch release. It is also the first release to use the patch path that 0.14.0
+opened.
+
+- The art footer reads "Zain Dana Harper / on PyPI". It had read "A Flywheel
+  lane / beta", which is internal language.
+- `editor.py` is split into `editor.py`, `editor_text.py` and `editor_cli.py`,
+  each under 300 lines. Every name still imports from `articulate.editor`.
+- The package keywords no longer list `ai-detection`. Articulate checks style
+  and does not detect who wrote a text.
+
+## 0.15.0
+
+The editor now does part of the work the checker points at, and it refuses
+rewrites that change meaning.
+
+- `fix --backend none` removes a closed list of openers, such as "Moreover,"
+  and "It is crucial to note that". Each edit passes the meaning check on its
+  own, and the receipt lists it.
+- A model rewrite that reorders a date or adds a HIGH or MEDIUM device, or a
+  corrective negation, keeps the original paragraph. The CLI prints the reason.
+- When the gate blocks a text, the judge sees the blocking findings. A judge
+  result that names none of them reads `quality_status: unreliable`.
+- In Markdown, inline and display math between `$` signs is skipped, and a
+  sentence-start name counts as a name when the same name appears mid-sentence.
+  Receipts record `markdown/2`; `markdown/1` receipts still replay.
+- The hero images and the social card carry the current caption.
+- MCP `fix` and `polish` return `kept_original_reason` when they hand back the
+  original text.
+- SARIF output validates against the 2.1.0 schema in the tests, and an absolute
+  path goes out as a `file:///` URI.
+- The GitHub Action takes inputs through the environment, matches `**/*.md` at
+  the repository root, and stops on a pattern that matches nothing. New inputs:
+  `gate` fails the build on a blocked file, and `upload-sarif` can skip the
+  upload. CI now runs the hook and the action from clean repositories.
+
+## 0.14.0
+
+Bug fixes now ship as patch releases, the command line reports its version, and
+the `[mcp]` extra installs a fastmcp that works.
+
+- `articulate --version` and `-V` print the package version. Before, the flag
+  failed with exit 2.
+- The native release check no longer refuses a version whose patch number is
+  above 0. That check stopped the 0.12.1 publish. The tag, ref, clean-tree and
+  ruleset checks still apply. `RELEASING.md` describes the process.
+- The `[mcp]` extra now reads `fastmcp>=3.2.4,<4`. fastmcp 4 dropped the tool
+  annotation hints. A new CI job installs `[mcp]` and `[hosted]` and runs the
+  MCP tests and the full suite with them.
+- A voice range no longer goes below 0, and a share range stops at 1. A rate
+  had read `your range -0.134 to 1.474`.
+- The pre-commit hook description and the hero caption source now describe
+  named writing devices. They had said "AI and prose tells" and "AI-tell
+  detection".
+- `scripts/sync_local_install.py` prints the version that the PATH command, the
+  Claude Code MCP server and the plugin each run.
+
+The Markdown structure fix below shipped in this release too.
+
+
+Markdown structure no longer reads as prose. The detector rules and their
+fingerprint are unchanged; the fix sits in the check layer in front of them.
+
+- A table delimiter row such as `|---|---|` or `| :--- | ---: |` was reported
+  as a HIGH em-dash, which blocked any Markdown file with a table under
+  `--gate`. Agents had started rewriting tables as `|-|-|` to quiet it. The row
+  is now blanked before the rules run. An em-dash or `---` inside a table cell
+  still fires.
+- An indented code block, outside a list, and TOML front matter between `+++`
+  lines are blanked the same way. YAML front matter and fenced code were
+  already skipped.
+- A register word inside a run of capitalised words, such as "Transformative"
+  in "the Transformative AI Fund", is no longer reported. A heading, a word
+  that opens a sentence, and a Title Case line still fire.
+- `articulate check`, the per-paragraph view, receipts, the MCP `check` and
+  `score` tools, the edit hook, the editor gate and the house notes all use the
+  same masks. On 3,000 Markdown files under the workspace the masks removed
+  5,123 separator findings, 8 register words in names and 2 findings inside
+  indented code, and added none.
+- A receipt for text the masks change records `"structure": "markdown/1"`, and
+  `verify` replays it with the masks. A receipt without the field replays
+  without them, so receipts made by earlier releases still read Match.
+- Still open: `---` inside inline `$...$` math, and block quotes, which can be
+  a cited source or the author's own callout.
+
+## 0.13.0
+
+Documentation and package metadata only. No rule, threshold or finding changes.
+
+- The README opens with what Articulate checks, who it serves, an install and
+  first run, a comparison with Vale, proselint, write-good, LanguageTool,
+  Grammarly and Hemingway Editor, and short limits. PyPI shows that text from
+  this release on.
+- The package summary names the 57 of 75 human-text result beside the style
+  claim, and the author entry carries zaindharper@gmail.com.
+- The v0.12.1 tag carried these changes first. Its publish run stopped at the
+  native build, which accepts only release versions that end in `.0`, so
+  0.12.1 never reached PyPI and has no release assets.
 
 ## 0.12.0
 

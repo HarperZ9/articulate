@@ -14,7 +14,7 @@ import re
 from . import corpus_features as cf
 from .authorship import is_disclosure
 
-SCHEMA = "articulate/interview/v1"
+SCHEMA = "articulate/interview/v2"
 BANK = {
     "argued-piece": "Why does this matter to you? What made you start writing it?",
     "perspective-stretch": ("What did you see, do or hear yourself in this part, that a reader "
@@ -29,8 +29,8 @@ BANK = {
 }
 ORDER = tuple(BANK)
 PER_TRIGGER = 3
-DOES_NOT_PROVE = ("The questions come from counted patterns. A question at a line does not "
-                  "mean the line is wrong, and only the author can answer it.")
+SCOPE = ("Asks a question at each line where a counted pattern occurs. Only the author "
+         "can answer the questions.")
 MARKER = re.compile(r"^<!-- articulate:answer (q\d+) \"([^\"]*)\" -->$")
 _HIGH = re.compile(r"(?i)\bhigh\b")
 _UNKNOWN = re.compile(r"(?i)\bunknown\b")
@@ -127,7 +127,7 @@ def questions(text, *, voice_profile=None):
     kept.sort(key=lambda i: (i["line_end"], ORDER.index(i["trigger"])))
     out = [dict(id=f"q{n}", question=BANK[i["trigger"]], **i) for n, i in enumerate(kept, 1)]
     return {"schema": SCHEMA, "questions": out, "ai_detector_consulted": False,
-            "does_not_prove": DOES_NOT_PROVE}
+            "scope": SCOPE}
 
 
 def marker_text(question):

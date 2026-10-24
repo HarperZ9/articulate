@@ -259,6 +259,11 @@ def test_a_tracked_log_never_stages_its_private_files(tmp_path):
 def test_fix_logs_the_rewrite_when_pass_two_fails(doc, monkeypatch, capsys):
     pl.init(doc)
     calls = []
+    # The guard refuses a rewrite that adds a device, so the original already
+    # carries the devices that keep the gate blocked after pass one.
+    pathlib.Path(doc).write_text(
+        "As mentioned above, the rain fell for three days in order to flood the field.\n",
+        encoding="utf-8")
 
     accepted = "As mentioned above, the rain fell in order to flood the field.\n"
 

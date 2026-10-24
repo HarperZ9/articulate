@@ -1,203 +1,86 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-dark.svg">
-  <img src="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-light.svg" alt="articulate. A fan of ruled sheets drawn in fine lines, the top sheet lit by a bright core. The caption in the image is an older tagline; the line below states what the tool does." width="100%">
+  <img src="https://raw.githubusercontent.com/HarperZ9/articulate/main/docs/art/hero-light.svg" alt="articulate. A fan of ruled sheets drawn in fine lines, the top sheet lit by a bright core. The caption reads: Local writing-quality checker and editor. No network. Not an authorship detector." width="100%">
 </picture>
 
 # articulate
 
-Local prose checks for writing devices and plain-writing problems, with an optional editor. No network.
+Articulate checks prose on your computer. It names each writing pattern it finds and the line it sits on, and a profile for each kind of writing decides which findings block.
 
+```bash
+python -m pip install articulate-writing
+articulate check README.md --profile readme --gate
 ```
-python -m articulate.cli check path/to/doc.md --gate
+
+Python 3.9 or newer. The checker uses only the standard library and needs no model, account or API key.
+
+```text
+$ articulate check post.md --profile readme --gate
+[articulate] post.md [readme]: 4 high, 2 medium (blocked)  texture 100/100
+  L3 [HIGH antithesis] it's not just X, it's Y: This release is not just a bug fix; it is a new foundation. ...
+  L3 [HIGH corporate-verb] leverage / underscore / reflect (as corporate verb): ...
+  L4 [HIGH filler-intensifier] genuinely / really / truly / actually: ...
 ```
 
-[![version: 0.12.0](https://img.shields.io/badge/version-0.12.0-e6e1d6?style=flat-square&labelColor=1a1712)](https://pypi.org/project/articulate-writing/)
-[![CI](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/articulate/actions/workflows/ci.yml)
-[![license](https://img.shields.io/badge/license-FSL--1.1--MIT-e6e1d6?style=flat-square&labelColor=1a1712)](https://github.com/HarperZ9/articulate/blob/main/LICENSE)
-![python 3.9+](https://img.shields.io/badge/python-3.9%2B-e6e1d6?style=flat-square&labelColor=1a1712)
+With `--gate` the command exits 1 when a high finding blocks under the chosen profile, so it drops into CI or a pre-commit hook.
 
-A local writing-quality tool. It flags writing devices common in AI output and in
-weak prose, says where each one occurs, scores how densely a passage uses them,
-and (with an LLM backend) rewrites prose to a plain, skilled standard. The core
-runs standard-library-only with no network call. Writing quality is the goal; it
-is not an evasion tool, and no detector score is a target.
+Use it on documentation, READMEs, release notes, essays and commit messages. It flags stacked hedges, marketing words, corporate verbs, contrast framing, rule-of-three lists, em dashes and the rhetorical habits common in model-written text.
 
-It is a style tool. It is not an authorship detector. On 183 texts of known origin it flagged all
-84 AI texts and also 57 of 75 human texts (76%, 95% interval 65% to 84%), including 10 of
-18 essays by English learners; see [the results](corpus/provenance/README.md) and
-[`results.json`](corpus/provenance/results.json). Never use a finding to accuse anyone of
-using AI, and never to judge a student's work.
-
-## Documentation
-
-Full docs are in [`docs/`](docs/): [getting started](docs/getting-started.md), a
-thorough [walkthrough](docs/walkthrough.md), the [feature reference](docs/features.md),
-the [CLI reference](docs/cli.md), and the [boundaries](docs/boundaries.md) that
-say what a verdict and a receipt mean and what they never claim. The
-[house voice](docs/house-voice.md) spec and the guide to
-[series review and your own voice](docs/series-and-voice.md) cover the 0.8.0
-voice features. [Dialogue and character voice](docs/dialogue.md) covers
-`articulate dialogue`: script checks, character voice sheets and blind speaker
-attribution.
-
-## See it work, step by step
-
-The [animated explainer](https://harperz9.github.io/repo-explainers/articulate.html)
-follows one short draft through the checker: the six findings and their tiers,
-how three profiles gate the same findings, how the texture score is computed,
-per-span verdicts, and a receipt that replays to Match, Drift or Unverifiable.
-Every value on it is output from this repository. Its source is
-[docs/explainer/index.html](docs/explainer/index.html).
-
-## Walkthrough
-
-Install it, run it once, then use the main feature. Each command below is real, and so is its output.
-
-1. **Install.** Install from PyPI. Python 3.9 or newer; the checker uses the standard library only and makes no network call.
-
-   ```text
-   $ python -m pip install articulate-writing
-   ```
-
-2. **First run: check a draft.** Check a draft against a profile. With `--gate` the command exits 1 when high findings block it.
-
-   ```text
-   $ articulate check post.md --profile readme --gate
-   [articulate] post.md [readme]: 3 high, 2 medium (blocked)  texture 70/100
-   ```
-
-3. **Seal a receipt and re-derive it.** Write a receipt for the check, then verify it against the same file.
-
-   ```text
-   $ articulate receipt post.md --profile readme > post.receipt.json
-   $ articulate verify post.receipt.json post.md
-   [articulate] Match: re-derived 6 findings, gate blocked, texture 70
-   ```
+Articulate finds writing patterns and shows where they are. Use it to improve writing. Use other evidence to decide who wrote a text. On 183 texts of known origin it flagged all 84 AI texts and 57 of 75 human texts (76%, 95% interval 65% to 84%), including 10 of 18 essays by English learners ([`results.json`](corpus/provenance/results.json)). Teachers: use it to help a student improve a draft, and use other evidence to judge who wrote an essay.
 
 ## What it does
 
-- **Detect.** Flags banned rhetorical devices (antithesis including keyword-free
-  parallel-negation contrast pairs, corrective negation, rule-of-three, em-dashes,
-  filler intensifiers, corporate verbs), current frontier-model register,
-  marketing, and email/blog tells, and Williams/Orwell signals (expletive openers,
-  nominalization density, passive voice, adverb density, cadence uniformity,
-  opener repetition). Emits a graded 0-100 texture score and a clean/flagged gate.
-- **Adapt by register.** A profile system (procedure, commit, research, readme,
-  essay, narrative, and more) sets which findings block. Fiction gates nothing;
-  procedures and essays gate strictly. Profiles resolve from `--profile`, an
-  in-file `writing-profile:` tag, or the file path.
-- **Choose a mode or a genre.** A writing mode crosses a domain register with an
-  articulation need, such as `memo/argue` or `technical-docs/explain`. The genre
-  axis reads narrative and expressive prose by its own convention: `literary-fiction`,
-  `genre-fiction`, `ya-fiction`, `memoir`, `screenplay`, `poetry`. Under a fiction
-  genre, quoted speech is masked out of the device passes so a character's line is
-  never scored as the author's prose; the craft devices report but never block; and
-  a report-only lexicon flags generation artifacts such as the somatic cliche or the
-  "could not help but" reflexive. Screenplay classifies Fountain roles first, so only
-  action lines face the device gate. Poetry reads by the line and drops the
-  craft-device categories from its report. Run `articulate modes` to list them.
-- **Edit.** `judge` reads the judgment-level failures a regex cannot see
-  (confident emptiness, vague abstraction, hedging with no position, weak verbs).
-  `fix` rewrites to the standard, self-checked against the detector. `polish`
-  loops until five qualities (concreteness, commitment, economy, rhythm, a
-  restatable fact per paragraph) clear a bar. Gated on writing quality, never a
-  detector score. Use the calling model, a configured backend, or mechanical
-  fixes with no model. Every result names its backend and any failed attempts.
+- **Check.** Flags rhetorical devices (antithesis, corrective negation, rule-of-three, em dashes, filler intensifiers, corporate verbs), marketing and email register, and plain-style signals such as expletive openers, nominalization density, passive voice, adverb density and uniform cadence. Each run gives a 0 to 100 texture score and a pass or block result.
+- **Profiles.** `procedure`, `commit`, `research`, `readme`, `essay`, `narrative` and more set which findings block. Procedures gate strictly and fiction gates nothing. A profile comes from `--profile`, a `writing-profile:` tag in the file, or the file path.
+- **Modes and genres.** A mode pairs a register with a purpose, such as `memo/argue` or `technical-docs/explain`. Genres (`literary-fiction`, `genre-fiction`, `ya-fiction`, `memoir`, `screenplay`, `poetry`) read narrative prose by their own conventions, and quoted speech stays out of the device checks. `articulate modes` lists them all.
+- **Edit.** `judge` reads problems a pattern rule cannot see, such as a vague claim or a weak verb. `fix` rewrites to the standard and rechecks the result. `polish` loops until the draft clears a quality bar. These use a model you configure, the calling model in an MCP host, or mechanical fixes with no model.
+- **Receipts.** `articulate receipt` records a check, and `articulate verify` replays it against the file later. `articulate audit` queries a folder of committed receipts.
+- **House voice.** `articulate house on` gives an AI model a published, versioned voice: answer first, numbers with denominators. `articulate house off` turns it off.
+- **Your own voice.** `articulate voice learn --mine` builds a profile from files you name. Compare drafts with it, or shape your own draft toward it.
+- **A voice from intent.** `articulate voice intend` takes a goal, an audience and a stance and writes a spec with a plan. `articulate voice check draft.md --intent spec.json` scores the draft against it and names, by line, the template shapes a line-by-line check misses: one-line paragraphs, anaphora runs, closing maxims, "It is not X. It is Y." See [a voice built from intent](docs/voice-intent.md).
+- **Series review.** `articulate corpus` reads several documents together and reports repeated title formulas, shared paragraph scaffolds and even rhythm, with locations.
+- **Dialogue.** `articulate dialogue` checks game and stage scripts and builds character voice sheets.
 
-- **Give the model a voice.** The house voice is a published, versioned voice
-  for AI models: answer first, numbers with denominators, "I" only for what the
-  model did in the session, and no claim to a human life. It is opt-in:
-  `articulate house on` turns it on, and `articulate house off` turns it off.
-- **Build your own voice.** `articulate voice learn --mine` builds a profile from
-  your own writing, on your computer. Compare drafts with it, run the
-  authorship interview, and, when you ask, shape your own draft toward it.
-- **Review a series.** `articulate corpus` reads several documents together and
-  names repeated title formulas, shared scaffolds, even rhythm and missing
-  perspective, with locations and no replacement prose.
-
-## Use
-
-Articulate includes no model. A connected client can call `edit_plan`, write the
-rewrite with its selected model, and submit it through `edit_submit`. The model
-account and conversation policy belong to that client. Local checks and host
-edits require no publisher-hosted service or separate model API key.
-
-Version 0.12.0 prepares [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md)
-with a Python runtime included. The [source plugin](docs/claude-plugin.md) remains
-available for local Claude Code, Codex and portable MCP hosts with installed
-Python. Native client installation and marketplace acceptance remain unverified.
+## Use it from anywhere
 
 ```bash
-# lint (exit 1 when blocked under the file's profile)
-python -m articulate.cli check path/to/doc.md --gate
-python -m articulate.cli check essay.md --profile essay --verbose
-echo "some prose" | python -m articulate.cli score
+# command line
+articulate check path/to/doc.md --gate
+articulate check essay.md --profile essay --verbose
+echo "some prose" | articulate score
 
-# library
+# Python
 python -c "import articulate; print(articulate.check_text('...', profile=articulate.profiles.load('research'))['gate'])"
 
-# receipt: a re-derivable verdict (Match / Drift / Unverifiable)
-python -m articulate.cli receipt doc.md --profile research > doc.receipt.json
-python -m articulate.cli verify doc.receipt.json doc.md   # replay; exit 0/1/2
+# receipts
+articulate receipt doc.md --profile research > doc.receipt.json
+articulate verify doc.receipt.json doc.md        # exit 0 match, 1 drift, 2 unverifiable
+articulate receipt doc.md --redact drop > receipts/doc.json   # keeps no matched text
 
-# content-free audit receipt: replayable, but stores no verbatim text (drop or hash
-# the matched substring). For a team that must retain a record without the source.
-python -m articulate.cli receipt doc.md --redact drop --reviewer alice > receipts/doc.json
-python -m articulate.cli check doc.md --content-free --sarif > doc.sarif  # no substrings
+# CI: SARIF for GitHub Code Scanning, Azure or reviewdog
+articulate check docs/*.md --sarif > articulate.sarif
 
-# audit: query committed receipts locally (no server), and re-verify they still hold
-python -m articulate.cli audit receipts/                 # recorded verdicts, blocked rules
-python -m articulate.cli audit receipts/ --reverify --gate   # exit 1 if a source drifted
-
-# SARIF for CI (GitHub Code Scanning, Azure, reviewdog)
-python -m articulate.cli check src/**/*.md --sarif > articulate.sarif
-
-# LSP server (inline squiggles in VS Code, JetBrains via LSP4IJ, Neovim). Stdlib
-# only, no dependency. Point your editor's LSP client at:
-python -m articulate.lsp_server
-
-# benchmark (regression-gated corpus) and MCP server
-python -m articulate.bench
-python -m articulate.mcp_server
+# editors and AI clients
+python -m articulate.lsp_server     # LSP over stdio
+python -m articulate.mcp_server     # MCP server
 ```
+
+Every command also runs as `python -m articulate.cli`. The [CLI reference](docs/cli.md) lists each command, flag and exit code.
 
 ### Editor setup
 
-The LSP server speaks standard LSP over stdio, so any LSP client can drive it.
-A minimal Neovim registration:
+The LSP server speaks standard LSP over stdio. A minimal Neovim registration:
 
 ```lua
 vim.lsp.start({ name = "articulate", cmd = { "python", "-m", "articulate.lsp_server" },
   filetypes = { "markdown", "text", "tex" } })
 ```
 
-For VS Code, a thin client that launches the same command as a `LanguageClient`
-is all that is needed; no server code lives in the extension.
+In VS Code, any `LanguageClient` that launches the same command works.
 
-### Scientific and mathematical writing
+### Editing with a model
 
-`academic/prove` and `science-writing/explain` target hard technical exposition:
-stating the idea before the formalism, keeping a roadmap, defining each symbol
-once. The proof mode does not rewrite by default, because a wrong change to a
-quantifier order or an inequality direction changes a theorem; it routes to
-`--judge`, and `--fix` is opt-in. On a `.tex` file the editor masks every math
-span before a rewrite and splices it back byte for byte, so a formula is never
-altered.
-
-The boundary is fixed and load-bearing: a clean gate, a low texture score, or a
-Match receipt means the prose was screened under a named ruleset. It says nothing
-about whether the theorem is true. A clearly written proof can still be false, and
-Articulate never checks the mathematics. Correctness comes from referees and proof
-assistants (Lean, Coq, Isabelle), never from this tool.
-
-### Editing from a host or the command line
-
-In an MCP host, `fix`, `judge` and `polish` use sampling only when the client
-advertises it. Otherwise they return an edit plan for the calling model.
-The host reads the plan's instructions and masked text, then calls `edit_submit`
-with the original text, its rewrite and the plan ID. Articulate checks protected
-spans and returns the accepted text, gate changes and a host receipt. No second
-model account is needed. Sampling and host edits follow the host's privacy policy.
+In an MCP host, `fix`, `judge` and `polish` use sampling when the client offers it. Otherwise they return an edit plan: the host writes the rewrite with its own model and calls `edit_submit`, and Articulate checks protected spans and returns the accepted text. No second model account is needed.
 
 ```bash
 articulate plan notes.md --goal fix > plan.json
@@ -206,48 +89,36 @@ articulate fix notes.md --backend none --out edited.md
 articulate polish notes.md --backend ollama --json
 ```
 
-Replace `PLAN_ID` with the ID in `plan.json`; the host writes `rewrite.md` from
-the plan's masked text. The CLI's `auto` selection tries configured Anthropic,
-the Claude CLI, configured OpenAI-compatible endpoints, Ollama and deterministic
-editing in that order. A failed backend is recorded before the next is tried.
-See the [backend configuration reference](docs/cli.md#backend-configuration).
+From the command line, `--backend auto` tries a configured Anthropic key, the Claude CLI, OpenAI-compatible endpoints, Ollama and mechanical editing, in that order. See the [backend configuration](docs/cli.md#backend-configuration). A rewrite can change meaning, so read each one before you accept it.
 
-## Privacy
+On a `.tex` file the editor masks every math span before a rewrite and restores it byte for byte. The proof mode `academic/prove` routes to `judge` by default and rewrites only with `--fix`. Articulate checks the prose of a proof and leaves the mathematics alone.
 
-The detector and `--backend none` never call a model or the network. Anthropic
-and the Claude CLI send text to their provider; an OpenAI-compatible endpoint
-receives text at its configured address. Ollama receives text at its configured
-server. Host editing and MCP sampling share text with the calling host, which
-may use a remote model. Set `ARTICULATE_LOCAL_ONLY=1` to allow only loopback
-Ollama and deterministic editing; other editor backends are refused before a
-connection. Plan payloads and edit results contain document text; handle them
-as source material. A content-free audit receipt keeps no verbatim text: it drops the matched
-substring and the exact offsets, keeping only which rule fired, its tier and
-category, and the line. A team can retain and replay a record without storing the
-sensitive source. Content-free is not zero-leakage: which rules fired and the line
-remain, which for a closed-vocabulary rule narrows the flagged word to that rule's
-small public candidate set. A personal voice profile is built only from files
-you name, holds aggregates and no sample sentence, and stays in your local voice
-store until `articulate voice delete --all`. The house-voice brief that enters a
-model's context is the same published text for everyone. The `hash` mode keeps a sha256 for an equality check
-against a known string, so it is dictionary-reversible for those closed-vocabulary
-rules; use `drop` when the flagged word must stay secret. An auto-filled `reviewer`
-(from `$GITHUB_ACTOR`) records CI attribution, and a named human sign-off needs an
-explicit `--reviewer`. Committed receipts live as long as the repo, with no
-automatic expiry (bounded retention is a later self-hosted tier). The full
-[documentation](docs/) covers each surface and the boundaries in depth.
+### Where text goes
 
-## Status
+The checker and `--backend none` make no network call. The Anthropic and Claude CLI backends send text to Anthropic. An OpenAI-compatible endpoint or an Ollama server receives text at the address you configure. In an MCP host, edits go through that host and its model. Set `ARTICULATE_LOCAL_ONLY=1` to allow only loopback Ollama and mechanical editing.
 
-Pre-1.0. The core detector, profile system, writing modes (including the science
-modes for proofs and technical exposition), the genre axis (fiction, memoir,
-screenplay, poetry), the editor injection boundary, per-paragraph
-findings, a sub-threshold "unverifiable" calibration, binary fail-closed input
-guards, the benchmark, the editor layer, the CLI, the LSP and SARIF surfaces,
-receipts, the content-free audit receipt, and the MCP server are built into this
-one package. Version 0.12.0 is prepared for release as `articulate-writing`; the
-[changelog](CHANGELOG.md) records what each release added. Optional adapters can
-use a model you supply; no model is bundled. This release retains the published
-v0.5.2 detector rules and fingerprint while extending packaging and rewrite
-guards. It excludes withheld development-branch scanner changes. Retention does
-not establish fairness, and accepted rewrites can still change meaning.
+A receipt made with `--redact drop` keeps the rule, tier and line of each finding and no matched text. `--redact hash` keeps a sha256 of the match, which can be reversed for rules with a small fixed word list. A voice profile holds aggregate statistics and stays on your computer until `articulate voice delete --all`.
+
+## How it compares
+
+- **Vale** enforces a style guide you write as YAML rules. Articulate ships its own rule set and register profiles, plus receipts and a texture score.
+- **proselint** and **write-good** flag usage problems and weak phrasing. Articulate covers hedges and weak phrasing too, and adds contrast framing, rule-of-three lists and corporate verbs, with a profile deciding which ones block.
+- **LanguageTool** and **Grammarly** check grammar and spelling, and their main products send text to a server. Articulate does not check grammar or spelling.
+- **Hemingway Editor** scores readability in an editor window. Articulate runs from the command line and in CI, and names the rule and line for each finding.
+
+## Install options
+
+Version 0.16.0 is on PyPI as `articulate-writing`. The [changelog](CHANGELOG.md) lists what each release added.
+
+- [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md) bundle a Python runtime.
+- The [Claude plugin](docs/claude-plugin.md) runs local checks and host editing in Claude Code, Codex and other MCP hosts that have Python installed.
+
+## Documentation
+
+- [Getting started](docs/getting-started.md): install, a first check and an editor squiggle.
+- [Walkthrough](docs/walkthrough.md): one document from check to rewrite to a committed receipt.
+- [Features](docs/features.md): every capability and how to reach it.
+- [CLI reference](docs/cli.md): each command and flag, with exit codes.
+- [What results mean](docs/boundaries.md): what a result and a receipt cover.
+- [House voice](docs/house-voice.md), [series and your own voice](docs/series-and-voice.md), [a voice built from intent](docs/voice-intent.md), [dialogue](docs/dialogue.md).
+- [Animated explainer](https://harperz9.github.io/repo-explainers/articulate.html): one draft through the checker, profiles, texture score and receipts.

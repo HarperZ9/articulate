@@ -75,6 +75,11 @@ def to_sarif(results):
     rules, out = {}, []
     for r in results:
         uri = "stdin" if r["file"] == "<stdin>" else r["file"].replace("\\", "/")
+        if uri != "stdin" and os.path.isabs(r["file"]):
+            # SARIF wants a URI: an absolute path becomes file:///, a relative
+            # path stays a relative reference to the repository root.
+            from pathlib import Path
+            uri = Path(r["file"]).resolve().as_uri()
         for f in r["high"] + r["medium"] + r.get("low", []):
             rid = f["rule_id"]
             desc = f.get("label") or f["category"]      # category only when redacted
@@ -265,7 +270,7 @@ def _cmd_verify(args):
     if isinstance(rec, dict) and str(rec.get("schema", "")).startswith("articulate/corpus-receipt/"):
         from . import cli_corpus
         return cli_corpus.verify(rec, [args.file] + args.more)
-    if isinstance(rec, dict) and rec.get("schema") == "articulate/house-receipt/v1":
+    if isinstance(rec, dict) and str(rec.get("schema", "")).startswith("articulate/house-receipt/"):
         from . import cli_house
         return cli_house.verify(rec, args.file)
     text = _decode(data)
@@ -456,8 +461,12 @@ def _cmd_edit(args):
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    if list(argv[:1]) in (["--version"], ["-V"]):
+        print(f"articulate {_pkgver()}")
+        return 0
     ap = argparse.ArgumentParser(prog="articulate",
-                                 description="Local prose checks for writing devices. Not an authorship detector.")
+                                 description="Finds writing patterns and shows where they are.")
+    ap.add_argument("-V", "--version", action="version", version=f"articulate {_pkgver()}")
     sub = ap.add_subparsers(dest="cmd")
     for cmd in ("plan", "submit", "judge", "fix", "polish"):
         p = sub.add_parser(cmd)
@@ -522,10 +531,11 @@ def main(argv=None):
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
-    from . import cli_campaign, cli_corpus, cli_desk, cli_dialogue, cli_house, cli_process
+    from . import cli_campaign, cli_corpus, cli_desk, cli_dialogue, cli_house, cli_negation, cli_process
     cli_campaign.register(sub)
     cli_corpus.register(sub)
     cli_dialogue.register(sub)
+    cli_negation.register(sub)
     cli_house.register(sub)
     cli_process.register(sub)
     cli_desk.register(sub)

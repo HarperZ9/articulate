@@ -61,7 +61,7 @@ def test_an_edit_that_drops_a_modal_and_changes_a_number_is_named():
     text = _context(out)
     assert code == 0
     assert "dropped modal 'may'" in text and "'18 ms'" in text and "'16 ms'" in text
-    assert "notes.md" in text and "does not prove" in text
+    assert "notes.md" in text and "These notes are advice" in text
 
 
 def test_an_edit_that_keeps_every_fact_and_reads_clean_says_nothing():
@@ -267,8 +267,8 @@ def test_a_changed_long_code_block_is_clipped_and_the_answer_is_bounded():
     assert code == 0
     assert "changed code" in context
     assert "more characters" in context
-    assert len(context) <= (edit_hook.MAX_CONTEXT_CHARS + len(edit_hook.DOES_NOT_PROVE) + 100)
-    assert context.endswith(edit_hook.DOES_NOT_PROVE)
+    assert len(context) <= (edit_hook.MAX_CONTEXT_CHARS + len(edit_hook.ADVICE_NOTE) + 100)
+    assert context.endswith(edit_hook.ADVICE_NOTE)
 
 
 def test_clip_keeps_short_notes_and_counts_what_it_cuts():

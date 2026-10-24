@@ -87,7 +87,7 @@ def test_compare_has_no_total_distance_and_ends_with_its_limit():
     v = voice()
     report = v.compare(templated_doc(0), v.build_profile(SAMPLES))
     assert not {"score", "distance", "total", "similarity"} & set(report)
-    assert report["does_not_prove"].startswith("A draft inside your measured range")
+    assert report["scope"].startswith("Places each feature of the draft")
     assert report["ai_detector_consulted"] is False
 
 
@@ -136,3 +136,16 @@ def test_compare_replays_from_the_same_inputs():
 def test_build_profile_needs_text():
     with pytest.raises(ValueError):
         voice().build_profile([])
+
+
+def test_ranges_stay_within_what_each_measure_allows():
+    v = voice()
+    rows = [{"concession_per_1k": 0.0, "opens_with_i_share": 0.98},
+            {"concession_per_1k": 1.34, "opens_with_i_share": 1.0}]
+    assert v._range({"per_sample": rows}, "concession_per_1k")[0] == 0.0
+    assert v._range({"per_sample": rows}, "opens_with_i_share")[1] == 1.0
+    profile = v.build_profile(SAMPLES)
+    for row in v.compare(SAMPLES[0], profile)["features"]:
+        assert row["low"] >= 0, row
+        if row["feature"].endswith("_share"):
+            assert row["high"] <= 1, row

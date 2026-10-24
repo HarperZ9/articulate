@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.12.0"
-description = "Local, re-derivable prose checks for writing devices and plain-writing problems, with an optional editor. A style tool. It is not an authorship detector; it also flags most human writing. Register profiles, writing modes, a genre axis and content-free audit receipts."
+version = "0.16.0"
+description = "Local prose checker that names each writing pattern and the line it is on, with register profiles, replayable receipts and an optional editor. Use it to improve writing; in its own evaluation it also flagged 57 of 75 human-written texts, so use other evidence to decide who wrote a text."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "LicenseRef-FSL-1.1-MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Zain Dana Harper" }]
-keywords = ["writing", "linter", "prose", "ai-detection", "editor", "quality", "receipt", "audit"]
+authors = [{ name = "Zain Dana Harper", email = "zaindharper@gmail.com" }]
+keywords = ["writing", "linter", "prose", "editor", "quality", "receipt", "audit"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Text Processing :: Linguistic",
@@ -21,9 +21,9 @@ classifiers = [
 dependencies = []  # the core detector is standard-library only
 
 [project.optional-dependencies]
-mcp = ["fastmcp>=3"]      # the MCP server surface
+mcp = ["fastmcp>=3.2.4,<4"]      # the MCP server surface; fastmcp 4 drops the tool annotation hints
 hosted = ["fastmcp>=3.2.4,<4", "pydantic>=2.12,<3", "uvicorn>=0.30,<1"]  # opt-in authenticated HTTP
-dev = ["pytest>=7"]
+dev = ["pytest>=7", "jsonschema>=4"]
 
 [project.scripts]
 articulate = "articulate.cli:main"

@@ -14,7 +14,7 @@ three confidence tiers:
 - MEDIUM: strong tells of current frontier-model prose, the stock transitions,
   the marketing superlatives, the participial closers, the email and blog tells.
 - LOW: advisories that catch a real pattern and also fire on innocent prose, so
-  they never block and expand only with `--verbose`.
+  they report, leave the gate open, and expand with `--verbose`.
 
 It also carries keyword-free detection for a parallel-negation contrast pair, and
 document-level signals for uniform cadence, repeated sentence openers, passive
@@ -24,7 +24,7 @@ location.
 
 Alongside the pass or fail gate, it emits a graded 0 to 100 texture score that
 accumulates weak evidence by density. The score is a signal for grading and for
-the benchmark, and it never changes the clean or flagged verdict.
+the benchmark. The clean or flagged verdict comes from the gate.
 
 ## Register profiles
 
@@ -36,8 +36,8 @@ readmes, legal text, journalism, social copy, chat, essays, and narrative. The
 domain profiles below add rule packs for UI microcopy, code review comments,
 plain language, controlled English and RFC keywords.
 
-The gate follows a slop level. `off` blocks nothing, for narrative where authorial
-voice governs. `flavored` blocks the HIGH device tier, for docs and research.
+The gate follows a slop level. `off` reports every finding and leaves the gate open, for
+narrative where authorial voice governs. `flavored` blocks the HIGH device tier, for docs and research.
 `strict` blocks HIGH and MEDIUM, for procedures and essays that must be device
 free. A profile resolves from an explicit flag, an in-file `writing-profile:` tag,
 or the file path.
@@ -84,8 +84,8 @@ or a resource key does (`"save_button": "Save"`).
   Design 3, the Microsoft Style Guide). Apple's guidelines use title-style
   buttons, so `case` takes `sentence`, `title`, or `off`. A proper noun reads like
   title case, so this reports only.
-- `ux-vague-error` (LOW): an error with no next step whose text is vague or names
-  no cause, after the Nielsen Norman Group error-message guidelines.
+- `ux-vague-error` (LOW): an error that lacks a next step and is vague or leaves
+  out its cause, after the Nielsen Norman Group error-message guidelines.
 - `ux-link-text` (MEDIUM): "click here", or link text such as "here" or "learn
   more", after the W3C tip against "click here" links. WCAG applies the rule
   strictly at level AAA (failure F84 under success criterion 2.4.9); at level A,
@@ -104,11 +104,12 @@ A flavored gate, so these report and the banned devices still block.
 - `review-condescension`: "just", "simply", "obviously", "clearly" (LOW), and
   stronger markers such as "why didn't you" or "any competent developer" (MEDIUM).
 - `review-no-reason` (LOW): a request ("please rename", "can you move", "this
-  should be") in a comment that gives no reason anywhere in it.
+  should be") in a comment that lacks a reason anywhere in it.
 - `review-absolute` (MEDIUM): absolute language about a person, such as "you
   always", "you never", or "your code is wrong".
 
-These are phrase lists. They miss a paraphrase and cannot read tone.
+These are phrase lists. They catch the listed wording; a paraphrase and tone
+need a human reader.
 
 ### `plain-language`: a readability gate
 
@@ -133,15 +134,16 @@ sentences, which is not the same as a reader understanding the text.
 ### `rfc-keywords`: RFC 2119 and RFC 8174 keywords
 
 The `normative-spec` register plus a check of BCP 14 keyword use. The
-`normative-spec` profile itself runs no pack and keeps its published findings.
-RFC 8174 gives the keywords their special meaning only in all capitals, and asks
-a document that uses them to say so in a boilerplate sentence citing BCP 14.
+`normative-spec` profile on its own keeps its published findings and runs the
+register checks alone. RFC 8174 gives the keywords their special meaning in all
+capitals, and asks a document that uses them to say so in a boilerplate sentence
+citing BCP 14.
 
 - `bcp14-mixed-case` (HIGH, gates): "MUST not", "SHOULD not", "must NOT",
   "NOT recommended".
-- `bcp14-no-boilerplate` (MEDIUM): capital keywords with no citation of BCP 14,
-  RFC 2119, or RFC 8174.
-- `bcp14-may-not` (MEDIUM): "MAY NOT", which neither RFC defines.
+- `bcp14-no-boilerplate` (MEDIUM): capital keywords in a document missing a
+  citation of BCP 14, RFC 2119, or RFC 8174.
+- `bcp14-may-not` (MEDIUM): "MAY NOT", a form both RFCs leave undefined.
 - `bcp14-lowercase` (LOW): a lowercase "must", "shall", or "should" in a document
   that declares BCP 14. Lowercase "may", "required", "recommended", and
   "optional" are left alone as common plain words.
@@ -149,15 +151,15 @@ a document that uses them to say so in a boilerplate sentence citing BCP 14.
 - `bcp14-old-boilerplate` (LOW): a declaration without the RFC 8174 clause
   "when, and only when, they appear in all capitals".
 
-Quoted keywords, such as those listed in the boilerplate itself, never count as
-uses. The rules check keyword form, and they cannot tell whether a requirement is
-the right one.
+Quoted keywords, such as those listed in the boilerplate itself, are skipped.
+The rules check keyword form; whether a requirement is the right one is for the
+spec's reviewers.
 
 ### `controlled-english`: second-language readers and translation
 
-Inspired by controlled-language practice in technical writing. Articulate does
-not implement ASD-STE100 or any other controlled-language specification, ships
-none of their dictionaries, and makes no conformance claim.
+Inspired by controlled-language practice in technical writing. The rules borrow
+two sentence-length limits from ASD-STE100 and use Articulate's own short word
+lists. For ASD-STE100 conformance, use the specification and its dictionary.
 
 - `controlled-sentence-length`: a sentence over 25 words (MEDIUM), or an
   instruction over 20 words (LOW, because spotting an instruction is a
@@ -169,11 +171,11 @@ none of their dictionaries, and makes no conformance claim.
 - `controlled-phrasal-verb` (LOW): a phrasal verb with a single-word form, such as
   "find out" to "learn".
 - `controlled-vague-pronoun` (LOW): a sentence that opens with "This", "That",
-  "These", or "It" and a verb, with no noun.
+  "These", or "It" followed directly by a verb, as in "This means".
 
 The idiom and phrasal-verb lists are Articulate's own and are short. A clean
-result means these lists found nothing; it cannot certify a text for
-translation.
+result means the text passed these lists. A translator's review is what certifies
+a text for translation.
 
 ### Sources for the domain defaults
 
@@ -195,14 +197,15 @@ change after that date, so check it before you rely on a default.
 
 The Flesch-Kincaid and Flesch reading-ease formulas trace to Kincaid, Fishburne,
 Rogers, and Chissom (1975), Research Branch Report 8-75. The coefficients here
-match the ones Microsoft's readability page reproduces; the original report was
-not checked.
+match the ones Microsoft's readability page reproduces. The source for them is
+that page; the 1975 report itself was unavailable for this check.
 
 `python -m articulate.bench` also runs the domain regression corpus under
 `corpus/domains/`: short synthetic samples, each with the exact set of pack
-categories it must produce. A clean sample must produce none and pass its gate.
-It shows the rules still do what they did, and nothing about recall or
-precision on real documents.
+categories it must produce, and each clean sample must come back empty and pass
+its gate. The corpus is a regression check: it shows the rules still do what
+they did. Recall and precision on real documents are measured in
+`corpus/provenance/`.
 
 ## Project config
 
@@ -250,20 +253,20 @@ joined the standard library only in 3.11.
 - `options` tunes a domain rule pack by name (`ux-microcopy`, `plain-language`,
   `controlled-english`). An unknown pack, option, or value is an error.
 
-There is no `protect` key. Protected spans are always on in this release, and a
-config that names `protect` is rejected with a message saying so. Disclosure
-lines and the added-first-person guard can never be turned off.
+Protected spans are always on in this release, so the config has no `protect`
+key, and a config that names it is rejected with a message saying so. Disclosure
+lines and the added-first-person guard are permanent.
 
 A malformed file stops the command with exit 2, the file name and the reason:
 invalid JSON, an unknown key, a bad type, an unknown profile, or a term that is
-both banned and allowed. It is never ignored in silence. The LSP server reports
+both banned and allowed. The LSP server reports
 a broken config as a diagnostic on line 1 and checks the document without it.
 `articulate config PATH` prints which config applies to a file, the profile it
 chooses and why, the terminology rules, the freeze terms and the pack options.
 
 A receipt made under a config embeds the terminology and options as
-`project_rules` with their hash, so anyone can replay it with no access to the
-project. An edited rule set reads `Unverifiable`, and a consistently re-hashed
+`project_rules` with their hash, so anyone can replay it from the receipt
+alone. An edited rule set reads `Unverifiable`, and a consistently re-hashed
 edit that changes the findings reads `Drift`. A receipt made with no config has
 neither field.
 
@@ -275,8 +278,8 @@ base profile plus a small delta: terms of art to keep, categories to block even
 under a lenient base, and editor guidance. Run `articulate modes` for the list.
 
 A mode tunes style within the plain-writing standard. It may tighten the gate and
-add terms of art. It may not re-enable a banned device on prose, with the single
-exception of literary narrative, where nothing gates.
+add terms of art. The banned devices stay banned on prose under every mode;
+literary narrative is the one register where the gate is off.
 
 ## The genre axis
 
@@ -286,15 +289,46 @@ for an essay misreads a novel. The genre axis adds `literary-fiction`,
 fiction genre:
 
 - Quoted speech is masked out of the device passes, so a character's line is
-  never scored as the author's own prose.
-- The craft devices report without blocking, because voice governs.
+  scored as that character's voice and left out of the author's prose.
+- The craft devices report and leave the gate open, because voice governs.
 - A report-only lexicon flags generation artifacts, such as the somatic cliche or
-  the "could not help but" reflexive. It never gates.
+  the "could not help but" reflexive.
 
 Screenplay classifies Fountain roles first, so only action lines face the device
 gate and dialogue keeps the character's voice. Poetry reads by the line, and the
 craft-device categories drop from its report, because they name legitimate
 technique in verse.
+
+## Markdown structure
+
+Some Markdown is not prose, and Articulate blanks it before the rules run. The
+masks keep every offset, so a finding still points at the right line and column.
+
+- A table delimiter row such as `| :--- | ---: |` is skipped. A dash inside a
+  table cell still fires.
+- Fenced code, an indented code block outside a list, and YAML or TOML front
+  matter are skipped.
+- Inline math such as `$a---b$` or `$$x -- y$$`, and a display block between two
+  `$$` lines, are skipped. A dollar amount stays prose. An opening `$` needs a
+  non-space after it, and a closing `$` needs a non-space before it and no digit
+  after it, so "$5 and $10" and "$5-$10" stay prose. An escaped `\$` never opens
+  or closes a span.
+- A register word inside a run of capitalised words, such as `Transformative` in
+  `the Transformative AI Fund`, reads as a name and is skipped. At the start of a
+  sentence every word is capitalised, so the word still fires there, unless the
+  same capitalised run appears elsewhere in the document away from a sentence
+  start. `Robust Intelligence builds models.` alone is still flagged.
+
+Block quotes are checked as prose. A quote can be a cited source, and it can
+also be the author's own callout or pull quote, and the Markdown does not say
+which. Checking both keeps the author's own words from slipping past the gate.
+To quote a source verbatim without findings, put it in a fenced block, which
+the checker skips. A term the project accepts in every file goes in the
+`allowed` list of the project config.
+
+A receipt records the mask set as `structure`. `markdown/1` is the set in 0.14.0,
+and `markdown/2` adds the math masks and the sentence-start names. A receipt
+replays under the set it names, so a receipt from 0.14.0 still reads Match.
 
 ## Science and mathematical writing
 
@@ -306,27 +340,27 @@ not rewrite by default, because a wrong change to a quantifier order or an
 inequality direction changes a theorem; it routes to the judge, and the fix loop
 is opt-in.
 
-The boundary here is fixed and load-bearing: a clean gate or a passing receipt
-means the prose was screened. It says nothing about whether the theorem is true.
-A clear proof can still be false, and this tool never checks the mathematics.
+A clean gate or a passing receipt means the prose was screened. The mathematics
+is for a referee or a proof assistant: a clear proof can still be false.
 
 ## The editor layer
 
 With a model, the editor adds judgment and rewriting:
 
-- `judge` reads the judgment-level failures a regex cannot see: a fluent paragraph
-  with no fact a reader could restate, vague abstraction, hedging with no
-  committed position, a weak verb carrying the meaning. It reports.
+- `judge` reads the judgment-level failures a regex misses: a fluent paragraph
+  empty of facts a reader could restate, vague abstraction, hedging that avoids a
+  position, a weak verb carrying the meaning. It reports.
 - `fix` rewrites to a plain, skilled standard, checks protected spans, and
   re-runs the detector. Remaining findings stay visible.
-- `polish` runs a monotonic loop that accepts a pass only when the gate stays
-  clean and no assessed quality score drops. Missing scores leave host-submitted
-  quality unassessed; the model loop keeps the best prior text. These checks bound acceptance;
-  they cannot prove that the meaning or writing quality improved.
+- `polish` runs a monotonic loop that accepts a pass when the gate stays clean
+  and every assessed quality score holds or rises. Missing scores leave
+  host-submitted quality unassessed; the model loop keeps the best prior text.
+  These checks decide acceptance. Read the result to judge whether the meaning
+  held and the writing improved.
 
 Every result identifies its backend, model and failed attempts. The available
 backends are `host`, `sampling`, `anthropic`, `claude-cli`, `openai`, `ollama`
-and `none`, with `auto` choosing for the current surface.
+and the local `none`, with `auto` choosing for the current surface.
 
 In an MCP session, automatic selection uses sampling only if the client
 advertised that capability. Otherwise it returns an edit plan to the calling
@@ -347,11 +381,10 @@ semantic equivalence: a rewrite can retain every number and still change a claim
 An edit can allow named kinds of protected change, such as a number it is meant
 to update (`--allow-change number`, or `allow_change` on the MCP `fix`,
 `polish` and `edit_plan` tools). An allowed change is reported in
-`allowed_changes` in the result and the editor receipt; it is never accepted in
-silence. The plan binds the allowed kinds (plan schema
-`articulate/edit-plan/v3`), so a submission cannot widen them, and v1 and v2
-plans still verify. Disclosure lines, an added first-person sentence, HTML and
-math can never be allowed.
+`allowed_changes` in the result and the editor receipt. The plan binds the allowed kinds (plan schema
+`articulate/edit-plan/v3`), so a submission keeps to them, and v1 and v2 plans
+still verify. Disclosure lines, an added first-person sentence, HTML and math
+are always protected.
 
 A change report (`--explain` on `fix`, `polish` and `submit`, or `explain` on
 the MCP `fix`, `polish` and `edit_submit` tools) pairs each changed sentence
@@ -360,35 +393,35 @@ paragraphs the guard kept and why, and every allowed change. It shows what the
 checker saw in each sentence; it does not show why the editor made a change or
 that the meaning held.
 
-Without a reachable model, `none` makes conservative mechanical edits and
-reports what remains. It can replace clause dashes and remove safe filler or
-extra spaces; it leaves protected content alone. Its `judge` returns local
-findings and reasons without inventing model scores. Backend unavailability
-does not prevent this result. A successful call can still contain blocked
-findings or refused edits; inspect the gate and refusal list.
+With no model reachable, `none` makes conservative mechanical edits and reports
+what remains. It can replace clause dashes and remove safe filler or extra
+spaces; it leaves protected content alone. Its `judge` returns local findings
+and reasons, with model scores left empty. This result works offline. A
+successful call can still contain blocked findings or refused edits; inspect the
+gate and refusal list.
 
 Plain CLI automatic selection tries configured Anthropic, the Claude CLI,
 configured OpenAI-compatible endpoints, Ollama and `none` in order. Ollama
-uses installed models only and never downloads one. Configuration and the model
+uses the models you have installed. Configuration and the model
 preference order are in the [CLI reference](cli.md#backend-configuration).
 
 Anthropic and the Claude CLI send text to their provider. OpenAI-compatible and
 Ollama backends send it to the configured endpoint, which can be remote. Host
 editing and sampling follow the host's data handling policy. `none` stays local.
-`ARTICULATE_LOCAL_ONLY=1` permits only loopback Ollama and `none`, refusing other
-editor backends before a connection. Plans and edit results contain source text;
+`ARTICULATE_LOCAL_ONLY=1` limits editing to loopback Ollama and `none`, and
+refuses other editor backends before a connection. Plans and edit results contain source text;
 they are separate from content-free detector audit receipts.
 
 The document is treated strictly as data. A trust boundary is appended to every
 model call, so a directive embedded in the text (a line that says to ignore the
-standard or to reply approved) is edited as content and never obeyed. The rewrite
-optimizes writing quality, and it never tunes prose toward a lower detector score.
+standard or to reply approved) is edited as content. The rewrite optimizes
+writing quality for the reader.
 
 ## The process record
 
 `articulate process` keeps a local log of your own process in
 `.articulate/process/` beside the document, with a `.gitignore` of its own.
-Nothing records until you run a command.
+Recording starts when you run a command.
 
 - A draft entry holds a salted commitment to the text, its sequence and the day.
   Word counts, lines changed, times and snapshots are opt-in per log and stay out
@@ -397,20 +430,19 @@ Nothing records until you run a command.
   translated), reviews by role, anchors to a git commit or a timestamp token, and
   a continuation entry for a log that broke.
 - How you put words down (dictation, a screen reader, switch access, drafting in
-  another language) goes to a private file outside the log. No export or
-  statement includes it unless you name it, and no sequence number shows it.
+  another language) goes to a private file outside the log. An export or
+  statement includes it when you name it, and the sequence numbers skip it.
 - `export` writes `<document>.process-summary.json`: two labelled document hashes,
   the entry sequence, a C2PA-shaped actions list with IPTC digital source types,
-  your disclosure statement and the limits of what the summary shows. It carries
-  no entry hash, so nothing in it can be tested against a withheld field.
+  your disclosure statement and the limits of what the summary shows. Entry
+  hashes stay in the log, which keeps withheld fields private.
   `--reveal N` attaches draft N's text and salt.
 - `verify` on a log reports `intact` (exit 0), `broken` (exit 1) or `missing`
-  (exit 3). A missing log is no record, and an absent or short record shows
-  nothing about a writer; `verify`, `export` and `disclose` each print that
-  limits line. On a summary (found by its schema) it checks the chain state the
+  (exit 3). A log records what the writer chose to log; `verify`, `export` and
+  `disclose` each print that limits line. On a summary (found by its schema) it checks the chain state the
   summary records and each reveal.
-- `continue` starts a new log only after a broken one. The new first entry names
-  the last good entry and carries every recorded assistance entry forward.
+- `continue` starts a new log after a broken one. The new first entry names the
+  last good entry and carries every recorded assistance entry forward.
 - `fix` and `polish` add their own assistance entry when the document has a log,
   including when a later pass fails.
 - `--track` lets git see the log and still keeps salts, the diff cache, snapshots
@@ -426,19 +458,20 @@ assistance; a paraphrase outside the list passes, so the Assistance section is
 the record. It refuses to leave out a recorded assistance entry. An author whose
 whole name is a product name ("Claude", "GPT-4o") is refused unless the entry
 says `"type": "person"`; a person who shares a word with a product, such as
-Claude Shannon or Ai Weiwei, is never refused. A `pip` template writes
-`Assisted-by:` commit-trailer lines and never a co-author trailer for a model.
+Claude Shannon or Ai Weiwei, passes. A `pip` template writes `Assisted-by:`
+commit-trailer lines for a model, and co-author trailers for people.
 
 ## The review desk
 
 `articulate desk` prepares the questions a reviewer should ask. Inside the
-document it asks about numbers with no source nearby, appeals to unnamed
-authority, sections or statements a venue asks for, and text that does not show
-to a reader: white or zero-size text, `display:none`, `visibility:hidden`, zero
+document it asks about numbers with a source missing nearby, appeals to unnamed
+authority, sections or statements a venue asks for, and text hidden from a
+reader: white or zero-size text, `display:none`, `visibility:hidden`, zero
 opacity, zero-width characters inside Latin text, bidirectional controls and
 Unicode tag characters, whose hidden sentence it spells out. Across the field it asks five fixed questions about what the work
-adds, and quotes only the authors' own claims beside them. It prints no score,
-no verdict, no ranking and no question count, and it never reads a process record.
+adds, and quotes the authors' own claims beside them. The output is questions
+and quotes; scores, verdicts and rankings are left to the reviewer, and process
+records stay unread.
 `--author` asks the same questions before submission.
 
 ## Re-derivable receipts
@@ -451,10 +484,10 @@ no trust in whoever issued it first. The verdict uses a closed set of three:
 - `Match`: same text, same ruleset, identical findings and gate.
 - `Drift`: same text and ruleset, but the re-derived findings differ.
 - `Unverifiable`: the ruleset moved, the text hash mismatches, or the text is
-  below the signal floor. Re-derivation cannot be done, so nothing is asserted.
+  below the signal floor, so the replay stops short of a comparison.
 
-There is deliberately no trusted or approved value. The receipt certifies
-re-derivability, and the issuer's identity is not load-bearing.
+The receipt certifies that anyone can recompute it. Trust rests on that replay,
+so the issuer's identity carries no weight.
 
 ## Per-paragraph findings
 
@@ -480,16 +513,16 @@ audit` command queries a directory of committed receipts locally, and with
 `--reverify` it re-checks that each still holds against its source, failing the
 gate only when a source drifted or changed since it was screened.
 
-A content-free record is not zero-leakage. Which rules fired and the line remain,
-which for a closed-vocabulary rule narrows the flagged word to that rule's small
-public candidate set. Read [Boundaries](boundaries.md) before you rely on it.
+A content-free record still names which rules fired and on which line. For a
+closed-vocabulary rule, that narrows the flagged word to the rule's small public
+candidate set. Read [Boundaries](boundaries.md) before you rely on it.
 
 ## Binary inputs fail closed
 
 A binary or an unsupported document (a `.docx`, a PDF, an image) is refused with
-an explicit reason, so the tool never returns a spurious clean scan of a lossy
-decode. A UTF-8 non-English document is screened, not refused; the patterns are
-English literals, so they simply do not fire on it.
+an explicit reason, so a lossy decode can never come back as a clean scan.
+Convert it to text or Markdown first. A UTF-8 document in another language is
+screened; the patterns are English literals, so expect few findings on it.
 
 ## Surfaces
 
@@ -499,7 +532,7 @@ The same detection reaches you through several surfaces:
   `disclose`, `desk`, `plan`, `submit`, `judge`, `fix` and `polish`, plus the
   `house`, `voice`, `corpus`, `titles`, `interview` and `restructure` commands.
 - LSP server: inline squiggles in VS Code, JetBrains through LSP4IJ, and Neovim.
-  It is standard-library only, with no dependency.
+  It runs on the Python standard library.
 - SARIF: `check --sarif` for GitHub code scanning, Azure DevOps, and reviewdog.
 - MCP server: the detector and editor as tools for an agent.
 - GitHub Action and a pre-commit hook, wired to gate a change and to re-verify

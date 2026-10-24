@@ -16,10 +16,9 @@ from collections import Counter
 import difflib
 import re
 
-SCHEMA = "articulate/changes/v1"
-DOES_NOT_PROVE = ("A sentence pairing shows what changed and which local findings went "
-                  "away. It does not prove the meaning was kept, that the writing "
-                  "improved, or why the editor changed a sentence.")
+SCHEMA = "articulate/changes/v2"
+SCOPE = ("Pairs each changed sentence with the sentence before the edit. Lists the "
+         "findings that each edit removed, kept or added.")
 _PARAGRAPH = re.compile(r"\r?\n[ \t]*\r?\n(?:[ \t]*\r?\n)*")
 _SENT_END = re.compile("(?<=[.!?])[\"'”’)\\]]*(\\s+)")
 
@@ -110,7 +109,7 @@ def build(original, final, check, refused=(), allowed_changes=()):
             "allowed_changes": list(allowed_changes),
             "summary": {"changed": len(records), "findings_before": len(found[0]),
                         "findings_after": len(found[1])},
-            "does_not_prove": DOES_NOT_PROVE}
+            "scope": SCOPE}
 
 
 def for_result(original, result):
@@ -156,5 +155,5 @@ def format_report(rep, name=""):
         lines.append("[changes] kept %s: %s" % (where, "; ".join(r["reasons"])))
     for a in rep["allowed_changes"]:
         lines.append("[changes] allowed %s change in paragraph %d" % (a["kind"], a["paragraph"] + 1))
-    lines.append("[changes] does not prove: " + rep["does_not_prove"])
+    lines.append("[changes] Read each pair to check the meaning held.")
     return "\n".join(lines)

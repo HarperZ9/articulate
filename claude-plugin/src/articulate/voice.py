@@ -17,10 +17,11 @@ from . import corpus_features as cf
 from . import voice_features as vf
 
 SCHEMA = "articulate/voice-profile/v1"
-COMPARE_SCHEMA = "articulate/voice-compare/v1"
+COMPARE_SCHEMA = "articulate/voice-compare/v2"
+COMPARE_SCHEMA_V1 = "articulate/voice-compare/v1"
 INDICATIVE_WORDS = 5000
-COMPARE_LIMIT = ("A draft inside your measured range can still not sound like you, and one "
-                 "outside it can. This shows where to look.")
+COMPARE_LIMIT = ("Places each feature of the draft against your measured range. Use it to "
+                 "see where to look.")
 RARE_OPENING = 0.02
 
 
@@ -96,7 +97,10 @@ def _range(profile, key):
     values = [s[key] for s in profile["per_sample"]]
     low, high = min(values), max(values)
     margin = max(0.1 * (high - low), 0.05 * abs((low + high) / 2))
-    return round(low - margin, 3), round(high + margin, 3)
+    # Every scalar is a count, length, rate or share, so the widened range stops
+    # at 0, and a share stops at 1.
+    ceiling = 1.0 if key.endswith("_share") else float("inf")
+    return round(max(0.0, low - margin), 3), round(min(ceiling, high + margin), 3)
 
 
 def _rare_openings(text, profile):
@@ -142,7 +146,7 @@ def compare(text, profile):
             "profile_sha256": sha256(canonical(profile)), "features": features,
             "locations": _locations(text, profile),
             "indicative_only": profile["sources"]["indicative_only"],
-            "ai_detector_consulted": False, "does_not_prove": COMPARE_LIMIT}
+            "ai_detector_consulted": False, "scope": COMPARE_LIMIT}
 
 
 def describe(profile):

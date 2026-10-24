@@ -1,32 +1,32 @@
 # Getting started
 
 Articulate reads prose and tells you where it uses a named writing device or
-breaks a plain-writing standard, with a line number for each finding. It does not
-tell you who wrote the text: it flags most human writing too. The detector runs on your
-machine with no network call. Model editing follows the selected backend's
+breaks a plain-writing standard, with a line number for each finding. It reads
+style, and it flags most human writing too, so authorship is a question it leaves
+open. The detector runs on your machine and works offline. Model editing follows the selected backend's
 privacy policy. Install the package, run a check, create a receipt and connect
 your editor with the commands below.
 
 ## Install
 
-Version 0.12.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
+Version 0.16.0 is prepared for release. Its Windows x64 native ZIP and binary MCPB
 packages include a Python runtime; see the [native package guide](native-local-package.md).
 They include no model. A connected client supplies rewritten text through
 `edit_plan` and `edit_submit`, using its own model account and permissions.
 
 The Python package and source plugin need Python 3.9 or newer and the standard
-library. The following commands select 0.12.0 after publication.
+library. The following commands select 0.16.0 after publication.
 
 From PyPI:
 
 ```bash
-pip install articulate-writing==0.12.0
+pip install articulate-writing==0.16.0
 ```
 
 From source:
 
 ```bash
-git clone --branch v0.12.0 https://github.com/HarperZ9/articulate
+git clone --branch v0.16.0 https://github.com/HarperZ9/articulate
 cd articulate
 pip install -e .
 ```
@@ -37,7 +37,7 @@ a bare install. The optional FastMCP surface, `python -m articulate.mcp_server`,
 uses the `mcp` extra:
 
 ```bash
-pip install "articulate-writing[mcp]==0.12.0"
+pip install "articulate-writing[mcp]==0.16.0"
 ```
 
 ## Your first check
@@ -64,9 +64,9 @@ Read it this way:
   under the 30-word floor, where there are too few words to call it clean.
 - Each finding carries a tier. HIGH marks the banned devices and named register
   words. MEDIUM marks strong frontier-model tells. LOW is an advisory that can fire
-  on innocent prose, so it never blocks and shows only with `--verbose`.
-- The texture score is a graded 0 to 100 read of machine texture. It is a signal,
-  and it never changes the clean or flagged verdict.
+  on innocent prose, so it reports without blocking and expands with `--verbose`.
+- The texture score is a graded 0 to 100 read of machine texture. It is a signal
+  beside the verdict; the gate alone decides clean or flagged.
 
 ## Gate a commit or a build
 
@@ -84,12 +84,15 @@ essay or a procedure profile blocks HIGH and MEDIUM. See
 ## Your first receipt
 
 A receipt is a re-derivable record of a verdict. Anyone with the same text and
-the same ruleset recomputes the same findings, with no network and no trust in
-whoever issued it first:
+the same ruleset recomputes the same findings on their own machine:
 
 ```bash
 articulate receipt notes.md > notes.receipt.json
 articulate verify notes.receipt.json notes.md
+```
+
+```text
+[articulate] Match: re-derived 1 findings, gate ok, texture 0
 ```
 
 `verify` prints one of three words and sets the exit code:
@@ -97,7 +100,7 @@ articulate verify notes.receipt.json notes.md
 - `Match` (exit 0): the same text under the same ruleset re-derives identically.
 - `Drift` (exit 1): the re-derived findings differ from the receipt.
 - `Unverifiable` (exit 2): the ruleset moved, the text hash mismatches, or the
-  text is below the signal floor, so nothing is asserted.
+  text is below the signal floor, so the replay abstains.
 
 ## An editor squiggle
 
@@ -136,18 +139,19 @@ This path needs no second model account. The host can still send text to a
 remote model under its own policy. Plans and edit results contain source text;
 keep them private when the source is private.
 
-## Edit without a model
+## Edit offline
 
-Mechanical editing works with no account, model or network:
+Mechanical editing runs offline on your machine:
 
 ```bash
 articulate fix notes.md --backend none --out edited.md
 articulate judge notes.md --backend none --json
 ```
 
-The deterministic backend fixes only conservative mechanical cases and reports
-remaining findings. It does not provide model quality scores or establish that
-a document is accurate. Inspect the gate and refusal list before accepting it.
+The deterministic backend fixes conservative mechanical cases, such as clause
+dashes and doubled spaces, and reports the remaining findings. Quality scores
+come from a model backend, and accuracy is for you to check. Inspect the gate
+and refusal list before accepting it.
 
 ## Use an installed local model
 
@@ -157,10 +161,11 @@ With Ollama running and a model already installed:
 articulate fix notes.md --backend ollama --out edited.md
 ```
 
-Set `ARTICULATE_LOCAL_MODEL` to choose the installed model. Articulate never
-downloads one. Set `ARTICULATE_LOCAL_ONLY=1` to restrict editor selection to
-loopback Ollama and deterministic editing. This refuses host and hosted editor
-paths before a connection. It does not control the calling host's conversation.
+Set `ARTICULATE_LOCAL_MODEL` to choose among the models you have pulled. Set
+`ARTICULATE_LOCAL_ONLY=1` to keep editor selection on loopback Ollama and
+deterministic editing; host and hosted editor paths are refused before a
+connection. A document already in a host's conversation follows that host's
+policy.
 
 The CLI also supports Anthropic, the Claude CLI and OpenAI-compatible endpoints.
 Automatic selection records unavailable backends and continues to a usable path,
@@ -196,5 +201,5 @@ The [house voice spec](house-voice.md) and
   to a rewrite to a committed audit record.
 - [Features](features.md): every capability, what it gives you, and how to reach it.
 - [CLI reference](cli.md): each command and flag.
-- [Boundaries](boundaries.md): what a verdict and a receipt mean, and what they
-  never claim. Read this before you rely on a receipt for anything.
+- [Boundaries](boundaries.md): what a verdict and a receipt mean. Read this
+  before you rely on a receipt for anything.

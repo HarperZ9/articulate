@@ -1,85 +1,78 @@
-# Boundaries
+# What results mean
 
-Articulate makes narrow claims on purpose. This page states what a verdict and a
-receipt mean, and what they never mean. Read it before you rely on either.
+This page says what each Articulate result covers. Read it before you act on a
+verdict or a receipt.
 
-## Not an authorship detector
+## A finding shows a writing pattern
 
-Articulate is a style tool. It is not an authorship detector. On 183 texts of known
-origin it flagged all 84 AI texts and also 57 of 75 human texts (76%, 95%
-interval 65% to 84%), among them 10 of 18 essays by English learners. The
-figures and their limits are in the
+Articulate finds writing patterns and shows where they are. Use it to improve
+writing. Use other evidence to decide who wrote a text.
+
+On 183 texts of known origin, Articulate flagged all 84 AI texts and 57 of 75
+human texts (76%, 95% interval 65% to 84%). The human texts include 10 of 18
+essays by English learners. The figures and the method are in the
 [known-provenance results](../corpus/provenance/README.md) and
 [`results.json`](../corpus/provenance/results.json).
 
-A finding, a verdict, a texture score or a per-paragraph flag names devices in the
-text. None of them is evidence about who or what wrote it. Never use one to accuse
-a person of using AI, and never to grade, discipline or judge a student. Learner
-English was flagged at a lower rate than other student essays in this sample (10
-of 18 against 31 of 36), but both rates are high and the sample is small.
+A finding, a verdict, a texture score and a per-paragraph flag each name devices
+in the text. Teachers: use them to help a student improve a draft. Use other
+evidence to judge who wrote an essay. In this sample, learner English was flagged
+at a lower rate than other student essays (10 of 18 against 31 of 36). Both rates
+are high, and the sample is small.
 
-## Writing quality, never evasion
+## Articulate improves writing quality
 
 Articulate finds where prose uses a named device or breaks a plain-writing
-standard, and it helps you rewrite to that standard. It is not a tool for slipping
-past another detector. A detector score is never the target the tool optimizes
-toward. The rewrite loop is gated on writing quality, and the benchmark
-refuses to report a competitor-detector-evasion result as a feature.
+standard. It then helps you rewrite to that standard. The rewrite loop is gated
+on writing quality. The benchmark reports writing quality only, and it refuses to
+report a result against another detector as a feature.
 
-## Exposition quality is not correctness
+## A clean screen covers the prose
 
-For a proof or a scientific paper, a clean gate, a low texture score, or a `Match`
-receipt means the prose was screened under a named ruleset. It says nothing about
-whether the theorem or the result is true. A clearly written proof can still be
-false, and a false proof screens exactly as clean as a correct one, because
-fluency shows that an author understood their own argument well enough to explain
-it, and it never shows that the argument holds. Correctness is established by independent referee
-review or a machine-checked formalization in a proof assistant such as Lean, Coq,
-or Isabelle, by other people, on a longer timescale. Articulate has no role in
-that verification step.
+For a proof or a scientific paper, a clean gate, a low texture score or a `Match`
+receipt means that a named ruleset screened the prose. The theorem or the result
+needs its own check. A false proof can screen as clean as a correct one. Referee
+review or a machine-checked proof in a proof assistant such as Lean, Coq or
+Isabelle establishes correctness.
 
-## A receipt attests a screening, not compliance
+## A receipt records a screening
 
-A receipt records that a named, fingerprinted ruleset ran against a specific text
-and produced a specific verdict, and that the same screening re-derives on the
-same text. That is the whole claim. A receipt is not a provenance attestation, not
-a correctness claim, and not a regulatory or compliance artifact. It is not an EU
-AI Act Article 50 marking, and it is not a C2PA content credential. The verdict
-set is `Match`, `Drift`, or `Unverifiable`, with no trusted or approved value, so
-a receipt cannot be read as a final determination against a person.
+A receipt records three facts. A named, fingerprinted ruleset ran on a specific
+text. It gave a specific verdict. The same screening gives the same verdict when
+you run it again on the same text. The verdict set is `Match`, `Drift` or
+`Unverifiable`. Use a receipt to show which rules ran on which text. For
+provenance, use a C2PA content credential. For EU AI Act Article 50 marking, use
+a marking made for that purpose.
 
-## Content-free is not zero-leakage
+## A content-free receipt keeps rules and lines
 
-A content-free audit receipt keeps no verbatim text: it drops the matched
-substring and the exact offsets. It is not information-free. Which rules fired and
-the line remain, and for a closed-vocabulary rule that narrows the flagged word to
-that rule's small, public candidate set. Store a content-free record when you must
-retain a screening without the source text, and understand that the residual is
-the rule and the line, and never the word.
+A content-free audit receipt keeps no verbatim text. It drops the matched
+substring and the exact offsets. It keeps the rule that fired and the line. For a
+closed-vocabulary rule, the rule narrows the flagged word to that rule's small,
+public word list. Use a content-free record when you must keep a screening
+without the source text.
 
-## Hash mode
+## Hash mode supports an equality check
 
-A `--redact hash` receipt keeps a plain sha256 of each matched substring, for an
-equality check against a string you already know. It is not confidentiality.
-Because most rules draw from a public, closed vocabulary, a holder can enumerate
-that vocabulary and hash it to recover the flagged word. Use `--redact drop` when
-the flagged word itself must stay secret.
+A `--redact hash` receipt keeps a plain sha256 of each matched substring. Use it
+to check a string you already know. Most rules use a public, closed word list, so
+a holder can hash that list and find the flagged word. Use `--redact drop` when
+the flagged word must stay secret.
 
-## The tool abstains when it cannot tell
+## Short texts read unverifiable
 
-Below a 30-word floor there are too few tokens to call a text clean human writing,
-so a device-clean short text reads `unverifiable` and the receipt makes no clean
-claim. This is calibrated uncertainty, and it is deliberate. A banned device is
-unambiguous at any length, so a short text with a device still reads `flagged`.
+A text under 30 words has too few tokens for a clean verdict. A device-clean short
+text reads `unverifiable`, and its receipt makes no clean claim. A banned device
+is clear at any length, so a short text with a device still reads `flagged`.
 
-## English patterns, and an honest detection ceiling
+## English patterns, read with rules
 
-The detector's patterns are English literals. A non-English document is screened,
-and the patterns simply do not fire on it, so a clean result on non-English text
-means the English rules found nothing, and it is never a verification of the text.
+The detector's patterns are English literals. On a document in another language,
+the English rules run as usual. A clean result there means the English rules
+found no match. Check other languages with a checker made for them.
 
-The detector reads devices, register, and structure with regular expressions. It
-cannot read token probability, so a device-clean passage of machine writing can
-score low. That is an honest ceiling, and it is why Articulate is a rule-based,
-explainable signal and never a trained statistical classifier. A statistical
-detector answers a different question, and the two are complementary.
+The detector reads devices, register and structure with regular expressions.
+Each finding names its rule, so you can see why it fired. The detector does not
+read token probability, so a device-clean passage of machine writing can score
+low. A statistical detector measures a different property, and the two methods
+complement each other.

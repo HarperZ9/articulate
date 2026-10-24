@@ -189,3 +189,64 @@ def test_legacy_fix_delegates_backend_and_writes_result(monkeypatch, tmp_path):
     assert editor.fix(str(source), str(target), 1, backend="none") == 0
     assert target.read_text(encoding="utf-8").strip() == "We ship software."
     assert calls[0][2]["backend"] == "none"
+
+
+BLOCKED = "It is crucial to note that this is not a bug — it is a feature. The team really leverages it."
+
+
+def test_judge_that_calls_a_blocked_passage_clean_is_unreliable(monkeypatch):
+    from articulate import editing
+    calls = _script(monkeypatch, [("The prose is strong and clear. No significant quality failures.", _info())])
+    result = editing.run_edit(BLOCKED, goal="judge")
+    assert result["gate_before"] == "blocked"
+    assert result["quality_status"] == "unreliable"
+    assert result["receipt"]["quality_status"] == "unreliable"
+    assert "named none of the" in result["quality_note"]
+    # The prompt hands the judge the blocking findings and the rule for them.
+    assert "BLOCKING FINDINGS" in calls[0][0] and "em-dash" in calls[0][0]
+
+
+def test_judge_that_names_a_blocking_finding_keeps_its_status(monkeypatch):
+    from articulate import editing
+    _script(monkeypatch, [("HIGH: the em-dash and the filler intensifier 'really' weaken line 1.", _info())])
+    result = editing.run_edit(BLOCKED, goal="judge")
+    assert result["quality_status"] != "unreliable"
+    assert "quality_note" not in result
+
+
+def test_judge_floor_ignores_a_passage_the_gate_allows(monkeypatch):
+    from articulate import editing
+    _script(monkeypatch, [("The prose is strong.", _info())])
+    result = editing.run_edit("The parser reads one line at a time.", goal="judge")
+    assert result["gate_before"] == "ok"
+    assert result["quality_status"] != "unreliable"
+
+
+def test_host_judge_submit_applies_the_same_floor():
+    from articulate import host_edit
+    plan = host_edit.edit_plan(BLOCKED, goal="judge")
+    assert "BLOCKING FINDINGS" in plan["instructions"]
+    clean = host_edit.edit_submit(BLOCKED, "The prose is strong.", plan["plan_id"])
+    assert clean["quality_status"] == "unreliable"
+    named = host_edit.edit_submit(BLOCKED, "Cut the corporate verb 'leverages'.", plan["plan_id"])
+    assert named["quality_status"] != "unreliable"
+
+
+def test_cli_judge_says_when_the_assessment_is_unreliable(monkeypatch, tmp_path, capsys):
+    from articulate import editor
+    _script(monkeypatch, [("No significant quality failures.", _info())])
+    path = tmp_path / "blocked.md"
+    path.write_text(BLOCKED, encoding="utf-8")
+    editor.judge(str(path))
+    assert "unreliable" in capsys.readouterr().out
+
+
+def test_articulate_judge_command_reports_unreliable(monkeypatch, tmp_path, capsys):
+    from articulate import cli
+    _script(monkeypatch, [("No significant quality failures.", _info())])
+    path = tmp_path / "blocked.md"
+    path.write_text(BLOCKED, encoding="utf-8")
+    cli.main(["judge", str(path), "--backend", "ollama"])
+    out = json.loads(capsys.readouterr().out)
+    assert out["quality_status"] == "unreliable"
+    assert out["quality_note"].startswith("The judge named none")

@@ -1,5 +1,6 @@
 """Command-line verbs for the personal voice: learn, show, list, path, compare,
-apply, submit, export, import, delete and identity.
+apply, submit, export, import, delete and identity, plus intend and check for a
+voice built from intent (voice_intent_cli).
 
 The command line is the only writer of the voice store. learn reads only the
 files the user names, and only after --mine says they are the user's own
@@ -87,7 +88,7 @@ def _submit(args):
             fh.write(out["text"])
     v = out.get("voice", {})
     _emit(out, args, f"Features outside your range: {v.get('outside_before')} before, "
-                     f"{v.get('outside_after')} after. {v.get('does_not_prove', '')}\n"
+                     f"{v.get('outside_after')} after. {v.get('scope', '')}\n"
                      f"Kept original for {len(out['refused'])} paragraph(s).")
     return 0
 
@@ -140,7 +141,17 @@ def _path(args):
     return 0
 
 
-ACTIONS = {"learn": _learn, "show": _show, "compare": _compare, "apply": _apply,
+def _intend(args):
+    from .voice_intent_cli import intend
+    return intend(args)
+
+
+def _check(args):
+    from .voice_intent_cli import check
+    return check(args)
+
+
+ACTIONS = {"intend": _intend, "check": _check, "learn": _learn, "show": _show, "compare": _compare, "apply": _apply,
            "submit": _submit, "export": _export, "import": _import, "delete": _delete,
            "identity": _identity, "list": _list, "path": _path}
 

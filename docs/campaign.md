@@ -77,7 +77,7 @@ The report has these top-level fields:
   `shared_tokens` and `fillers`.
 - `persona_groups`: bio groups with the same fields, built from masked frames.
 - `summary`: counts.
-- `does_not_prove`: the limit of the report, in one paragraph.
+- `scope`: what the report covers and its limit, in one paragraph.
 
 A finding has the same span fields as `articulate check` findings (`line`,
 `col`, `start`, `end`, `category`, `label`, `match`, `rule_id`, `tier`) plus
