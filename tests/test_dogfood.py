@@ -16,7 +16,7 @@ DOCS = ["README.md", "editors/vscode/README.md",
         "docs/README.md", "docs/getting-started.md", "docs/walkthrough.md",
         "docs/features.md", "docs/cli.md", "docs/boundaries.md",
         "docs/house-voice.md", "docs/series-and-voice.md", "docs/claude-plugin.md",
-        "claude-plugin/README.md", "corpus/PANGRAM.md", "corpus/provenance/README.md"]
+        "claude-plugin/README.md", "corpus/PANGRAM.md", "corpus/provenance/README.md", "docs/campaign.md"]
 MODULES = ["cli.py", "editor.py", "bench.py", "pangram_records.py", "mcp_server.py", "profiles.py",
            "receipt.py", "lsp_server.py", "pysource.py", "modes.py",
            "genres.py", "masking.py", "claude_cli.py", "__init__.py",
@@ -25,7 +25,9 @@ MODULES = ["cli.py", "editor.py", "bench.py", "pangram_records.py", "mcp_server.
            "voice_apply.py", "cli_voice.py", "mcp_local_tools.py", "voice_store.py",
            "voice.py", "voice_tools.py", "authorship.py", "interview.py", "restructure.py",
            "titles.py", "corpus.py", "cli_corpus.py", "negation_load.py",
-           "negation_entries.py", "cli_negation.py"]
+           "negation_entries.py", "cli_negation.py", "campaign.py", "campaign_promo.py",
+           "campaign_persona.py", "campaign_cluster.py", "campaign_corpus.py",
+           "campaign_bench.py", "cli_campaign.py"]
 
 
 def _gate(path, text):
