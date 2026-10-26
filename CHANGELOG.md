@@ -6,6 +6,12 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+## 0.17.0
+
+You can now see the rhetorical devices in a draft, hear the findings read
+aloud, and see how much of each property an edit kept. The intensifier rule no
+longer blocks learner writing under the default profile.
+
 - `filler-intensifier` no longer blocks under the default profile. It still
   shows on every report, as a LOW finding labelled `report only:`. On the Liang
   et al. (2023) essays it blocked 26 of 91 TOEFL learner texts against 2 of 70

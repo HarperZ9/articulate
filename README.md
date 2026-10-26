@@ -108,7 +108,7 @@ A receipt made with `--redact drop` keeps the rule, tier and line of each findin
 
 ## Install options
 
-Version 0.16.0 is on PyPI as `articulate-writing`. The [changelog](CHANGELOG.md) lists what each release added.
+Version 0.17.0 is on PyPI as `articulate-writing`. The [changelog](CHANGELOG.md) lists what each release added.
 
 - [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md) bundle a Python runtime.
 - The [Claude plugin](docs/claude-plugin.md) runs local checks and host editing in Claude Code, Codex and other MCP hosts that have Python installed.

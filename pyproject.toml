@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.16.0"
+version = "0.17.0"
 description = "Local prose checker that names each writing pattern and the line it is on, with register profiles, replayable receipts and an optional editor. Use it to improve writing; in its own evaluation it also flagged 57 of 75 human-written texts, so use other evidence to decide who wrote a text."
 readme = "README.md"
 requires-python = ">=3.9"
