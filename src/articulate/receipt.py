@@ -48,7 +48,7 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
-from . import checkext, detector, domains, mdstructure, profiles, project, rules_ext
+from . import calibration, checkext, detector, domains, mdstructure, profiles, project, rules_ext
 
 SCHEMA = "articulate/receipt/v1"
 AUDIT_SCHEMA = "articulate/receipt/audit/v1"
@@ -100,12 +100,13 @@ def _normalize(result, redaction=None) -> list:
     return out
 
 
-def _block_receipt(text, prof, structure=True) -> list:
+def _block_receipt(text, prof, structure=True, calibration=True) -> list:
     """Per-span (per-paragraph) verdicts for the receipt: which block is flagged,
     its line range, its own text hash, and its localized texture. This is what
     makes the receipt reportable per span, beyond the whole-document verdict."""
     out = []
-    for b in checkext.analyze_blocks(text, profile=prof, structure=structure):
+    for b in checkext.analyze_blocks(text, profile=prof, structure=structure,
+                                     calibration=calibration):
         out.append({
             "index": b["index"],
             "start_line": b["start_line"], "end_line": b["end_line"],
@@ -162,6 +163,10 @@ def make_receipt(text: str, profile_name: str = None, *, per_span: bool = False,
     # without that structure is the same as before the masks existed.
     if checkext.changes_text(text):
         rec["structure"] = checkext.STRUCTURE_VERSION
+    # Named only when the calibration layer moved a finding in this text, so a
+    # receipt for text it leaves alone is the same as before the layer existed.
+    if "calibration" in r:
+        rec["calibration"] = r["calibration"]
     if per_span:
         rec["blocks"] = _block_receipt(text, prof)
     return rec
@@ -228,7 +233,11 @@ def verify_receipt(receipt: dict, text: str):
     if recorded is not None and recorded not in mdstructure.VERSIONS:
         return "Unverifiable", f"receipt names unknown structure masks {recorded!r}"
     structure = recorded if recorded is not None else False
-    r = checkext.check_text(text, profile=prof, structure=structure)
+    calib = receipt.get("calibration")
+    if calib is not None and calib not in calibration.VERSIONS:
+        return "Unverifiable", f"receipt names unknown calibration {calib!r}"
+    calib = calib if calib is not None else False
+    r = checkext.check_text(text, profile=prof, structure=structure, calibration=calib)
     # Project the re-derived findings to the receipt's redaction mode, so a
     # content-free receipt reads Match and `match`/offsets never drive the verdict.
     same = (_normalize(r, redaction) == receipt.get("findings")
@@ -243,7 +252,8 @@ def verify_receipt(receipt: dict, text: str):
                 f"below the {detector.MIN_WORDS_FOR_VERDICT}-word signal floor; "
                 f"no confident clean verdict on this little text")
     # A per-span receipt also re-derives its per-block verdicts.
-    if "blocks" in receipt and _block_receipt(text, prof, structure) != receipt["blocks"]:
+    if ("blocks" in receipt
+            and _block_receipt(text, prof, structure, calib) != receipt["blocks"]):
         return "Drift", "re-derived per-span block verdicts differ from the receipt"
     n = len(r["high"]) + len(r["medium"]) + len(r["low"])
     span = f", {len(receipt['blocks'])} spans" if "blocks" in receipt else ""
