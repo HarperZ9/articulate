@@ -19,9 +19,10 @@ Text with none of that structure gives the same result as before. Pass
 `structure=False` for the unmasked result, which a receipt made before
 STRUCTURE_VERSION existed replays against. Standard library only.
 """
-from . import detector, mdstructure, rules_ext
+from . import calibration, detector, mdstructure, rules_ext
 
 STRUCTURE_VERSION = mdstructure.VERSION
+CALIBRATION_VERSION = calibration.VERSION
 
 _TIERS = (("high", "HIGH"), ("medium", "MEDIUM"), ("low", "LOW"))
 
@@ -64,7 +65,20 @@ def _names(work, profile, allow, version=mdstructure.VERSION, known=None):
     return work, result
 
 
-def _run(text, work, profile, allow, structure, known=None):
+def _calibrate(result, work, profile, version):
+    """Apply the calibration layer and recompute the gate when it moved a finding."""
+    if version and calibration.apply(result, work, _calibration(version)):
+        result = _regate(result, profile or {})
+        result["calibration"] = _calibration(version)
+    return result
+
+
+def _calibration(version):
+    """The calibration version for a `calibration` argument: True means the current one."""
+    return calibration.VERSION if version is True else version
+
+
+def _run(text, work, profile, allow, structure, known=None, calib=True):
     """The check of `text`, scanning `work`, its structure-masked copy."""
     if structure:
         work, result = _names(work, profile, allow, _version(structure), known)
@@ -75,6 +89,7 @@ def _run(text, work, profile, allow, structure, known=None):
         for (key, tier), found in zip(_TIERS, extra):
             result[key] = result[key] + [detector._finding(tier, f) for f in found]
         result = _regate(result, profile)
+    result = _calibrate(result, work, profile, calib)
     return mdstructure.restore(result, text, work)
 
 
@@ -84,24 +99,32 @@ def changes_text(text):
     return _names(work, None, ())[0] != text
 
 
-def check_text(text, *, profile=None, allow=(), structure=True):
+def calibration_changes(text, *, profile=None, allow=()):
+    """True when the calibration layer moves a finding in this text, so a receipt
+    must name its version."""
+    return "calibration" in check_text(text, profile=profile, allow=allow)
+
+
+def check_text(text, *, profile=None, allow=(), structure=True, calibration=True):
     """detector.check_text plus the profile's rule packs and terminology.
     `structure` is True for the current Markdown masks, a version name such as
-    "markdown/1" for an older set, or False for none."""
+    "markdown/1" for an older set, or False for none. `calibration` is True for
+    the current calibration layer, a version name, or False for none; a result
+    the layer changed carries a `calibration` field naming the version."""
     work = mdstructure.mask_structure(text, _version(structure)) if structure else text
-    return _run(text, work, profile, allow, structure)
+    return _run(text, work, profile, allow, structure, calib=calibration)
 
 
-def analyze_blocks(text, *, profile=None, allow=(), structure=True):
-    """detector.analyze_blocks under the same rule layer as check_text."""
-    if not structure and not rules_ext.active(profile):
+def analyze_blocks(text, *, profile=None, allow=(), structure=True, calibration=True):
+    """detector.analyze_blocks under the same rule layers as check_text."""
+    if not structure and not calibration and not rules_ext.active(profile):
         return detector.analyze_blocks(text, profile=profile, allow=allow)
     work = mdstructure.mask_structure(text, _version(structure)) if structure else text
     known = mdstructure.known_names(work) if structure and structure != "markdown/1" else None
     out = []
     for b in detector.segment_blocks(work):
         r = _run(text[b["start"]:b["end"]], work[b["start"]:b["end"]], profile, allow,
-                 structure, known)
+                 structure, known, calibration)
         for key, _tier in _TIERS:
             for f in r[key]:
                 f["line"] += b["start_line"] - 1

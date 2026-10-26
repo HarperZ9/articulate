@@ -416,6 +416,21 @@ narration still counts. Narrative and genre profiles take the fiction rule;
 scripts, JSON (a `lines` list reads as one film segment) and JavaScript string
 literals. `--gate` exits 1 when any entry reaches the fail line.
 
+## devices
+
+```
+articulate devices FILES... [--only DEVICE,...] [--json | --speak | --ssml]
+```
+
+Lists the rhetorical devices in each file with their lines: antithesis,
+tricolon, anaphora, chiasmus, alliteration, assonance, polysyndeton, asyndeton,
+anadiplosis, epizeuxis, isocolon, zeugma and oxymoron. `--only` limits the
+report to named devices. `--speak` prints a script to read aloud and `--ssml`
+the same script as SSML 1.1. The command never gates; it exits 2 only when a
+file cannot be read or a device name is unknown. See [devices](devices.md).
+
+`articulate check --speak` prints check findings as the same kind of script.
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.

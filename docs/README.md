@@ -31,6 +31,10 @@ student improve a draft, and use other evidence to judge who wrote an essay.
 - [House voice](house-voice.md), [series and your own voice](series-and-voice.md) and [a voice built from intent](voice-intent.md).
 - [Dialogue and character voice](dialogue.md): the dialogue profile, voice sheets,
   blind speaker attribution and the CI gate for game and stage scripts.
+- [Devices](devices.md): `articulate devices`, thirteen rhetorical devices with
+  held-out rates, the spoken view and graded survival in the change report.
+- [Calibration](calibration.md): the measured layer after the pinned detector,
+  and why the intensifier rule no longer blocks.
 - [Campaign signals](campaign.md): `articulate campaign`, promotional-template
   and stock-persona checks with near-duplicate clustering for batches of short
   social texts, and the input and output schema.

@@ -6,6 +6,30 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+- `filler-intensifier` no longer blocks under the default profile. It still
+  shows on every report, as a LOW finding labelled `report only:`. On the Liang
+  et al. (2023) essays it blocked 26 of 91 TOEFL learner texts against 2 of 70
+  length-matched US college essay windows. With the change, the TOEFL minus
+  college blocked-rate gap on a held-out half goes from +0.24 to 0.00. A profile
+  that wants the rule to block names it in `gate_promote`. The decision record
+  is `docs/calibration.md`.
+- A HIGH or MEDIUM finding inside a quotation attributed to someone else (a
+  speech or citation verb beside the quote) moves to LOW with the label prefix
+  `quoted:`. Quotation marks around your own paragraph change nothing.
+- Both changes live in a new layer, `articulate.calibration` (`calibration/1`),
+  after the pinned detector. The ruleset and its fingerprint are unchanged. A
+  receipt names the layer when it moved a finding, and receipts made before it
+  still verify.
+- `articulate devices` reads thirteen rhetorical devices: antithesis,
+  tricolon, anaphora, chiasmus, alliteration, assonance, polysyndeton,
+  asyndeton, anadiplosis, epizeuxis, isocolon, zeugma and oxymoron. It reports
+  where each one is and never gates. Rates on a held-out set written without
+  sight of the readers are in `docs/devices.md`.
+- `--speak` and `--ssml` on `articulate devices`, and `--speak` on
+  `articulate check`, give a script of the findings to read aloud.
+- The change report from `--explain` carries `survival`: a clarity value for
+  each fact, device, rhythm, sentence order and register, 1 kept, below 1 lost.
+
 - Reports and receipts now name their limit field `scope`, and each scope says
   what the result covers. The field was named `does_not_prove` before. These
   schemas move to version 2: changes, meaning, corpus-report, corpus-receipt,

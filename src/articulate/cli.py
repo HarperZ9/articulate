@@ -220,7 +220,11 @@ def _cmd_check(args):
         payload.append(r)
         if r["gate"] == "blocked":
             blocked = True
-        if not args.json and not getattr(args, "sarif", False):
+        if getattr(args, "speak", False) and not args.json and not getattr(args, "sarif", False):
+            from . import speech
+            print(f"{name}.")
+            print(speech.script(r["high"] + r["medium"] + r["low"], text))
+        elif not args.json and not getattr(args, "sarif", False):
             if getattr(args, "spans", False):
                 _print_spans(name, pname, r["blocks"])
             else:
@@ -511,6 +515,8 @@ def main(argv=None):
                            help="per-paragraph findings, so one dense paragraph shows in place")
             p.add_argument("--content-free", action="store_true",
                            help="omit every verbatim substring from console/JSON/SARIF output")
+            p.add_argument("--speak", action="store_true",
+                           help="print the findings as a script to read aloud")
         if cmd == "receipt":
             p.add_argument("--spans", action="store_true",
                            help="record a per-span (per-paragraph) receipt")
@@ -532,7 +538,9 @@ def main(argv=None):
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
     from . import cli_campaign, cli_corpus, cli_desk, cli_dialogue, cli_house, cli_negation, cli_process
+    from . import cli_devices
     cli_campaign.register(sub)
+    cli_devices.register(sub)
     cli_corpus.register(sub)
     cli_dialogue.register(sub)
     cli_negation.register(sub)

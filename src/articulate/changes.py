@@ -10,11 +10,15 @@ remain, plus any finding the new sentence adds. The report also lists each
 paragraph the guard refused, with its reasons, and each allowed change.
 
 The findings columns show what the checker saw; they do not show why the editor
-changed a sentence. Standard library only.
+changed a sentence. `survival` grades how much of each property came through
+(articulate.survival): items, devices, rhythm, order and register, each as a
+clarity value. Standard library only.
 """
 from collections import Counter
 import difflib
 import re
+
+from . import survival
 
 SCHEMA = "articulate/changes/v2"
 SCOPE = ("Pairs each changed sentence with the sentence before the edit. Lists the "
@@ -109,6 +113,7 @@ def build(original, final, check, refused=(), allowed_changes=()):
             "allowed_changes": list(allowed_changes),
             "summary": {"changed": len(records), "findings_before": len(found[0]),
                         "findings_after": len(found[1])},
+            "survival": survival.compare(original, final),
             "scope": SCOPE}
 
 
@@ -155,5 +160,8 @@ def format_report(rep, name=""):
         lines.append("[changes] kept %s: %s" % (where, "; ".join(r["reasons"])))
     for a in rep["allowed_changes"]:
         lines.append("[changes] allowed %s change in paragraph %d" % (a["kind"], a["paragraph"] + 1))
+    if rep.get("survival"):
+        lines.append("[changes] survival (clarity: 1 kept, below 1 lost, above 1 gained):")
+        lines.extend(survival.format_lines(rep["survival"]))
     lines.append("[changes] Read each pair to check the meaning held.")
     return "\n".join(lines)
