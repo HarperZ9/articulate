@@ -6,6 +6,8 @@ checker can measure: device limits, wanted moves and a few ranges. The
 his stated stance for posts: contrarian, polemical, asking what if and trying
 the other person's shoes before judging.
 """
+from .voice_register import FEATURES
+
 SCHEMA = "articulate/voice-intent/v1"
 
 TELL_WHY = {
@@ -33,6 +35,10 @@ WORK_HOW = {
     "turn": "Turn once, at the place the evidence stops agreeing with the easy reading.",
     "reader-question": "End on a question the reader has to answer, in place of a maxim.",
     "tool": "Name the tool and the command once, plainly, where it helps the reader do the check.",
+    "imagery": "Put a thing the reader can see on the page: a gauge, a rope, a street, a hand.",
+    "forward-motion": "Play the next move forward: say what comes next, before it comes.",
+    "observer": "Say what you watched, as the one watching: I saw, I watched, here's what I saw.",
+    "idea-runs": "Let a run of ideas run in one long sentence; keep it out of a tidy list.",
 }
 
 DEFAULT_LIMITS = {k: 0 for k in TELL_WHY}
@@ -78,4 +84,41 @@ ZAIN = {
                          "stance for posts (2026-10-23)", "samples": []},
 }
 
-BUILTIN = {"zain": ZAIN}
+# The author's own register (author, 2026-10-23 and 2026-10-24): defensive,
+# antagonistic and contrarian; an everyman and an observer; wonder held beside a
+# jaded eye; polemic. From the author's own description of their process:
+# imagery-forward, playing the next moment forward, ideas that run like waves,
+# laying down the path while walking. Literary devices are tools in this voice
+# (author, 2026-11-02: "Literary devices are important"), so the spec sets no
+# limit on anaphora, tricolon, antithesis or a closing line; the device report
+# (articulate.device_function) judges each one by the image, anchor or stance it
+# carries. Hedges and stock setups stay limited, and claims still need evidence.
+AUTHOR_VOICE = {
+    "schema": SCHEMA,
+    "name": "author-voice",
+    "goal": "The author's own first-person posts, essays and findings.",
+    "audience": "Readers who came for a person with a side, not an authority.",
+    "stance": "Defensive, antagonistic and contrarian. An everyman and an observer. Wonder "
+              "beside a jaded eye. Polemic. Imagery first, the next move played forward, "
+              "ideas kept as runs.",
+    "traits": [
+        "First person, from the bench: what I saw, what I think it means, how you can check it.",
+        "Pushes against what the reader assumes, and jabs with questions.",
+        "Concrete pictures before abstractions; a figure carries an image or it goes.",
+        "Plays the next moment forward and says where it is heading.",
+        "Runs of ideas stay runs; lists are for steps.",
+        "Literary devices are tools: each one carries an image, an anchor or a stance.",
+        "No hedges and no stock reveal; every claim points at something a reader can check.",
+    ],
+    "limits": {"hedge": 0, "reveal-setup": 0, "numbered-escalation": 0},
+    "wants": {k: 1 for k in ("counter-view", "stance", "turn", "reader-question", "imagery",
+                             "observer", "forward-motion")},
+    # Every register feature; voice_register.guard keeps the original when a rewrite loses one.
+    "protects": list(FEATURES),
+    "ranges": {"sentence_len_cv": {"min": 0.4}},
+    "sources": {"rules": "the author's stated register (2026-10-23, 2026-10-24), the author's "
+                         "own description of their process, and the author's direction on "
+                         "literary devices (2026-11-02)", "samples": []},
+}
+
+BUILTIN = {"zain": ZAIN, "author-voice": AUTHOR_VOICE}

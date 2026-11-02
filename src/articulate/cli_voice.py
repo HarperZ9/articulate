@@ -151,7 +151,12 @@ def _check(args):
     return check(args)
 
 
-ACTIONS = {"intend": _intend, "check": _check, "learn": _learn, "show": _show, "compare": _compare, "apply": _apply,
+def _register(args):
+    from .voice_intent_cli import register
+    return register(args)
+
+
+ACTIONS = {"intend": _intend, "check": _check, "register": _register, "learn": _learn, "show": _show, "compare": _compare, "apply": _apply,
            "submit": _submit, "export": _export, "import": _import, "delete": _delete,
            "identity": _identity, "list": _list, "path": _path}
 

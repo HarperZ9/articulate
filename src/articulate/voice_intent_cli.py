@@ -1,12 +1,13 @@
-"""Command-line handlers for voice intend and voice check.
+"""Command-line handlers for voice intend, voice check and voice register.
 
 intend writes a spec and prints its plan. check scores drafts against a spec
 file or a built-in name and exits 1 when a draft scores under --min-score.
-Neither command edits a draft.
+register compares the author's draft with a rewrite and names each register
+feature the rewrite lost, exiting 1 when it lost any. None of them edits a draft.
 """
 import json
 
-from . import voice_intent
+from . import voice_intent, voice_register
 from .voice_intent_specs import BUILTIN
 from .voice_intent_text import format_check, format_spec
 
@@ -51,6 +52,19 @@ def check(args):
     return 1 if args.min_score is not None and worst < args.min_score else 0
 
 
+def register(args):
+    report = voice_register.flattening(_read(args.before), _read(args.after))
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        for row in report["features"]:
+            if row["status"] != "absent":
+                print(f"  {row['feature']:<15}{row['before']:>4} -> {row['after']:<4}{row['status']}")
+        lost = ", ".join(report["lost"]) or "nothing"
+        print(f"{args.after}: lost {lost}. {report['scope']}")
+    return 1 if report["flattened"] else 0
+
+
 def add_parsers(vs):
     """The intend and check sub-commands, added to the voice parser."""
     p = vs.add_parser("intend", help="build a voice spec and a plan from a goal, audience and stance")
@@ -69,3 +83,7 @@ def add_parsers(vs):
     c.add_argument("--intent", required=True, help="a spec file from voice intend, or a built-in name")
     c.add_argument("--min-score", type=int, help="exit 1 when a draft scores under this")
     c.add_argument("--json", action="store_true")
+    r = vs.add_parser("register", help="name the register features a rewrite of your draft lost")
+    r.add_argument("before", help="your draft")
+    r.add_argument("after", help="the rewrite")
+    r.add_argument("--json", action="store_true")

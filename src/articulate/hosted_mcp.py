@@ -154,7 +154,7 @@ def build_server(config):
             raise ValueError('Only built-in profiles are supported')
         return host_edit.edit_submit(text, rewrite, plan_id, scores, model)
 
-    @hosted_tool('Check the host model proposed edit against the original and plan_id. Returns accepted text and a receipt; lexical preservation does not prove semantic equivalence.' + disclosure)
+    @hosted_tool('Check the host model proposed edit against the original and plan_id. Returns accepted text and a receipt. The guard compares words and protected spans; review meaning yourself.' + disclosure)
     def edit_submit(text: str, rewrite: str, plan_id: str, scores: Optional[dict] = None,
                     model: Optional[str] = None) -> dict:
         return safe(submit, text, rewrite, plan_id, scores, model)

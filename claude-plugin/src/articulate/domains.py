@@ -15,6 +15,23 @@ keeps its findings, and the RFC keyword rules run only under `rfc-keywords`.
                       conformance to ASD-STE100 or any other specification.
   rfc-keywords        the normative-spec register plus RFC 2119 and RFC 8174
                       keyword consistency.
+  product-copy        READMEs, release notes and listings read from the user's
+                      side: claims point at evidence, the lead says what the
+                      tool does for the reader, a mission line exists.
+                      Flavored, so these report and the banned devices gate.
+  note                a personal note to someone you know: no stock opener and
+                      no closing offer (both gate), office words and length
+                      reported. Flavored.
+  author-voice        the author's own first-person text. Narrative slop, so
+                      no device gates; em-dashes are still reported. Literary
+                      devices that carry an image, an anchor or a stance pass;
+                      an empty one is reported. Claims are still checked
+                      against evidence, and edits planned under this profile
+                      keep the register (articulate.voice_register) and the
+                      author's own terms.
+
+A domain may carry `gate_promote` (pack categories that gate under a flavored
+profile) and `freeze` (terms an edit planned under the profile must keep).
 
 `load_profile(name)` resolves a domain or register profile name, and `load`
 also takes a writing mode (a name with a slash). Every place outside the
@@ -25,6 +42,9 @@ from . import modes, profiles
 
 _SPEC_KEEP = ("must", "should", "may", "shall", "required", "recommended", "optional")
 _REVIEW_KEEP = ("nit", "lgtm", "blocking", "non-blocking", "suggestion")
+# The author's own words for his tools (marketing copy uses them; a rewrite keeps them).
+AUTHOR_TERMS = ("distill", "distilling", "essence", "layers", "weights", "metamers", "metamer",
+                "lens", "boundary", "signal", "noise", "make truth cheap to check")
 
 # name -> base profile, slop override, extra keep terms, register, rule packs.
 DOMAINS = {
@@ -42,6 +62,16 @@ DOMAINS = {
                            "rule_packs": ("controlled-english",)},
     "rfc-keywords": {"base": "normative-spec", "slop": "flavored", "keep": (),
                      "register": None, "rule_packs": ("bcp14",)},
+    "product-copy": {"base": "readme", "slop": "flavored", "keep": AUTHOR_TERMS,
+                     "register": ("product", "user", "listing"),
+                     "rule_packs": ("claims", "product-copy"), "freeze": AUTHOR_TERMS},
+    "note": {"base": "chat", "slop": "flavored", "keep": (),
+             "register": ("personal", "someone-you-know", "note"),
+             "rule_packs": ("note",), "gate_promote": ("note-opener", "note-closing-offer")},
+    "author-voice": {"base": "narrative", "slop": "off", "keep": AUTHOR_TERMS,
+                     "register": ("first-person", "reader", "author-voice"),
+                     "rule_packs": ("claims", "literary-devices"), "no_em_dash": True,
+                     "freeze": AUTHOR_TERMS},
 }
 
 
@@ -58,6 +88,12 @@ def _domain(name):
         field, tenor, mode = spec["register"]
         out["register"] = {"field": field, "tenor": tenor, "mode": mode}
     out["rule_packs"] = tuple(spec["rule_packs"])
+    if spec.get("gate_promote"):
+        out["gate_promote"] = tuple(out.get("gate_promote", ())) + tuple(spec["gate_promote"])
+    if "no_em_dash" in spec:
+        out["no_em_dash"] = spec["no_em_dash"]
+    if spec.get("freeze"):
+        out["freeze_terms"] = tuple(spec["freeze"])
     out["domain"] = name
     return out
 

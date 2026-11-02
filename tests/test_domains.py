@@ -22,8 +22,8 @@ def _cats(result, tier=None):
 
 
 def test_every_domain_profile_names_its_base_and_packs():
-    assert domains.names() == ["code-review", "controlled-english", "plain-language",
-                               "rfc-keywords", "ux-microcopy"]
+    assert domains.names() == ["author-voice", "code-review", "controlled-english", "note",
+                               "plain-language", "product-copy", "rfc-keywords", "ux-microcopy"]
     for name in domains.names():
         prof = domains.load_profile(name)
         assert prof["domain"] == name and prof["rule_packs"]
@@ -71,7 +71,7 @@ def test_short_text_with_only_a_low_pack_finding_is_not_unverifiable():
 
 
 def test_unknown_profile_lists_domain_profiles():
-    with pytest.raises(profiles.ProfileError, match="domain profiles: code-review"):
+    with pytest.raises(profiles.ProfileError, match="domain profiles: author-voice, code-review"):
         domains.load_profile("no-such-profile")
 
 
@@ -149,5 +149,5 @@ def test_edit_plan_binds_the_domain_profile_and_its_findings():
 def test_bench_runs_the_domain_corpus(capsys):
     misses = bench.main([os.path.join(ROOT, "corpus")])
     out = capsys.readouterr().out
-    assert "[bench-domains] samples 11, mismatches 0" in out
+    assert "[bench-domains] samples 18, mismatches 0" in out
     assert misses == 0

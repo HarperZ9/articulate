@@ -204,7 +204,8 @@ def test_host_skill_uses_masked_protocol_and_reports_refusals():
         assert "`" + field + "`" in skill
     assert "exact original" in skill
     assert "Check-only fallback" in skill
-    assert "do not prove semantic equivalence" in skill
+    assert "check words and protected spans only" in skill
+    assert "Meaning, quality, factual correctness and authorship stay with the reader" in skill
 
 
 def test_release_line_link_to_missing_file_is_caught():

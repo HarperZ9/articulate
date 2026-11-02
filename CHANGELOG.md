@@ -6,6 +6,37 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+Your own voice now has a profile that keeps it. Literary devices are read by
+the work they do, and product copy and personal notes have checks of their own.
+
+- New domain profile `author-voice` for your own first-person writing. No device
+  gates. `device-empty` (LOW) reports a device whose sentence carries no image,
+  anchor or stance, or whose figure rests on a stock vehicle. Claims are still
+  checked against evidence and em-dashes are still reported.
+- `articulate.voice_register` measures twelve register features (imagery,
+  forward motion, runs of ideas, observer, first person, questions, reader,
+  contrarian, jaded, wonder, defensive, profanity). An edit planned under
+  `author-voice`, and `voice apply`, keep the original text when a rewrite
+  loses one; `voice apply` takes `accept_register_change` to accept it anyway.
+  `articulate voice register DRAFT REWRITE` prints the comparison.
+- `articulate devices --function` adds simile, metaphor and motif, and reads
+  each device as `carries` or `empty`.
+- Built-in intent spec `author-voice`: wants imagery, the observer, forward
+  motion, a counter-view, a stance, a turn and a reader question, and sets no
+  device limit.
+- New domain profile `product-copy`: `claim-without-evidence` (LOW, with the
+  document's claim coverage in the label), `lead-author-framed` (MEDIUM) and
+  `mission-missing` (LOW). It keeps and freezes the author's own terms.
+- New domain profile `note`: a stock opener and a stock closing offer gate;
+  office words and length report.
+- Domain profiles can carry `gate_promote` and `freeze`; freeze terms enter
+  every edit plan made under the profile.
+- The edit limit lines in the plugin skill, the plugin README and the hosted
+  `edit_submit` description now state their scope plainly.
+- The detector, its ruleset and its fingerprint are unchanged. Receipts that
+  used a domain profile read `Unverifiable` after this change, because the
+  extension fingerprint covers the new packs.
+
 ## 0.17.0
 
 You can now see the rhetorical devices in a draft, hear the findings read
