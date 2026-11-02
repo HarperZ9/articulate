@@ -29,6 +29,10 @@ keeps its findings, and the RFC keyword rules run only under `rfc-keywords`.
                       against evidence, and edits planned under this profile
                       keep the register (articulate.voice_register) and the
                       author's own terms.
+  publication         research and published findings. The research profile
+                      plus claim evidence and analogy-map advice: an analogy
+                      that carries the argument should point at a testable
+                      map. Both report in LOW; neither gates.
 
 A domain may carry `gate_promote` (pack categories that gate under a flavored
 profile) and `freeze` (terms an edit planned under the profile must keep).
@@ -72,6 +76,9 @@ DOMAINS = {
                      "register": ("first-person", "reader", "author-voice"),
                      "rule_packs": ("claims", "literary-devices"), "no_em_dash": True,
                      "freeze": AUTHOR_TERMS},
+    "publication": {"base": "research", "slop": "flavored", "keep": (),
+                    "register": ("findings", "public", "publication"),
+                    "rule_packs": ("claims", "analogy-map")},
 }
 
 

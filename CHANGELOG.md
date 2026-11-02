@@ -13,9 +13,10 @@ the work they do, and product copy and personal notes have checks of their own.
   gates. `device-empty` (LOW) reports a device whose sentence carries no image,
   anchor or stance, or whose figure rests on a stock vehicle. Claims are still
   checked against evidence and em-dashes are still reported.
-- `articulate.voice_register` measures twelve register features (imagery,
+- `articulate.voice_register` measures fifteen register features (imagery,
   forward motion, runs of ideas, observer, first person, questions, reader,
-  contrarian, jaded, wonder, defensive, profanity). An edit planned under
+  contrarian, jaded, wonder, defensive, profanity, analogy, symbol,
+  confrontation). An edit planned under
   `author-voice`, and `voice apply`, keep the original text when a rewrite
   loses one; `voice apply` takes `accept_register_change` to accept it anyway.
   `articulate voice register DRAFT REWRITE` prints the comparison.
@@ -27,6 +28,14 @@ the work they do, and product copy and personal notes have checks of their own.
 - New domain profile `product-copy`: `claim-without-evidence` (LOW, with the
   document's claim coverage in the label), `lead-author-framed` (MEDIUM) and
   `mission-missing` (LOW). It keeps and freezes the author's own terms.
+- `articulate.analogy` reads analogy: `carries` with two or more mapped parts
+  or a relation carried across, `empty` for a bare stock comparison. A literal
+  comparison with real figures is not a device.
+- New domain profile `publication`: the research profile plus claim evidence
+  and `analogy-untested` (LOW, advice) for an analogy that carries the argument
+  and points at no testable map.
+- `claim-without-evidence` also reads a statistic about people ("90% of you",
+  "studies show"), and a claim's own number no longer counts as its source.
 - New domain profile `note`: a stock opener and a stock closing offer gate;
   office words and length report.
 - Domain profiles can carry `gate_promote` and `freeze`; freeze terms enter

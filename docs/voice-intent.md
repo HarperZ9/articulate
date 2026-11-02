@@ -83,9 +83,11 @@ articulate voice intend --list
 `--intent author-voice` is the author's own register: defensive, antagonistic
 and contrarian, an everyman and an observer, wonder beside a jaded eye. From
 the author's own description of their process it adds imagery first, the next
-move played forward and runs of ideas kept as runs. It wants imagery, the
-observer's "I saw", forward motion, a counter-view, a stance, a turn and a
-reader question. It limits hedges and stock setups and sets no limit on
+move played forward and runs of ideas kept as runs, and from the author's
+direction it adds analogy, symbolic messaging and confrontation that holds the
+reader to their own contradiction. It wants imagery, the observer's "I saw",
+forward motion, an analogy that carries structure, a counter-view, a stance, a
+turn and a reader question. It limits hedges and stock setups and sets no limit on
 anaphora, tricolon, antithesis or a closing line, because in this voice a
 literary device is a tool: `articulate devices --function` reads each one for
 the image, anchor or stance it carries. Pair it with `--profile author-voice`,

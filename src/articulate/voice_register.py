@@ -17,6 +17,13 @@ features a neutral rewrite tends to strip:
   wonder          plain amazement: wild, strange, beautiful
   defensive       a guard put up before the concession
   profanity       the plain word where it fits
+  analogy         an analogy that carries structure across: mapped parts or a
+                  relation (articulate.analogy); flattening it to a stock
+                  comparison, or dropping it, counts as a loss
+  symbol          symbolic messaging: an object made to stand for an idea
+                  (stands for, a symbol of, the mirror, the mask, the scale)
+  confrontation   direct address that holds the reader to their own
+                  contradiction (you say ... but you, ask yourself, so do you)
 
 `measure(text)` counts each feature with the lines it sits on. `flattening(
 before, after)` names every feature the rewrite lost (present before, under
@@ -33,6 +40,7 @@ from __future__ import annotations
 
 import re
 
+from . import analogy as A
 from . import devices_lex as X
 from . import imagery_lex as L
 
@@ -58,6 +66,14 @@ _RX = {
     "defensive": r"\b(?:don'?t look at me|look,|I know,|yeah,? I|so what|before you (?:say|ask)|"
                  r"I'?m not (?:saying|pretending))",
     "profanity": r"\b(?:damn|hell|shit\w*|fuck\w*|crap|bullshit|ass)\b",
+    "symbol": r"\b(?:stands? for|symboli[sz]e[sd]?|a symbol of|the emblem of|"
+              r"(?:the|a|your|our) (?:mirror|mask|blindfold|mast|scales?|chain|cage|crown|"
+              r"white feather|golem|janus|caduceus) (?:of|for|we|you|they|that|everyone|"
+              r"nobody|every)\b)",
+    "confrontation": r"\byou (?:say|said|claim|tell yourself|swear|call it|preach)\b[^.?!]{0,120}?"
+                     r"\b(?:but|yet|and then|while) you\b|\bask yourself\b|\bbe honest\b|"
+                     r"\badmit it\b|\bso do you\b|\byou do (?:it|this|that) too\b|"
+                     r"\byou(?:'d| would) do the same\b|\blook in the mirror\b|\bsame as you\b",
 }
 _COMPILED = {k: re.compile(v, re.I if k not in ("first-person", "observer") else 0)
              for k, v in _RX.items()}
@@ -66,7 +82,8 @@ _LIST = re.compile(r"(?m)^\s*(?:[-*+]|\d{1,3}[.)])\s+\S")
 _SENT = re.compile(r"[^.!?\n]+(?:[.!?]+|$)")
 
 FEATURES = ("imagery", "forward-motion", "idea-runs", "observer", "first-person", "questions",
-            "reader", "contrarian", "jaded", "wonder", "defensive", "profanity")
+            "reader", "contrarian", "jaded", "wonder", "defensive", "profanity", "analogy",
+            "symbol", "confrontation")
 
 
 def _line(text, offset):
@@ -82,6 +99,10 @@ def measure(text):
         for m in rx.finditer(text):
             counts[key] += 1
             lines[key].append(_line(text, m.start()))
+    for hit in A.find(text):
+        if hit["verdict"] == "carries":
+            counts["analogy"] += 1
+            lines["analogy"].append(_line(text, hit["start"]))
     for m in _SENT.finditer(text):
         s = m.group(0)
         ws = X.words(s)

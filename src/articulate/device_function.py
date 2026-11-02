@@ -19,7 +19,9 @@ it, reads as `empty`. Every other device reads as `carries`, with the loads
 listed. The verdict is a reading for the author to judge, never an edit.
 
 Readers: the thirteen structural readers in articulate.devices, plus simile,
-metaphor and motif here. Motif is an image noun that returns in three or more
+metaphor and motif here, and analogy (articulate.analogy), which carries its
+own verdict: `carries` when it maps two or more parts or a relation across,
+`empty` when it is a bare stock comparison. Motif is an image noun that returns in three or more
 paragraphs. Rhythm is reported as the spread of sentence lengths. Irony and
 synecdoche depend on context these surface readers cannot see, so this module
 names them as unread. Standard library only.
@@ -28,17 +30,17 @@ from __future__ import annotations
 
 import re
 
-from . import devices
+from . import analogy, devices
 from . import devices_lex as X
 from . import imagery_lex as L
 from . import voice_features as vf
 from .devices_core import sentences
 
-FIGURES = ("simile", "metaphor", "motif")
+FIGURES = ("simile", "metaphor", "motif", "analogy")
 UNREAD = ("irony", "synecdoche")
 # The figures the empty reading is applied to in a check; the rest are named only.
 JUDGED = frozenset({"antithesis", "tricolon", "anaphora", "asyndeton", "chiasmus", "epizeuxis",
-                    "metaphor", "simile"})
+                    "metaphor", "simile", "analogy"})
 SCOPE = ("Names device shapes and reads the words inside them for an image, an anchor "
          "or a stance. The author decides whether each device earns its place.")
 
@@ -118,17 +120,26 @@ def _motifs(text, minimum=3):
             for w, starts in sorted(seen.items()) if len(starts) >= minimum]
 
 
+def _line(text, offset):
+    return text.count("\n", 0, offset) + 1
+
+
 def analyze(text):
     """Every device with its line, its verdict and the loads it carries."""
     sents = sentences(text)
-    found = devices.analyze(text)["findings"] + figures(text)
-    rows = []
+    analogies = analogy.find(text)
+    covered = {_line(text, a["start"]) for a in analogies}
+    found = devices.analyze(text)["findings"] + [
+        f for f in figures(text)
+        if not (f["device"] == "simile" and _line(text, f["start"]) in covered)]
+    rows = [dict(a, line=_line(text, a["start"])) for a in analogies]
     for f in sorted(found, key=lambda h: (h["start"], h["device"])):
         if f["device"] == "motif":
             verdict = {"verdict": "carries", "carries": ["image"], "stock": []}
         else:
             verdict = judge(_holding(sents, f["start"], len(f["snippet"])))
-        rows.append(dict(f, line=text.count("\n", 0, f["start"]) + 1, **verdict))
+        rows.append(dict(f, line=_line(text, f["start"]), **verdict))
+    rows.sort(key=lambda r: (r["start"], r["device"]))
     names = devices.DEVICES + FIGURES
     counts = {d: sum(1 for r in rows if r["device"] == d) for d in names}
     cv = vf.scalars(vf.measure(text))["sentence_len_cv"] if text.strip() else None

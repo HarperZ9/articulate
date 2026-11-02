@@ -26,5 +26,7 @@
   "note/clean.md": {"profile": "note", "expect": []},
   "note/long.md": {"profile": "note", "expect": ["note-length"]},
   "author-voice/flagged.md": {"profile": "author-voice", "expect": ["device-empty"]},
-  "author-voice/clean.md": {"profile": "author-voice", "expect": []}
+  "author-voice/clean.md": {"profile": "author-voice", "expect": []},
+  "publication/flagged.md": {"profile": "publication", "expect": ["analogy-untested"]},
+  "publication/clean.md": {"profile": "publication", "expect": []}
 }

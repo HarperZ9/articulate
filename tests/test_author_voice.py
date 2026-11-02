@@ -201,3 +201,103 @@ def test_voice_apply_takes_the_change_when_the_author_accepts_it(store):
     out = voice_apply.submit(FIRST, FLAT, plan["plan_id"], directory=store,
                              accept_register_change=True)
     assert out["text"] != FIRST and out["register"]["flattened"]
+
+
+# Analogy, symbol and confrontation (all sentences below are synthetic).
+
+MAPPED = ("A code review is like a pre-flight check: the reviewer is the co-pilot, the diff "
+          "is the checklist, and nobody takes off until both sign.")
+STOCK = "A code review is like a rollercoaster."
+LITERAL = "Build 2 runs in 2.1 seconds, like build 1 did on the same 75 files."
+
+
+def _analogies(text):
+    return [d for d in device_function.analyze(text)["devices"] if d["device"] == "analogy"]
+
+
+def test_the_same_analogy_frame_reads_by_the_structure_it_carries():
+    good, bad = _analogies(MAPPED), _analogies(STOCK)
+    assert good and good[0]["verdict"] == "carries" and good[0]["detail"] == "2 mapped parts"
+    assert bad and bad[0]["verdict"] == "empty" and bad[0]["stock"] == ["rollercoaster"]
+    assert not _empty(MAPPED)[1]
+    assert _empty(STOCK)[1] and "analogy" in _empty(STOCK)[1][0]["label"]
+
+
+def test_a_relation_carried_across_is_an_analogy_that_carries():
+    rows = _analogies("A token is to a server as a key is to a lock.")
+    assert rows and rows[0]["verdict"] == "carries"
+
+
+def test_a_literal_comparison_with_real_numbers_is_not_a_device():
+    rows = device_function.analyze(LITERAL)["devices"]
+    assert not [d for d in rows if d["device"] in ("analogy", "simile", "metaphor")]
+    assert not _empty(LITERAL)[1]
+
+
+def test_flattening_or_dropping_an_analogy_is_a_loss():
+    assert voice_register.measure(MAPPED)["counts"]["analogy"] == 1
+    assert "analogy" in voice_register.flattening(MAPPED, STOCK)["lost"]
+    assert "analogy" in voice_register.flattening(
+        MAPPED, "A code review needs two people to sign.")["lost"]
+    plan = host_edit.edit_plan(MAPPED, profile="author-voice")
+    flat = "A code review is like a rollercoaster, and nobody takes off until both sign."
+    out = host_edit.edit_submit(MAPPED, flat, plan["plan_id"])
+    assert out["text"] == MAPPED and "analogy" in out["register"]["lost"]
+
+
+CONFRONT = ("You say you read every log, but you skip the one that names you. Ask yourself "
+            "why. The scale of justice we all hold tips the same way every time.")
+
+
+def test_symbol_and_confrontation_are_measured_and_protected():
+    counts = voice_register.measure(CONFRONT)["counts"]
+    assert counts["confrontation"] >= 2 and counts["symbol"] >= 1
+    # The softened version keeps the scope words, so the meaning guard passes it
+    # and the register guard is what keeps the original.
+    soft = ("People read every log and skip the one that names them. We all hold opinions "
+            "that tip one way every time.")
+    report = voice_register.flattening(CONFRONT, soft)
+    assert {"confrontation", "symbol"} <= set(report["lost"])
+    plan = host_edit.edit_plan(CONFRONT, profile="author-voice")
+    out = host_edit.edit_submit(CONFRONT, soft, plan["plan_id"])
+    assert out["text"] == CONFRONT
+    assert {"confrontation", "symbol"} <= set(out["register"]["lost"])
+    assert any("flattened" in r for ref in out["refused"] for r in ref["reasons"])
+
+
+def test_plain_address_and_a_literal_mirror_are_not_confrontation_or_symbol():
+    counts = voice_register.measure("You said the build passed, and it did. "
+                                    "I fixed the mirror in the hall.")["counts"]
+    assert counts["confrontation"] == 0 and counts["symbol"] == 0
+
+
+def test_a_confrontation_cannot_carry_an_unsourced_statistic():
+    prof = domains.load_profile("author-voice")
+    made_up = CONFRONT + " Studies show 90% of you never open it."
+    r = checkext.check_text(made_up, profile=prof)
+    assert "claim-without-evidence" in [f["category"] for f in r["low"]]
+    r = checkext.check_text(CONFRONT, profile=prof)
+    assert "claim-without-evidence" not in [f["category"] for f in r["low"]]
+
+
+# Research and publication: an analogy that carries an argument points at a map.
+
+def _pub(text):
+    r = checkext.check_text(text, profile=domains.load_profile("publication"))
+    return r, [f for f in r["low"] if f["category"] == "analogy-untested"]
+
+
+def test_an_argument_by_analogy_with_no_map_gets_advice_not_a_block():
+    r, found = _pub(MAPPED)
+    assert found and r["gate"] == "ok"
+
+
+def test_an_analogy_that_points_at_its_map_gets_no_advice():
+    _r, found = _pub(MAPPED + " The map breaks when the diff runs past one screen.")
+    assert not found
+
+
+def test_a_stock_comparison_or_author_voice_gets_no_map_advice():
+    assert not _pub(STOCK)[1]
+    r = checkext.check_text(MAPPED, profile=domains.load_profile("author-voice"))
+    assert "analogy-untested" not in [f["category"] for f in r["low"]]

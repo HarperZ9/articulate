@@ -32,7 +32,8 @@ CHECK_SCHEMA = "articulate/voice-intent-check/v1"
 SCORE_MEANS = "Share of the spec's checks this draft meets. It does not check facts or authorship."
 TOOL = re.compile(r"`[^`\n]+`|\bpip install\b")
 # Register features a spec may want; articulate.voice_register counts them.
-REGISTER_WANTS = ("imagery", "forward-motion", "observer", "idea-runs")
+REGISTER_WANTS = ("imagery", "forward-motion", "observer", "idea-runs", "analogy", "symbol",
+                  "confrontation")
 
 
 def load_spec(ref):
@@ -98,7 +99,8 @@ def build_spec(goal, audience, stance, samples=(), *, base=None, name="custom", 
 def plan(spec):
     """The moves in writing order, then what to leave out, as plain sentences."""
     order = ("anchor", "imagery", "observer", "counter-view", "other-shoes", "what-if", "stance",
-             "turn", "forward-motion", "idea-runs", "tool", "reader-question")
+             "turn", "forward-motion", "idea-runs", "analogy", "symbol", "confrontation", "tool",
+             "reader-question")
     steps = [WORK_HOW[w] for w in order if spec.get("wants", {}).get(w)]
     leaning = sorted(spec.get("sources", {}).get("sample_tells", {}).items(), key=lambda kv: -kv[1])
     if leaning:

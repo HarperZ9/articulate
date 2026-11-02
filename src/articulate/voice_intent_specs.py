@@ -39,6 +39,10 @@ WORK_HOW = {
     "forward-motion": "Play the next move forward: say what comes next, before it comes.",
     "observer": "Say what you watched, as the one watching: I saw, I watched, here's what I saw.",
     "idea-runs": "Let a run of ideas run in one long sentence; keep it out of a tidy list.",
+    "analogy": "Carry the idea across with an analogy: map two parts, or a relation, onto "
+               "something the reader knows.",
+    "symbol": "Let one object stand for the idea, and keep it in view.",
+    "confrontation": "Hold the reader to their own contradiction: you say this, and you do that."
 }
 
 DEFAULT_LIMITS = {k: 0 for k in TELL_WHY}
@@ -88,7 +92,10 @@ ZAIN = {
 # antagonistic and contrarian; an everyman and an observer; wonder held beside a
 # jaded eye; polemic. From the author's own description of their process:
 # imagery-forward, playing the next moment forward, ideas that run like waves,
-# laying down the path while walking. Literary devices are tools in this voice
+# laying down the path while walking. The author speaks in analogies (author,
+# 2026-11-02: "I speak in analogies oftentimes as well"), with symbolic messaging
+# and confrontation that holds the reader to their own contradiction; all three
+# are protected register features. Literary devices are tools in this voice
 # (author, 2026-11-02: "Literary devices are important"), so the spec sets no
 # limit on anaphora, tricolon, antithesis or a closing line; the device report
 # (articulate.device_function) judges each one by the image, anchor or stance it
@@ -107,12 +114,14 @@ AUTHOR_VOICE = {
         "Concrete pictures before abstractions; a figure carries an image or it goes.",
         "Plays the next moment forward and says where it is heading.",
         "Runs of ideas stay runs; lists are for steps.",
+        "Speaks in analogies that map parts or a relation across; a stock comparison goes.",
+        "Symbols carry the message, and the reader is held to their own contradiction.",
         "Literary devices are tools: each one carries an image, an anchor or a stance.",
         "No hedges and no stock reveal; every claim points at something a reader can check.",
     ],
     "limits": {"hedge": 0, "reveal-setup": 0, "numbered-escalation": 0},
     "wants": {k: 1 for k in ("counter-view", "stance", "turn", "reader-question", "imagery",
-                             "observer", "forward-motion")},
+                             "observer", "forward-motion", "analogy")},
     # Every register feature; voice_register.guard keeps the original when a rewrite loses one.
     "protects": list(FEATURES),
     "ranges": {"sentence_len_cv": {"min": 0.4}},

@@ -6,8 +6,10 @@ articulate.pack_claims -- claims that point at their evidence (rule pack `claims
   claim-without-evidence (LOW)   a sentence makes a claim a reader would want
                                  to check (a superlative, a speed or accuracy
                                  figure, a guarantee, "proven", "secure",
-                                 "works with") and neither it nor the next
-                                 sentence points at the thing itself: a link, a
+                                 "works with", a statistic about people such
+                                 as "90% of you", "studies show") and neither
+                                 the rest of it nor the next sentence points
+                                 at the thing itself: a link, a
                                  command or path in code, a number with its
                                  unit or count, a named test or file, a figure.
 
@@ -41,7 +43,9 @@ CLAIM = re.compile(
     r"zero[- ](?:bugs|false positives|errors)|never (?:fails|breaks|misses|loses)|"
     r"always (?:works|catches|finds)|100\s*% (?:accurate|reliable|secure|of)|"
     r"works (?:with|on|in) (?:any|every|all)|state[- ]of[- ]the[- ]art|enterprise[- ]ready|"
-    r"production[- ]ready|battle[- ]tested|industry[- ]standard)\b")
+    r"production[- ]ready|battle[- ]tested|industry[- ]standard|"
+    r"\d+(?:\.\d+)?\s*%\s+of (?:you|people|users|developers|readers|everyone|us)|"
+    r"studies (?:show|prove)|research (?:shows|proves)|science says|everyone knows)\b")
 
 EVIDENCE = re.compile(
     r"https?://|\]\(|`[^`]+`|\b[\w./-]+\.(?:py|md|json|jsonl|txt|csv|html|yml|yaml|toml|png|svg)\b|"
@@ -61,9 +65,14 @@ def _sentences_with_raw(prose):
     return sents
 
 
-def _bound(sents, i, ahead):
+def _bound(sents, i, ahead, claim=""):
+    """True when the claim sentence or the next points at evidence. The claim's own
+    words are taken out first, so "90% of you" is not its own source."""
     for j in range(i, min(len(sents), i + 1 + ahead)):
-        if EVIDENCE.search(sents[j]["raw_text"]) or EVIDENCE.search(sents[j]["text"]):
+        raw, text = sents[j]["raw_text"], sents[j]["text"]
+        if j == i and claim:
+            raw, text = raw.replace(claim, " "), text.replace(claim, " ")
+        if EVIDENCE.search(raw) or EVIDENCE.search(text):
             return True
     return False
 
@@ -74,7 +83,7 @@ def _claims(prose, ahead):
     for i, s in enumerate(sents):
         m = CLAIM.search(s["text"])
         if m:
-            out.append((s, m, _bound(sents, i, ahead)))
+            out.append((s, m, _bound(sents, i, ahead, m.group(0))))
     return out
 
 

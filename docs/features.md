@@ -74,6 +74,8 @@ profile definitions. A receipt whose packs have since changed reads
   gate, with a stock opener and a stock closing offer promoted to the gate.
 - `author-voice`: your own first-person writing. The `narrative` profile, so
   no device gates, with em-dashes still reported.
+- `publication`: research and published findings. The `research` profile plus
+  claim evidence and advice on analogies, flavored gate.
 
 ### `product-copy`: what the tool does for the reader
 
@@ -108,15 +110,31 @@ One that carries none, or rests on a stock vehicle such as "journey" or
 "beacon", reads `empty`, and the check reports it as `device-empty` (LOW). Irony
 and synecdoche need context these readers cannot see, and the report says so.
 
+Analogy has its own reading. It `carries` when it maps two or more parts onto
+something the reader knows ("the reviewer is the co-pilot, the diff is the
+checklist") or carries a relation across ("a token is to a server as a key is
+to a lock"). A bare stock comparison ("like a rollercoaster") reads `empty`. A
+comparison inside one domain with real figures ("build 2 runs in 2.1 seconds,
+like build 1") is not read as a device.
+
 The register is measured by `articulate.voice_register`: imagery, forward
 motion, runs of ideas, the observer's "I saw", first person, questions,
-contrarian turns, jaded and wondering words, the defensive guard and plain
-profanity. An edit planned under this profile keeps the original text when the
+contrarian turns, jaded and wondering words, the defensive guard, plain
+profanity, analogies that carry structure, symbolic messaging ("the scale of
+justice we all hold") and confrontation that holds the reader to their own
+contradiction ("you say ..., but you ..."). An edit planned under this profile keeps the original text when the
 rewrite loses one of them, and `voice apply` does the same unless you pass
 `accept_register_change`. `articulate voice register DRAFT REWRITE` prints what
 a rewrite kept and lost. Claims are still checked against evidence. The
 built-in intent spec `author-voice` (`articulate voice check DRAFT --intent
 author-voice`) wants the same features and sets no limit on devices.
+
+### `publication`: analogies that point at a map
+
+- `analogy-untested` (LOW, advice): an analogy that carries the argument with no
+  pointer to a testable map in its sentence or the next. A pointer names what
+  corresponds to what, where the map breaks, what it predicts, or links to the
+  work that tests it. It never gates.
 
 ### `ux-microcopy`: UI strings
 
