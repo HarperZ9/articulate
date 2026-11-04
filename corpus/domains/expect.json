@@ -17,5 +17,16 @@
   "controlled-english/flagged.md": {"profile": "controlled-english",
     "expect": ["controlled-idiom", "controlled-multi-instruction", "controlled-phrasal-verb",
                "controlled-sentence-length", "controlled-vague-pronoun"]},
-  "controlled-english/clean.md": {"profile": "controlled-english", "expect": []}
+  "controlled-english/clean.md": {"profile": "controlled-english", "expect": []},
+  "product-copy/flagged.md": {"profile": "product-copy",
+    "expect": ["claim-without-evidence", "lead-author-framed", "mission-missing"]},
+  "product-copy/clean.md": {"profile": "product-copy", "expect": []},
+  "note/flagged.md": {"profile": "note",
+    "expect": ["note-closing-offer", "note-opener", "note-professional"]},
+  "note/clean.md": {"profile": "note", "expect": []},
+  "note/long.md": {"profile": "note", "expect": ["note-length"]},
+  "author-voice/flagged.md": {"profile": "author-voice", "expect": ["device-empty"]},
+  "author-voice/clean.md": {"profile": "author-voice", "expect": []},
+  "publication/flagged.md": {"profile": "publication", "expect": ["analogy-untested"]},
+  "publication/clean.md": {"profile": "publication", "expect": []}
 }

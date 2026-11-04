@@ -16,7 +16,7 @@ In apply the profile's aggregate sentences enter the host conversation, because
 the host model writes the rewrite. Sample text never does: the profile holds
 none.
 """
-from . import host_edit, voice, voice_identity, voice_store
+from . import host_edit, voice, voice_identity, voice_register, voice_store
 
 ATTEST = ("voice apply shapes only text that is yours; say so with --authored-by-me "
           "(authored_by_user: true over MCP)")
@@ -70,11 +70,20 @@ def check_bound_profile(text, plan_id, directory=None):
 
 
 def submit(text, rewrite, plan_id, *, directory=None, author_text=None,
-           author_text_origin=None, scores=None, model=None):
-    """Guarded result of a voice plan, with voice counts before and after."""
-    _, profile = check_bound_profile(text, plan_id, directory)
+           author_text_origin=None, scores=None, model=None, accept_register_change=False):
+    """Guarded result of a voice plan, with voice counts before and after.
+
+    The draft is the user's own, so the register guard runs: a rewrite that
+    loses a register feature keeps the original text unless the author passes
+    accept_register_change=True."""
+    settings, profile = check_bound_profile(text, plan_id, directory)
     out = host_edit.edit_submit(text, rewrite, plan_id, scores=scores, model=model,
                                 author_text=author_text, author_text_origin=author_text_origin)
+    if "register" not in out:
+        refused, quality = out["refused"], out["quality_status"]
+        out = voice_register.guard(text, out, lambda reason: host_edit._result(
+            text, text, settings, refused + [reason], "host", model, quality, scores,
+            author_text_origin, []), accept=accept_register_change)
     if profile is not None:
         out["voice"] = distances(text, out["text"], profile)
     return out

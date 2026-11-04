@@ -22,7 +22,7 @@ import hmac
 import json
 import re
 
-from . import checkext, detector, domains, edit_options, modes, profiles, prompts
+from . import checkext, detector, domains, edit_options, modes, profiles, prompts, voice_register
 from .meaning_guard import _PARAGRAPH, guard_rewrite, mask_text, protected_spans, restore_masks
 from .edit_notes import _blocking, judge_floor  # noqa: F401  (judge_floor is public here)
 from .phrase_pass import kept_edits as _kept_edits, phrase_pass as _phrase_pass
@@ -78,7 +78,9 @@ def _settings(mode, profile, goal, is_html, is_tex, author_text=None, voice=None
                 'author_text_sha256': _author_hash(author_text),
                 'voice_name': _voice_fields(voice)[0],
                 'voice_profile_sha256': _voice_fields(voice)[1]}
-    settings = edit_options.extend_settings(settings, allow_change, freeze_terms, PLAN_V3)
+    # A domain profile's own terms (author-voice, product-copy) are frozen in every plan.
+    freeze_terms = edit_options.parse_freeze(freeze_terms) + list(prof.get('freeze_terms', ()))
+    settings = edit_options.extend_settings(settings, allow_change, freeze_terms or None, PLAN_V3)
     # Normalize tuples to JSON lists so the digest is stable across processes.
     return json.loads(_canonical(settings))
 
@@ -242,8 +244,13 @@ def edit_submit(text, rewrite, plan_id, scores=None, model=None, author_text=Non
     if refused and quality == 'host_assessed_no_regression':
         quality = 'unassessed_after_guard'
     allowed = guarded.get('allowed_changes', []) if accepted != text else []
-    return _result(text, accepted, settings, refused, 'host', model, quality, scores,
-                   author_text_origin, allowed)
+    out = _result(text, accepted, settings, refused, 'host', model, quality, scores,
+                  author_text_origin, allowed)
+    if settings['profile'].get('domain') == 'author-voice':
+        out = voice_register.guard(text, out, lambda reason: _result(
+            text, text, settings, refused + [reason], 'host', model, quality, scores,
+            author_text_origin, []))
+    return out
 
 
 def deterministic_edit(text, mode=None, profile=None, goal='fix', is_html=False, is_tex=False,

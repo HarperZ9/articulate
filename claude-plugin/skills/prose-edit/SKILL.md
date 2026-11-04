@@ -54,7 +54,7 @@ checker output.
 
 ## Limits to state with the result
 
-A detector gate and protected-span guard do not prove semantic equivalence,
-quality, factual correctness or authorship. The plan token binds content and
+A detector gate and protected-span guard check words and protected spans only.
+Meaning, quality, factual correctness and authorship stay with the reader. The plan token binds content and
 settings through an integrity checksum. It provides no signature or proof of
 authority.

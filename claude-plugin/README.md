@@ -230,8 +230,9 @@ are listed, with no file paths. Paste that report into an issue.
 
 ## Limits
 
-- A protected-span guard and detector gate do not prove semantic equivalence,
-  quality or factual correctness. Inspect refused edits and review meaning.
+- A protected-span guard and detector gate check words and protected spans
+  only. Meaning, quality and factual correctness stay with you: inspect refused
+  edits and review meaning.
 - `texture_score` is a heuristic. It does not estimate the probability that a
   model wrote the text.
 - The house-voice brief is an instruction. Host models follow it unevenly, and

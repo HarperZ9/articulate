@@ -68,6 +68,73 @@ profile definitions. A receipt whose packs have since changed reads
   gate.
 - `rfc-keywords`: RFC 2119 and RFC 8174 keywords. The `normative-spec`
   profile, flavored gate.
+- `product-copy`: READMEs, release notes and listings. The `readme` profile,
+  flavored gate.
+- `note`: a personal note to someone you know. The `chat` profile, flavored
+  gate, with a stock opener and a stock closing offer promoted to the gate.
+- `author-voice`: your own first-person writing. The `narrative` profile, so
+  no device gates, with em-dashes still reported.
+- `publication`: research and published findings. The `research` profile plus
+  claim evidence and advice on analogies, flavored gate.
+
+### `product-copy`: what the tool does for the reader
+
+- `claim-without-evidence` (LOW): a claim a reader would want to check, such as
+  "10x faster than", "production-ready" or "secure by default", with no link,
+  code, file, figure or counted number in the same or the next sentence. The
+  label gives the document's coverage, for example "4 of 6 claim sentences here
+  point at evidence", so the share is read with its count.
+- `lead-author-framed` (MEDIUM): the first sentence talks from the maker's side
+  ("I built", "my tool") or opens on what the tool lacks.
+- `mission-missing` (LOW): 150 words or more and no stated mission.
+
+The profile keeps and freezes the author's own words for the tools: distill,
+essence, layers, weights, metamers, lens, boundary, signal, noise and "make
+truth cheap to check". For the share of a description spent on what a tool
+lacks, run `articulate negation`.
+
+### `note`: a note to someone you know
+
+- `note-opener` and `note-closing-offer` (MEDIUM, gating): "I hope this finds
+  you well", "let me know if you have any questions" and their kin.
+- `note-professional` (LOW): office words such as "regarding" and "kindly".
+- `note-length` (LOW): past the word budget, 120 by default.
+
+### `author-voice`: your own register, kept
+
+Literary devices are tools here. `articulate devices --function` names each
+one, adds simile, metaphor and motif, and reads the sentence for an image (a
+thing a reader can picture), an anchor (a number, a quote, a name, a file) or a
+stance (because, I think, I saw). A device that carries one reads `carries`.
+One that carries none, or rests on a stock vehicle such as "journey" or
+"beacon", reads `empty`, and the check reports it as `device-empty` (LOW). Irony
+and synecdoche need context these readers cannot see, and the report says so.
+
+Analogy has its own reading. It `carries` when it maps two or more parts onto
+something the reader knows ("the reviewer is the co-pilot, the diff is the
+checklist") or carries a relation across ("a token is to a server as a key is
+to a lock"). A bare stock comparison ("like a rollercoaster") reads `empty`. A
+comparison inside one domain with real figures ("build 2 runs in 2.1 seconds,
+like build 1") is not read as a device.
+
+The register is measured by `articulate.voice_register`: imagery, forward
+motion, runs of ideas, the observer's "I saw", first person, questions,
+contrarian turns, jaded and wondering words, the defensive guard, plain
+profanity, analogies that carry structure, symbolic messaging ("the scale of
+justice we all hold") and confrontation that holds the reader to their own
+contradiction ("you say ..., but you ..."). An edit planned under this profile keeps the original text when the
+rewrite loses one of them, and `voice apply` does the same unless you pass
+`accept_register_change`. `articulate voice register DRAFT REWRITE` prints what
+a rewrite kept and lost. Claims are still checked against evidence. The
+built-in intent spec `author-voice` (`articulate voice check DRAFT --intent
+author-voice`) wants the same features and sets no limit on devices.
+
+### `publication`: analogies that point at a map
+
+- `analogy-untested` (LOW, advice): an analogy that carries the argument with no
+  pointer to a testable map in its sentence or the next. A pointer names what
+  corresponds to what, where the map breaks, what it predicts, or links to the
+  work that tests it. It never gates.
 
 ### `ux-microcopy`: UI strings
 

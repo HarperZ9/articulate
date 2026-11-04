@@ -24,12 +24,16 @@ import re
 from . import detector
 from . import voice_devices as vd
 from . import voice_features as vf
+from . import voice_register
 from .voice_intent_specs import (BUILTIN, DEFAULT_LIMITS, DEFAULT_RANGES, GOAL_WANTS, SCHEMA,
                                  STANCE_WANTS, TELL_WHY, WORK_HOW)
 
 CHECK_SCHEMA = "articulate/voice-intent-check/v1"
 SCORE_MEANS = "Share of the spec's checks this draft meets. It does not check facts or authorship."
 TOOL = re.compile(r"`[^`\n]+`|\bpip install\b")
+# Register features a spec may want; articulate.voice_register counts them.
+REGISTER_WANTS = ("imagery", "forward-motion", "observer", "idea-runs", "analogy", "symbol",
+                  "confrontation")
 
 
 def load_spec(ref):
@@ -94,7 +98,8 @@ def build_spec(goal, audience, stance, samples=(), *, base=None, name="custom", 
 
 def plan(spec):
     """The moves in writing order, then what to leave out, as plain sentences."""
-    order = ("anchor", "counter-view", "other-shoes", "what-if", "stance", "turn", "tool",
+    order = ("anchor", "imagery", "observer", "counter-view", "other-shoes", "what-if", "stance",
+             "turn", "forward-motion", "idea-runs", "analogy", "symbol", "confrontation", "tool",
              "reader-question")
     steps = [WORK_HOW[w] for w in order if spec.get("wants", {}).get(w)]
     leaning = sorted(spec.get("sources", {}).get("sample_tells", {}).items(), key=lambda kv: -kv[1])
@@ -118,11 +123,16 @@ def measure(text, spec=None):
     tool_hits = [{"id": "tool", "line": n, "snippet": line.strip()[:90], "detail": ""}
                  for n, line in enumerate(text.splitlines(), 1)
                  if TOOL.search(line) or any(t in line.lower() for t in tools)]
-    counts = dict(dev["counts"], **{"house-devices": len(house_hits), "tool": len(tool_hits)})
+    reg = voice_register.measure(text)
+    reg_hits = [{"id": k, "line": n, "snippet": "", "detail": ""}
+                for k in REGISTER_WANTS for n in reg["lines"][k]]
+    counts = dict(dev["counts"], **{"house-devices": len(house_hits), "tool": len(tool_hits)},
+                  **{k: reg["counts"][k] for k in REGISTER_WANTS})
     values = {"sentence_len_cv": scal["sentence_len_cv"],
               "one_line_share": dev["one_line_share"]}
     return {"devices": dev, "counts": counts, "values": values,
-            "hits": dev["tells"] + dev["works"] + house_hits + tool_hits}
+            "hits": dev["tells"] + dev["works"] + house_hits + tool_hits + reg_hits,
+            "register": reg}
 
 
 def _check(kind, key, bound, value, hits, note):
