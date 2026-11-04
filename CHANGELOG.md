@@ -46,6 +46,12 @@ the work they do, and product copy and personal notes have checks of their own.
   used a domain profile read `Unverifiable` after this change, because the
   extension fingerprint covers the new packs.
 
+## 0.17.1
+
+Publishes the 0.17.0 changes to PyPI. The 0.17.0 release stopped before
+upload because CITATION.cff still named 0.16.0; the citation metadata now
+matches the package. No code changed.
+
 ## 0.17.0
 
 You can now see the rhetorical devices in a draft, hear the findings read
