@@ -6,6 +6,8 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+## 0.18.0
+
 Your own voice now has a profile that keeps it. Literary devices are read by
 the work they do, and product copy and personal notes have checks of their own.
 
