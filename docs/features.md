@@ -76,6 +76,25 @@ profile definitions. A receipt whose packs have since changed reads
   no device gates, with em-dashes still reported.
 - `publication`: research and published findings. The `research` profile plus
   claim evidence and advice on analogies, flavored gate.
+- `outbound`: text about to leave your machine, such as a message, a post or
+  a pasted report. The `chat` profile, flavored gate, with e-mail addresses
+  and local paths promoted to the gate.
+
+### `outbound` and the `privacy` pack: personal details before text leaves
+
+- `private-email` (MEDIUM): an e-mail address. Reserved example domains
+  (`example.com`, `.test`, `.invalid`, `.localhost`) and no-reply addresses
+  are left alone.
+- `local-path` (MEDIUM): a path on one computer, such as a Windows drive path,
+  a home folder under `/Users` or `/home`, or a network share. It shows the
+  machine's layout and often the account name.
+
+The pack reads the whole text, code blocks and inline code included, because a
+path in a code block leaves with the text too. `outbound` gates on both
+categories. `note`, `product-copy` and `publication` run the pack and report
+without gating, since a contact address there can be deliberate. The patterns
+are closed: an address with its @ spelled out, or a path written another way,
+is not caught. Run `articulate check --profile outbound FILE` before you send.
 
 ### `product-copy`: what the tool does for the reader
 

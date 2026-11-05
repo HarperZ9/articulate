@@ -22,7 +22,7 @@ def _cats(result, tier=None):
 
 
 def test_every_domain_profile_names_its_base_and_packs():
-    assert domains.names() == ["author-voice", "code-review", "controlled-english", "note",
+    assert domains.names() == ["author-voice", "code-review", "controlled-english", "note", "outbound",
                                "plain-language", "product-copy", "publication", "rfc-keywords",
                                "ux-microcopy"]
     for name in domains.names():
@@ -150,5 +150,5 @@ def test_edit_plan_binds_the_domain_profile_and_its_findings():
 def test_bench_runs_the_domain_corpus(capsys):
     misses = bench.main([os.path.join(ROOT, "corpus")])
     out = capsys.readouterr().out
-    assert "[bench-domains] samples 20, mismatches 0" in out
+    assert "[bench-domains] samples 22, mismatches 0" in out
     assert misses == 0
