@@ -67,7 +67,9 @@ settings file; the `articulate` command line comes with the PyPI package
   (`.md`, `.mdx`, `.markdown`, `.txt`, `.rst`, `.adoc`, `.tex`). When the edit
   carries the text before and after, it names numbers, links, quotes,
   citations, modals, scope words, negations and names that the edit dropped,
-  added or changed. It also lists style findings in the new text. The model
+  added or changed. It also lists style findings in the new text, leaving out
+  words inside quotation marks and block quotes, which belong to the person
+  quoted (`ARTICULATE_EDIT_HOOK_QUOTES=check` checks them too). The model
   gets this as context on its next step. The hook never blocks an edit, and
   `ARTICULATE_EDIT_HOOK=off` turns it off. Codex runs a plugin hook only after
   you review and trust it.
@@ -168,7 +170,7 @@ Claude Code's events also carry the session ID, the path of the conversation tra
 
 **Files it writes.** None. Only the separate Articulate command line writes the settings file and the voice store, and this plugin does not include that command line. The `-B` flag keeps Python from writing bytecode into the plugin folder.
 
-**Environment variables and credentials.** The server reads `ARTICULATE_MCP_TOOLS` and `ARTICULATE_LOCAL_ONLY`, which the plugin sets itself. The hooks and tools read `ARTICULATE_HOUSE_VOICE` (`off`, `on`, `brief`, `default` or `revise`), the tuning keys `ARTICULATE_HOUSE_LENGTH`, `ARTICULATE_HOUSE_END_LINE`, `ARTICULATE_HOUSE_HEADINGS`, `ARTICULATE_HOUSE_LISTS`, `ARTICULATE_HOUSE_LIMITS` and `ARTICULATE_HOUSE_FIRST_PERSON`, `ARTICULATE_CONFIG_DIR` with `APPDATA` or `XDG_CONFIG_HOME`, and `ARTICULATE_VOICE_DIR` with `LOCALAPPDATA` or `XDG_DATA_HOME`. The edit hook reads `ARTICULATE_EDIT_HOOK`; set it to `off` to turn that hook off. Python reads your home folder location when a folder variable is unset. None of these is a credential, and the plugin reads no credential. The `-I` flag also makes Python ignore its own `PYTHON*` variables.
+**Environment variables and credentials.** The server reads `ARTICULATE_MCP_TOOLS` and `ARTICULATE_LOCAL_ONLY`, which the plugin sets itself. The hooks and tools read `ARTICULATE_HOUSE_VOICE` (`off`, `on`, `brief`, `default` or `revise`), the tuning keys `ARTICULATE_HOUSE_LENGTH`, `ARTICULATE_HOUSE_END_LINE`, `ARTICULATE_HOUSE_HEADINGS`, `ARTICULATE_HOUSE_LISTS`, `ARTICULATE_HOUSE_LIMITS` and `ARTICULATE_HOUSE_FIRST_PERSON`, `ARTICULATE_CONFIG_DIR` with `APPDATA` or `XDG_CONFIG_HOME`, and `ARTICULATE_VOICE_DIR` with `LOCALAPPDATA` or `XDG_DATA_HOME`. The edit hook reads `ARTICULATE_EDIT_HOOK`; set it to `off` to turn that hook off. It also reads `ARTICULATE_EDIT_HOOK_QUOTES`; set it to `check` to check quoted words. Python reads your home folder location when a folder variable is unset. None of these is a credential, and the plugin reads no credential. The `-I` flag also makes Python ignore its own `PYTHON*` variables.
 
 **Data collected.** The plugin reads the text the calling host passes to one of its tools, the events the host passes to its hooks (a session start, a file edit, and the end of a reply, which holds Claude's last reply), its own house-voice spec, and your house-voice settings file. When you name a voice profile in `voice_compare`, `voice_apply_plan` or `interview`, it reads that one profile and the store's `identity.json` from the local voice store. It does not open your other files, the conversation transcript or saved memory. The Stop hook receives Claude's last reply in its event and reads it only in mode `revise`. It collects no account details, usage statistics or telemetry.
 

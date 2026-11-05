@@ -149,6 +149,13 @@ it cannot read; a read failure goes to standard error. It always exits 0, so it
 never blocks an edit. A Claude Code `Write` and a Codex added file carry no
 before text, so they get the style check only.
 
+The style check leaves out words inside double quotation marks, curly
+quotation marks and Markdown block quotes. Those words belong to the person
+quoted, so a finding there is no edit the model should make. The hook says how
+many findings it left out. Set `ARTICULATE_EDIT_HOOK_QUOTES=check` to check
+quoted words too. Straight single quotes are still checked, because an
+apostrophe would open a false quote.
+
 The hook does not open the edited file. It reads the event, which already holds
 the text the model wrote. Codex skips plugin hooks until you review and trust
 them. Set `ARTICULATE_EDIT_HOOK=off` to turn the hook off in either host.
