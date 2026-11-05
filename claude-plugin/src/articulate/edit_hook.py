@@ -7,7 +7,9 @@ kinds of advisory context to the model:
 - preservation: when the event carries the text before and after an edit, the
   meaning comparison names numbers, links, quotes, citations, modals, scope
   words, negations and names that the edit dropped, added or changed;
-- style: the detector's HIGH and MEDIUM findings in the new text.
+- style: the detector's HIGH and MEDIUM findings in the new text. Words inside
+  quotation marks and Markdown block quotes belong to the person quoted, so the
+  style check skips them and says how many findings it left out.
 
 It reads only the event on stdin. It opens no file, starts no program, opens no
 network connection and writes nothing but its answer on stdout. It never blocks
@@ -15,14 +17,15 @@ the edit: the exit status is always 0, and an event it cannot use produces no
 output. A finding is advice to the model. It does not prove that meaning changed
 or that the edit is wrong; a change the user asked for is expected to show up.
 
-Set ARTICULATE_EDIT_HOOK=off in the environment to turn the hook off.
+Set ARTICULATE_EDIT_HOOK=off in the environment to turn the hook off. Set
+ARTICULATE_EDIT_HOOK_QUOTES=check to check quoted words as well.
 """
 import json
 import os
 import re
 import sys
 
-from . import checkext, meaning
+from . import checkext, masking, meaning
 
 PROSE_SUFFIXES = frozenset((".md", ".markdown", ".mdx", ".txt", ".text", ".rst",
                             ".adoc", ".asciidoc", ".tex"))
@@ -38,6 +41,7 @@ MAX_CONTEXT_CHARS = 6000
 EVENT = "PostToolUse"
 _PATCH_FILE = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+?)\s*$")
 _PATCH_MOVE = re.compile(r"^\*\*\* Move to: (.+?)\s*$")
+_BLOCK_QUOTE = re.compile(r"^([ \t]{0,3}(?:>[ \t]?)+)(.*?)(\r?\n)?$", re.S)
 ADVICE_NOTE = ("These notes are advice from a word-level comparison. A change the user "
                   "asked for will appear here too.")
 
@@ -136,12 +140,57 @@ def preservation_notes(old, new, is_tex=False):
         ["and %d more" % (len(rows) - MAX_PRESERVATION)] if len(rows) > MAX_PRESERVATION else [])
 
 
+def _mask_line(line):
+    """One line with quoted words blanked to spaces of the same length.
+
+    A Markdown block quote keeps its ">" markers and loses its text. Elsewhere the
+    detector's own quote mask blanks double-quoted and curly-quoted spans.
+    Straight single quotes stay, because an apostrophe would open a false span.
+    Lengths never change, so line numbers and offsets still point at the text.
+    """
+    block = _BLOCK_QUOTE.match(line)
+    if block and block.group(1).strip():
+        marks, body, end = block.group(1), block.group(2), block.group(3) or ""
+        return marks + " " * len(body) + end
+    return masking.mask_quoted(line)
+
+
+def mask_quotations(text):
+    """The text with every quotation blanked, line by line, at the same length."""
+    return "".join(_mask_line(line) for line in text.splitlines(keepends=True))
+
+
+def quotes_checked():
+    return os.environ.get("ARTICULATE_EDIT_HOOK_QUOTES", "").strip().lower() == "check"
+
+
+def _hits(text):
+    result = checkext.check_text(text)
+    return sorted(result["high"] + result["medium"], key=lambda h: h["start"])
+
+
+def _inside_count(new, masked):
+    """How many findings in the unmasked text start on a blanked character."""
+    return sum(1 for h in _hits(new)
+               if h["start"] < len(masked) and masked[h["start"]] != new[h["start"]])
+
+
 def style_notes(new):
-    result = checkext.check_text(new)
-    hits = sorted(result["high"] + result["medium"], key=lambda h: h["start"])
-    notes = [clip("L%d %s %r" % (h["line"], h["label"], h["match"])) for h in hits[:MAX_STYLE]]
+    """Style findings in the new text, quoted words left out unless asked for."""
+    if quotes_checked():
+        hits, skipped = _hits(new), 0
+    else:
+        masked = mask_quotations(new)
+        hits = _hits(masked)
+        skipped = _inside_count(new, masked) if masked != new else 0
+    # A finding's match is read from the original text, so a quote mark that
+    # sits next to a finding is shown as written.
+    notes = [clip("L%d %s %r" % (h["line"], h["label"], new[h["start"]:h["end"]]))
+             for h in hits[:MAX_STYLE]]
     if len(hits) > MAX_STYLE:
         notes.append("and %d more" % (len(hits) - MAX_STYLE))
+    if skipped:
+        notes.append("%d inside quotation marks or block quotes left out" % skipped)
     return notes
 
 

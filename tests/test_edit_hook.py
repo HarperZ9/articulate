@@ -275,3 +275,50 @@ def test_clip_keeps_short_notes_and_counts_what_it_cuts():
     assert edit_hook.clip("short") == "short"
     clipped = edit_hook.clip("x" * 300, limit=100)
     assert clipped == "x" * 100 + "... (200 more characters)"
+
+
+QUOTED_WRITE = ('The author said "we showcased the build and it was a delve into craft" '
+                "on the call.\n> We showcased it to delve deeper.\n")
+
+
+def _write(content, path="/w/docs/notes.md"):
+    return _event("Write", {"file_path": path, "content": content})
+
+
+def test_words_inside_quotation_marks_and_block_quotes_are_left_out():
+    code, out, _ = _run(_write(QUOTED_WRITE))
+    assert code == 0
+    text = _context(out)
+    assert "showcased" not in text and "delve" not in text
+    assert "inside quotation marks or block quotes left out" in text
+
+
+def test_the_same_words_outside_quotes_are_still_named():
+    # Control: the quote mask must not hide the author's own sentences.
+    unquoted = QUOTED_WRITE.replace('"', "").replace("> ", "")
+    text = _context(_run(_write(unquoted))[1])
+    assert "showcased" in text or "delve" in text
+    assert "left out" not in text
+
+
+def test_a_clean_file_with_quotes_says_nothing():
+    code, out, _ = _run(_write('She said "see you at noon" and left.\n'))
+    assert code == 0 and out == ""
+
+
+def test_quoted_words_are_checked_when_the_switch_asks_for_it():
+    text = _context(_run(_write(QUOTED_WRITE), {"ARTICULATE_EDIT_HOOK_QUOTES": "check"})[1])
+    assert "showcased" in text or "delve" in text
+    assert "left out" not in text
+
+
+@pytest.mark.parametrize("line, kept", [
+    ('He said "showcased" twice.\n', "He said " + " " * 11 + " twice.\n"),
+    ("“delve” here\r\n", "        here\r\n"),
+    ("> > quoted words\n", "> >             \n"),
+    ("it's Bob's 'word'\n", "it's Bob's 'word'\n"),
+    ("a > b is not a quote\n", "a > b is not a quote\n"),
+])
+def test_mask_quotations_keeps_length_and_line_endings(line, kept):
+    masked = edit_hook.mask_quotations(line)
+    assert masked == kept and len(masked) == len(line)

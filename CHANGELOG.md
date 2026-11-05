@@ -42,6 +42,11 @@ the work they do, and product copy and personal notes have checks of their own.
   every edit plan made under the profile.
 - The edit limit lines in the plugin skill, the plugin README and the hosted
   `edit_submit` description now state their scope plainly.
+- The edit hook leaves quoted words out of its style findings. Words inside
+  double or curly quotation marks and Markdown block quotes belong to the
+  person quoted, so the hook no longer asks the model to fix them, and it says
+  how many findings it left out. `ARTICULATE_EDIT_HOOK_QUOTES=check` checks
+  them again. The detector itself is unchanged.
 - The detector, its ruleset and its fingerprint are unchanged. Receipts that
   used a domain profile read `Unverifiable` after this change, because the
   extension fingerprint covers the new packs.
