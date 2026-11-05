@@ -68,17 +68,20 @@ DOMAINS = {
                      "register": None, "rule_packs": ("bcp14",)},
     "product-copy": {"base": "readme", "slop": "flavored", "keep": AUTHOR_TERMS,
                      "register": ("product", "user", "listing"),
-                     "rule_packs": ("claims", "product-copy"), "freeze": AUTHOR_TERMS},
+                     "rule_packs": ("claims", "product-copy", "privacy"), "freeze": AUTHOR_TERMS},
     "note": {"base": "chat", "slop": "flavored", "keep": (),
              "register": ("personal", "someone-you-know", "note"),
-             "rule_packs": ("note",), "gate_promote": ("note-opener", "note-closing-offer")},
+             "rule_packs": ("note", "privacy"), "gate_promote": ("note-opener", "note-closing-offer")},
     "author-voice": {"base": "narrative", "slop": "off", "keep": AUTHOR_TERMS,
                      "register": ("first-person", "reader", "author-voice"),
                      "rule_packs": ("claims", "literary-devices"), "no_em_dash": True,
                      "freeze": AUTHOR_TERMS},
     "publication": {"base": "research", "slop": "flavored", "keep": (),
                     "register": ("findings", "public", "publication"),
-                    "rule_packs": ("claims", "analogy-map")},
+                    "rule_packs": ("claims", "analogy-map", "privacy")},
+    "outbound": {"base": "chat", "slop": "flavored", "keep": (),
+                 "register": ("outbound", "recipient", "message"),
+                 "rule_packs": ("privacy",), "gate_promote": ("private-email", "local-path")},
 }
 
 

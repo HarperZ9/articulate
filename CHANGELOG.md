@@ -47,6 +47,12 @@ the work they do, and product copy and personal notes have checks of their own.
   person quoted, so the hook no longer asks the model to fix them, and it says
   how many findings it left out. `ARTICULATE_EDIT_HOOK_QUOTES=check` checks
   them again. The detector itself is unchanged.
+- New domain profile `outbound` and rule pack `privacy`, for text about to
+  leave your machine. `private-email` (MEDIUM) names an e-mail address and
+  `local-path` (MEDIUM) names a Windows drive path, a home folder or a network
+  share, code blocks included. `outbound` gates on both. `note`,
+  `product-copy` and `publication` report them without gating. Reserved
+  example domains and no-reply addresses are left alone.
 - The detector, its ruleset and its fingerprint are unchanged. Receipts that
   used a domain profile read `Unverifiable` after this change, because the
   extension fingerprint covers the new packs.
