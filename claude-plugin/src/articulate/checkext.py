@@ -5,9 +5,12 @@ switches on rules outside the detector (domain rule packs, project
 terminology), it scans for them with articulate.rules_ext, adds the findings
 by tier, and recomputes clean, gate, blocking_count and verdict with the same
 logic the detector uses: GATE_TIERS for the profile's slop, gate_promote, and
-MIN_WORDS_FOR_VERDICT. These findings never feed the texture score. With no
-such rules the detector's result is returned as it is, so output stays
-byte-identical.
+MIN_WORDS_FOR_VERDICT. These findings never feed the texture score, which
+stays the pinned detector's figure. A result that ran rule packs or project
+terminology therefore carries `pack_findings`, the count of those findings by
+tier, so a texture score of 0 is never the only figure beside a blocked gate.
+With no such rules the detector's result is returned as it is, so output
+stays byte-identical.
 
 `analyze_blocks` gives the per-paragraph view under the same rules.
 
@@ -47,6 +50,13 @@ def _regate(result, profile):
     result.update(clean=n_dev == 0, gate="blocked" if blocking else "ok",
                   blocking_count=blocking, verdict=verdict)
     return result
+
+
+def pack_findings(result):
+    """{"high", "medium", "low"} counts of the findings that came from rule
+    packs and project terminology. None of them is in the texture score."""
+    outside = rules_ext.categories() | {"terminology"}
+    return {key: sum(1 for f in result[key] if f["category"] in outside) for key, _t in _TIERS}
 
 
 def _version(structure):
@@ -93,6 +103,8 @@ def _run(text, work, profile, allow, structure, known=None, calib=True):
             prose = list(rules_ext.prose_lines(work.splitlines(keepends=True)))
             result["cadence"] = dict(result["cadence"], **pack_structure.cadence(prose))
     result = _calibrate(result, work, profile, calib)
+    if rules_ext.active(profile):
+        result["pack_findings"] = pack_findings(result)
     return mdstructure.restore(result, text, work)
 
 
@@ -146,4 +158,6 @@ def analyze_blocks(text, *, profile=None, allow=(), structure=True, calibration=
             "high": r["high"], "medium": r["medium"], "low": r["low"],
             "snippet": text[b["start"]:b["end"]].strip()[:100],
         })
+        if "pack_findings" in r:
+            out[-1]["pack_findings"] = r["pack_findings"]
     return out
