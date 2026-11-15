@@ -33,6 +33,8 @@ student improve a draft, and use other evidence to judge who wrote an essay.
   blind speaker attribution and the CI gate for game and stage scripts.
 - [Devices](devices.md): `articulate devices`, thirteen rhetorical devices with
   held-out rates, the spoken view and graded survival in the change report.
+- [Structure rules](structure-rules.md): the `chat` profile's paragraph-level
+  rules, how a sentence frame is compared, and the measured rates.
 - [Calibration](calibration.md): the measured layer after the pinned detector,
   and why the intensifier rule no longer blocks.
 - [Campaign signals](campaign.md): `articulate campaign`, promotional-template
