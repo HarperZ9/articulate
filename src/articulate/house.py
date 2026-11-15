@@ -46,8 +46,13 @@ def human_claims(text):
     return notes
 
 
+# The house voice is a model's speech in conversation, so its notes come from
+# the default rules plus the structure pack that the chat profile carries.
+_NOTE_PROFILE = {"rule_packs": ("structure",)}
+
+
 def style_notes(text, tiers=("high", "medium")):
-    result = checkext.check_text(text)
+    result = checkext.check_text(text, profile=dict(_NOTE_PROFILE))
     return [{"category": "style/" + str(f.get("category")), "line": f["line"],
              "match": f["match"][:80], "reason": f["label"], "tier": tier}
             for tier in tiers for f in result[tier]]

@@ -209,3 +209,38 @@ def test_lists_headings_quotes_and_code_are_not_paragraphs():
             "> Keys open doors. Keys rust in rain. Keys get lost.\n\n"
             "```\nKeys open doors. Keys rust in rain. Keys get lost.\n```\n")
     assert structure(text) == []
+
+
+# --- the MCP check and score tools take a profile ---------------------------
+
+def test_mcp_check_reaches_the_structure_rules_through_a_profile():
+    from articulate import local_mcp, mcp_server
+    plain = mcp_server.do_check(SPECIMEN_B)
+    assert plain["clean"] and "profile" not in plain          # the 2026-11-15 result, unchanged
+    chat = mcp_server.do_check(SPECIMEN_B, None, "chat")
+    assert chat["verdict"] == "flagged" and chat["gate"] == "blocked" and chat["profile"] == "chat"
+    assert {h["category"] for h in chat["hits"]} >= {
+        "structure-anaphora", "structure-parallel", "structure-triad", "structure-pin",
+        "structure-parataxis", "structure-landing"}
+    assert chat["cadence"]["repeated_openers_in_a_row"] is True
+    assert mcp_server.do_score(SPECIMEN_B, "chat")["hard_hits"] == len(chat["hits"])
+    for tool in local_mcp.TOOLS[:2]:
+        assert tool["name"] in ("check", "score")
+        assert tool["inputSchema"]["properties"]["profile"]["type"] == "string"
+    called = local_mcp._call({"name": "check", "arguments": {"text": SPECIMEN_B, "profile": "chat"}})
+    assert not called.get("isError") and '"gate":"blocked"' in called["content"][0]["text"]
+
+
+def test_mcp_check_names_an_unknown_profile():
+    from articulate import local_mcp
+    called = local_mcp._call({"name": "check", "arguments": {"text": "x", "profile": "nope"}})
+    assert called["isError"] and "unknown profile" in called["content"][0]["text"]
+
+
+def test_house_notes_carry_the_structure_rules():
+    from articulate import house
+    notes = {n["category"] for n in house.style_notes(SPECIMEN_B)}
+    assert {"style/structure-anaphora", "style/structure-pin", "style/structure-landing"} <= notes
+    assert house.style_notes(COUNTERPART) == []
+    revise = {n["category"] for n in house.revision_findings(SPECIMEN_B)}
+    assert "style/structure-triad" in revise
