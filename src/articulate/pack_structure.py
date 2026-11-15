@@ -52,9 +52,9 @@ def scan(text, prose, opts, make):
             for detect in detectors:
                 for tier, items in detect(unit, text, make).items():
                     for f in items:
-                        # A wrapped line under a marker is read both ways. The item
-                        # reading knows where the item ends, so it is the one kept.
-                        key = (f["category"], f["line"], f["end"])
+                        # One span is reported once for a category, whichever
+                        # reading reached it first.
+                        key = (f["category"], f["start"], f["end"])
                         if key not in seen:
                             seen.add(key)
                             found[tier].append(f)

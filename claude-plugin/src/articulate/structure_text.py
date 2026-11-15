@@ -12,6 +12,9 @@ checkbox blanked, for the rules that judge one sentence by its place (pin,
 pointer, landing). The run rules never read a list: three items that open on
 one word are a list doing its job.
 
+A quoted span is a mention, so a full stop inside one ends no sentence: the
+quoted line stays inside the sentence that quotes it.
+
 `shape` turns a sentence into a token-shape signature with no parser: a
 function word stays as itself, a quoted span becomes Q, a number becomes #,
 and every other word becomes its ending class (s, ed, ing, ly) or a blank.
@@ -79,11 +82,21 @@ def opener(text, count=1):
     return tuple(w.lower() for w in words[:count])
 
 
+def _runs_on(joined, m):
+    """True when a full stop sits inside a closing quote or bracket and the
+    sentence runs on in lower case, as in: the line ("That is all.") stays."""
+    rest = joined[m.end():].lstrip()
+    return m.group()[-1] in "\"')]”’" and rest[:1].islower()
+
+
 def _split(joined, base):
     """Sentence records for one paragraph's text; `base` is its absolute offset."""
     out, pos = [], 0
+    quoted = [q.span() for q in _QUOTED.finditer(joined)]
     ends = [m for m in _END.finditer(joined)
-            if not _ABBREV.search(joined[max(0, m.start() - 8):m.start() + 1])]
+            if not _ABBREV.search(joined[max(0, m.start() - 8):m.start() + 1])
+            and not _runs_on(joined, m)
+            and not any(a < m.start() and m.end() < b for a, b in quoted)]
     for m in ends + [None]:
         end = m.end() if m else len(joined)
         chunk = joined[pos:end]
@@ -103,17 +116,24 @@ def _split(joined, base):
 
 def _groups(prose):
     """Runs of contiguous prose lines that form one paragraph. A structure line
-    (heading, list item, quote, table row) or a gap in the offsets closes a run."""
-    group, expect = [], None
+    (heading, list item, quote, table row) or a gap in the offsets closes a run.
+    The wrapped lines under a list marker belong to the item: `list_items` reads
+    them, and here they are skipped, so a line fragment is never a paragraph."""
+    group, expect, item_next = [], None, None
     for rec in prose:
         _line, off, raw, masked = rec
         blank = not masked.strip()
-        if blank or pack_util._BLOCK.match(masked) or (expect is not None and off != expect):
+        block = bool(pack_util._BLOCK.match(masked))
+        marker = bool(_ITEM.match(masked))
+        wrapped = not blank and not block and not marker and off == item_next
+        item_next = off + len(raw) if marker or wrapped else None
+        skip = blank or block or marker or wrapped
+        if skip or (expect is not None and off != expect):
             if group:
                 yield group
             group = []
             expect = None
-            if blank or pack_util._BLOCK.match(masked):
+            if skip:
                 continue
         group.append(rec)
         expect = off + len(raw)

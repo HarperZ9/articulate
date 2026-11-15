@@ -49,16 +49,22 @@ These rules report what the line checker passed.
   holds that.
 - The pin, pointer and landing rules read a list item as a short paragraph. A
   hand-back that closes a bullet ("That one is your call.") is a landing
-  sentence. The run rules stay out of lists.
+  sentence. The run rules stay out of lists, and the wrapped lines under a
+  list marker are read with their item, where they used to be read as a
+  paragraph of fragments.
 - `structure-landing/handback` (MEDIUM) reports a hand-back before the end of a
   paragraph. A long sentence that ends within four words of the hand-back
   counts as one. "Their decision was final." no longer matches: the possessive
-  form needs "is", "was" or the end of the sentence.
+  form needs "is", "was" or the end of the sentence. A hand-back inside
+  quotation marks is a mention and raises nothing.
+- A quoted span stays inside the sentence that quotes it: a full stop inside
+  quotation marks ends no sentence, and neither does one inside a closing
+  bracket when the text runs on in lower case.
 - `structure-anaphora/pronoun-run` (MEDIUM): exactly three sentences in a row
   that open on one personal pronoun report and do not gate, and an opener alone
   makes them no triad. This was the largest source of HIGH findings on human
   prose, and none of 52 sampled replies held one. HIGH findings fell from 14.7
-  to 4.9 per 1,000 sentences on the human corpus and from 9.6 to 7.6 on four
+  to 5.1 per 1,000 sentences on the human corpus and from 9.6 to 7.6 on four
   books. Four or more in a row still gate.
 - `articulate check` prints where a structure finding starts and ends
   (`L1:85-L1:207`) and the first and last words of its span. It used to print

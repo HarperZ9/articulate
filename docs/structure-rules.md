@@ -52,14 +52,14 @@ On 2026-11-15 a reply passed `check` with a texture score of 0. Its reader then 
 | `structure-pointer/meta` | HIGH | A sentence that points at another sentence and rates it: "His last sentence is the useful part." | Say what that sentence says |
 | `structure-pointer/beat` | MEDIUM | A beat of 6 words or fewer that labels the point before it: "That is the silo." | Cut it or make the point in the sentence itself |
 | `structure-landing/handoff` | HIGH | The last sentence of a paragraph or a list item hands the next step back: "... is up to you.", "... is yours to write.", "That one is your call." The sentence has 16 words or fewer, or ends within 4 words of the hand-back | Say what you need from the reader, or stop a sentence earlier |
-| `structure-landing/handback` | MEDIUM | The same hand-back before the end of a paragraph | Say once what you need from the reader |
+| `structure-landing/handback` | MEDIUM | The same hand-back before the end of a paragraph. A hand-back inside quotation marks is a mention and raises nothing | Say once what you need from the reader |
 | `structure-landing/closer` | MEDIUM | A paragraph of four or more sentences ends on one clause of 12 words or fewer | Join it to the sentence it restates, or cut it |
 
 A finding spans the whole run, across wrapped lines when the run wraps. Under `chat` the HIGH findings gate.
 
 ### List items
 
-The pin, pointer and landing rules read a list item as a short paragraph: the marker line and the wrapped lines under it. A one-sentence item counts as its own close, so "- Whether to relicense it is your call." is a landing sentence. A bold lead-in such as `**Listing.**` is a label and is skipped. An item that opens "This is the default." is content, so the beat form of the pointer rule needs a sentence before it in the same item.
+The pin, pointer and landing rules read a list item as a short paragraph: the marker line and the wrapped lines under it. Those wrapped lines belong to the item, so no rule reads one of them as a paragraph of its own. A one-sentence item counts as its own close, so "- Whether to relicense it is your call." is a landing sentence. A bold lead-in such as `**Listing.**` is a label and is skipped. An item that opens "This is the default." is content, so the beat form of the pointer rule needs a sentence before it in the same item.
 
 The anaphora, parallel, triad and parataxis rules stay out of lists. Three items that open on one word are a list doing its job.
 
@@ -94,13 +94,13 @@ The counts below come from one run of version 0.19.0 on 2026-11-15. Rates are fi
 | --- | --- | --- | --- | --- |
 | Specimen B, the reply that passed | 24 | 8 | 4 | 1 of 1 |
 | The accepted counterpart | 7 | 0 | 0 | 0 of 1 |
-| 52 replies by the same session on the same day | 681 | 22 (32.3) | 28 (41.1) | 12 of 52 |
-| 18 human texts in `corpus/provenance/human` | 204 | 1 (4.9) | 2 (9.8) | 1 of 18 |
-| Running prose from four public-domain books | 3,973 | 30 (7.6) | 38 (9.6) | 4 of 4 |
+| 52 replies by the same session on the same day | 677 | 21 (31.0) | 28 (41.4) | 11 of 52 |
+| 18 human texts in `corpus/provenance/human` | 198 | 1 (5.1) | 2 (10.1) | 1 of 18 |
+| Running prose from four public-domain books | 3,953 | 30 (7.6) | 38 (9.6) | 4 of 4 |
 
-The 52 replies also hold 524 sentences in list items, which only the pin, pointer and landing rules read. The sentence column leaves them out, so the rate for the replies is findings over paragraph sentences.
+The 52 replies also hold 519 sentences in list items, which only the pin, pointer and landing rules read. The sentence column leaves them out, so the rate for the replies is findings over paragraph sentences.
 
-The same texts under the rules as first merged, before list items were read and before the pronoun tier:
+The same texts under the rules as first merged, before list items were read and before the pronoun tier. Sentence counts then were 681, 204 and 3,973, because a full stop inside a quoted span used to end the sentence:
 
 | Text | HIGH | MEDIUM | Documents with a HIGH finding |
 | --- | --- | --- | --- |
