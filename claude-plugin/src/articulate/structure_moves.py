@@ -151,7 +151,8 @@ def landing(unit, text, make):
                                    or k == len(unit) - 1 and len(unit) >= 2)
         body = sent["text"].rstrip("\"')]”’*_")
         n = len(sent["words"])
-        if body.endswith((".", ":")) and _hands_back(body, sent["words"]):
+        said = T._QUOTED.sub("Q", sent["text"])            # a quoted hand-back is a mention
+        if body.endswith((".", ":")) and _hands_back(said, sent["words"]):
             if closes:
                 label = ("the paragraph ends by handing the next step back; "
                          "say what you need from the reader, or stop one sentence earlier")

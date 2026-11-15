@@ -12,6 +12,7 @@ reports at MEDIUM.
 """
 import pytest
 
+from articulate import rules_ext, structure_text
 from test_pack_structure import SPECIMEN_B, hits, run, structure
 
 ITEMS = [
@@ -121,3 +122,43 @@ def test_specimen_b_stays_blocked_with_its_opener_run_at_high():
     assert r["gate"] == "blocked"
     assert ("HIGH", "structure-anaphora/run") in [
         (t, rule) for t, rule, _m in hits(SPECIMEN_B, "structure-anaphora")]
+
+
+# --- wrapped items and quoted hand-backs (found by checking the 0.19.0 notes) --
+
+WRAPPED = ("- New rule pack, on under the chat profile and in the house voice\n"
+           "  notes. A finding spans the whole run of sentences. The HIGH\n"
+           "  findings gate under chat, and no other profile lists the pack.\n")
+
+
+def test_the_wrapped_lines_of_an_item_are_not_read_as_a_paragraph():
+    assert structure(WRAPPED) == [], "a line fragment under a marker is no paragraph"
+    assert structure(WRAPPED.replace("\n  ", " ")) == [], "the same item on one line"
+
+
+def test_a_hand_back_on_a_wrapped_line_is_reported_once_with_its_whole_span():
+    text = ("- The switch sits in the settings page, and that\n"
+            "  switch is yours.\n")
+    found = structure(text)
+    assert [(f["tier"], f["rule_id"]) for f in found] == [("HIGH", "structure-landing/handoff")]
+    assert found[0]["match"] == "The switch sits in the settings page, and that\n  switch is yours."
+
+
+def test_a_quoted_hand_back_is_a_mention():
+    quoted = 'The bullet ended on "That one is your call." and on nothing else.\n'
+    assert hits(quoted, "structure-landing") == []
+    plain = ("That one is your call. The tests hold three cases of it in list items, "
+             "and each has a near miss beside it.\n")
+    assert [t for t, _r, _m in hits(plain, "structure-landing")] == ["MEDIUM"]
+
+
+def test_a_full_stop_inside_a_quote_that_runs_on_does_not_end_the_sentence():
+    text = ('His post reads "Keep the well. Water is patience. Water is memory. Water is '
+            'care." and under his own profile no rule reports it.\n')
+    assert structure(text) == [], "a quoted run is a mention inside one sentence"
+    text = 'The note says (keys open doors.) and the rest of the page explains why.\n'
+    prose = list(rules_ext.prose_lines(text.splitlines(keepends=True)))
+    assert [len(unit) for unit in structure_text.paragraphs(prose)] == [1], (
+        "a full stop inside a bracket that runs on in lower case")
+    text = 'He said "Keys open doors." Keys rust in rain. Keys get lost in coats.\n'
+    assert [t for t, _r, _m in hits(text, "structure-anaphora")] == ["LOW"], "a capital starts one"
