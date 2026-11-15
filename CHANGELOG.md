@@ -6,6 +6,10 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+## 0.19.0
+
+Released 2026-11-15.
+
 Structure rules for a model's replies. A reply passed `check` with a texture
 score of 0 on 2026-11-15, and its reader then read it back as a list of faults.
 These rules report what the line checker passed.
