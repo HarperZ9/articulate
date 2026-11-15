@@ -34,6 +34,12 @@ keeps its findings, and the RFC keyword rules run only under `rfc-keywords`.
                       that carries the argument should point at a testable
                       map. Both report in LOW; neither gates.
 
+  chat                a model's replies in conversation. The published chat
+                      register plus the structure pack: anaphora runs,
+                      parallel frames, triads, paragraph pinning, parataxis,
+                      pointer sentences and landing sentences. Flavored, so
+                      the HIGH findings gate.
+
 A domain may carry `gate_promote` (pack categories that gate under a flavored
 profile) and `freeze` (terms an edit planned under the profile must keep).
 
@@ -82,6 +88,10 @@ DOMAINS = {
     "outbound": {"base": "chat", "slop": "flavored", "keep": (),
                  "register": ("outbound", "recipient", "message"),
                  "rule_packs": ("privacy",), "gate_promote": ("private-email", "local-path")},
+    # The published `chat` register profile, with the structure pack added. The
+    # name resolves here first, so the register profile itself stays as published.
+    "chat": {"base": "chat", "slop": "flavored", "keep": (), "register": None,
+             "rule_packs": ("structure",)},
 }
 
 

@@ -26,11 +26,27 @@ def _within_budget(hits, budget=HITS_BUDGET):
     return kept
 
 
-def do_check(text, max_hits=None):
-    """Find named writing devices with span records. Runs on your machine."""
+def _profile(name):
+    """The named register or domain profile, or None when no name is given."""
+    if name is None:
+        return None
+    if not isinstance(name, str):
+        raise ValueError("profile must be a profile name")
+    from . import domains, profiles
+    try:
+        return domains.load_profile(name)
+    except profiles.ProfileError as exc:
+        raise ValueError(str(exc)) from None
+
+
+def do_check(text, max_hits=None, profile=None):
+    """Find named writing devices with span records. Runs on your machine.
+    With `profile`, the check runs under that profile and its rule packs, and
+    the result adds the profile name, the gate and the blocking count."""
     if max_hits is not None and (type(max_hits) is not int or not 0 <= max_hits <= 1000):
         raise ValueError("max_hits must be a whole number from 0 to 1000")
-    r = core.check_text(text)
+    prof = _profile(profile)
+    r = core.check_text(text, profile=prof) if prof else core.check_text(text)
     hits = sorted(r["high"] + r["medium"], key=lambda h: h["start"])
     shown = hits if max_hits is None else _within_budget(hits[:max_hits])
     out = {
@@ -44,12 +60,15 @@ def do_check(text, max_hits=None):
     }
     if len(shown) < len(hits):
         out["hits_omitted"] = len(hits) - len(shown)
+    if prof:
+        out.update(profile=profile, gate=r["gate"], blocking_count=r["blocking_count"])
     return out
 
 
-def do_score(text):
+def do_score(text, profile=None):
     """Graded device-density (texture) score and structural rates. Runs on your machine."""
-    r = core.check_text(text)
+    prof = _profile(profile)
+    r = core.check_text(text, profile=prof) if prof else core.check_text(text)
     cad = r["cadence"]
     return {
         "texture_score": r["texture_score"],
@@ -183,14 +202,14 @@ def build_server():
     mcp = FastMCP("articulate")
 
     @mcp.tool(description=description("check"), **fastmcp_options("check"))
-    def check(text: str, max_hits: int = 50) -> dict:
+    def check(text: str, max_hits: int = 50, profile: Optional[str] = None) -> dict:
         """Find named writing devices and return findings with cadence stats. Runs on your machine."""
-        return do_check(text, max_hits)
+        return do_check(text, max_hits, profile)
 
     @mcp.tool(description=description("score"), **fastmcp_options("score"))
-    def score(text: str) -> dict:
+    def score(text: str, profile: Optional[str] = None) -> dict:
         """Return the device-density (texture) score and structural rates. Runs on your machine."""
-        return do_score(text)
+        return do_score(text, profile)
 
     @mcp.tool(description=description("judge"), **fastmcp_options("judge"))
     async def judge(text: str, ctx: Context, backend: Optional[str] = None,

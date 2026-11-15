@@ -16,7 +16,8 @@ def _corpus():
 
 CATEGORIES = ["corpus/title-formula", "corpus/shared-ngram", "corpus/shared-construction",
               "corpus/paragraph-scaffold", "corpus/section-symmetry", "corpus/rhythm",
-              "corpus/perspective", "corpus/abstract-run"]
+              "corpus/perspective", "corpus/abstract-run", "corpus/sentence-template",
+              "corpus/ritual"]
 
 
 def _by_category(report):

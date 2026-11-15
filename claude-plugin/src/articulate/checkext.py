@@ -19,7 +19,7 @@ Text with none of that structure gives the same result as before. Pass
 `structure=False` for the unmasked result, which a receipt made before
 STRUCTURE_VERSION existed replays against. Standard library only.
 """
-from . import calibration, detector, mdstructure, rules_ext
+from . import calibration, detector, mdstructure, pack_structure, rules_ext
 
 STRUCTURE_VERSION = mdstructure.VERSION
 CALIBRATION_VERSION = calibration.VERSION
@@ -89,6 +89,9 @@ def _run(text, work, profile, allow, structure, known=None, calib=True):
         for (key, tier), found in zip(_TIERS, extra):
             result[key] = result[key] + [detector._finding(tier, f) for f in found]
         result = _regate(result, profile)
+        if pack_structure.NAME in (profile.get("rule_packs") or ()):
+            prose = list(rules_ext.prose_lines(work.splitlines(keepends=True)))
+            result["cadence"] = dict(result["cadence"], **pack_structure.cadence(prose))
     result = _calibrate(result, work, profile, calib)
     return mdstructure.restore(result, text, work)
 

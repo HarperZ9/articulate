@@ -19,7 +19,10 @@ TOOLS = {
     "check": ("Check a passage for named prose patterns. Runs on your machine. Returns "
               "up to max_hits HIGH and MEDIUM findings (50 by default), with span "
               "records capped at about 30,000 characters. The clean/flagged verdict, "
-              "texture score, advisory count and cadence cover the full text. " + LIMIT),
+              "texture score, advisory count and cadence cover the full text. Pass "
+              "profile to check under a named profile: chat adds the structure rules "
+              "for a model's replies (anaphora runs, parallel frames, triads, paragraph "
+              "pinning, parataxis, pointer and landing sentences). " + LIMIT),
     "score": ("Return the 0-100 device-density (texture) score, finding counts, passive-voice "
               "and adverb rates, and cadence flags. Runs on your machine. " + LIMIT),
     "judge": "Assess prose. " + _EDIT,

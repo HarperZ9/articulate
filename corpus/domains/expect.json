@@ -30,5 +30,9 @@
   "publication/flagged.md": {"profile": "publication", "expect": ["analogy-untested"]},
   "publication/clean.md": {"profile": "publication", "expect": []},
   "outbound/flagged.md": {"profile": "outbound", "expect": ["local-path", "private-email"]},
-  "outbound/clean.md": {"profile": "outbound", "expect": []}
+  "outbound/clean.md": {"profile": "outbound", "expect": []},
+  "chat/flagged.md": {"profile": "chat",
+    "expect": ["structure-anaphora", "structure-landing", "structure-parallel",
+               "structure-parataxis", "structure-pin", "structure-pointer", "structure-triad"]},
+  "chat/clean.md": {"profile": "chat", "expect": []}
 }

@@ -172,6 +172,11 @@ LOCAL_ONLY += _voice_tools.NAMES + _house_tools.NAMES + _dialogue_tools.NAMES
 TOOLS[0]["inputSchema"]["properties"]["max_hits"] = {
     "type": "integer", "default": 50, "minimum": 0, "maximum": 1000,
     "description": "Maximum span records; full-text verdict and scores are unchanged."}
+for _tool in TOOLS[:2]:           # check and score
+    _tool["inputSchema"]["properties"]["profile"] = {
+        "type": "string",
+        "description": "A register or domain profile, such as chat, readme or commit. "
+                       "The chat profile adds the structure rules for a model's replies."}
 tool_options.extend(TOOLS)
 
 
@@ -229,9 +234,10 @@ def _call(params: dict, session=None) -> dict:
         return _tool_result(info)
     try:
         if name == "check":
-            result = do_check(_text_arg(args), _max_hits(args))
+            result = do_check(_text_arg(args), _max_hits(args), args.get("profile"))
         elif name == "score":
-            result = do_score(_text_arg(args))
+            named = () if args.get("profile") is None else (args["profile"],)
+            result = do_score(_text_arg(args), *named)
         elif name in ("judge", "fix", "polish"):
             options = {key: args[key] for key in _EDIT_OPTIONS if key in args}
             if session is not None:

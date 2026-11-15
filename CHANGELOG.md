@@ -6,6 +6,33 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+Structure rules for a model's replies. A reply passed `check` with a texture
+score of 0 on 2026-11-15, and its reader then read it back as a list of faults.
+These rules report what the line checker passed.
+
+- New rule pack `structure`, on under the `chat` profile and in the house voice
+  notes: `structure-anaphora`, `structure-parallel`, `structure-triad`,
+  `structure-pin`, `structure-parataxis`, `structure-pointer` and
+  `structure-landing`. A finding spans the whole run of sentences. The HIGH
+  findings gate under `chat`. No other profile lists the pack, so `author-voice`
+  and `narrative` text raises none of these findings.
+- `chat` now resolves to a domain profile that adds the pack to the published
+  chat register. The published detector, its rules and its fingerprint are
+  unchanged.
+- Under `chat` the cadence block adds `longest_opener_run` and
+  `repeated_openers_in_a_row`. The published `repetitive_openers` flag is a
+  whole-document ratio and stays as it is.
+- The MCP `check` and `score` tools take an optional `profile`. With one,
+  `check` also returns `gate` and `blocking_count`. With none, the result is the
+  same as before.
+- Series review adds `corpus/sentence-template` and `corpus/ritual`: a sentence
+  ending or an opening that several documents by one author share. Report only.
+  The corpus thresholds changed, so a corpus receipt from an earlier version
+  reads Unverifiable.
+- [Structure rules](docs/structure-rules.md) gives each rule, its thresholds,
+  the measured rates on 52 replies and on human prose, the three worst false
+  positives, and which of one author's 23 prose rules have a detector.
+
 ## 0.18.0
 
 Your own voice now has a profile that keeps it. Literary devices are read by

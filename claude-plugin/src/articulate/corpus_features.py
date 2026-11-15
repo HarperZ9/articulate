@@ -25,6 +25,9 @@ THRESHOLDS = {
     "rhythm_spread": 0.05,
     "perspective_rate": 1.0, "perspective_stretch": 1500, "perspective_min_words": 300,
     "abstract_run": 3, "abstract_min_words": 20,
+    "template_docs": 3, "template_docs_small": 2, "template_literals": 3, "template_report": 12,
+    "template_tail": 8,
+    "ritual_share": 0.2,
 }
 ARGUED_GENRES = frozenset({"essay", "op-ed", "letter", "memoir"})
 
