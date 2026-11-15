@@ -7,6 +7,11 @@ heading, a list item, a table row and a block quote are structure, and they
 are left out. Adjacent one-sentence paragraphs are read as one unit, since a
 post written one sentence to a line has the same rhythm as a paragraph.
 
+`list_items` reads each list item as its own short paragraph, marker and
+checkbox blanked, for the rules that judge one sentence by its place (pin,
+pointer, landing). The run rules never read a list: three items that open on
+one word are a list doing its job.
+
 `shape` turns a sentence into a token-shape signature with no parser: a
 function word stays as itself, a quoted span becomes Q, a number becomes #,
 and every other word becomes its ending class (s, ed, ing, ly) or a blank.
@@ -28,6 +33,7 @@ _NUMBER = re.compile(r"^\d[\d,.]*$")
 _LETTER = re.compile(r"[A-Za-z]")
 _BOLD_LABEL = re.compile(r"^(?:\*\*|__)(?:\d+[.)]\s*)?[^*_\n]{1,80}(?:\*\*|__)[.:]?$")
 _LEAD = re.compile(r"^[\s\"'“‘(\[*_]+")
+_ITEM = re.compile(r"^\s*(?:[-*+]|\d{1,3}[.)])\s+(?:\[[ xX]\]\s+)?")
 
 # Words that tie a sentence to the one before it when they open the sentence.
 LINK_OPENERS = frozenset(
@@ -134,6 +140,40 @@ def paragraphs(prose):
         if len(sents) == 1 and units and units[-1][-1]["para"] == 1:
             units[-1].append(sents[0])
         else:
+            units.append(sents)
+    return units
+
+
+def list_items(prose):
+    """A list of list items, each a list of sentence records shaped like the
+    ones `paragraphs` returns, with `item` set. An item is its marker line and
+    the wrapped lines under it; a blank line, another marker or a block line
+    ends it. The marker and a task checkbox are blanked, so offsets hold."""
+    items, group, expect = [], [], None
+    for rec in prose:
+        _line, off, raw, masked = rec
+        mark = _ITEM.match(masked)
+        wrapped = (group and off == expect and masked.strip()
+                   and not pack_util._BLOCK.match(masked))
+        if mark or not wrapped:
+            if group:
+                items.append(group)
+            group = []
+        if mark:
+            rec = (rec[0], off, raw, " " * mark.end() + masked[mark.end():])
+        if mark or wrapped:
+            group.append(rec)
+            expect = off + len(raw)
+    if group:
+        items.append(group)
+    units = []
+    for n, group in enumerate(items):
+        sents = _split("".join(rec[3] for rec in group), group[0][1])
+        for i, s in enumerate(sents):
+            owner = [rec for rec in group if rec[1] <= s["start"]][-1]
+            s.update(line=owner[0], line_off=owner[1], raw=owner[2], pid=("item", n),
+                     first=i == 0, last=i == len(sents) - 1, para=len(sents), item=True)
+        if sents:
             units.append(sents)
     return units
 

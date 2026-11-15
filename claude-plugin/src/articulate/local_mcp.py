@@ -176,7 +176,9 @@ for _tool in TOOLS[:2]:           # check and score
     _tool["inputSchema"]["properties"]["profile"] = {
         "type": "string",
         "description": "A register or domain profile, such as chat, readme or commit. "
-                       "The chat profile adds the structure rules for a model's replies."}
+                       "Pass chat when a model checks its own reply to a person: it adds "
+                       "the structure rules. With no profile the default line rules run, "
+                       "and the result's rules_run field says so."}
 tool_options.extend(TOOLS)
 
 

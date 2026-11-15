@@ -2,7 +2,11 @@
 sentences side by side.
 
   anaphora   consecutive sentences that open with the same word. An article
-             opener counts only when the second word repeats too.
+             opener counts only when the second word repeats too. Exactly
+             three sentences that open on one personal pronoun report at
+             MEDIUM: a pronoun subject is how English keeps talking about one
+             thing, and human prose does it far more often than a model's
+             replies did (docs/structure-rules.md has the counts).
   parallel   three sentences within four that share a syntactic frame. The
              frame is a token-shape signature (structure_text.shape): two
              short sentences match when their signatures are equal, and two
@@ -10,7 +14,8 @@ sentences side by side.
              and at least FRAME_RATIO alike. A second frame, the label
              sentence, is a subject followed by is/are/was/were and a/an/the.
   triad      exactly three sentences in a row that share an opener or a frame,
-             and a three-item list of short phrases inside one sentence.
+             and a three-item list of short phrases inside one sentence. A
+             pronoun opener alone makes no triad; the three need one frame.
   parataxis  three or more short statements in a row with no linking word at
              the start of any of them, and a very short statement in a
              paragraph where no sentence links to the one before it.
@@ -26,6 +31,7 @@ from difflib import SequenceMatcher
 from . import structure_text as T
 
 ARTICLES = frozenset({"a", "an", "the"})
+PRONOUN_OPENERS = frozenset({"i", "we", "you", "he", "she", "it", "they"})
 FRAME_RATIO = 0.8          # likeness of two long shape signatures
 FRAME_SHORT = 5            # signatures this short must be equal
 FRAME_WINDOW = 4           # three matching sentences within this many
@@ -61,10 +67,15 @@ def opener_runs(unit):
 
 
 def anaphora(unit, text, make):
-    found = {"HIGH": [], "LOW": []}
+    found = {"HIGH": [], "MEDIUM": [], "LOW": []}
     for i, j, key in opener_runs(unit):
         n, word = j - i, " ".join(key)
-        if n >= 3:
+        if n == 3 and key[0] in PRONOUN_OPENERS:
+            label = (f"3 sentences in a row open with '{word}'; "
+                     "join two of them or vary one opening")
+            found["MEDIUM"].append(T.record(make, text, unit[i], unit[j - 1],
+                                            "structure-anaphora", label, "pronoun-run"))
+        elif n >= 3:
             label = (f"{n} sentences in a row open with '{word}'; "
                      "vary the openings or join the sentences")
             found["HIGH"].append(T.record(make, text, unit[i], unit[j - 1],
@@ -153,7 +164,8 @@ def parallel(unit, text, make):
 
 def triad(unit, text, make):
     found = {"HIGH": [], "LOW": []}
-    spans = {(i, j) for i, j, _k in opener_runs(unit) if j - i == 3}
+    spans = {(i, j) for i, j, key in opener_runs(unit)
+             if j - i == 3 and key[0] not in PRONOUN_OPENERS}
     spans |= {(m[0], m[-1] + 1) for m, _v in frame_groups(unit)
               if len(m) == 3 and m[-1] - m[0] == 2}
     for i, j in sorted(spans):
@@ -223,5 +235,6 @@ def fingerprint():
     return ["RUNS|%s|%s|%s|%s|%s|%s|%s" % (FRAME_RATIO, FRAME_SHORT, FRAME_WINDOW, SHORT_WORDS,
                                            RUN_MIN, STUB_WORDS, STUB_PARAGRAPH),
             _TRIAD.pattern, _LABEL.pattern, repr(sorted(ARTICLES)), repr(sorted(_COPULA)),
+            repr(sorted(PRONOUN_OPENERS)),
             repr(sorted(T.LINK_OPENERS)), repr(sorted(T.SUBORDINATORS)),
             repr(sorted(T.COORDINATORS))]

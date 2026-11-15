@@ -39,10 +39,39 @@ def _profile(name):
         raise ValueError(str(exc)) from None
 
 
+DEFAULT_RULES_NOTE = ("Default line rules only. The structure rules for a reply to a person "
+                      "did not run, so clean here says nothing about them. Pass profile "
+                      "\"chat\" to run them.")
+TEXTURE_SCOPE = ("texture_score counts line rules only. Rule-pack findings are in hits and "
+                 "pack_findings, and they count toward the gate.")
+
+
+def rules_run(profile, prof):
+    """Which rules a result came from, so a clean result under the default
+    rules cannot be read as a clean result under a profile."""
+    packs = sorted((prof or {}).get("rule_packs", ()))
+    out = {"profile": profile or "default", "rule_packs": packs,
+           "structure_rules": "structure" in packs}
+    if not out["structure_rules"]:
+        out["note"] = DEFAULT_RULES_NOTE if prof is None else (
+            "Profile %s does not run the structure rules. Pass profile \"chat\" to check "
+            "a reply to a person." % profile)
+    return out
+
+
+def _pack_fields(r):
+    """Fields for a result that ran rule packs: their finding counts, and
+    what the texture score leaves out."""
+    if "pack_findings" not in r:
+        return {}
+    return {"pack_findings": r["pack_findings"], "texture_scope": TEXTURE_SCOPE}
+
+
 def do_check(text, max_hits=None, profile=None):
     """Find named writing devices with span records. Runs on your machine.
     With `profile`, the check runs under that profile and its rule packs, and
-    the result adds the profile name, the gate and the blocking count."""
+    the result adds the profile name, the gate and the blocking count. Every
+    result carries `rules_run`, which names the profile and rule packs used."""
     if max_hits is not None and (type(max_hits) is not int or not 0 <= max_hits <= 1000):
         raise ValueError("max_hits must be a whole number from 0 to 1000")
     prof = _profile(profile)
@@ -57,11 +86,13 @@ def do_check(text, max_hits=None, profile=None):
         "hits": shown,
         "advisory_count": len(r["low"]),
         "cadence": r["cadence"],
+        "rules_run": rules_run(profile, prof),
     }
     if len(shown) < len(hits):
         out["hits_omitted"] = len(hits) - len(shown)
     if prof:
         out.update(profile=profile, gate=r["gate"], blocking_count=r["blocking_count"])
+        out.update(_pack_fields(r))
     return out
 
 
@@ -71,6 +102,8 @@ def do_score(text, profile=None):
     r = core.check_text(text, profile=prof) if prof else core.check_text(text)
     cad = r["cadence"]
     return {
+        "rules_run": rules_run(profile, prof), **_pack_fields(r),
+        **({"gate": r["gate"], "blocking_count": r["blocking_count"]} if prof else {}),
         "texture_score": r["texture_score"],
         "elevated": r["elevated"],
         "hard_hits": len(r["high"]) + len(r["medium"]),

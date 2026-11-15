@@ -38,12 +38,26 @@ _DETECTORS = (structure_runs.anaphora, structure_runs.parallel, structure_runs.t
               structure_moves.landing)
 
 
+# A list item is a sentence or a short paragraph for the rules that judge one
+# sentence by its place. The run rules stay out of lists.
+_ITEM_DETECTORS = (structure_moves.pin, structure_moves.pointer, structure_moves.landing)
+
+
 def scan(text, prose, opts, make):
     found = {"HIGH": [], "MEDIUM": [], "LOW": []}
-    for unit in T.paragraphs(prose):
-        for detect in _DETECTORS:
-            for tier, items in detect(unit, text, make).items():
-                found[tier].extend(items)
+    seen = set()
+    for units, detectors in ((T.list_items(prose), _ITEM_DETECTORS),
+                             (T.paragraphs(prose), _DETECTORS)):
+        for unit in units:
+            for detect in detectors:
+                for tier, items in detect(unit, text, make).items():
+                    for f in items:
+                        # A wrapped line under a marker is read both ways. The item
+                        # reading knows where the item ends, so it is the one kept.
+                        key = (f["category"], f["line"], f["end"])
+                        if key not in seen:
+                            seen.add(key)
+                            found[tier].append(f)
     for tier in found:
         found[tier].sort(key=lambda f: (f["start"], f["category"]))
     return found

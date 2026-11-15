@@ -14,7 +14,7 @@ import json
 import os
 import sys
 
-from . import cli_config, modes, profiles, pysource, receipt
+from . import cli_config, cli_report, modes, profiles, pysource, receipt
 from .checkext import check_text
 from .detector import binary_reason, ruleset_fingerprint
 
@@ -172,7 +172,7 @@ def _print_spans(name, pname, blocks):
         else:
             mark = " ok "
         print(f"  [{mark}] span {b['index']} L{b['start_line']}-{b['end_line']}: "
-              f"{b['verdict']}, texture {b['texture_score']}/100 "
+              f"{b['verdict']}, {cli_report.texture_note(b)} "
               f"({b['counts']['high']}H/{b['counts']['medium']}M): {b.get('snippet', '')[:52]}")
 
 
@@ -185,14 +185,12 @@ def _print_check(name, pname, r, verbose):
     else:
         head = (f"[articulate] {base} [{pname}]: {len(r['high'])} high, "
                 f"{len(r['medium'])} medium ({r['gate']})")
-    print(head + f"  texture {r['texture_score']}/100")
+    print(head + "  " + cli_report.texture_note(r))
     for f in r["high"] + r["medium"]:
-        print(f"  L{f['line']} [{f['tier']} {cli_config.shown(f)}] "
-              f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
+        print(cli_report.finding_line(f))
     if verbose and r["low"]:
         for f in r["low"]:
-            print(f"  L{f['line']} [LOW {cli_config.shown(f)}] "
-                  f"{f.get('label', f['category'])}: {f.get('snippet', '')}")
+            print(cli_report.finding_line(f, "LOW"))
 
 
 def _cmd_check(args):
@@ -407,7 +405,8 @@ def _cmd_score(args):
         r = check_text(text, profile=prof)
         print(f"[articulate] {name} [{pname}]: verdict {r['verdict']}, "
               f"texture {r['texture_score']}/100 "
-              f"({'elevated' if r['elevated'] else 'low'}), gate {r['gate']} "
+              f"({'elevated' if r['elevated'] else 'low'}{cli_report.score_note(r)}), "
+              f"gate {r['gate']} "
               f"[{len(r['high'])}H/{len(r['medium'])}M, {r['cadence']['words']}w]")
     return 0
 

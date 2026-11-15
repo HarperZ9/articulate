@@ -175,11 +175,16 @@ CONTROLS = [
     ("structure-pointer", "Each team keeps its own copy. That is the silo.\n", ["MEDIUM"]),
     ("structure-pointer", "Each team keeps its own copy. That is the silo the audit named "
                           "in its second finding.\n", []),
-    # 7. landing sentences: only at the end of a paragraph
+    # 7. landing sentences: a hand-back gates at the end of a paragraph and reports
+    #    one tier lower before it; the same sentence with no hand-back is silent
     ("structure-landing", "The patch is ready and the tests pass on both machines. Whether "
                           "it ships today is up to you.\n", ["HIGH"]),
     ("structure-landing", "Whether it ships today is up to you. The patch is ready and the "
-                          "tests pass on both machines.\n", []),
+                          "tests pass on both machines.\n", ["MEDIUM"]),
+    ("structure-landing", "Whether it ships today turns on the cache run. The patch is ready "
+                          "and the tests pass on both machines.\n", []),
+    ("structure-landing", "The patch is ready and the tests pass on both machines. Their "
+                          "decision was to ship it on Monday.\n", []),
     ("structure-landing", "The patch touches the cache loader, which is the oldest file in "
                           "the tree. It adds a lock around the write, and it drops the "
                           "retry that hid the fault. Both machines ran the suite twice, "
