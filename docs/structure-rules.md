@@ -88,7 +88,7 @@ Both report only. A template needs three documents, or two in a series of three 
 
 ## Measured rates
 
-The counts below come from one run of version 0.19.0 on 2026-11-15. Rates are findings per 1,000 paragraph sentences.
+The counts below come from one run of version 0.19.1 on 2026-11-15. Rates are findings per 1,000 paragraph sentences.
 
 | Text | Sentences | HIGH | MEDIUM | Documents with a HIGH finding |
 | --- | --- | --- | --- | --- |

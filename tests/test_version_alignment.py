@@ -60,6 +60,21 @@ def test_the_changelog_has_an_entry_for_the_declared_version():
         "without saying what changed")
 
 
+def test_the_changelog_entry_opens_with_a_summary_sentence():
+    # The publish workflow runs HarperZ9/discover with its gate on, and the gate
+    # stops a release whose changelog section does not open with a sentence of
+    # six words or more on what the release does. The 0.19.0 section opened
+    # with "Released 2026-11-15." and its publish stopped there, after the tag.
+    # This holds the same rule before a merge.
+    changelog = (_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    section = changelog.split(f"## {_declared_version()}\n", 1)[1]
+    first = section.strip().split("\n\n", 1)[0]
+    assert not re.match(r"\s*(?:[-*+] |\d+[.)] |#|\|)", first), first
+    assert len(first.split()) >= 6 and re.search(r"[.!?](?:\s|$)", first), (
+        f"the changelog section opens with {first!r}; open it with a sentence on "
+        "what the release does for the user")
+
+
 def test_the_readme_names_the_release_version():
     readme = (_ROOT / "README.md").read_text(encoding="utf-8")
     version = _declared_version()

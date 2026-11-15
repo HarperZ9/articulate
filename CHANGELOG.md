@@ -6,13 +6,17 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
-## 0.19.0
-
-Released 2026-11-15.
+## 0.19.1
 
 Structure rules for a model's replies. A reply passed `check` with a texture
 score of 0 on 2026-11-15, and its reader then read it back as a list of faults.
 These rules report what the line checker passed.
+
+Released 2026-11-15. This is the first version on PyPI with these changes.
+Version 0.19.0 was tagged an hour earlier and its publish stopped at the
+release gate, because its changelog section opened with the date line where
+the gate wants a summary. Nothing was uploaded for 0.19.0. A test now holds
+that rule before a merge, and the Discover check gates on a release branch.
 
 - New rule pack `structure`, on under the `chat` profile and in the house voice
   notes: `structure-anaphora`, `structure-parallel`, `structure-triad`,
@@ -80,6 +84,12 @@ These rules report what the line checker passed.
 - [Structure rules](docs/structure-rules.md) gives each rule, its thresholds,
   the measured rates on 52 replies and on human prose, the three worst false
   positives, and which of one author's 23 prose rules have a detector.
+
+## 0.19.0
+
+Tagged on 2026-11-15 and never published to PyPI. The publish workflow stopped
+at its first gate, before any build. Every change listed under 0.19.1 was in
+this tag.
 
 ## 0.18.0
 

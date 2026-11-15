@@ -40,8 +40,12 @@ answers.
 1. Branch from `main` and set the version in `pyproject.toml`,
    `src/articulate/__init__.py`, `claude-plugin/src/articulate/__init__.py` and
    the three plugin manifests.
-2. Move the CHANGELOG entries from Unreleased to the new version.
-3. Open a pull request, wait for CI to pass, then merge.
+2. Move the CHANGELOG entries from Unreleased to the new version. Open the
+   section with one or two sentences on what the release does for the user.
+   A date line or a list at the top stops the publish at its first gate.
+3. Open a pull request from a branch named `release/<version>`, wait for CI
+   to pass, then merge. On a release branch the Discover check runs with its
+   gate on, the same gate `publish.yml` runs first.
 4. Tag the merge commit on `main` with `v<version>` and push the tag. The tag
    alone starts nothing.
 5. Publish a GitHub release for the tag, with the CHANGELOG section as notes:
