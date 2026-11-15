@@ -1,0 +1,141 @@
+"""Paragraphs, sentences and token shapes for the structure rule pack.
+
+The pack reads prose one paragraph at a time. `paragraphs` groups the prose
+lines a pack receives into paragraphs and splits each into sentence records
+that carry absolute offsets, so a finding can span a run of sentences. A
+heading, a list item, a table row and a block quote are structure, and they
+are left out. Adjacent one-sentence paragraphs are read as one unit, since a
+post written one sentence to a line has the same rhythm as a paragraph.
+
+`shape` turns a sentence into a token-shape signature with no parser: a
+function word stays as itself, a quoted span becomes Q, a number becomes #,
+and every other word becomes its ending class (s, ed, ing, ly) or a blank.
+Two sentences with the same signature differ only in their content words.
+Standard library only.
+"""
+from __future__ import annotations
+
+import re
+
+from . import pack_util
+from .wordlists import FUNCTION_WORDS
+
+WORD = re.compile(r"[A-Za-z0-9]+(?:['’\-][A-Za-z0-9]+)*")
+_END = re.compile(r"[.!?]+[\"')\]”’*_]*(?=\s|$)|:(?=\s*$)")
+_ABBREV = re.compile(r"(?:\b(?:e\.g|i\.e|etc|vs|cf|Mr|Mrs|Ms|Dr|St|Inc|Jr|Sr|No|Fig)|\b[A-Z])\.$")
+_QUOTED = re.compile(r"\"[^\"\n]{3,}?\"|“[^”\n]{3,}?”")
+_NUMBER = re.compile(r"^\d[\d,.]*$")
+_LEAD = re.compile(r"^[\s\"'“‘(\[*_]+")
+
+# Words that tie a sentence to the one before it when they open the sentence.
+LINK_OPENERS = frozenset(
+    "and but so or yet nor because since although though while whereas when if once after "
+    "before until unless as then also however still therefore thus instead meanwhile "
+    "otherwise besides hence afterwards later next finally first second third".split())
+# Words that tie one clause to another inside a sentence.
+SUBORDINATORS = frozenset(
+    "because since although though while whereas when whenever if unless until once after "
+    "before which who whom whose where that so whether".split())
+COORDINATORS = frozenset("and but or nor yet".split())
+
+
+def tokens(text):
+    """Words of a sentence, with each quoted span collapsed to the token Q."""
+    return WORD.findall(_QUOTED.sub(" Q ", text))
+
+
+def _class(word):
+    low = word.lower()
+    if word == "Q":
+        return "Q"
+    if _NUMBER.match(word):
+        return "#"
+    if low in FUNCTION_WORDS:
+        return low
+    for end, least in (("ing", 5), ("ed", 4), ("ly", 4)):
+        if low.endswith(end) and len(low) >= least:
+            return end
+    if low.endswith("s") and not low.endswith("ss") and len(low) >= 4:
+        return "s"
+    return "_"
+
+
+def shape(text):
+    """The token-shape signature of a sentence, as a tuple."""
+    return tuple(_class(w) for w in tokens(text))
+
+
+def opener(text, count=1):
+    """The first `count` words of a sentence, lowercased, as a tuple."""
+    words = WORD.findall(_LEAD.sub("", text))
+    return tuple(w.lower() for w in words[:count])
+
+
+def _split(joined, base):
+    """Sentence records for one paragraph's text; `base` is its absolute offset."""
+    out, pos = [], 0
+    ends = [m for m in _END.finditer(joined) if not _ABBREV.search(joined[:m.start() + 1])]
+    for m in ends + [None]:
+        end = m.end() if m else len(joined)
+        chunk = joined[pos:end]
+        body = chunk.strip()
+        if body and WORD.search(body):
+            start = pos + len(chunk) - len(chunk.lstrip())
+            out.append({"text": body, "start": base + start, "end": base + start + len(body),
+                        "words": WORD.findall(body)})
+        pos = end
+    return out
+
+
+def _groups(prose):
+    """Runs of contiguous prose lines that form one paragraph. A structure line
+    (heading, list item, quote, table row) or a gap in the offsets closes a run."""
+    group, expect = [], None
+    for rec in prose:
+        _line, off, raw, masked = rec
+        blank = not masked.strip()
+        if blank or pack_util._BLOCK.match(masked) or (expect is not None and off != expect):
+            if group:
+                yield group
+            group = []
+            expect = None
+            if blank or pack_util._BLOCK.match(masked):
+                continue
+        group.append(rec)
+        expect = off + len(raw)
+    if group:
+        yield group
+
+
+def paragraphs(prose):
+    """A list of paragraphs, each a list of sentence records. A record adds
+    `line`, `line_off` and `raw` for the line the sentence starts on, `pid` for
+    its paragraph, `first`
+    and `last` for its place in its own paragraph, and `para` for the size of
+    that paragraph. Adjacent one-sentence paragraphs are merged into one unit."""
+    units = []
+    for pid, group in enumerate(_groups(prose)):
+        base = group[0][1]
+        sents = _split("".join(rec[3] for rec in group), base)
+        for i, s in enumerate(sents):
+            owner = [rec for rec in group if rec[1] <= s["start"]][-1]
+            s.update(line=owner[0], line_off=owner[1], raw=owner[2], pid=pid,
+                     first=i == 0, last=i == len(sents) - 1, para=len(sents))
+        if not sents:
+            continue
+        if len(sents) == 1 and units and units[-1][-1]["para"] == 1:
+            units[-1].append(sents[0])
+        else:
+            units.append(sents)
+    return units
+
+
+def record(make, text, first, last, category, label, variant):
+    """A finding that spans from sentence `first` to sentence `last`."""
+    start = first["start"] - first["line_off"]
+    end = last["end"] - first["line_off"]
+    rec = make(first["line"], first["line_off"], category, label, start, end, first["raw"],
+               first["raw"].strip()[:100])
+    rec["match"] = text[first["start"]:last["end"]]
+    rec["rule_id"] = "%s/%s" % (category, variant)
+    return rec
