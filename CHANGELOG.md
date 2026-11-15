@@ -22,9 +22,47 @@ These rules report what the line checker passed.
 - Under `chat` the cadence block adds `longest_opener_run` and
   `repeated_openers_in_a_row`. The published `repetitive_openers` flag is a
   whole-document ratio and stays as it is.
-- The MCP `check` and `score` tools take an optional `profile`. With one,
-  `check` also returns `gate` and `blocking_count`. With none, the result is the
-  same as before.
+- The MCP `check` and `score` tools take an optional `profile`. With one, they
+  also return `gate` and `blocking_count`. With none, the default line rules run
+  as before. A model that checks its own reply to a person should pass
+  `profile: "chat"`, and the tool descriptions now say so.
+- Every MCP `check` and `score` result carries `rules_run`: the profile, the
+  rule packs that ran, and whether the structure rules were among them. On the
+  day these rules were written a session read "clean" from the default rules as
+  permission to send a reply. An unprofiled result now says in `rules_run` that
+  the structure rules did not run. No existing field changed its meaning.
+- The texture score counts line rules only, and it is the published detector's
+  figure, so rule-pack findings do not feed it. A blocked reply with 8 HIGH
+  findings printed "texture 0/100" beside the failure. Decision: keep the
+  texture score as it is and never show it alone when rule packs found
+  something. A check result that ran rule packs carries `pack_findings` (counts
+  by tier). The terminal headline reads `rule-pack findings 12, texture 0/100
+  (line rules only)`, and the MCP result adds `texture_scope`. Dropping the
+  texture figure from a blocked result was the other option. It would have left
+  the bare zero in the JSON and in every unblocked result with MEDIUM pack
+  findings, so the second named figure is the one that cannot mislead. The
+  edit hook and the Stop hook print findings and no texture figure, and a test
+  holds that.
+- The pin, pointer and landing rules read a list item as a short paragraph. A
+  hand-back that closes a bullet ("That one is your call.") is a landing
+  sentence. The run rules stay out of lists.
+- `structure-landing/handback` (MEDIUM) reports a hand-back before the end of a
+  paragraph. A long sentence that ends within four words of the hand-back
+  counts as one. "Their decision was final." no longer matches: the possessive
+  form needs "is", "was" or the end of the sentence.
+- `structure-anaphora/pronoun-run` (MEDIUM): exactly three sentences in a row
+  that open on one personal pronoun report and do not gate, and an opener alone
+  makes them no triad. This was the largest source of HIGH findings on human
+  prose, and none of 52 sampled replies held one. HIGH findings fell from 14.7
+  to 4.9 per 1,000 sentences on the human corpus and from 9.6 to 7.6 on four
+  books. Four or more in a row still gate.
+- `articulate check` prints where a structure finding starts and ends
+  (`L1:85-L1:207`) and the first and last words of its span. It used to print
+  the start of the line.
+- `tests/fixtures/structure/readback/` holds texts a person read and judged,
+  with the spans the reader objected to and the rule the reader named. A test
+  reports each rule's recall against those marks. The folder's README says how
+  to add a case.
 - Series review adds `corpus/sentence-template` and `corpus/ritual`: a sentence
   ending or an opening that several documents by one author share. Report only.
   The corpus thresholds changed, so a corpus receipt from an earlier version
