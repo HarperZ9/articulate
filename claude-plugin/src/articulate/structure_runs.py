@@ -109,7 +109,8 @@ def is_label(text):
     if not m:
         return False
     head = T.WORD.findall(m.group(0))[:-2]
-    return 1 < len(head) <= 13 and not set(w.lower() for w in head[:-1]) & _COPULA
+    subject = {w.lower() for w in head[:-1]}
+    return 1 < len(head) <= 11 and not subject & (_COPULA | T.SUBORDINATORS)
 
 
 def _groups(unit, match):

@@ -25,6 +25,8 @@ _END = re.compile(r"[.!?]+[\"')\]”’*_]*(?=\s|$)|:(?=\s*$)")
 _ABBREV = re.compile(r"(?:\b(?:e\.g|i\.e|etc|vs|cf|Mr|Mrs|Ms|Dr|St|Inc|Jr|Sr|No|Fig)|\b[A-Z])\.$")
 _QUOTED = re.compile(r"\"[^\"\n]{3,}?\"|“[^”\n]{3,}?”")
 _NUMBER = re.compile(r"^\d[\d,.]*$")
+_LETTER = re.compile(r"[A-Za-z]")
+_BOLD_LABEL = re.compile(r"^(?:\*\*|__)(?:\d+[.)]\s*)?[^*_\n]{1,80}(?:\*\*|__)[.:]?$")
 _LEAD = re.compile(r"^[\s\"'“‘(\[*_]+")
 
 # Words that tie a sentence to the one before it when they open the sentence.
@@ -74,11 +76,17 @@ def opener(text, count=1):
 def _split(joined, base):
     """Sentence records for one paragraph's text; `base` is its absolute offset."""
     out, pos = [], 0
-    ends = [m for m in _END.finditer(joined) if not _ABBREV.search(joined[:m.start() + 1])]
+    ends = [m for m in _END.finditer(joined)
+            if not _ABBREV.search(joined[max(0, m.start() - 8):m.start() + 1])]
     for m in ends + [None]:
         end = m.end() if m else len(joined)
         chunk = joined[pos:end]
         body = chunk.strip()
+        if m and not _LETTER.search(body):
+            continue                      # "1." or "**2." opens the sentence after it
+        if _BOLD_LABEL.match(body):
+            pos = end
+            continue                      # a bold lead-in is a label, like a heading
         if body and WORD.search(body):
             start = pos + len(chunk) - len(chunk.lstrip())
             out.append({"text": body, "start": base + start, "end": base + start + len(body),

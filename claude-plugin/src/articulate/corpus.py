@@ -10,7 +10,7 @@ Standard library only. No network and no model.
 """
 import re
 
-from . import corpus_checks, corpus_shape
+from . import corpus_checks, corpus_shape, corpus_templates
 from . import corpus_features as cf
 from .authorship import disclosure_spans
 
@@ -57,6 +57,19 @@ READER = {
         "tell what the author saw or would stand behind.",
         _INTERVIEW,
         "Counts first-person words. Some pieces stay impersonal on purpose."),
+    "corpus/sentence-template": (
+        "A sentence built on one template is ordinary once. By the third turn a reader "
+        "hears a stamp and stops reading it.",
+        "Keep the one use that carries a decision. Say the others the way that turn needs, "
+        "or leave them out.",
+        "Reduces each sentence to its function words and slots. Two sentences can share a "
+        "template and still each say something the reader needs."),
+    "corpus/ritual": (
+        "Turns that all open or close on one move teach a reader to skip the first and "
+        "last line.",
+        "Open with what this turn found, and end when the content ends.",
+        "Compares the first and last sentence of each document. A status report can use a "
+        "fixed opening on purpose."),
     "corpus/abstract-run": (
         "Several paragraphs in a row without a name, number, place or quotation ask the "
         "reader to trust claims they cannot picture.",
@@ -126,7 +139,7 @@ def analyze_corpus(docs, *, keep=(), genre="essay", single=False):
     ctx = {"docs": docs, "keep": keep, "genre": genre, "single": single or len(docs) < 2,
            "protected": [], "finding": finding}
     findings = []
-    for check in corpus_checks.CHECKS + corpus_shape.CHECKS:
+    for check in corpus_checks.CHECKS + corpus_shape.CHECKS + corpus_templates.CHECKS:
         findings += check(ctx)
     return {"schema": SCHEMA,
             "documents": [{"name": d["name"], "title": d["title"],
