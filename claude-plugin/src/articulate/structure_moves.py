@@ -12,7 +12,12 @@ a stock job in its paragraph.
            the silo.", "His last sentence is the useful part."
   landing  a paragraph's last sentence that hands the next step back ("... is
            up to you.", "... is yours to write.") or closes a paragraph of
-           four or more sentences with one short clause.
+           four or more sentences with one short clause. The same hand-back
+           earlier in a paragraph is reported one tier lower.
+
+A list item is read as a short paragraph by these three rules, so a hand-back
+that closes a bullet is a landing sentence, and a one-sentence item counts as
+its own close.
 
 Each phrase list is a closed list, so a paraphrase gets past it. English only.
 Standard library only.
@@ -31,6 +36,7 @@ BEAT_WORDS = 6
 LANDING_WORDS = 16
 VERDICT_WORDS = 12
 VERDICT_PARAGRAPH = 4
+HANDOFF_TAIL = 4           # words allowed after the hand-back phrase in a long sentence
 
 _COUNT = r"(?:a|one|two|three|four|five|six|several|some|a few|a couple of)"
 _THING = (r"(?:things?|points?|notes?|caveats?|problems?|reasons?|options?|parts?|steps?"
@@ -63,9 +69,11 @@ _POINTER = (
 )
 _HANDOFF = re.compile(
     r"(?i)\b(?:is|are|was|stays?|remains?) (?:up to (?:you|him|her|them)|yours\b|theirs\b"
-    r"|hers\b|his to\b)|\byours to \w+|\b(?:your|his|her|their) (?:call|decision|move)\b"
+    r"|hers\b|his to\b)|\byours to \w+"
+    r"|\b(?:is|are|was|stays?|remains?|it['’]s|that['’]s) (?:your|his|her|their) "
+    r"(?:call|decision|move)\b|\b(?:your|his|her|their) (?:call|decision|move)[.:]?$"
     r"|\bfor (?:you|him|her|them) to (?:decide|rewrite|approve|judge|pick|choose|say"
-    r"|answer|settle|keep|cut)\b|\byou decide\b|\bsay the word\b")
+    r"|answer|settle|keep|cut|correct)\b|\byou decide\b|\bsay the word\b")
 
 
 def _content(words):
@@ -110,6 +118,8 @@ def pointer(unit, text, make):
                                  "say what that sentence says",
                          "beat": "a short beat that labels the point before it; "
                                  "cut it or make the point in the sentence itself"}[variant]
+                if variant == "beat" and sent.get("item") and sent["first"]:
+                    break                  # an item that opens "This is the ..." is content
                 tier = "MEDIUM" if variant == "beat" else "HIGH"
                 found[tier].append(T.record(make, text, sent, sent,
                                             "structure-pointer", label, variant))
@@ -123,18 +133,37 @@ def _one_clause(sent):
             and not low & (T.SUBORDINATORS | T.COORDINATORS))
 
 
+def _hands_back(body, words):
+    """True when a sentence carries a hand-back phrase and is short, or is
+    long and ends within HANDOFF_TAIL words of the phrase."""
+    last = None
+    for last in _HANDOFF.finditer(body):
+        pass
+    if last is None:
+        return False
+    return len(words) <= LANDING_WORDS or len(T.WORD.findall(body[last.end():])) <= HANDOFF_TAIL
+
+
 def landing(unit, text, make):
     found = {"HIGH": [], "MEDIUM": []}
     for k, sent in enumerate(unit):
-        closes = sent["last"] and (sent["para"] >= 2 or k == len(unit) - 1 and len(unit) >= 2)
-        if not closes or not sent["text"].rstrip("\"')]”’*_").endswith("."):
-            continue
+        closes = sent["last"] and (sent["para"] >= 2 or sent.get("item")
+                                   or k == len(unit) - 1 and len(unit) >= 2)
+        body = sent["text"].rstrip("\"')]”’*_")
         n = len(sent["words"])
-        if n <= LANDING_WORDS and _HANDOFF.search(sent["text"]):
-            label = ("the paragraph ends by handing the next step back; "
-                     "say what you need from the reader, or stop one sentence earlier")
-            found["HIGH"].append(T.record(make, text, sent, sent,
-                                          "structure-landing", label, "handoff"))
+        if body.endswith((".", ":")) and _hands_back(body, sent["words"]):
+            if closes:
+                label = ("the paragraph ends by handing the next step back; "
+                         "say what you need from the reader, or stop one sentence earlier")
+                found["HIGH"].append(T.record(make, text, sent, sent,
+                                              "structure-landing", label, "handoff"))
+            else:
+                label = ("the sentence hands the next step back; "
+                         "say once what you need from the reader")
+                found["MEDIUM"].append(T.record(make, text, sent, sent,
+                                                "structure-landing", label, "handback"))
+        elif not closes or not body.endswith("."):
+            continue
         elif sent["para"] >= VERDICT_PARAGRAPH and n <= VERDICT_WORDS and _one_clause(sent):
             label = ("the paragraph ends on a short one-clause closer; "
                      "join it to the sentence it restates or cut it")
@@ -144,7 +173,8 @@ def landing(unit, text, make):
 
 
 def fingerprint():
-    parts = ["MOVES|%s|%s|%s|%s|%s|%s|%s" % (PIN_WORDS, LABEL_WORDS, POINTER_WORDS, BEAT_WORDS,
-                                            LANDING_WORDS, VERDICT_WORDS, VERDICT_PARAGRAPH),
+    parts = ["MOVES|%s|%s|%s|%s|%s|%s|%s|%s" % (PIN_WORDS, LABEL_WORDS, POINTER_WORDS, BEAT_WORDS,
+                                               LANDING_WORDS, VERDICT_WORDS, VERDICT_PARAGRAPH,
+                                               HANDOFF_TAIL),
              _PIN_CUE.pattern, _PIN_LABEL.pattern, _HANDOFF.pattern, repr(sorted(_PLAIN_ANSWER))]
     return parts + ["%s|%s|%s" % (v, n, rx.pattern) for v, n, rx in _POINTER]
