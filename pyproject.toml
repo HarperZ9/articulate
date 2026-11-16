@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "articulate-writing"
-version = "0.7.0"
+version = "0.8.0"
 description = "Local, re-derivable writing-quality and AI-tell detection and editing: register profiles, writing modes, a genre axis, and content-free audit receipts."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -35,6 +35,9 @@ articulate-mcp = "articulate.local_mcp:main"
 # The advisory PostToolUse check for agent harnesses (Claude Code, Codex and any
 # client that runs a command hook with the same event shape). Standard library only.
 articulate-edit-hook = "articulate.edit_hook:main"
+# The house-voice hook: the brief at SessionStart, and the optional revise-mode
+# Stop check. Standard library only.
+articulate-house-hook = "articulate.house_hook:main"
 
 [project.urls]
 Homepage = "https://github.com/HarperZ9/articulate"

@@ -27,6 +27,8 @@ import os
 import subprocess
 import sys
 
+from .bench_house import HOUSE_BUDGET_MS, house_text  # noqa: E402,F401  (python -m articulate.bench house)
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_CORPUS = os.path.normpath(os.path.join(HERE, "..", "..", "corpus"))
 
@@ -79,6 +81,9 @@ def collect(corpus, label):
 
 
 def main(argv):
+    if argv and argv[0] == "house":
+        from .bench_house import main as house_main
+        return house_main(argv[1:])
     corpus = argv[0] if argv else DEFAULT_CORPUS
     ai_files = collect(corpus, "ai")
     human_files = collect(corpus, "human")

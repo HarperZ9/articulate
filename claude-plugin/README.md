@@ -7,7 +7,36 @@ label explaining each pattern. Use it on documentation, READMEs, release notes,
 commit messages and drafts. The checker runs on your computer and sends the text
 nowhere; the calling model reads the text as part of your conversation.
 
+It can also give the model in your client a voice of its own, the Articulate
+house voice, from the first reply of every session. It is opt-in: turn it on
+with `articulate house on` or `ARTICULATE_HOUSE_VOICE=on`. It is openly a model's voice:
+answer first, numbers with their denominators, "I" only for what it did in the
+session, no praise openers, no offers to help further, no em dashes. It never
+claims a human life. `ARTICULATE_HOUSE_VOICE=off` or `articulate house off`
+turns it off again. The published spec is
+[docs/house-voice.md](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/house-voice.md).
+
 ## What you get
+
+- The house voice, once you turn it on. At session start (and after a resume,
+  clear or compaction) a hook hands the model the house-voice brief, about 1,400 characters, with
+  its version and fingerprint. `house_brief` returns the brief, and
+  `house_transform` applies the house voice's closed list of exact edits to
+  model output you pass it, with a meaning guard and a receipt. Mode `revise`
+  (`articulate house set mode=revise`) adds one revision request when a
+  finished reply claims a human life or breaks a banned rule; it costs a model
+  turn, so it is off by default.
+- Series review: `corpus_check` reads several documents as one series and
+  names repeated title formulas, shared phrases, paragraph scaffolds, even
+  rhythm and missing perspective, with locations. `title_workshop`,
+  `interview` and `restructure_plan` group titles, ask the author questions
+  and propose moving limit lines. They never write first-person text for the
+  author.
+- Your own voice, when you build one: `voice_compare` places a draft against a
+  voice profile you made on this computer with `articulate voice learn --mine`,
+  and `voice_apply_plan` plans an edit of your own draft toward that voice,
+  only when you say the draft is yours. No tool learns, exports or deletes a
+  profile; the command line does that.
 
 - `check` returns each HIGH and MEDIUM finding with its rule, tier, line, span
   and label, a count of LOW advisories (`advisory_count`), `clean` and `verdict`
@@ -49,9 +78,15 @@ nowhere; the calling model reads the text as part of your conversation.
 
 ## Install
 
+<<<<<<< HEAD
 Install Articulate Writing from the Claude plugin directory, or add this
 repository's `claude-plugin` folder as a marketplace. The folder carries its own
 copy of the checker, so there is nothing else to install:
+=======
+This plugin targets package version 0.8.0. Build from its matching package tag as
+[the build guide](https://github.com/HarperZ9/articulate/blob/release/0.5.x/docs/claude-plugin.md)
+describes, then use the local build folder:
+>>>>>>> pr19
 
 ```bash
 claude plugin marketplace add ./claude-plugin
@@ -92,8 +127,8 @@ process. This does not provide a checker in an ordinary web chat.
 
 | What | Detail |
 |:-|:-|
-| Processes | The server: `python3 -I -S -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. The hook: the same command running `server/edit_hook.py` once after each file write or edit, which exits when it has answered. Both run the first `python3` on your PATH, which is a virtual environment's Python when you have one activated. |
-| Files | It loads its own source from the plugin folder and the Python standard library, and no installed package: `-S` skips every site-packages folder. It opens none of your files and writes no file: no log, no cache, no bytecode. The hook reads the edit from the event the host sends on standard input and does not open the edited file. |
+| Processes | The server: `python3 -I -S -B -X utf8` running the plugin's `server/serve.py`. Claude Code starts it with the session and stops it at the end. The hooks: the same command running `server/house_hook.py` at session start and at the end of each reply, and `server/edit_hook.py` after each file write or edit. Each exits when it has answered. All run the first `python3` on your PATH, which is a virtual environment's Python when you have one activated. |
+| Files | It loads its own source from the plugin folder and the Python standard library, and no installed package: `-S` skips every site-packages folder. It writes no file: no log, no cache, no bytecode. It reads two more things, and only reads them: the house-voice settings file (`house.json` in your Articulate config folder) when the house hooks and tools run, and, for `voice_compare`, `voice_apply_plan` and `interview` with a voice name, one profile and `identity.json` from your local voice store. The edit hook reads the edit from the event the host sends on standard input and does not open the edited file. |
 | Network | None. It opens no connection. |
 | Other programs | None. |
 | Settings | It sets `ARTICULATE_MCP_TOOLS=local` and `ARTICULATE_LOCAL_ONLY=1` for its own process and changes no host setting. |
@@ -109,6 +144,7 @@ Last updated: 2026-10-01. This policy covers the Articulate Writing plugin for
 local Claude Code and Codex hosts. It is also published at
 https://github.com/HarperZ9/articulate/blob/release/0.5.x/claude-plugin/PRIVACY.md.
 
+<<<<<<< HEAD
 ### What this plugin runs and handles
 
 **Hooks.** The plugin has one hook. After Claude writes or edits a file (the PostToolUse event for Write, Edit, MultiEdit and apply_patch), Claude Code runs `python3 -I -S -B -X utf8 "${CLAUDE_PLUGIN_ROOT}/server/edit_hook.py"` for up to 15 seconds. The hook reads the edit event Claude Code sends on standard input, which holds the file name and the text before and after the edit. For prose files (.md, .txt, .rst, .tex and similar) it returns advice about changed meaning and style to Claude. It opens no file, writes no file, starts no program and makes no network call. It never blocks the edit. Claude Code's event also carries the session ID, the path of the conversation transcript and the working folder. The hook ignores them and never opens the transcript.
@@ -127,21 +163,41 @@ https://github.com/HarperZ9/articulate/blob/release/0.5.x/claude-plugin/PRIVACY.
 one of its tools, and the edit event the host passes to its hook after the
 model writes or edits a file. It does not open your files or read conversation
 history or saved memory. It collects no account details, usage statistics or telemetry.
+=======
+**Data collected.** The plugin reads the text the calling host passes to one of
+its tools, the events the host passes to its hooks (a session start, a file
+edit, and the end of a reply), its own house-voice spec, and your house-voice
+settings file. When you name a voice profile in `voice_compare`,
+`voice_apply_plan` or `interview`, it reads that one profile and the store's
+`identity.json` from the local voice store. It does not open your other files
+or read conversation history or saved memory. It collects no account details,
+usage statistics or telemetry.
+>>>>>>> pr19
 
-**Use and storage.** The plugin checks text and prepares or validates host edits
-in memory on your computer, then returns the result to the host. It writes no
-log, cache or copy of the text to disk.
+**Use and storage.** The plugin checks text, applies the house voice and
+prepares or validates host edits in memory on your computer, then returns the
+result to the host. It writes no log, cache or copy of the text to disk. At
+session start it adds the house-voice brief to the model's context; the brief
+is the same published text for everyone and holds nothing about you. A voice
+profile is made only by the command line (`articulate voice learn --mine`)
+from files you name. It holds measured aggregates, never a sentence of your
+samples, stays on your computer, and `articulate voice delete --all` removes
+every profile, the identity file and the store folder. During
+`voice_apply_plan` the profile's plain-sentence description enters the host
+conversation, because the host model writes the rewrite.
 
 **Third-party sharing.** The plugin opens no network connection and starts no
 other program. The calling host already has the text in the conversation and
-may send it to its model provider. That provider's privacy policy and your
-account settings govern the conversation and tool results. No second model
-account is needed by the plugin.
+may send it to its model provider, together with the house-voice brief and,
+during `voice_apply_plan`, your profile's description. That provider's privacy
+policy and your account settings govern the conversation and tool results. No
+second model account is needed by the plugin.
 
 **Retention.** The plugin writes no persistent copy of the text, log or cache.
 Request and response text can remain in process memory during the server session.
-The host may retain conversation text and tool results locally or remotely;
-its settings and provider terms govern those copies.
+Voice profiles stay in your local voice store until you delete them. The host
+may retain conversation text and tool results locally or remotely; its settings
+and provider terms govern those copies.
 
 **Contact.** Ask a question about this policy or the plugin at
 https://github.com/HarperZ9/articulate/issues. Report a security problem
@@ -178,6 +234,13 @@ are listed, with no file paths. Paste that report into an issue.
   quality or factual correctness. Inspect refused edits and review meaning.
 - `texture_score` is a heuristic. It does not estimate the probability that a
   model wrote the text.
+- The house-voice brief is an instruction. Host models follow it unevenly, and
+  no hook can rewrite a model's reply after the model writes it. The deterministic
+  transform covers only its closed list.
+- Codex may not run plugin hooks. If the brief does not arrive in Codex, print
+  it with `articulate house brief --agents` and paste it into AGENTS.md.
+- The voice identity binding is a consent and provenance record. A local user
+  who edits the JSON can defeat it, so it is not access control.
 
 - The rules are written for English prose. Text in other languages gets few or
   no findings, and a clean result there says nothing about the writing.

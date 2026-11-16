@@ -199,6 +199,50 @@ settings do not load. On Windows, `NoDefaultCurrentDirectoryInExePath=1` keeps
 the npm shim's `node` lookup on PATH. An older CLI that rejects these flags is
 reported as unavailable. This isolation does not make a hosted call local.
 
+## house
+
+```
+articulate house apply [FILE | -] [--json] [--receipt OUT]
+articulate house brief [--agents]
+articulate house show
+articulate house on | off
+articulate house set KEY=VALUE...
+```
+
+`apply` runs the house transform on model output and prints the result; notes
+go to standard error. `--receipt` writes an `articulate/house-receipt/v1`
+receipt that `articulate verify` replays. `brief --agents` prints the brief as an
+AGENTS.md section. `on`, `off` and `set` write the settings file and nothing
+else. Keys for `set`: `mode`, `length`, `headings`, `lists`, `first_person`,
+`limits`, `end_line`. See [the house voice](house-voice.md).
+
+## voice
+
+```
+articulate voice learn SAMPLES... --name N --mine [--no-vocabulary]
+articulate voice show N | list | path | identity [--name DISPLAY]
+articulate voice compare DRAFT... --name N
+articulate voice apply DRAFT --name N --authored-by-me [--author-text FILE] [--out FILE]
+articulate voice submit DRAFT REWRITE --plan ID [--author-text FILE] [--out FILE]
+articulate voice export N --out FILE
+articulate voice import FILE [--adopt-identity]
+articulate voice delete N | --all
+```
+
+Every verb takes `--dir` for the store folder. See
+[series review and your own voice](series-and-voice.md).
+
+## corpus, titles, interview, restructure
+
+```
+articulate corpus FILES... [--single] [--keep FILE] [--json] [--receipt OUT]
+articulate titles FILES... [--titles FILE] [--answers FILE]
+articulate interview DOC [--voice N] [--out FILE] | --collect FILE [--answers-out FILE]
+articulate restructure DOC [--out FILE] [--anchors footnote|link]
+```
+
+All four report or propose. None edits an input file in place.
+
 ## Exit codes
 
 - `check --gate`: 1 if any file is blocked or unscreenable, else 0.

@@ -14,10 +14,17 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 DOCS = ["README.md", "editors/vscode/README.md",
         "docs/README.md", "docs/getting-started.md", "docs/walkthrough.md",
-        "docs/features.md", "docs/cli.md", "docs/boundaries.md"]
+        "docs/features.md", "docs/cli.md", "docs/boundaries.md",
+        "docs/house-voice.md", "docs/series-and-voice.md", "docs/claude-plugin.md",
+        "claude-plugin/README.md"]
 MODULES = ["cli.py", "editor.py", "bench.py", "mcp_server.py", "profiles.py",
            "receipt.py", "lsp_server.py", "pysource.py", "modes.py",
-           "genres.py", "masking.py", "claude_cli.py", "__init__.py"]
+           "genres.py", "masking.py", "claude_cli.py", "__init__.py",
+           "house.py", "house_spec.py", "house_settings.py", "house_edits.py", "house_hook.py",
+           "house_tools.py", "cli_house.py", "bench_house.py", "voice_identity.py",
+           "voice_apply.py", "cli_voice.py", "mcp_local_tools.py", "voice_store.py",
+           "voice.py", "voice_tools.py", "authorship.py", "interview.py", "restructure.py",
+           "titles.py", "corpus.py", "cli_corpus.py"]
 
 
 def _gate(path, text):
@@ -39,3 +46,12 @@ def test_module_prose_is_clean():
         prose = pysource.prose_of(p.read_text(encoding="utf-8"))
         gate, hits = _gate(p, prose)
         assert gate == "ok", f"{mod} docstrings/comments fail our own standard: {hits}"
+
+
+def test_the_house_brief_is_clean():
+    """The brief every session receives passes our own standard."""
+    from articulate import house
+    text = house.brief()
+    r = articulate.check_text(text, profile=profiles.resolve(path="brief.md", text=text))
+    assert r["gate"] == "ok", [f["match"] for f in r["high"] + r["medium"]]
+    assert "—" not in text

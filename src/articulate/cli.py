@@ -262,6 +262,12 @@ def _cmd_verify(args):
     if reason:
         print(f"[articulate] cannot screen {args.file}: {reason}", file=sys.stderr)
         return 2
+    if isinstance(rec, dict) and str(rec.get("schema", "")).startswith("articulate/corpus-receipt/"):
+        from . import cli_corpus
+        return cli_corpus.verify(rec, [args.file] + args.more)
+    if isinstance(rec, dict) and rec.get("schema") == "articulate/house-receipt/v1":
+        from . import cli_house
+        return cli_house.verify(rec, args.file)
     text = _decode(data)
     verdict, detail = receipt.verify_receipt(rec, text)
     print(f"[articulate] {verdict}: {detail}")
@@ -406,6 +412,11 @@ def _read_edit_file(path):
     return _decode(data)
 
 
+def _author_text(args):
+    path = getattr(args, "author_text", None)
+    return _read_edit_file(path) if path else None
+
+
 def _cmd_edit(args):
     from . import editing, host_edit
     try:
@@ -414,14 +425,14 @@ def _cmd_edit(args):
             result = host_edit.edit_submit(
                 text, _read_edit_file(args.rewrite), args.plan,
                 scores=json.loads(args.scores) if args.scores else None,
-                model=args.model)
+                model=args.model, author_text=_author_text(args))
         else:
             options = {"mode": args.mode,
                        "profile": None if args.mode else _profile_name(args.file, text, args.profile),
                        "is_html": args.is_html or args.file.lower().endswith((".html", ".htm")),
                        "is_tex": args.is_tex or args.file.lower().endswith(".tex")}
             if args.cmd == "plan":
-                result = host_edit.edit_plan(text, goal=args.goal, **options)
+                result = host_edit.edit_plan(text, goal=args.goal, author_text=_author_text(args), **options)
             else:
                 result = editing.run_edit(text, goal=args.cmd, backend=args.backend,
                                           bar=args.bar, passes=args.passes,
@@ -466,6 +477,8 @@ def main(argv=None):
                 p.add_argument("--bar", type=int, default=4)
                 p.add_argument("--passes", type=int, default=3)
                 p.add_argument("--timeout", type=float, default=600)
+        if cmd in ("plan", "submit"):
+            p.add_argument("--author-text", help="a file of your own words the edit may add")
         p.add_argument("--out", help="write accepted text to this file")
         p.add_argument("--json", action="store_true", help="emit result JSON (the editor default)")
     for cmd in ("check", "score", "receipt"):
@@ -493,6 +506,7 @@ def main(argv=None):
     pv = sub.add_parser("verify", help="replay a receipt against text")
     pv.add_argument("receipt", help="a receipt JSON file")
     pv.add_argument("file", help="the text file to re-derive against")
+    pv.add_argument("more", nargs="*", help="further files for a corpus receipt")
     pa = sub.add_parser("audit", help="query committed receipts locally")
     pa.add_argument("paths", nargs="*", help="receipt files or directories (default: .)")
     pa.add_argument("--days", type=int, default=30, help="recent-activity window")
@@ -502,7 +516,12 @@ def main(argv=None):
                     help="with --reverify, exit 1 if any receipt drifts")
     pa.add_argument("--json", action="store_true")
     sub.add_parser("modes", help="list available writing modes")
+    from . import cli_corpus, cli_house
+    cli_corpus.register(sub)
+    cli_house.register(sub)
     args = ap.parse_args(argv)
+    if getattr(args, "corpus_handler", None):
+        return args.corpus_handler(args)
     if args.cmd in ("plan", "submit", "judge", "fix", "polish"):
         return _cmd_edit(args)
     if args.cmd == "check":

@@ -1,6 +1,18 @@
 {
-  "description": "Advisory Articulate check after the model writes or edits a prose file. It names possible meaning changes and style findings and never blocks the edit.",
+  "description": "Articulate house voice and advisory checks. At session start the model receives the house-voice brief. After the model writes or edits a prose file, an advisory check names possible meaning changes and style findings and never blocks the edit. In mode revise only, a finished reply that claims a human life or breaks a banned rule gets one revision request. ARTICULATE_HOUSE_VOICE=off turns the house voice off.",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S -B -X utf8 \"${CLAUDE_PLUGIN_ROOT}/server/house_hook.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit|apply_patch",
@@ -8,6 +20,17 @@
           {
             "type": "command",
             "command": "python3 -I -S -B -X utf8 \"${CLAUDE_PLUGIN_ROOT}/server/edit_hook.py\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S -B -X utf8 \"${CLAUDE_PLUGIN_ROOT}/server/house_hook.py\"",
             "timeout": 15
           }
         ]

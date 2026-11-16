@@ -32,6 +32,32 @@ TOOLS = {
                     "Restores masks, guards protected spans and returns checked text "
                     "with a host receipt. No network call; it edits none of your files. "
                     "Protected-span checks do not establish semantic equivalence."),
+    "corpus_check": ("Review several documents as one series: title formulas, shared phrases, "
+                     "repeated paragraph scaffolds, even rhythm, missing perspective. Report "
+                     "only, with locations and a corpus receipt. Local, no network; it edits "
+                     "none of your files."),
+    "title_workshop": ("Group titles into formula families and ask the author one question per "
+                       "repeated title. Suggestions come only from the author's own answers. "
+                       "Local, no network; it edits none of your files."),
+    "interview": ("Questions only the author can answer, each at its lines. The tool never "
+                  "answers them; present them and wait for the author. Local, no network; it "
+                  "edits none of your files."),
+    "restructure_plan": ("Propose moving per-paragraph source, confidence and limit lines into "
+                         "one section, with anchors. Every sentence and citation is kept and "
+                         "checked. Local, no network; it edits none of your files."),
+    "voice_compare": ("Place a draft against the measured range of the author's own voice, "
+                      "saved on this computer with articulate voice learn. No total score. Local, no network; it edits "
+                      "none of your files."),
+    "voice_apply_plan": ("Plan an edit that shapes the user's own draft toward their own saved "
+                         "voice. Runs only with authored_by_user true. Returns a v2 host edit "
+                         "plan; call edit_submit with the rewrite. Local, no network; it edits "
+                         "none of your files."),
+    "house_brief": ("The Articulate house voice brief: a model's voice, versioned, with its "
+                    "fingerprint. Local, no network; it edits none of your files."),
+    "house_transform": ("Apply the house voice to model output: closed-list deterministic "
+                        "edits, a meaning guard, located notes and a receipt. house false "
+                        "returns the text unchanged. Local, no network; it edits none of "
+                        "your files."),
     "articulate.status": "Local server identity and liveness. No network call.",
     "articulate.doctor": ("Local readiness report: version, tools, optional backends "
                           "and session sampling capability. No network call."),
