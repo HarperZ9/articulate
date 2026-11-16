@@ -143,8 +143,8 @@ def _path(args):
 
 
 def _recipient(spec, directory):
-    """The reader reference: a file of their messages split by lines of ---,
-    - for standard input, or the name of a stored profile."""
+    """The reader reference: a file of their messages split by lines of three
+    dashes, a single dash for standard input, or the name of a stored profile."""
     from . import outbound
     if spec is None:
         return None
