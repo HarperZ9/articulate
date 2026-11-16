@@ -6,6 +6,21 @@ own `RULESET_SEMVER`, which a receipt records so a replay knows which rules ran.
 
 ## Unreleased
 
+### Added
+
+- `articulate voice outbound DRAFT --author N [--recipient FILE]` and the
+  `voice_outbound` MCP tool check a message to be sent in your name against two
+  references: your own samples and the reader's own messages. Features: the nine
+  measured tells of model rewrites (nouns carried between sentences, vocabulary
+  variety, words per clause and per sentence, proper names, repeated three-word
+  runs, frequency band by two proxies, numbers and vague quantities, new
+  abstract nouns and checkable facts per sentence) and the shapes named for
+  messages (opener, sign-off, greeting, softened framing, pitch or ask, stance
+  words, surface marks, semicolons and colons, clause-length spread). A feature
+  is named with its line only where no reference holds the draft and the draft
+  leans toward model shape. `voice learn` now stores one row of these measures
+  per sample, with no text; profiles learned before need learning again.
+
 ### Fixed
 
 - `articulate audit --reverify --gate` exits 1 when a receipt's source file is

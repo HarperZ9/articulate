@@ -1,12 +1,12 @@
 ---
 name: author-voice
-description: Use when the user asks to compare a draft with their own writing voice, to run an authorship interview on their draft, or to shape their own draft toward a voice profile they built with articulate voice learn. Articulate reads one profile from the user's local voice store, asks questions only the author can answer, and shapes only text the user says is theirs.
+description: Use when the user asks to compare a draft with their own writing voice, to check a message to be sent in their name, to run an authorship interview on their draft, or to shape their own draft toward a voice profile they built with articulate voice learn. Articulate reads one profile from the user's local voice store, asks questions only the author can answer, and shapes only text the user says is theirs.
 ---
 
 # Work in the author's own voice with Articulate
 
 Use the Articulate tools exposed by the current host: `interview`,
-`voice_compare`, `voice_apply_plan` and `edit_submit`. Match tools by their
+`voice_compare`, `voice_outbound`, `voice_apply_plan` and `edit_submit`. Match tools by their
 Articulate server and short name. Never invent a tool result when a tool is
 missing.
 
@@ -30,6 +30,14 @@ and stop.
 Call `voice_compare` with the draft and the profile name. Report each feature
 that sits above or below the user's range, and the located stretches. There is
 no total score. Keep the `scope` line.
+
+## A message sent in the user's name
+
+Call `voice_outbound` with the draft, the profile name and, when the thread is
+in the conversation, the reader's own messages as `recipient_text` (split by
+lines of `---`). Report each finding with its line and excerpt. Do not run the
+draft through `check` or the house voice: those rules are for documents, and
+they push a personal voice toward the shape of model text.
 
 ## Shape the user's own draft
 

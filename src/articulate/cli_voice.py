@@ -1,5 +1,5 @@
 """Command-line verbs for the personal voice: learn, show, list, path, compare,
-apply, submit, export, import, delete and identity, plus intend and check for a
+outbound (a message to send in your name, against your writing and the reader's), apply, submit, export, import, delete and identity, plus intend and check for a
 voice built from intent (voice_intent_cli).
 
 The command line is the only writer of the voice store. learn reads only the
@@ -8,6 +8,7 @@ writing. apply and submit never edit the draft in place; they write to --out
 or print.
 """
 import json
+import os
 import sys
 
 from . import voice, voice_apply, voice_identity, voice_store
@@ -141,6 +142,35 @@ def _path(args):
     return 0
 
 
+def _recipient(spec, directory):
+    """The reader reference: a file of their messages split by lines of three
+    dashes, a single dash for standard input, or the name of a stored profile."""
+    from . import outbound
+    if spec is None:
+        return None
+    if spec == "-":
+        return outbound.reference(sys.stdin.read(), basis="recipient-messages")
+    if os.path.isfile(spec):
+        return outbound.reference(_read(spec), basis="recipient-messages")
+    stored = voice_store.load(spec, directory).get("outbound")
+    if stored is None:
+        raise ValueError(f"profile {spec!r} has no outbound measures; learn it again")
+    return stored
+
+
+def _outbound(args):
+    from . import outbound
+    profile = voice_store.load(args.author, args.dir)
+    voice_identity.check_owner(profile, args.dir)
+    author = profile.get("outbound")
+    if author is None:
+        raise ValueError(f"profile {args.author!r} was learned before the outbound check "
+                         "existed; run voice learn again on the same samples")
+    report = outbound.compare(_read(args.draft), author, _recipient(args.recipient, args.dir))
+    _emit(report, args, f"{args.draft}\n{outbound.format_report(report)}")
+    return 0
+
+
 def _intend(args):
     from .voice_intent_cli import intend
     return intend(args)
@@ -156,7 +186,8 @@ def _register(args):
     return register(args)
 
 
-ACTIONS = {"intend": _intend, "check": _check, "register": _register, "learn": _learn, "show": _show, "compare": _compare, "apply": _apply,
+ACTIONS = {"intend": _intend, "check": _check, "register": _register, "learn": _learn, "show": _show, "compare": _compare,
+           "outbound": _outbound, "apply": _apply,
            "submit": _submit, "export": _export, "import": _import, "delete": _delete,
            "identity": _identity, "list": _list, "path": _path}
 
