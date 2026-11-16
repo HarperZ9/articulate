@@ -14,7 +14,7 @@ from native_windows_process import run_process
 SOURCE = 'The sample contains 14 records.'
 TOOLS = {'check', 'score', 'judge', 'fix', 'polish', 'edit_plan', 'edit_submit',
          'articulate.status', 'articulate.doctor', 'corpus_check', 'title_workshop',
-         'interview', 'restructure_plan', 'voice_compare', 'voice_apply_plan',
+         'interview', 'restructure_plan', 'voice_compare', 'voice_apply_plan', 'voice_outbound',
          'house_brief', 'house_transform', 'dialogue_check'}
 HOUSE_IN = 'Great question! The sample has 14 records—all checked.'
 HOUSE_OUT = 'The sample has 14 records, all checked.'

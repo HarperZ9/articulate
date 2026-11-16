@@ -41,6 +41,11 @@ def register(mcp):
     def voice_compare(text: str, voice_name: str) -> dict:
         return voice_tools.handle("voice_compare", _given(text=text, voice_name=voice_name))
 
+    @mcp.tool(**_opts("voice_outbound"))
+    def voice_outbound(text: str, voice_name: str, recipient_text: Optional[str] = None) -> dict:
+        return voice_tools.handle("voice_outbound", _given(text=text, voice_name=voice_name,
+                                                           recipient_text=recipient_text))
+
     @mcp.tool(**_opts("voice_apply_plan"))
     def voice_apply_plan(text: str, voice_name: str, authored_by_user: bool,
                          author_text: Optional[str] = None) -> dict:

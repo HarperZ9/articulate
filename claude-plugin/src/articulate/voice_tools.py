@@ -1,7 +1,7 @@
 """MCP tool definitions and handlers for series review and the author's voice.
 
-All six tools are local and read-only. They read the text the host passes
-and, for voice_compare, voice_apply_plan and interview with voice_name, one
+All seven tools are local and read-only. They read the text the host passes
+and, for voice_compare, voice_outbound, voice_apply_plan and interview with voice_name, one
 voice file the author saved with the command line plus the store's identity
 file. A profile that belongs to another owner is refused. No tool takes samples
 to learn from: learning through a tool would put the samples into the host
@@ -11,7 +11,7 @@ or deletes a profile.
 from .tool_text import description
 
 NAMES = ("corpus_check", "title_workshop", "interview", "restructure_plan", "voice_compare",
-         "voice_apply_plan")
+         "voice_apply_plan", "voice_outbound")
 _TEXT = {"type": "string", "description": "the passage to read"}
 _VOICE = {"type": "string", "description": "name of a voice saved with articulate voice learn"}
 _SCHEMAS = {
@@ -35,6 +35,11 @@ _SCHEMAS = {
                                    "default": "footnote"}}},
     "voice_compare": {"type": "object", "required": ["text", "voice_name"],
                       "properties": {"text": _TEXT, "voice_name": _VOICE}},
+    "voice_outbound": {"type": "object", "required": ["text", "voice_name"], "properties": {
+        "text": {"type": "string", "description": "the message to be sent in the author's name"},
+        "voice_name": _VOICE,
+        "recipient_text": {"type": "string", "description":
+                           "the reader's own messages from the thread, split by lines of ---"}}},
     "voice_apply_plan": {"type": "object", "required": ["text", "voice_name", "authored_by_user"],
                          "properties": {
                              "text": {"type": "string", "description": "the user's own draft"},
@@ -106,6 +111,18 @@ def _voice_compare(args):
     return voice.compare(text, _voice(args, True))
 
 
+def _voice_outbound(args):
+    from . import outbound
+    profile = _voice(args, True)
+    author = profile.get("outbound")
+    if author is None:
+        raise ValueError("this voice profile was learned before the outbound check existed; "
+                         "run articulate voice learn again on the same samples")
+    reader = _string(args, "recipient_text", False)
+    recipient = outbound.reference(reader, basis="recipient-messages") if reader else None
+    return outbound.compare(_string(args, "text"), author, recipient)
+
+
 def _voice_apply_plan(args):
     from . import voice_apply
     return voice_apply.plan(_string(args, "text"), _string(args, "voice_name"),
@@ -115,7 +132,7 @@ def _voice_apply_plan(args):
 
 _HANDLERS = {"voice_apply_plan": _voice_apply_plan, "corpus_check": _corpus_check, "title_workshop": _title_workshop,
              "interview": _interview, "restructure_plan": _restructure,
-             "voice_compare": _voice_compare}
+             "voice_compare": _voice_compare, "voice_outbound": _voice_outbound}
 
 
 def handle(name, args):

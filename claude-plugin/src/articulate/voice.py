@@ -14,6 +14,7 @@ import json
 from collections import Counter
 
 from . import corpus_features as cf
+from . import outbound
 from . import voice_features as vf
 
 SCHEMA = "articulate/voice-profile/v1"
@@ -87,6 +88,7 @@ def build_profile(samples, *, vocabulary=True):
         "argument": dict(rates, move_mix=_shares(counters["moves"], sents)),
         "function_words": {w: round(n * 1000 / words, 2) for w, n in top_fw},
         "per_sample": per_sample,
+        "outbound": outbound.reference(samples, basis="own-samples"),
     }
     if vocabulary:
         profile["vocabulary"] = {"basis": "own-samples", "words": vf.vocabulary(samples)}

@@ -358,6 +358,7 @@ else. Keys for `set`: `mode`, `length`, `headings`, `lists`, `first_person`,
 articulate voice learn SAMPLES... --name N --mine [--no-vocabulary]
 articulate voice show N | list | path | identity [--name DISPLAY]
 articulate voice compare DRAFT... --name N
+articulate voice outbound DRAFT --author N [--recipient FILE|-|NAME] [--json]
 articulate voice apply DRAFT --name N --authored-by-me [--author-text FILE] [--out FILE]
 articulate voice submit DRAFT REWRITE --plan ID [--author-text FILE] [--out FILE]
 articulate voice export N --out FILE
@@ -367,6 +368,17 @@ articulate voice intend [--goal G] [--audience A] [--stance S] [--sample FILE]..
                         [--tool NAME]... [--name N] [--out FILE] [--json] [--list]
 articulate voice check DRAFT... --intent SPEC|NAME [--min-score N] [--json]
 ```
+
+`voice outbound` checks a message to be sent in your name. It places each
+feature of the draft against your own samples and, with `--recipient`, against
+the reader's own messages from the thread (one file, messages split by lines of
+`---`). It names a feature, with its line, only where the draft sits outside
+both and on the side model-written text leans: nouns not carried between
+sentences, more varied words, short clauses and sentences, few names, numbers
+and checkable facts, vague quantities, a new abstract noun per sentence, even
+clauses, softened framing, a pitch or ask, tidy colons, a thank-you opener and
+a sign-off word. A register the reader shares is never flagged. It applies none
+of the house prose rules. Learn the profile again to add the measures it needs.
 
 `voice check` exits 1 when a draft scores under `--min-score`; see
 [a voice built from intent](voice-intent.md). Every verb takes `--dir` for the store folder. See

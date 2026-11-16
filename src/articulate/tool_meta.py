@@ -21,6 +21,7 @@ TITLES = {
     "restructure_plan": "Propose moving limit and source lines",
     "voice_compare": "Compare a draft to your voice profile",
     "voice_apply_plan": "Plan an edit toward your own voice",
+    "voice_outbound": "Check a message sent in your name",
     "house_brief": "The house voice brief",
     "house_transform": "Apply the house voice to model output",
     "dialogue_check": "Check dialogue and character voices",

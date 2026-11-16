@@ -137,7 +137,7 @@ def _arguments(tool):
         args["documents"] = [{"name": "a.md", "text": MARKER}, {"name": "b.md", "text": MARKER}]
     if tool["name"] == "title_workshop":
         args["titles"] = [MARKER, MARKER]
-    if tool["name"] in ("voice_compare", "voice_apply_plan"):
+    if tool["name"] in ("voice_compare", "voice_apply_plan", "voice_outbound"):
         args["voice_name"] = "sealed"
     if tool["name"] == "voice_apply_plan":
         args["authored_by_user"] = True

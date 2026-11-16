@@ -31,6 +31,13 @@ def _voice(sub, run, handler):
     compare.add_argument("drafts", nargs="+")
     compare.add_argument("--name", required=True)
     compare.add_argument("--json", action="store_true")
+    out = vs.add_parser("outbound", help="check a message to send in your name against your "
+                        "writing and the reader's own messages")
+    out.add_argument("draft")
+    out.add_argument("--author", required=True, help="your stored voice profile")
+    out.add_argument("--recipient", help="a file of the reader's messages split by lines of ---, "
+                     "- for standard input, or a stored profile name")
+    out.add_argument("--json", action="store_true")
     apply = vs.add_parser("apply", help="plan an edit that shapes your own draft toward your voice")
     apply.add_argument("draft")
     apply.add_argument("--name", required=True)

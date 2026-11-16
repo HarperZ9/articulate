@@ -57,6 +57,11 @@ TOOLS = {
     "voice_compare": ("Place a draft against the measured range of the author's own voice, "
                       "saved on this computer with articulate voice learn. No total score. Runs on your machine and edits "
                       "none of your files."),
+    "voice_outbound": ("Check a message to be sent in the author's name against the author's own "
+                       "writing, saved with articulate voice learn, and the reader's own messages "
+                       "from the thread. Names each feature where the draft leans toward the shape "
+                       "of model text and sits outside both, with its line. No total score. Runs on "
+                       "your machine and edits none of your files."),
     "voice_apply_plan": ("Plan an edit that shapes the user's own draft toward their own saved "
                          "voice. Runs only with authored_by_user true. Returns a v2 host edit "
                          "plan; call edit_submit with the rewrite. Runs on your machine and edits "

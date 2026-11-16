@@ -75,6 +75,15 @@ def _vocabulary(p):
             "is against your own samples only. Learn with --no-vocabulary to leave this out."]
 
 
+def _outbound(p):
+    o = p.get("outbound")
+    if o is None:
+        return []
+    return [f"outbound: One row of message measures for each of your {o['samples']} samples "
+            "(clause and sentence lengths, names, numbers, softeners, asks, openers, sign-offs), "
+            "used by voice outbound. It keeps no text."]
+
+
 def _per_sample(p):
     return [f"per_sample: The same measures for each of your {len(p['per_sample'])} samples, "
             "so a comparison can use the spread across your samples."]
@@ -83,7 +92,7 @@ def _per_sample(p):
 def describe(profile):
     lines = []
     for part in (_sources, _rhythm, _openings, _argument, _function_words, _vocabulary,
-                 _per_sample):
+                 _per_sample, _outbound):
         lines += part(profile)
     return lines
 
