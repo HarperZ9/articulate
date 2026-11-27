@@ -175,9 +175,11 @@ TOOLS[0]["inputSchema"]["properties"]["max_hits"] = {
 for _tool in TOOLS[:2]:           # check and score
     _tool["inputSchema"]["properties"]["profile"] = {
         "type": "string",
-        "description": "A register or domain profile, such as chat, readme or commit. "
+        "description": "A register or domain profile, such as chat, personal_email, readme or commit. "
                        "Pass chat when a model checks its own reply to a person: it adds "
-                       "the structure rules. With no profile the default line rules run, "
+                       "the structure rules. Pass personal_email for a personal email draft: "
+                       "it adds bullet-list, stiff-opener, enumeration, PR-closer and "
+                       "parenthetical-metric checks. With no profile the default line rules run, "
                        "and the result's rules_run field says so."}
 tool_options.extend(TOOLS)
 
