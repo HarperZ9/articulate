@@ -23,13 +23,16 @@ TOOLS = {
               "checking its own reply to a person should pass profile \"chat\": it adds "
               "the structure rules (anaphora runs, parallel frames, triads, paragraph "
               "pinning, parataxis, pointer and landing sentences, in paragraphs and list "
-              "items). With no profile only the default line rules run, and clean then "
-              "says nothing about structure. The rules_run field names the profile and "
-              "rule packs that ran. " + LIMIT),
+              "items). Pass profile \"personal_email\" to check a personal email draft for "
+              "bullet lists, stiff openers, enumeration crutches, canned closers and "
+              "parenthetical metric packs. With no profile only the default line rules run, "
+              "and clean then says nothing about structure. The rules_run field names the "
+              "profile and rule packs that ran. " + LIMIT),
     "score": ("Return the 0-100 device-density (texture) score, finding counts, passive-voice "
               "and adverb rates, and cadence flags. Runs on your machine. The texture score "
               "counts line rules only. A model scoring its own reply to a person should "
-              "pass profile \"chat\"; rules_run names what ran. " + LIMIT),
+              "pass profile \"chat\", or \"personal_email\" for a personal email draft; "
+              "rules_run names what ran. " + LIMIT),
     "judge": "Assess prose. " + _EDIT,
     "fix": "Suggest a rewrite. " + _EDIT,
     "polish": "Polish prose with meaning and regression guards. " + _EDIT,

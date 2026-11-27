@@ -31,7 +31,7 @@ Articulate finds writing patterns and shows where they are. Use it to improve wr
 ## What it does
 
 - **Check.** Flags rhetorical devices (antithesis, corrective negation, rule-of-three, em dashes, filler intensifiers, corporate verbs), marketing and email register, and plain-style signals such as expletive openers, nominalization density, passive voice, adverb density and uniform cadence. Each run gives a 0 to 100 texture score and a pass or block result.
-- **Profiles.** `procedure`, `commit`, `research`, `readme`, `essay`, `narrative` and more set which findings block. Procedures gate strictly and fiction gates nothing. A profile comes from `--profile`, a `writing-profile:` tag in the file, or the file path.
+- **Profiles.** `procedure`, `commit`, `research`, `readme`, `essay`, `narrative`, `personal_email` and more set which findings block. Procedures gate strictly and fiction gates nothing. A profile comes from `--profile`, a `writing-profile:` tag in the file, or the file path.
 - **Modes and genres.** A mode pairs a register with a purpose, such as `memo/argue` or `technical-docs/explain`. Genres (`literary-fiction`, `genre-fiction`, `ya-fiction`, `memoir`, `screenplay`, `poetry`) read narrative prose by their own conventions, and quoted speech stays out of the device checks. `articulate modes` lists them all.
 - **Edit.** `judge` reads problems a pattern rule cannot see, such as a vague claim or a weak verb. `fix` rewrites to the standard and rechecks the result. `polish` loops until the draft clears a quality bar. These use a model you configure, the calling model in an MCP host, or mechanical fixes with no model.
 - **Receipts.** `articulate receipt` records a check, and `articulate verify` replays it against the file later. `articulate audit` queries a folder of committed receipts.
@@ -109,6 +109,8 @@ A receipt made with `--redact drop` keeps the rule, tier and line of each findin
 ## Install options
 
 Version 0.19.1 is on PyPI as `articulate-writing`. The [changelog](CHANGELOG.md) lists what each release added.
+
+mcp-name: io.github.harperz9/articulate
 
 - [Windows x64 native ZIP and MCPB packages](docs/native-local-package.md) bundle a Python runtime.
 - The [Claude plugin](docs/claude-plugin.md) runs local checks and host editing in Claude Code, Codex and other MCP hosts that have Python installed.
